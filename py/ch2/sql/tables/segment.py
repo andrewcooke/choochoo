@@ -56,7 +56,7 @@ class Segment(Base):
     finish_lat = Column(Float, nullable=False)
     finish_lon = Column(Float, nullable=False)
     distance = Column(Float, nullable=False)
-    name = Column(Text, nullable=False, index=True, unique=True)
+    title = Column(Text, nullable=False, index=True, unique=True)
     description = Column(Text)
     UniqueConstraint(start_lat, start_lon, finish_lat, finish_lon)
 

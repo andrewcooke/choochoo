@@ -10,9 +10,11 @@ from string import ascii_letters
 import pandas as pd
 from binascii import hexlify
 
+from .log import log_current_exception
 from ..names import Titles
 
 log = getLogger(__name__)
+DEV = False  # set when args parsed
 
 
 class WarnDict(dict):
@@ -245,3 +247,49 @@ def median(list):
         return list[n//2]
     else:
         return (list[n//2] + list[n//2+1]) / 2
+
+
+def safe_return(make_retval):
+
+    def safe(f):
+
+        def wrapped(*args, **kargs):
+            try:
+                return f(*args, **kargs)
+            except Exception as e:
+                log.warning(f'Error in {f.__name__}: {e}')
+                log_current_exception(traceback=DEV)
+                return make_retval()
+
+        return wrapped
+
+    return safe
+
+
+safe_dict = safe_return(lambda: {})
+safe_none = safe_return(lambda: None)
+
+
+def safe_yield(f):
+
+    def wrapped(*args, **kargs):
+        try:
+            yield from f(*args, **kargs)
+        except Exception as e:
+            log.warning(f'Error in {f.__name__}: {e}')
+            log_current_exception(traceback=DEV)
+
+    return wrapped
+
+
+def safe_first(f):
+
+    def wrapped(first, *args, **kargs):
+        try:
+            return f(first, *args, **kargs)
+        except Exception as e:
+            log.warning(f'Error in {f.__name__}: {e}')
+            log_current_exception(traceback=DEV)
+            return first
+
+    return wrapped

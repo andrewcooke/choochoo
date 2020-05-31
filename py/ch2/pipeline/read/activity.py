@@ -199,7 +199,7 @@ class ActivityReader(MultiProcFitReader):
         # first, do we have the 'Name' field defined?
         # this should be triggered at most once per group if it was not already defined
         root = s.query(ActivityTopic). \
-            filter(ActivityTopic.name == ActivityTopic.ROOT,
+            filter(ActivityTopic.title == ActivityTopic.ROOT,
                    ActivityTopic.activity_group == ajournal.activity_group).one_or_none()
         if not root:
             root = add(s, ActivityTopic(name=ActivityTopic.ROOT, description=ActivityTopic.ROOT_DESCRIPTION,

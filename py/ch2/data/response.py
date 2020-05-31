@@ -9,6 +9,7 @@ from pandas import DataFrame, Series
 from scipy import optimize
 
 from .lib import decay_params, inplace_decay
+from ..lib.data import safe_dict
 from ..names import Titles, like, N, SPACE
 
 log = getLogger(__name__)
@@ -154,6 +155,7 @@ def fit_ff_params(data, params, performances, method='L1', max_reject=0, thresho
         rejected.append((i, t))
 
 
+@safe_dict
 def response_stats(df, prev_secs):
     from math import log
     digits = re.compile(r'(\d+)')

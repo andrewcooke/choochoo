@@ -36,7 +36,7 @@ class TestSources(LogTestCase):
 
                 journal = add(s, DiaryTopicJournal(date='2018-09-29'))
                 cache = journal.cache(s)
-                diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Status').one()
+                diary = s.query(DiaryTopic).filter(DiaryTopic.title == 'Status').one()
                 fields = diary.fields
                 self.assertEqual(len(fields), 6, list(enumerate(map(str, fields))))
                 self.assertEqual(fields[0].statistic_name.name, 'notes')
@@ -53,7 +53,7 @@ class TestSources(LogTestCase):
 
                 journal = DiaryTopicJournal.get_or_add(s, '2018-09-29')
                 cache = journal.cache(s)
-                diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Status').one()
+                diary = s.query(DiaryTopic).filter(DiaryTopic.title == 'Status').one()
                 fields = diary.fields
                 self.assertEqual(len(fields), 6, list(enumerate(map(str, fields))))
                 self.assertEqual(fields[0].statistic_name.name, 'notes')
@@ -71,9 +71,9 @@ class TestSources(LogTestCase):
 
                 # check the summary stats
 
-                diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Status').one()
+                diary = s.query(DiaryTopic).filter(DiaryTopic.title == 'Status').one()
                 weights = s.query(StatisticJournal).join(StatisticName). \
-                               filter(StatisticName.owner == diary, StatisticName.name == 'Weight'). \
+                               filter(StatisticName.owner == diary, StatisticName.name == 'weight'). \
                                order_by(StatisticJournal.time).all()
                 self.assertEqual(len(weights), 2)
                 self.assertEqual(weights[1].value, 64.5)
@@ -81,16 +81,16 @@ class TestSources(LogTestCase):
                 self.assertEqual(weights[1].measures[0].rank, 1)
                 self.assertEqual(weights[1].measures[0].percentile, 100, weights[1].measures[0].percentile)
                 n = s.query(count(StatisticJournalFloat.id)).scalar()
-                self.assertEqual(n, 6, n)
+                self.assertEqual(n, 4, n)
                 n = s.query(count(StatisticJournalInteger.id)).scalar()
-                self.assertEqual(n, 10, n)
+                self.assertEqual(n, 6, n)
                 m_avg = s.query(StatisticJournalFloat).join(StatisticName). \
-                    filter(StatisticName.name == 'Avg/Month Weight').one()
+                    filter(StatisticName.name == 'avg-month-weight').one()
                 self.assertEqual(m_avg.value, 64.5)
                 y_avg = s.query(StatisticJournalFloat).join(StatisticName). \
-                    filter(StatisticName.name == 'Avg/Year Weight').one()
+                    filter(StatisticName.name == 'avg-year-weight').one()
                 self.assertEqual(y_avg.value, 64.5)
-                month = s.query(Interval).filter(Interval.schedule == 'm').one()
+                month = s.query(Interval).filter(Interval.schedule == 'm').first()
                 self.assertEqual(month.start, to_date('2018-09-01'), month.start)
                 self.assertEqual(month.finish, to_date('2018-10-01'), month.finish)
 
@@ -112,6 +112,6 @@ class TestSources(LogTestCase):
                     print(source)
                 for journal in s.query(StatisticJournal).all():
                     print(journal)
-                self.assertEqual(s.query(count(Source.id)).scalar(), 30, list(map(str, s.query(Source).all())))  # constants
-                self.assertEqual(s.query(count(StatisticJournalText.id)).scalar(), 18, s.query(count(StatisticJournalText.id)).scalar())
-                self.assertEqual(s.query(count(StatisticJournal.id)).scalar(), 31, s.query(count(StatisticJournal.id)).scalar())
+                self.assertEqual(s.query(count(Source.id)).scalar(), 38, list(map(str, s.query(Source).all())))  # constants
+                self.assertEqual(s.query(count(StatisticJournalText.id)).scalar(), 14, s.query(count(StatisticJournalText.id)).scalar())
+                self.assertEqual(s.query(count(StatisticJournal.id)).scalar(), 23, s.query(count(StatisticJournal.id)).scalar())

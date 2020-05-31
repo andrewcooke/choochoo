@@ -7,7 +7,7 @@ from sqlalchemy import Column, Integer, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 
-from .source import SourceType, Source, Interval, UngroupedSource, GroupedSource
+from .source import SourceType, Interval, UngroupedSource, GroupedSource
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from .system import SystemConstant
 from ..support import Base
@@ -27,7 +27,7 @@ class Topic:
     '''
 
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False, server_default='')
+    title = Column(Text, nullable=False, server_default='')
     description = Column(Text, nullable=False, server_default='')
     sort = Column(Sort, nullable=False, server_default='0')
 
@@ -49,7 +49,7 @@ class DiaryTopic(Base, Topic):
         # http://docs.sqlalchemy.org/en/latest/orm/self_referential.html
         return relationship('DiaryTopic', backref=backref('parent', remote_side=[cls.id]))
 
-    def __init__(self, id=None, parent=None, parent_id=None, schedule=None, name=None, description=None, sort=None):
+    def __init__(self, id=None, parent=None, parent_id=None, schedule=None, title=None, description=None, sort=None):
         # Topic instances are only created in config.  so we intercept here to
         # duplicate data for start and finish - it's not needed elsewhere.
         if not isinstance(schedule, Schedule):
@@ -58,14 +58,14 @@ class DiaryTopic(Base, Topic):
         self.parent = parent
         self.parent_id = parent_id
         self.schedule = schedule
-        self.name = name
+        self.title = title
         self.description = description
         self.sort = sort
         self.start = schedule.start
         self.finish = schedule.finish
 
     def __str__(self):
-        return 'DiaryTopic "%s" (%s)' % (self.name, self.schedule)
+        return 'DiaryTopic "%s" (%s)' % (self.title, self.schedule)
 
 
 class ActivityTopic(Base, Topic):
@@ -85,7 +85,7 @@ class ActivityTopic(Base, Topic):
         return relationship('ActivityTopic', backref=backref('parent', remote_side=[cls.id]))
 
     def __str__(self):
-        return 'ActivityTopic "%s" (%s)' % (self.name, self.activity_group)
+        return 'ActivityTopic "%s" (%s)' % (self.title, self.activity_group)
 
 
 class TopicField:
@@ -120,7 +120,7 @@ class DiaryTopicField(Base, TopicField):
     UniqueConstraint('statistic_name_id')
 
     def __str__(self):
-        return 'DiaryTopicField "%s"/"%s"' % (self.diary_topic.name, self.statistic_name.name)
+        return 'DiaryTopicField "%s"/"%s"' % (self.diary_topic.title, self.statistic_name.name)
 
 
 class ActivityTopicField(Base, TopicField):
@@ -141,7 +141,7 @@ class ActivityTopicField(Base, TopicField):
     UniqueConstraint('statistic_name_id')
 
     def __str__(self):
-        name = self.activity_topic.name if self.activity_topic else None
+        name = self.activity_topic.title if self.activity_topic else None
         return f'ActivityTopicField {name} / {self.statistic_name.name}'
 
 
@@ -230,28 +230,6 @@ class ActivityTopicJournal(GroupedSource):
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ACTIVITY_TOPIC
     }
-
-    def get_named(self, s, qname, default_owner=None, default_group=None):
-        from ...sql import StatisticJournal, StatisticName, ActivityGroup, FileHash, ActivityJournal
-        from ...data.constraint import parse_qualified_name
-        owner, name, group = parse_qualified_name(qname)
-        owner = owner or default_owner
-        group = group or default_group
-        q = s.query(StatisticJournal). \
-            join(ActivityTopicJournal). \
-            join(StatisticName). \
-            filter(StatisticName.name.ilike(name),
-                   StatisticJournal.source_id == self.id)
-        if owner:
-            q = q.filter(StatisticName.owner == owner)
-        if group:
-            q = q.join(FileHash).join(ActivityGroup).filter(ActivityGroup.name == group)
-        elif group is None:
-            q = q.join(ActivityGroup). \
-                join(FileHash). \
-                join(ActivityJournal). \
-                filter(ActivityGroup.id == ActivityJournal.activity_group_id)
-        return q.all()
 
     @classmethod
     def get_or_add(cls, s, file_hash, activity_group):

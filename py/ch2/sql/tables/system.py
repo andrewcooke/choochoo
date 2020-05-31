@@ -143,7 +143,7 @@ class Progress(SystemBase):
     __tablename__ = 'progress'
 
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False, unique=True)
+    name = Column(Name, nullable=False, unique=True)
     pid = Column(Integer, nullable=False, index=True)
     start = Column(Time, nullable=False)
     percent = Column(Integer, nullable=False, default=0)

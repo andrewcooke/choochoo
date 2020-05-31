@@ -9,7 +9,7 @@ from math import pi
 
 from .frame import median_dt
 from .lib import fit, inplace_decay
-from ..lib.data import tmp_name
+from ..lib.data import tmp_name, safe_first
 from ..names import Names as N
 
 log = getLogger(__name__)
@@ -21,6 +21,7 @@ def add_differentials(df, max_gap=None):
                               N.LATITUDE, N.LONGITUDE, max_gap=max_gap)
 
 
+@safe_first
 def add_air_speed(df, wind_speed=0, wind_heading=0, max_gap=None):
     df[N.AIR_SPEED] = df[N.SPEED] + wind_speed * _np.cos((df[N.HEADING] - wind_heading) / RAD_TO_DEG)
     return _add_differentials(df, N.AIR_SPEED, N.AIR_SPEED, max_gap=max_gap)
@@ -56,6 +57,7 @@ def _add_differentials(df, speed, *names, max_gap=None):
     return df
 
 
+@safe_first
 def add_energy_budget(df, m, g=9.8):
     # if DELTA_ELEVATION is +ve we've gone uphill.  so this is the total amount of energy
     # gained in this segment.
@@ -76,12 +78,14 @@ def add_crr_estimate(df, m, g=9.8):
     return df
 
 
+@safe_first
 def add_loss_estimate(df, m, cda=0.45, crr=0, p=1.225, g=9.8):
     # this is the energy spent on air and rolling resistance
     df[N.LOSS] = (cda * p * df[N.AVG_AIR_SPEED_2] * 0.5 + crr * m * g) * df[N.DELTA_DISTANCE]
     return df
 
 
+@safe_first
 def add_power_estimate(df):
     # power input must balance the energy budget.
     df[N.POWER_ESTIMATE] = (df[N.DELTA_ENERGY] + df[N.LOSS]) / df[N.DELTA_TIME].dt.total_seconds()

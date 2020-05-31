@@ -19,6 +19,7 @@ from ...data.climb import find_climbs, Climb, add_climb_stats
 from ...data.frame import present
 from ...data.response import response_stats
 from ...lib import time_to_local_time
+from ...lib.data import safe_dict
 from ...lib.log import log_current_exception
 from ...names import N, T, Summaries as S, Units, titles_for_names, SPACE
 from ...sql import StatisticJournalFloat, Constant, StatisticJournalText, StatisticJournalTimestamp, \
@@ -80,6 +81,7 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
             add_climb_stats(adf, climbs)
         return data, stats, climbs
 
+    @safe_dict
     def __average_power(self, s, ajournal, active_time):
         # this doesn't fit nicely anywhere...
         energy = StatisticJournal.at(s, ajournal.start, N.ENERGY_ESTIMATE, PowerCalculator,

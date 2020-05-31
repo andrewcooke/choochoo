@@ -99,14 +99,14 @@ class ActivityDelegate(ActivityJournalDelegate):
         # special case root
         for field in s.query(ActivityTopicField). \
                 join(ActivityTopic). \
-                filter(ActivityTopic.name == ActivityTopic.ROOT,
+                filter(ActivityTopic.title == ActivityTopic.ROOT,
                        or_(ActivityTopic.activity_group_id == None,
                            ActivityTopic.activity_group_id == ajournal.activity_group.id)). \
                 order_by(ActivityTopicField.sort).all():
             yield from_field(field, cache[field])
         for topic in s.query(ActivityTopic). \
                 filter(ActivityTopic.parent == None,
-                       ActivityTopic.name != ActivityTopic.ROOT,
+                       ActivityTopic.title != ActivityTopic.ROOT,
                        or_(ActivityTopic.activity_group_id == None,
                            ActivityTopic.activity_group_id == ajournal.activity_group.id)). \
                 order_by(ActivityTopic.sort).all():
@@ -250,28 +250,6 @@ def active_days(s, month):
 
 def active_months(s, year):
     return active_dates(s, year, YEAR, YM)
-
-
-def activities_date(s, order, add_days=0):
-    time = s.query(ActivityJournal.start). \
-        order_by(order(ActivityJournal.start)).limit(1).one_or_none()
-    if time:
-        time = add_date(time_to_local_date(time[0]), (add_days, DAY))
-        return time.strftime(YMD)
-    else:
-        return None
-
-
-def activities_start(s):
-    return activities_date(s, asc)
-
-
-def activities_finish(s):
-    return activities_date(s, desc, 1)
-
-
-def activity_groups(s):
-    return [row[0] for row in s.query(distinct(ActivityGroup.name)).all()]
 
 
 def latest_activity(s):

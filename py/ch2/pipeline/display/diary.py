@@ -25,7 +25,7 @@ class DiaryDisplayer(Displayer):
                 yield list(self.__read_date_diary_topic(s, date, journal.cache(s), topic))
 
     def __read_date_diary_topic(self, s, date, cache, topic):
-        yield text(topic.name)
+        yield text(topic.title)
         if topic.description: yield text(topic.description)
         log.debug(f'topic id {topic.id}; fields {topic.fields}')
         for field in topic.fields:
@@ -58,7 +58,7 @@ class DiaryDisplayer(Displayer):
                 yield list(self.__read_interval_topic(s, interval, topic))
 
     def __read_interval_topic(self, s, interval, topic):
-        yield text(topic.name)
+        yield text(topic.title)
         if topic.description: yield text(topic.description)
         for field in topic.fields:
             column = list(interval_column(s, interval, field.statistic_name.name, SummaryCalculator))

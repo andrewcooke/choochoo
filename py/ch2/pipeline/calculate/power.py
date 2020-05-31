@@ -91,7 +91,7 @@ class PowerCalculator(ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, Mu
         for time, row in df.iterrows():
             for title, units, summary, description in fields:
                 name = simple_name(title)
-                if not pd.isnull(row[name]):
+                if name in row and not pd.isnull(row[name]):
                     loader.add(name, units, summary, ajournal, row[name], time,
                                StatisticJournalFloat, title=title, description=description)
 

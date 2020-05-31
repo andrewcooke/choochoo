@@ -3,11 +3,12 @@ import numpy as np
 import pandas as pd
 
 from .heart_rate import BC_ZONES
-from ..lib.data import interpolate_freq
+from ..lib.data import interpolate_freq, safe_none, safe_return
 from ..lib.date import to_time
 from ..names import Names, Titles
 
 
+@safe_none
 def hr_zone(heart_rate_df, fthr_df, pc_fthr_zones=BC_ZONES, heart_rate=Names.HEART_RATE, hr_zone=Names.HR_ZONE):
     '''
     mutate input df to include hr zone
@@ -47,20 +48,17 @@ def hr_zone(heart_rate_df, fthr_df, pc_fthr_zones=BC_ZONES, heart_rate=Names.HEA
             lower = upper
 
 
+@safe_return(lambda: pd.DataFrame(columns=[Names.HR_IMPULSE_10]))
 def impulse_10(hr_zone_df, impulse, hr_zone=Names.HR_ZONE):
     '''
     interpolate HR to 10s values then calculate impulse using model parameters.
 
     this can be used for a huge slew of data, or for an individual activity.
     '''
-    if hr_zone_df.empty:
-        impulse_df = pd.DataFrame(columns=[Names.HR_IMPULSE_10])
-    else:
-        impulse_df = interpolate_freq(hr_zone_df.loc[:, [hr_zone]], '10s',
-                                      method='index', limit=int(0.5 + impulse.max_secs / 10)).dropna()
-        impulse_df[Names.HR_IMPULSE_10] = (impulse_df[hr_zone] - impulse.zero) / (impulse.one - impulse.zero)
-        impulse_df[Names.HR_IMPULSE_10].clip(lower=0, inplace=True)
-        impulse_df[Names.HR_IMPULSE_10] = impulse_df[Names.HR_IMPULSE_10] ** impulse.gamma
-        impulse_df.drop(columns=[hr_zone], inplace=True)
+    impulse_df = interpolate_freq(hr_zone_df.loc[:, [hr_zone]], '10s',
+                                  method='index', limit=int(0.5 + impulse.max_secs / 10)).dropna()
+    impulse_df[Names.HR_IMPULSE_10] = (impulse_df[hr_zone] - impulse.zero) / (impulse.one - impulse.zero)
+    impulse_df[Names.HR_IMPULSE_10].clip(lower=0, inplace=True)
+    impulse_df[Names.HR_IMPULSE_10] = impulse_df[Names.HR_IMPULSE_10] ** impulse.gamma
+    impulse_df.drop(columns=[hr_zone], inplace=True)
     return impulse_df
-

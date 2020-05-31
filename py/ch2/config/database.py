@@ -186,7 +186,7 @@ def set_constant(s, constant, value, time=None, date=None):
     constant.add_value(s, value, time=time, date=date)
 
 
-def add_diary_topic(s, name, sort, description=None, schedule=None):
+def add_diary_topic(s, title, sort, description=None, schedule=None):
     '''
     Add a root topic.
 
@@ -197,7 +197,7 @@ def add_diary_topic(s, name, sort, description=None, schedule=None):
     A root topic is usually used as a header to group related children.
     For example, 'DailyDiary' to group diary entries (notes, weight, sleep etc), or 'Plan' to group training plans.
     '''
-    return add(s, DiaryTopic(name=name, sort=sort, description=description, schedule=schedule))
+    return add(s, DiaryTopic(title=title, sort=sort, description=description, schedule=schedule))
 
 
 def add_child_diary_topic(s, parent, name, sort, description=None, schedule=None):
@@ -212,7 +212,7 @@ def add_child_diary_topic(s, parent, name, sort, description=None, schedule=None
     For example, the parent topic might be "injuries" and permanent, while children are defined for
     specific injuries with a schedule that gives start and end dates.
     '''
-    return add(s, DiaryTopic(parent=parent, name=name, sort=sort, description=description, schedule=schedule))
+    return add(s, DiaryTopic(parent=parent, title=name, sort=sort, description=description, schedule=schedule))
 
 
 def add_diary_topic_field(s, diary_topic, name, sort, type, description=None, units=None, summary=None, schedule=None,
@@ -233,7 +233,7 @@ def add_diary_topic_field(s, diary_topic, name, sort, type, description=None, un
                                    statistic_name=statistic_name))
 
 
-def add_activity_topic(s, name, sort, description=None, activity_group=None):
+def add_activity_topic(s, title, sort, description=None, activity_group=None):
     '''
     Add a root topic.
 
@@ -244,7 +244,7 @@ def add_activity_topic(s, name, sort, description=None, activity_group=None):
     A root topic is usually used as a header to group related children.
     For example, 'DailyDiary' to group diary entries (notes, weight, sleep etc), or 'Plan' to group training plans.
     '''
-    return add(s, ActivityTopic(name=name, sort=sort, description=description,
+    return add(s, ActivityTopic(title=title, sort=sort, description=description,
                                 activity_group=ActivityGroup.from_name(s, activity_group)))
 
 

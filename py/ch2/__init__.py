@@ -86,6 +86,7 @@ COMMANDS = {ACTIVITIES: activities,
 
 
 def main():
+    import ch2.lib.data
     parser = make_parser()
     ns = parser.parse_args()
     command_name = ns.command if hasattr(ns, COMMAND) else None
@@ -93,6 +94,7 @@ def main():
     if command and hasattr(command, 'tui') and command.tui:
         ns.verbose = 0
     args = NamespaceWithVariables(ns)
+    ch2.lib.data.DEV = args[DEV]
     make_log_from_args(args)
     log.info('Version %s' % CH2_VERSION)
     if version_info < (3, 7):

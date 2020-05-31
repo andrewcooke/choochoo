@@ -8,7 +8,7 @@ import numpy as np
 
 from .frame import linear_resample, present
 from ..lib.log import log_current_exception
-from ..lib.data import nearest_index, get_index_loc
+from ..lib.data import nearest_index, get_index_loc, safe_yield, safe_none
 from ..names import Names as N
 from ..sql import StatisticName, StatisticJournal, Source
 
@@ -36,31 +36,28 @@ Climb = namedtuple('Climb', 'phi, min_elevation, min_gradient, max_gradient, max
                              MAX_CLIMB_GRADIENT, MAX_CLIMB_REVERSAL))
 
 
+@safe_yield
 def find_climbs(df, params=Climb()):
-    try:
-        df = df.drop_duplicates(subset=[N.DISTANCE])
-        by_dist = df.set_index(df[N.DISTANCE])
-        by_dist = linear_resample(by_dist, quantise=False)
-        for dlo, dhi in find_climb_distances(by_dist, params=params):
-            tlo, thi = nearest_index(df, N.DISTANCE, dlo), nearest_index(df, N.DISTANCE, dhi)
-            log.debug(f'Found climb from {tlo} - {thi} ({dlo}km - {dhi}km)')
-            up = df[N.ELEVATION].loc[thi] - df[N.ELEVATION].loc[tlo]
-            along = df[N.DISTANCE].loc[thi] - df[N.DISTANCE].loc[tlo]
-            climb = {N.TIME: thi,
-                     N.CLIMB_ELEVATION: up,
-                     N.CLIMB_DISTANCE: along,
-                     N.CLIMB_TIME: (thi - tlo).total_seconds(),
-                     N.CLIMB_GRADIENT: PERCENT * up / along}
-            for height in sorted(CLIMB_CATEGORIES.keys()):
-                if up >= height:
-                    climb[N.CLIMB_CATEGORY] = CLIMB_CATEGORIES[height]
-                else:
-                    break
-            log.debug(climb)
-            yield climb
-    except Exception as e:
-        log.warning(f'Error finding climbs: {e}')
-        log_current_exception(traceback=False)
+    df = df.drop_duplicates(subset=[N.DISTANCE])
+    by_dist = df.set_index(df[N.DISTANCE])
+    by_dist = linear_resample(by_dist, quantise=False)
+    for dlo, dhi in find_climb_distances(by_dist, params=params):
+        tlo, thi = nearest_index(df, N.DISTANCE, dlo), nearest_index(df, N.DISTANCE, dhi)
+        log.debug(f'Found climb from {tlo} - {thi} ({dlo}km - {dhi}km)')
+        up = df[N.ELEVATION].loc[thi] - df[N.ELEVATION].loc[tlo]
+        along = df[N.DISTANCE].loc[thi] - df[N.DISTANCE].loc[tlo]
+        climb = {N.TIME: thi,
+                 N.CLIMB_ELEVATION: up,
+                 N.CLIMB_DISTANCE: along,
+                 N.CLIMB_TIME: (thi - tlo).total_seconds(),
+                 N.CLIMB_GRADIENT: PERCENT * up / along}
+        for height in sorted(CLIMB_CATEGORIES.keys()):
+            if up >= height:
+                climb[N.CLIMB_CATEGORY] = CLIMB_CATEGORIES[height]
+            else:
+                break
+        log.debug(climb)
+        yield climb
 
 
 def find_climb_distances(df, params=Climb()):
@@ -176,11 +173,11 @@ def climbs_for_activity(s, ajournal):
                          key=lambda climb: climb[N.CLIMB_ELEVATION].value, reverse=True)
 
 
+@safe_none
 def add_climb_stats(df, climbs):
     for climb in climbs:
         finish = climb[N.TIME]
         start = finish - dt.timedelta(seconds=climb[N.CLIMB_TIME])
-        power = None
         if N.POWER_ESTIMATE in df.columns:
             # mean() returns a series!
             power = df.loc[start:finish, [N.POWER_ESTIMATE]].mean()[0]

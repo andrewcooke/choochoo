@@ -229,9 +229,6 @@ class NamespaceWithVariables(Mapping):
     def __len__(self):
         return len(self.__dict__)
 
-    def clone_with(self, **kargs):
-        pass
-
 
 def base_system_path(base, subdir=None, file=None, version=DB_VERSION, create=True):
 

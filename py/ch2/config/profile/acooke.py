@@ -1,7 +1,6 @@
 
 from ..config import Config, WALK, SWIM, RUN, BIKE
-from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_enum_constant, \
-    add_constant
+from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_constant
 from ..power import add_simple_power_estimate, add_kit_power_estimate, add_kit_power_model
 from ...commands.args import DEFAULT, base_system_path, PERMANENT
 from ...diary.model import TYPE, EDIT
