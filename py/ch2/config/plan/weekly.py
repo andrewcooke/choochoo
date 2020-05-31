@@ -47,7 +47,7 @@ class Week(Assert, ORMUtils):
         if self.__start.weekday():
             log.warning('The start day (%s) is not a Monday, so the days will be rotated appropriately',
                      DOW[self.__start.weekday()])
-        root = self._get_or_create(s, DiaryTopic, name=root)
+        root = self._get_or_create(s, DiaryTopic, title=root)
         schedule = Schedule('')
         schedule.start = self.__start
         schedule.finish = self.__start + dt.timedelta(days=7 * self.__n_weeks)
