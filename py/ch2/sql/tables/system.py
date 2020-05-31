@@ -4,10 +4,10 @@ from os import getpid
 from time import time, sleep
 
 import psutil as ps
-from sqlalchemy import Column, Text, Integer, Float, UniqueConstraint
+from sqlalchemy import Column, Text, Integer
 
 from ..support import SystemBase
-from ..types import Time, ShortCls
+from ..types import Time, ShortCls, Name
 from ..utils import add
 from ...lib import now
 
@@ -18,11 +18,11 @@ class SystemConstant(SystemBase):
 
     __tablename__ = 'system_constant'
 
-    name = Column(Text, primary_key=True)
+    name = Column(Name, primary_key=True)
     value = Column(Text, nullable=False)
 
     @classmethod
-    def get(cls, s, name, none=False):
+    def from_name(cls, s, name, none=False):
         instance = s.query(SystemConstant).filter(SystemConstant.name == name).one_or_none()
         if instance is None:
             if not none:
@@ -53,6 +53,7 @@ class SystemConstant(SystemBase):
     WEB_URL = 'web-url'
     LAST_GARMIN = 'last-garmin'
     DB_VERSION = 'db-version'
+    LOG_COLOR = 'log-color'
 
 
 class Process(SystemBase):
@@ -142,7 +143,7 @@ class Progress(SystemBase):
     __tablename__ = 'progress'
 
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False, unique=True)
+    name = Column(Name, nullable=False, unique=True)
     pid = Column(Integer, nullable=False, index=True)
     start = Column(Time, nullable=False)
     percent = Column(Integer, nullable=False, default=0)

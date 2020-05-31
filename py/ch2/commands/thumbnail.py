@@ -4,14 +4,13 @@ from os.path import exists
 
 from matplotlib import use
 from matplotlib.pyplot import show, figure
-from pygeotile.point import Point
 
 from .args import ACTIVITY, base_system_path, THUMBNAIL, BASE
-from ..data import activity_statistics
+from ..data.query import Statistics
 from ..lib import local_time_to_time
+from ..names import Names
+from ..pipeline.read.segment import SegmentReader
 from ..sql import ActivityJournal
-from ..names import LONGITUDE, LATITUDE
-
 
 log = getLogger(__name__)
 
@@ -35,20 +34,14 @@ def parse_activity(s, text):
     try:
         return int(text)
     except ValueError:
-        try:
-            time = local_time_to_time(text)
-            log.debug(f'{time}')
-            return s.query(ActivityJournal). \
-                filter(ActivityJournal.start <= time,
-                       ActivityJournal.finish >= time).one().id
-        except ValueError:
-            raise Exception(f'Could not find {text} as an activity date or parse as an ID')
+        return ActivityJournal.at(s, text).id
 
 
 def read_activity(s, activity_id, decimate=10):
     try:
         activity_journal = s.query(ActivityJournal).filter(ActivityJournal.id == activity_id).one()
-        df = activity_statistics(s, LATITUDE, LONGITUDE, activity_journal=activity_journal)
+        df = Statistics(s, activity_journal=activity_journal). \
+            by_name(SegmentReader, Names.SPHERICAL_MERCATOR_X, Names.SPHERICAL_MERCATOR_Y).df
         return df.iloc[::decimate, :]
     except:
         raise Exception(f'{activity_id} is not a valid activity ID')
@@ -95,9 +88,8 @@ def make_figure(xs, ys, side, grid, cm, border):
     return fig
 
 
-# TODO - no need to calculate X + Y from lat / lon - they are already in the database
 def fig_from_df(df, grid=10, cm=1.5, border=0.2):
-    points = [Point.from_latitude_longitude(lat, lon).meters for _, (lat, lon) in df.iterrows()]
+    points = [(x, y) for _, (x, y) in df.iterrows()]
     if points:
         xs, ys, side = normalize(points)
     else:

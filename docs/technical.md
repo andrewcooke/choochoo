@@ -8,7 +8,7 @@ Data are combined from three sources:
   * [FIT files](fit-files), both for activities and monitoring (ie
     steps, heart rate).  The latter can be downloaded from Garmin.
 
-  * Text entry via a '[diary](daily-use)' that runs in the terminal.
+  * Data entry via the web interface.
 
   * Direct commands (eg [tracking equipment changes](kit)).
 

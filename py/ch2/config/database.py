@@ -1,17 +1,16 @@
 from json import dumps
 from logging import getLogger
-from re import sub
 
-from ..names import DUMMY, ALL
 from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.nearby import Nearby, SimilarityCalculator, NearbyCalculator
 from ..sql import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
     DiaryTopic, DiaryTopicField, Dummy, ActivityTopic, ActivityTopicField
 from ..sql.tables.constant import ValidateNamedTuple
-from ..sql.types import long_cls, short_cls
+from ..sql.types import long_cls, short_cls, simple_name
 
 log = getLogger(__name__)
-NEARBY_CNAME = 'Nearby'
+
+NEARBY_CNAME = 'nearby'
 
 
 class Counter:
@@ -142,23 +141,26 @@ def add_activities(s, cls, sort, **kargs):
     return add(s, Pipeline(cls=cls, type=PipelineType.READ_ACTIVITY, sort=sort, kargs=kargs))
 
 
-def add_constant(s, name, value, description=None, units=None, single=False,
-                 statistic_journal_type=StatisticJournalType.INTEGER, activity_group=ALL,
-                 time=0.0):
+def add_constant(s, title, value, description=None, units=None, name=None,
+                 statistic_journal_type=StatisticJournalType.INTEGER, activity_group=None,
+                 time=0.0, single=False, validate_cls=None, validate_args=None, validate_kargs=None):
     '''
-    Add a constant (not associated with an activity).
+    Add a constant.
 
     Configuring a constant allows the user to supply a value later, using the `ch2 constant` command.
     This can be useful for values that don't vary often, and so aren't worth adding to the diary.
     An example is FTHR, which you will only measure occasionally, but which is needed when calculating
     activity statistics (also, FTHR can vary by activity, which is why we add a constant per activity).
     '''
+    if name is None: name = simple_name(title)
     log.debug(f'Adding constant {name}')
-    statistic_name = add(s, StatisticName(name=name, owner=Constant,
-                                          activity_group=ActivityGroup.from_name(s, activity_group),
-                                          units=units, description=description,
-                                          statistic_journal_type=statistic_journal_type))
-    constant = add(s, Constant(statistic_name=statistic_name, name=name, single=single))
+    statistic_name = StatisticName.add_if_missing(s, name, statistic_journal_type, units, None, Constant,
+                                                  title=title, description=description)
+    activity_group = ActivityGroup.from_name(s, activity_group)
+    constant = add(s, Constant(statistic_name=statistic_name,
+                               name=statistic_name.qualified_name(s, activity_group),
+                               activity_group=activity_group, single=single, validate_cls=validate_cls,
+                               validate_args=validate_args, validate_kargs=validate_kargs))
     if value:
         constant.add_value(s, value, time=time)
     else:
@@ -166,48 +168,15 @@ def add_constant(s, name, value, description=None, units=None, single=False,
     return constant
 
 
-def add_activity_constant(s, activity_group, name, value, description=None, units=None, single=False,
-                          statistic_journal_type=StatisticJournalType.INTEGER, time=0.0):
-    '''
-    Add a constant associated with an activity.
-
-    Configuring a constant allows the user to modify a value later, using the `ch2 constant` command.
-    This can be useful for values that don't vary often, and so aren't worth adding to the diary.
-    An example is FTHR, which you will only measure occasionally, but which is needed when calculating
-    activity statistics (also, FTHR can vary by activity, which is why we add a constant per activity).
-    '''
-    if activity_group.id is None:
-        s.flush()
-    statistic_name = add(s, StatisticName(name=name, owner=Constant, activity_group=activity_group,
-                                          units=units, description=description,
-                                          statistic_journal_type=statistic_journal_type))
-    log.debug(f'Adding activity constant {name}')
-    constant = add(s, Constant(statistic_name=statistic_name, name='%s.%s' % (name, activity_group.name),
-                               single=single))
-    if value:
-        constant.add_value(s, value, time=time)
-    else:
-        log.warning(f'No value for constant {name}')
-    return constant
-
-
-def add_enum_constant(s, name, enum, value,
-                      activity_group=ALL, description=None, units=None, single=False, time=0.0):
+def add_enum_constant(s, title, enum, value, description=None, units=None, single=False, name=None,
+                      activity_group=None, time=0.0):
     '''
     Add a constant that is a JSON encoded enum.  This is validated before saving.
     '''
-    statistic_name = add(s, StatisticName(name=name, owner=Constant,
-                                          activity_group=ActivityGroup.from_name(s, activity_group),
-                                          units=units, description=description,
-                                          statistic_journal_type=StatisticJournalType.TEXT))
-    constant = add(s, Constant(statistic_name=statistic_name, name=name, single=single,
-                               validate_cls=ValidateNamedTuple,
-                               validate_args=[], validate_kargs={'tuple_cls': long_cls(enum)}))
-    if value:
-        constant.add_value(s, dumps(value), time=time)
-    else:
-        log.warning(f'No value for constant {name}')
-    return constant
+    return add_constant(s, title, dumps(value), description=description, units=units, name=name,
+                        statistic_journal_type=StatisticJournalType.TEXT, activity_group=activity_group,
+                        time=time, single=single, validate_cls=ValidateNamedTuple,
+                        validate_args=[], validate_kargs={'tuple_cls': long_cls(enum)})
 
 
 def set_constant(s, constant, value, time=None, date=None):
@@ -217,18 +186,7 @@ def set_constant(s, constant, value, time=None, date=None):
     constant.add_value(s, value, time=time, date=date)
 
 
-def name_constant(short_name, activity_group=None):
-    '''
-    Constants typically combine a name with an activity group (because they're specific to a
-    particular activity).
-    '''
-    name = sub(r'\s+', '', short_name)
-    if activity_group:
-        name = '%s.%s' % (name, sub(r'\s+', '', activity_group.name))
-    return name
-
-
-def add_diary_topic(s, name, sort, description=None, schedule=None):
+def add_diary_topic(s, title, sort, description=None, schedule=None):
     '''
     Add a root topic.
 
@@ -239,7 +197,7 @@ def add_diary_topic(s, name, sort, description=None, schedule=None):
     A root topic is usually used as a header to group related children.
     For example, 'DailyDiary' to group diary entries (notes, weight, sleep etc), or 'Plan' to group training plans.
     '''
-    return add(s, DiaryTopic(name=name, sort=sort, description=description, schedule=schedule))
+    return add(s, DiaryTopic(title=title, sort=sort, description=description, schedule=schedule))
 
 
 def add_child_diary_topic(s, parent, name, sort, description=None, schedule=None):
@@ -254,7 +212,7 @@ def add_child_diary_topic(s, parent, name, sort, description=None, schedule=None
     For example, the parent topic might be "injuries" and permanent, while children are defined for
     specific injuries with a schedule that gives start and end dates.
     '''
-    return add(s, DiaryTopic(parent=parent, name=name, sort=sort, description=description, schedule=schedule))
+    return add(s, DiaryTopic(parent=parent, title=name, sort=sort, description=description, schedule=schedule))
 
 
 def add_diary_topic_field(s, diary_topic, name, sort, type, description=None, units=None, summary=None, schedule=None,
@@ -269,14 +227,13 @@ def add_diary_topic_field(s, diary_topic, name, sort, type, description=None, un
     if diary_topic.id is None:
         s.flush()
     statistic_name = add(s, StatisticName(name=name, owner=DiaryTopic, statistic_journal_type=type,
-                                          description=description, units=units, summary=summary,
-                                          activity_group=ActivityGroup.from_name(s, ALL)))
+                                          description=description, units=units, summary=summary))
     if model is None: model = {}
     field = add(s, DiaryTopicField(diary_topic=diary_topic, sort=sort, model=model, schedule=schedule,
                                    statistic_name=statistic_name))
 
 
-def add_activity_topic(s, name, sort, description=None):
+def add_activity_topic(s, title, sort, description=None, activity_group=None):
     '''
     Add a root topic.
 
@@ -287,10 +244,11 @@ def add_activity_topic(s, name, sort, description=None):
     A root topic is usually used as a header to group related children.
     For example, 'DailyDiary' to group diary entries (notes, weight, sleep etc), or 'Plan' to group training plans.
     '''
-    return add(s, ActivityTopic(name=name, sort=sort, description=description))
+    return add(s, ActivityTopic(title=title, sort=sort, description=description,
+                                activity_group=ActivityGroup.from_name(s, activity_group)))
 
 
-def add_child_activity_topic(s, parent, name, sort, description=None):
+def add_child_activity_topic(s, parent, title, sort, description=None):
     '''
     Add a child topic.
 
@@ -302,10 +260,10 @@ def add_child_activity_topic(s, parent, name, sort, description=None):
     For example, the parent topic might be "injuries" and permanent, while children are defined for
     specific injuries with a schedule that gives start and end dates.
     '''
-    return add(s, ActivityTopic(parent=parent, name=name, sort=sort, description=description))
+    return add(s, ActivityTopic(parent=parent, title=title, sort=sort, description=description))
 
 
-def add_activity_topic_field(s, activity_topic, name, sort, type, activity_group,
+def add_activity_topic_field(s, activity_topic, title, sort, type, activity_group,
                              description=None, units=None, summary=None, model=None):
     '''
     Add a field and associated statistic to a topic entry.
@@ -317,43 +275,11 @@ def add_activity_topic_field(s, activity_topic, name, sort, type, activity_group
     if activity_topic and activity_topic.id is None:
         s.flush()
     # cannot simply add as this is also called during loading
-    statistic_name = StatisticName.add_if_missing(s, name, type, units, summary, ActivityTopic,
-                                                  activity_group=activity_group, description=description)
+    statistic_name = StatisticName.add_if_missing(s, title, type, units, summary, ActivityTopic,
+                                                  description=description)
     if model is None: model = {}
     return add(s, ActivityTopicField(activity_topic=activity_topic, sort=sort, model=model,
                                      statistic_name=statistic_name))
-
-
-def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=5,
-               start='1970', finish='2999', height=10, width=10, fraction=1, constant=NEARBY_CNAME):
-    '''
-    Add a pipeline task (and related constant) to find nearby activities in a given geographic
-    region (specified by latitude, longitude, width and height, all in degrees).
-    '''
-    log.debug(f'Adding nearby statistics for {constraint} / {activity_group.name}')
-    nearby_constraint = name_constant(constraint, activity_group)
-    nearby_name = name_constant(constant, activity_group)
-    add_enum_constant(s, nearby_name, Nearby,
-                      {'constraint': nearby_constraint, 'activity_group': activity_group.name,
-                       'border': border, 'start': start, 'finish': finish,
-                       'latitude': latitude, 'longitude': longitude,
-                       'height': height, 'width': width, 'fraction': fraction},
-                      single=True, activity_group=activity_group, description='''
-A region over which activities are candidates to be 'near' each other.  
-This does not mean that all activities in this area are near to each other - 
-only that activities outside will not be considered as candidates.
-* Constraint is the name of the region.
-* Activity_group identifies which activities are considered.
-* Border is the radius (m) around GPS points for them to 'overlap' ('nearby' routes have a large number of 'ovelapping' points).
-* Start and finish are dates between which the region is used.
-* Latitude and longitude define the centre of the region (degrees).
-* Height and width define the size of the region (degrees).
-* Fraction reduces the number of points used to match two activities (increasing processing speed).
-''')
-    add_statistics(s, SimilarityCalculator, sort, nearby=nearby_name,
-                   owner_in=short_cls(ActivityCalculator), owner_out=short_cls(SimilarityCalculator))
-    add_statistics(s, NearbyCalculator, sort, constraint=nearby_constraint,
-                   owner_in=short_cls(SimilarityCalculator), owner_out=short_cls(NearbyCalculator))
 
 
 def add_loader_support(s):
@@ -362,6 +288,5 @@ def add_loader_support(s):
     '''
     log.debug('Adding dummy source')
     dummy_source = add(s, Dummy())
-    dummy_name = add(s, StatisticName(name=DUMMY, owner=dummy_source,
-                                      activity_group=ActivityGroup.from_name(s, ALL),
+    dummy_name = add(s, StatisticName(name=Dummy.DUMMY, owner=dummy_source,
                                       statistic_journal_type=StatisticJournalType.STATISTIC))

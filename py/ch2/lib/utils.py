@@ -12,7 +12,7 @@ from time import sleep
 from psutil import Process
 
 from .date import now
-from ..names import M, KM, PC, W
+from ..names import Units
 
 
 log = getLogger(__name__)
@@ -132,24 +132,24 @@ def short_str(x):
 
 def format_metres(dist):
     if dist < 1000:
-        return str(int(dist)) + M
+        return str(int(dist)) + Units.M
     else:
         return format_km(dist / 1000)
 
 
 def format_km(dist):
-    return f'{dist:.1f}{KM}'
+    return f'{dist:.1f}{Units.KM}'
 
 
 def format_percent(pc):
     if pc > 0.5:
-        return f'{pc:.1f}{PC}'
+        return f'{pc:.1f}{Units.PC}'
     else:
-        return f'{pc:.2f}{PC}'
+        return f'{pc:.2f}{Units.PC}'
 
 
 def format_watts(power):
-    return str(int(power)) + W
+    return str(int(power)) + Units.W
 
 
 def groupby_tuple(iterable, key=None):
@@ -224,8 +224,18 @@ def parse_bool(text, default=False):
 
 
 @contextmanager
-def timing(label):
+def timing(label, warn_over=None):
     start = now()
     yield
     seconds = (now() - start).total_seconds()
-    log.debug(f'Time for {label}: {seconds:.1f}s')
+    if warn_over and seconds > warn_over:
+        log.warning(f'{seconds:.1f}s > {warn_over:.1f}s {label}')
+    else:
+        log.debug(f'{seconds:.1f}s {label}')
+
+
+def clean(token, none=False):
+    if token is None and none:
+        return None
+    else:
+        return token.strip().lower()

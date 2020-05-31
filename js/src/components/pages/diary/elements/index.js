@@ -5,6 +5,7 @@ export {default as HRZoneField} from './HRZoneField';
 export {default as IntegerField} from './IntegerField';
 export {default as JupyterActivity} from './JupyterActivity';
 export {default as JupyterAllActivities} from './JupyterAllActivites';
+export {default as JupyterGroupActivities} from './JupyterGroupActivities';
 export {default as JupyterMenu} from './JupyterMenu';
 export {default as Measures} from './Measures';
 export {default as NearbyMenu} from './NearbyMenu';

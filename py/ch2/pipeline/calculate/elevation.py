@@ -1,10 +1,11 @@
 
 from logging import getLogger
 
-from .calculate import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
+from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
+from ...data import Statistics
 from ...data.elevation import smooth_elevation
-from ...data.frame import activity_statistics, present
-from ...names import RAW_ELEVATION, ELEVATION, DISTANCE, M, GRADE, PC, ALTITUDE
+from ...data.frame import present, valid
+from ...names import N, Titles, Units
 from ...sql import StatisticJournalFloat
 
 log = getLogger(__name__)
@@ -17,32 +18,32 @@ class ElevationCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMix
         super().__init__(*args, **kargs)
 
     def _read_dataframe(self, s, ajournal):
+        from ..owners import SegmentReader
         try:
-            df = activity_statistics(s, DISTANCE, RAW_ELEVATION, ELEVATION, ALTITUDE,
-                                     activity_journal=ajournal, with_timespan=True)
-            return df
+            return Statistics(s, activity_journal=ajournal, with_timespan=True). \
+                by_name(SegmentReader, N.DISTANCE, N.RAW_ELEVATION, N.ELEVATION, N.ALTITUDE).df
         except Exception as e:
             log.warning(f'Failed to generate statistics for elevation: {e}')
             raise
 
     def _calculate_stats(self, s, ajournal, df):
-        if not present(df, ELEVATION):
-            if present(df, RAW_ELEVATION):
+        if not present(df, N.ELEVATION):
+            if present(df, N.RAW_ELEVATION):
                 df = smooth_elevation(df, smooth=self.smooth)
-            elif present(df, ALTITUDE):
-                log.warning(f'Using {ALTITUDE} as {ELEVATION}')
-                df[ELEVATION] = df[ALTITUDE]
+            elif present(df, N.ALTITUDE):
+                log.warning(f'Using {N.ALTITUDE} as {N.ELEVATION}')
+                df[N.ELEVATION] = df[N.ALTITUDE]
             return df
         else:
             return None
 
     def _copy_results(self, s, ajournal, loader, df):
         for time, row in df.iterrows():
-            if ELEVATION in row:
-                loader.add(ELEVATION, M, None, ajournal.activity_group, ajournal, row[ELEVATION], time,
-                           StatisticJournalFloat,
+            if N.ELEVATION in row and valid(row[N.ELEVATION]):
+                loader.add(Titles.ELEVATION, Units.M, None, ajournal, row[N.ELEVATION],
+                           time, StatisticJournalFloat,
                            description='An estimate of elevation (may come from various sources).')
-            if GRADE in row:
-                loader.add(GRADE, PC, None, ajournal.activity_group, ajournal, row[GRADE], time,
-                           StatisticJournalFloat,
+            if N.GRADE in row and valid(row[N.GRADE]):
+                loader.add(Titles.GRADE, Units.PC, None, ajournal, row[N.GRADE],
+                           time, StatisticJournalFloat,
                            description='The gradient of the smoothed SRTM1 elevation.')

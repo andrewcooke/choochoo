@@ -8,14 +8,15 @@ import {fmtHref, last} from '../../functions';
 export default function CompareActivities(props) {
 
     const {params} = props;
-    const groups = Object.keys(params.activities_by_group).filter(group => params.activities_by_group[group].length > 1);
+    const groups = Object.keys(params.activity_times_by_group).filter(group => params.activity_times_by_group[group].length > 1);
     if (groups.length === 0) return <Empty/>;
 
     const defaultGroup = params.latest_activity_group in groups ? params.latest_activity_group : groups[0];
     const [group, setGroup] = useState(defaultGroup);
 
-    const localTimes = params.activities_by_group[group];
-    const defaultLocalTime = params.latest_activity_time in localTimes ? params.latest_activity_time : last(localTimes);
+    const latest_activity_time = params.all_activity_times[0];
+    const localTimes = params.activity_times_by_group[group];
+    const defaultLocalTime = latest_activity_time in localTimes ? latest_activity_time : localTimes[0];
     const [localTime, setLocalTime] = useState(defaultLocalTime);
     if (! localTimes.includes(localTime)) setLocalTime(last(localTimes));
 
@@ -33,7 +34,7 @@ export default function CompareActivities(props) {
         <Grid item xs={2}>
             <InputLabel shrink>Group</InputLabel>
             <Select onChange={event => setGroup(event.target.value)} value={group}>
-                {Object.keys(params.activities_by_group).map((group, i) =>
+                {Object.keys(params.activity_times_by_group).map((group, i) =>
                     <MenuItem value={group} key={i}>{group}</MenuItem>)}
             </Select>
         </Grid>

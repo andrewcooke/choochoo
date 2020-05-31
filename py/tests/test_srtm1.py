@@ -7,7 +7,7 @@ from ch2 import constants
 from ch2.commands.args import bootstrap_dir, V, m, DEV, mm, FORCE
 from ch2.config.profile.default import default
 from ch2.srtm.bilinear import bilinear_elevation_from_constant
-from ch2.srtm.file import SRTM1_DIR
+from ch2.srtm.file import SRTM1_DIR_CNAME
 from ch2.srtm.spline import spline_elevation_from_constant
 from tests import LogTestCase
 
@@ -21,7 +21,7 @@ class TestSortem(LogTestCase):
     def bilinear(self):
         with TemporaryDirectory() as f:
             bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, sys, db = bootstrap_dir(f, m(V), '5', 'constants', 'set', SRTM1_DIR, '/home/andrew/archive/srtm1',
+            args, sys, db = bootstrap_dir(f, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
                                           mm(FORCE))
             constants(args, sys, db)
             with db.session_context() as s:
@@ -31,7 +31,7 @@ class TestSortem(LogTestCase):
     def spline(self, smooth=0):
         with TemporaryDirectory() as f:
             bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, sys, db = bootstrap_dir(f, m(V), '5', 'constants', 'set', SRTM1_DIR, '/home/andrew/archive/srtm1',
+            args, sys, db = bootstrap_dir(f, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
                                           mm(FORCE))
             constants(args, sys, db)
             with db.session_context() as s:

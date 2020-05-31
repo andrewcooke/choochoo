@@ -3,9 +3,15 @@ from logging import getLogger
 from sqlalchemy import func
 
 from ..json import JsonResponse
-from ...commands.search import expand_activities, unified_search
+from ...commands.search import text_search
+from ...data import constrained_sources
+from ...data.constraint import activity_conversion
+from ...diary.model import VALUE, UNITS, DB
+from ...lib import time_to_local_time
 from ...lib.utils import parse_bool
-from ...sql import StatisticName, ActivityGroup, StatisticJournal, Source
+from ...names import N
+from ...pipeline.calculate import ActivityCalculator
+from ...sql import StatisticName, ActivityGroup, StatisticJournal, Source, ActivityTopicField, ActivityTopic
 from ...sql.tables.source import SourceType
 
 log = getLogger(__name__)
@@ -13,7 +19,6 @@ log = getLogger(__name__)
 NAME = 'name'
 DESCRIPTION = 'description'
 GROUPS = 'groups'
-UNITS = 'units'
 
 RESULTS = 'results'
 ERROR = 'error'
@@ -26,7 +31,7 @@ class Search:
         try:
             advanced = parse_bool(request.args.get('advanced', 'false'), default=None)
             log.info(f'{"advanced " if advanced else ""}query: {query}')
-            return JsonResponse({RESULTS: expand_activities(s, unified_search(s, query, advanced=advanced))})
+            return JsonResponse({RESULTS: search(s, query, advanced)})
         except Exception as e:
             log.warning(e)
             return JsonResponse({ERROR: str(e)})
@@ -35,13 +40,10 @@ class Search:
     def read_activity_terms(request, s):
 
         def format(row):
-            name, description,units,  groups = row
-            groups = ', '.join(sorted(groups.split(',')))
-            return {NAME: name, DESCRIPTION: description, GROUPS: groups, UNITS: units}
+            name, description, units = row
+            return {NAME: name, DESCRIPTION: description, UNITS: units}
 
-        q = s.query(StatisticName.name, StatisticName.description, StatisticName.units,
-                    func.group_concat(ActivityGroup.name.distinct())). \
-            join(ActivityGroup). \
+        q = s.query(StatisticName.name, StatisticName.description, StatisticName.units). \
             join(StatisticJournal). \
             join(Source, Source.id == StatisticJournal.source_id). \
             filter(Source.type.in_([SourceType.ACTIVITY_TOPIC, SourceType.ACTIVITY])). \
@@ -49,3 +51,39 @@ class Search:
             order_by(StatisticName.name)
         log.debug(q)
         return JsonResponse([format(row) for row in q.all()])
+
+
+def search(s, query, advanced):
+    if advanced:
+        activities = constrained_sources(s, query, conversion=activity_conversion)
+    else:
+        activities = text_search(s, query)
+    return [expand_activity(s, activity) for activity in sorted(activities, key=lambda x: x.start)]
+
+
+def expand_activity(s, activity_journal):
+
+    topic_journal = activity_journal.get_activity_topic_journal(s)
+
+    def format(statistic):
+        if statistic:
+            return {VALUE: statistic.value, UNITS: statistic.statistic_name.units}
+        else:
+            return None
+
+    def value(statistic):
+        if statistic:
+            return statistic.value
+        else:
+            return None
+
+    return {DB: activity_journal.id,
+            'name': {VALUE: value(StatisticJournal.for_source(s, topic_journal.id, N.NAME,
+                                                              ActivityTopic, topic_journal.activity_group)),
+                     UNITS: None},
+            'group': {VALUE: activity_journal.activity_group.name, UNITS: None},
+            'start': {VALUE: time_to_local_time(activity_journal.start), UNITS: 'date'},
+            'time': format(StatisticJournal.for_source(s, activity_journal.id, N.ACTIVE_TIME,
+                                                       ActivityCalculator, activity_journal.activity_group)),
+            'distance': format(StatisticJournal.for_source(s, activity_journal.id, N.ACTIVE_DISTANCE,
+                                                           ActivityCalculator, activity_journal.activity_group))}

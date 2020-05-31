@@ -2,9 +2,8 @@
 from glob import glob
 from logging import getLogger, NullHandler
 from os.path import abspath, dirname, join
-from sys import version_info
-
 from sqlite3 import enable_callback_tracebacks
+from sys import version_info
 
 getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())
@@ -23,17 +22,15 @@ class FatalException(Exception):
 from .commands.activities import activities
 from .commands.args import COMMAND, make_parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, CONFIGURE, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, UPLOAD, UPGRADE, THUMBNAIL, CHECK, SEARCH
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, UPLOAD, IMPORT, THUMBNAIL, CHECK, SEARCH
 from .commands.constants import constants
 from .commands.check import check
-from .commands.dump import dump
 from .commands.configure import configure
-from .commands.diary import diary
 from .commands.fit import fit
 from .commands.fix_fit import fix_fit
 from .commands.garmin import garmin
 from .commands.help import help, Markdown
-from .commands.upgrade import upgrade
+from .commands.import_ import import_
 from .commands.jupyter import jupyter
 from .commands.kit import kit
 from .commands.monitor import monitor
@@ -68,12 +65,11 @@ COMMANDS = {ACTIVITIES: activities,
             CHECK: check,
             CONSTANTS: constants,
             CONFIGURE: configure,
-            # DIARY: diary,
-            DUMP: dump,
             FIT: fit,
             FIX_FIT: fix_fit,
             GARMIN: garmin,
             HELP: help,
+            IMPORT: import_,
             JUPYTER: jupyter,
             KIT: kit,
             MONITOR: monitor,
@@ -84,13 +80,13 @@ COMMANDS = {ACTIVITIES: activities,
             TEST_SCHEDULE: test_schedule,
             THUMBNAIL: thumbnail,
             UNLOCK: unlock,
-            UPGRADE: upgrade,
             UPLOAD: upload,
             WEB: web
             }
 
 
 def main():
+    import ch2.lib.data
     parser = make_parser()
     ns = parser.parse_args()
     command_name = ns.command if hasattr(ns, COMMAND) else None
@@ -98,6 +94,7 @@ def main():
     if command and hasattr(command, 'tui') and command.tui:
         ns.verbose = 0
     args = NamespaceWithVariables(ns)
+    ch2.lib.data.DEV = args[DEV]
     make_log_from_args(args)
     log.info('Version %s' % CH2_VERSION)
     if version_info < (3, 7):
@@ -120,7 +117,7 @@ def main():
         exit(1)
     except Exception as e:
         log.critical(e)
-        log_current_exception()
+        log_current_exception(warning=False)
         log.info('See `%s %s` for available commands.' % (PROGNAME, HELP))
         log.info('Docs at http://andrewcooke.github.io/choochoo')
         if not args or args[DEV]:

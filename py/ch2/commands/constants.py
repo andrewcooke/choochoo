@@ -1,8 +1,10 @@
 
 from logging import getLogger
 
-from ..commands.args import DATE, NAME, VALUE, DELETE, FORCE, mm, COMMAND, CONSTANTS, SET, SUB_COMMAND, ADD, \
-    SHOW, REMOVE, DESCRIPTION, SINGLE, VALIDATE, GROUP
+from .help import Markdown
+from ..commands.args import DATE, NAME, VALUE, FORCE, mm, COMMAND, CONSTANTS, SET, SUB_COMMAND, ADD, \
+    SHOW, REMOVE, DESCRIPTION, SINGLE, VALIDATE, UNSET, LIST
+from ..sql import ActivityGroup
 from ..sql.tables.constant import Constant, ValidateNamedTuple
 from ..sql.tables.statistic import StatisticJournal, StatisticName, StatisticJournalType
 from ..sql.types import lookup_cls
@@ -15,9 +17,13 @@ def constants(args, system, db):
     '''
 ## constants
 
+    > ch2 constants list
+
+Lists constant names on stdout.
+
     > ch2 constants show [NAME [DATE]]
 
-Lists constants to stdout.
+Shows constant names, descriptions, and values (if NAME is given) on stdout.
 
     > ch2 constants add NAME
 
@@ -30,7 +36,7 @@ Adds an entry for the constant.  If date is omitted a single value is used for a
 
 Note that adding / removing constants (ie their names) is separate from setting / deleting entries (ie their values).
 
-    > ch2 constants delete NAME [DATE]
+    > ch2 constants unset NAME [DATE]
 
 Deletes an entry.
 
@@ -38,14 +44,19 @@ Deletes an entry.
 
 Remove a constant (the associated entries must have been deleted first).
 
+### Names
+
+A constant name is a token (lower case letters, digits and underscores) optionally followed by a colon and
+the name of an activity group.
+
 Names can be matched by SQL patterns.  So FTHR.% matches both FTHR.Run and FTHR.Bike, for example.
 In such a case "entry" in the descriptions above may refer to multiple entries.
     '''
-    name, cmd = args[NAME], args[SUB_COMMAND]
+    cmd = args[SUB_COMMAND]
+    name = None if cmd == LIST else args[NAME]
     with db.session_context() as s:
         if cmd == ADD:
-            add_constant(s, name, activity_group=args[GROUP], description=args[DESCRIPTION],
-                         single=args[SINGLE], validate=args[VALIDATE])
+            add_constant(s, name, description=args[DESCRIPTION], single=args[SINGLE], validate=args[VALIDATE])
         else:
             if name:
                 constants = constants_like(s, name)
@@ -58,15 +69,15 @@ In such a case "entry" in the descriptions above may refer to multiple entries.
                     raise Exception(f'Use {mm(FORCE)} to remove multiple constants')
                 remove_constants(s, constants)
             else:
-                date = args[DATE]
+                date = None if cmd == LIST else args[DATE]
                 if cmd == SET:
                     set_constants(s, constants, date, args[VALUE], args[FORCE])
-                elif cmd == DELETE:
+                elif cmd == UNSET:
                     if not date and not args[FORCE]:
                         raise Exception(f'Use {mm(FORCE)} to delete all entries for a Constant')
                     delete_constants(s, constants, date)
-                elif cmd == SHOW:
-                    print_constants(s, constants, name, date)
+                elif cmd in (SHOW, LIST):
+                    print_constants(s, constants, name, date, names_only=(cmd == LIST))
 
 
 def constants_like(s, name):
@@ -83,20 +94,22 @@ def constants_like(s, name):
     return constants
 
 
-def add_constant(s, name, activity_group=None, description=None, single=False, validate=None):
-    if s.query(StatisticName). \
-            filter(StatisticName.name == name,
-                   StatisticName.owner == Constant,
-                   StatisticName.activity_group == activity_group).one_or_none():
-        raise Exception(f'Constant {name} (activity group {activity_group}) already exists')
+def add_constant(s, name, description=None, single=False, validate=None):
+    if Constant.from_name(s, name, none=True):
+        raise Exception(f'Constant {name} already exists')
+    if ':' in name:
+        activity_group = ActivityGroup.from_name(s, name.split(':', 1)[1], none=True)
+        if activity_group:
+            raise Exception(f'Activity group does not exist for {name}')
+    else:
+        activity_group = None
     validate_cls, validate_args, validate_kargs = None, [], {}
     if validate:
         lookup_cls(validate)
         validate_cls, validate_kargs = ValidateNamedTuple, {'tuple_cls': validate}
-    statistic_name = add(s, StatisticName(name=name, owner=Constant, activity_group=activity_group,
-                                          units=None, description=description,
-                                          statistic_journal_type=StatisticJournalType.TEXT))
-    add(s, Constant(statistic_name=statistic_name, name=name, single=single,
+    statistic_name = StatisticName.add_if_missing(s, name, StatisticJournalType.TEXT, None, None,
+                                                  Constant, description=description)
+    add(s, Constant(statistic_name=statistic_name, name=name, single=single, activity_group=activity_group,
                     validate_cls=validate_cls, validate_args=validate_args, validate_kargs=validate_kargs))
     log.info(f'Added {name}')
 
@@ -106,8 +119,7 @@ def set_constants(s, constants, date, value, force):
         log.info('Checking any previous values')
         journals = []
         for constant in constants:
-            journals += s.query(StatisticJournal).join(StatisticName, Constant). \
-                filter(Constant.id == constant.id).all()
+            journals += journal_for_constant(s, constant)
         if journals:
             log.info(f'Need to delete {len(journals)} ConstantJournal entries')
             if not force:
@@ -124,9 +136,7 @@ def delete_constants(s, constants, date):
     if date:
         for constant in constants:
             for repeat in range(2):
-                journal = s.query(StatisticJournal).join(StatisticName, Constant). \
-                    filter(Constant.id == constant.id,
-                           StatisticJournal.time == date).one_or_none()
+                journal = journal_join_constant(s, constant).filter(StatisticJournal.time == date).one_or_none()
                 if repeat:
                     log.info(f'Deleting {constant.name} on {journal.time}')
                     s.delete(journal)
@@ -135,13 +145,12 @@ def delete_constants(s, constants, date):
                         raise Exception(f'No entry for {constant.name} on {date}')
     else:
         for constant in constants:
-            for journal in s.query(StatisticJournal).join(StatisticName, Constant). \
-                    filter(Constant.id == constant.id).order_by(StatisticJournal.time).all():
+            for journal in journal_for_constant(s, constant):
                 log.info(f'Deleting {constant.name} on {journal.time}')
                 s.delete(journal)
 
 
-def print_constants(s, constants, name, date):
+def print_constants(s, constants, name, date, names_only=False):
     if not constants:
         constants = s.query(Constant).order_by(Constant.name).all()
         if not constants:
@@ -149,18 +158,21 @@ def print_constants(s, constants, name, date):
     print()
     for constant in constants:
         if not date:
-            description = constant.statistic_name.description \
-                if constant.statistic_name.description else '[no description]'
-            print(f'{constant.name}: {description}')
-            if name:  # only print values if we're not listing all
-                found = False
-                for journal in s.query(StatisticJournal).join(StatisticName, Constant). \
-                        filter(Constant.id == constant.id).order_by(StatisticJournal.time).all():
-                    print(f'{journal.time}: {journal.value}')
-                    found = True
-                if not found:
-                    log.warning(f'No values found for {constant.name}')
-            print()
+            print(f'{constant.name}')
+            if not names_only:
+                description = constant.statistic_name.description \
+                    if constant.statistic_name.description else '[no description]'
+                Markdown().print(description)
+                if name:  # only print values if we're not listing all
+                    found = False
+                    # need to be epxlicit in joins because there's more than one way all can connect
+                    # (since constant also references statistic name)
+                    for journal in journal_for_constant(s, constant):
+                        print(f'{journal.time}: {journal.value}')
+                        found = True
+                    if not found:
+                        log.warning(f'No values found for {constant.name}')
+                print()
         else:
             journal = constant.at(s, date=date)
             if journal:
@@ -174,10 +186,22 @@ def remove_constants(s, constants):
         for constant in constants:
             if do:
                 log.warning(f'Deleting {constant.name}')
-                s.query(StatisticName).filter(StatisticName.id == constant.statistic_name_id).delete()
+                # note - we do not remove the statistic name since it could be shared across multiple constants
+                # for different activity groups (but we have ensured no journal entries exist)
                 s.query(Constant).filter(Constant.id == constant.id).delete()
             else:
-                if s.query(StatisticJournal). \
-                        join(StatisticName, Constant). \
-                        filter(Constant.id == constant.id).count():
+                if journal_for_constant(s, constant):
                     raise Exception(f'Values still defined for {constant.name}')
+
+
+def journal_join_constant(s, constant):
+    # need to be explicit in joins because there's more than one way all can connect
+    # (since constant also references statistic name)
+    return s.query(StatisticJournal). \
+            join(StatisticName, StatisticName.id == StatisticJournal.statistic_name_id). \
+            join(Constant, Constant.id == StatisticJournal.source_id). \
+            filter(Constant.id == constant.id)
+
+
+def journal_for_constant(s, constant):
+    return journal_join_constant(s, constant).order_by(StatisticJournal.time).all()

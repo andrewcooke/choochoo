@@ -4,16 +4,18 @@ from logging import getLogger
 from sentinelsat import SentinelAPI
 from shapely.geometry import MultiPoint, box
 
-from ..data import activity_statistics
-from ..names import LATITUDE, LONGITUDE
+from ..data import Statistics
+from ..names import N
+from ..pipeline.owners import SegmentReader
 
 log = getLogger(__name__)
 
 
-def query_activity(s, user, passwd, local_time, activity_group, margin=0.1):
-    df = activity_statistics(s, LATITUDE, LONGITUDE, local_time=local_time, activity_group=activity_group)
+def query_activity(s, user, passwd, local_time, margin=0.1):
+    df = Statistics(s, activity_journal=local_time).by_name(SegmentReader, N.LATITIUDE, N.LONGITUDE).df
     df = df.dropna()
-    footprint = MultiPoint(df.apply(lambda row: (row[LONGITUDE], row[LATITUDE]), axis='columns')).convex_hull
+    footprint = MultiPoint(df.apply(lambda row: (row[Names.LONGITUDE], row[Names.LATITUDE]),
+                                    axis='columns')).convex_hull
     minx, miny, maxx, maxy = footprint.bounds
     dx, dy = maxx - minx, maxy - miny
     bbox = box(minx - margin * dx, miny - margin * dy, maxx + margin * dx, maxy + margin * dy)

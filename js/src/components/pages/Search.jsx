@@ -61,10 +61,10 @@ function AdvancedHelp(props) {
             </p>
             <Collapse in={expanded} timeout="auto" unmountOnExit>
                 <p>A search expression compares statistic names with values. For example</p>
-                <pre>Active Distance &gt; 10</pre>
+                <pre>active-distance &gt; 10</pre>
                 <p>would search for activities where the Active Distance statistic was larger than 10km.</p>
                 <p>Expressions can be combined using <code>and</code> and <code>or</code>:</p>
-                <pre>Active Distance &gt; 10 and Active Time &lt; 3600</pre>
+                <pre>active-distance &gt; 10 and active-time &lt; 3600</pre>
                 <p>(time is measured in seconds so 3600 is an hour).</p>
             </Collapse>
         </Text></Grid>

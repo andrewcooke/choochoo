@@ -1,41 +1,40 @@
 
 from collections import defaultdict, namedtuple
 from itertools import groupby
-from json import loads
 from logging import getLogger
 from random import uniform
 
-from sqlalchemy import inspect, select, alias, and_, distinct, func, not_, or_
+from sqlalchemy import inspect, select, alias, and_, distinct, func, not_
+from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import count
 
-from .calculate import UniProcCalculator
-from ...names import LONGITUDE, LATITUDE, ACTIVE_DISTANCE
-from ...rtree import MatchType
-from ...rtree.spherical import SQRTree
-from ...lib.date import to_time, local_date_to_time
+from .utils import UniProcCalculator
+from ..pipeline import OwnerInMixin
 from ...lib.dbscan import DBSCAN
 from ...lib.optimizn import expand_max
-from ...sql import ActivityJournal, ActivityGroup, Constant, ActivitySimilarity, ActivityNearby, StatisticName, \
-    StatisticJournal, StatisticJournalFloat, Timestamp
+from ...names import Names
+from ...rtree import MatchType
+from ...rtree.spherical import SQRTree
+from ...sql import ActivityJournal, ActivityGroup, ActivitySimilarity, ActivityNearby, StatisticName, \
+    StatisticJournal, StatisticJournalFloat, Timestamp, Source
 
 log = getLogger(__name__)
 Nearby = namedtuple('Nearby', 'constraint, activity_group, border, start, finish, '
                               'latitude, longitude, height, width, fraction')
 
 
-class SimilarityCalculator(UniProcCalculator):
+class SimilarityCalculator(OwnerInMixin, UniProcCalculator):
 
-    def __init__(self, *args, nearby=None, **kargs):
-        self.nearby_ref = self._assert('nearby', nearby)
+    def __init__(self, *args, fraction=0.01, border=150, **kargs):
+        self.fraction = fraction
+        self.border = border
         super().__init__(*args, **kargs)
 
     def _startup(self, s):
-        self.nearby = Nearby(**loads(Constant.get(s, self.nearby_ref).at(s).value))
-        log.info(f'{self.nearby_ref}: {self.nearby}')
-        log.info(f'Reducing to {int(0.5 + 100 * self.nearby.fraction):d}%')
+        log.info(f'Reducing to {int(0.5 + 100 * self.fraction):d}%')
 
     def _missing(self, s):
-        prev = Timestamp.get(s, self.owner_out, constraint=self.nearby.constraint)
+        prev = Timestamp.get(s, self.owner_out)
         if not prev:
             return [True]
         prev_ids = s.query(Timestamp.source_id). \
@@ -44,38 +43,27 @@ class SimilarityCalculator(UniProcCalculator):
                    Timestamp.time < prev.time).cte()
         later = s.query(count(ActivityJournal.id)). \
             join(ActivityGroup). \
-            filter(ActivityGroup.name == self.nearby.activity_group,
-                   not_(ActivityJournal.id.in_(prev_ids))).scalar()
+            filter(not_(ActivityJournal.id.in_(prev_ids))).scalar()
         if later:
             return [True]
         else:
             return []
 
     def _delete(self, s):
-        start, finish = self._start_finish()
-        log.warning(f'Deleting similarity data for {self.nearby.constraint} from {start} to {finish}')
-        activity_ids = s.query(ActivityJournal.id)
-        if start:
-            activity_ids = activity_ids.filter(ActivityJournal.start >= local_date_to_time(start))
-        if finish:
-            activity_ids = activity_ids.filter(ActivityJournal.start < local_date_to_time(finish))
-        s.query(ActivitySimilarity). \
-            filter(ActivitySimilarity.constraint == self.nearby.constraint,
-                   or_(ActivitySimilarity.activity_journal_lo_id.in_(activity_ids.cte()),
-                       ActivitySimilarity.activity_journal_hi_id.in_(activity_ids.cte()))). \
-            delete(synchronize_session=False)
-        Timestamp.clear(s, self.owner_out, constraint=self.nearby.constraint)
+        log.warning(f'Deleting similarity data')
+        s.query(ActivitySimilarity).delete(synchronize_session=False)
+        Timestamp.clear(s, self.owner_out)
         s.commit()
 
     def _run_one(self, s, missed):
-        rtree = SQRTree(default_match=MatchType.OVERLAP, default_border=self.nearby.border)
+        rtree = SQRTree(default_match=MatchType.OVERLAP, default_border=self.border)
         n_points = defaultdict(lambda: 0)
         self._prepare(s, rtree, n_points, 30000)
         n_overlaps = defaultdict(lambda: defaultdict(lambda: 0))
         new_ids, affected_ids = self._count_overlaps(s, rtree, n_points, n_overlaps, 10000)
         # this clears itself beforehand
         # use explicit class to distinguish from subclasses (which compare against this)
-        with Timestamp(owner=self.owner_out, constraint=self.nearby.constraint).on_success(s):
+        with Timestamp(owner=self.owner_out).on_success(s):
             self._save(s, new_ids, affected_ids, n_points, n_overlaps, 10000)
 
     def _prepare(self, s, rtree, n_points, delta):
@@ -86,9 +74,9 @@ class SimilarityCalculator(UniProcCalculator):
             n_points[aj_id_in] += 1
             n += 1
             if n % delta == 0:
-                log.info('Loaded %s points for %s' % (n, self.nearby.constraint))
+                log.info(f'Loaded {n} points')
         if n % delta:
-            log.info('Loaded %s points for %s' % (n, self.nearby.constraint))
+            log.info(f'Loaded {n} points')
 
     def _count_overlaps(self, s, rtree, n_points, n_overlaps, delta):
         new_aj_ids, affected_aj_ids, n, no = [], set(), 0, 0
@@ -112,31 +100,30 @@ class SimilarityCalculator(UniProcCalculator):
                 n_points[aj_id_in] += 1
                 n += 1
                 if n % delta == 0:
-                    log.info(f'Measured {n} points for {self.nearby.constraint} ({no} overlaps)')
+                    log.info(f'Measured {n} points')
         if n % delta:
-            log.info('Measured %s points for %s' % (n, self.nearby.constraint))
+            log.info(f'Measured {n} points')
         return new_aj_ids, affected_aj_ids
 
     def _filter(self, lon_lats):
+        # todo - why random?  would sequential be better?
         for lon_lat in lon_lats:
-            if uniform(0, 1 / self.nearby.fraction) < 1:
+            if uniform(0, 1 / self.fraction) < 1:
                 yield lon_lat
 
     def _aj_lon_lat(self, s, new=True):
-
-        start = to_time(self.nearby.start)
-        finish = to_time(self.nearby.finish)
-
-        agroup = ActivityGroup.from_name(s, self.nearby.activity_group)
+        from ..owners import SegmentReader
         lat = s.query(StatisticName.id). \
-            filter(StatisticName.name == LATITUDE, StatisticName.activity_group == agroup).scalar()
+            filter(StatisticName.name == Names.LATITUDE,
+                   StatisticName.owner == SegmentReader).scalar()
         lon = s.query(StatisticName.id). \
-            filter(StatisticName.name == LONGITUDE, StatisticName.activity_group == agroup).scalar()
-        
+            filter(StatisticName.name == Names.LONGITUDE,
+                   StatisticName.owner == SegmentReader).scalar()
         if not lat or not lon:
-            log.warning(f'No {LATITUDE} or {LONGITUDE} in database for {agroup}')
+            log.warning(f'No {Names.LATITUDE} or {Names.LONGITUDE} in database')
             return
 
+        # todo - use tables() instead
         sj_lat = inspect(StatisticJournal).local_table
         sj_lon = alias(inspect(StatisticJournal).local_table)
         sjf_lat = inspect(StatisticJournalFloat).local_table
@@ -144,28 +131,20 @@ class SimilarityCalculator(UniProcCalculator):
         aj = inspect(ActivityJournal).local_table
         ns = inspect(ActivitySimilarity).local_table
 
-        existing_lo = select([ns.c.activity_journal_lo_id]). \
-            where(ns.c.constraint == self.nearby.constraint)
-        existing_hi = select([ns.c.activity_journal_hi_id]). \
-            where(ns.c.constraint == self.nearby.constraint)
+        existing_lo = select([ns.c.activity_journal_lo_id])
+        existing_hi = select([ns.c.activity_journal_hi_id])
         existing = existing_lo.union(existing_hi).cte()
 
+        # todo - has not been tuned for latest schema
         stmt = select([sj_lat.c.source_id, sjf_lon.c.value, sjf_lat.c.value]). \
             select_from(sj_lat).select_from(sj_lon).select_from(sjf_lat).select_from(sjf_lat).select_from(aj). \
             where(and_(sj_lat.c.source_id == sj_lon.c.source_id,  # same source
                        sj_lat.c.time == sj_lon.c.time,            # same time
                        sj_lat.c.source_id == aj.c.id,             # and associated with an activity
-                       aj.c.activity_group_id == agroup.id,       # of the right group
                        sj_lat.c.id == sjf_lat.c.id,               # lat sub-class
                        sj_lon.c.id == sjf_lon.c.id,               # lon sub-class
-                       sj_lat.c.statistic_name_id == lat,         # lat name
-                       sj_lon.c.statistic_name_id == lon,         # lon name
-                       sj_lat.c.time >= start.timestamp(),        # time limits
-                       sj_lat.c.time < finish.timestamp(),
-                       sjf_lat.c.value > self.nearby.latitude - self.nearby.height / 2,
-                       sjf_lat.c.value < self.nearby.latitude + self.nearby.height / 2,
-                       sjf_lon.c.value > self.nearby.longitude - self.nearby.width / 2,
-                       sjf_lon.c.value < self.nearby.longitude + self.nearby.width / 2))
+                       sj_lat.c.statistic_name_id == lat,
+                       sj_lon.c.statistic_name_id == lon))
 
         if new:
             stmt = stmt.where(func.not_(sj_lat.c.source_id.in_(existing)))
@@ -178,7 +157,7 @@ class SimilarityCalculator(UniProcCalculator):
         distances = dict((s.source.id, s.value)
                          for s in s.query(StatisticJournalFloat).
                          join(StatisticName).
-                         filter(StatisticName.name == ACTIVE_DISTANCE,
+                         filter(StatisticName.name == Names.ACTIVE_DISTANCE,
                                 StatisticName.owner == self.owner_in).all())  # todo - another owner
         n = 0
         for lo in affected_ids:
@@ -195,57 +174,63 @@ class SimilarityCalculator(UniProcCalculator):
                             # both new and ordered lo-hi, or hi new and last
                             n_max = n_points[lo]
                             d_factor = d_lo / d_hi if d_lo < d_hi else 1
-                        s.add(ActivitySimilarity(constraint=self.nearby.constraint,
-                                                 activity_journal_lo_id=lo, activity_journal_hi_id=hi,
-                                                 similarity=(n_overlaps[lo][hi] / n_max) * d_factor))
+                            similarity = (n_overlaps[lo][hi] / n_max) * d_factor if n_max else 0
+                        s.add(ActivitySimilarity(activity_journal_lo_id=lo, activity_journal_hi_id=hi,
+                                                 similarity=similarity))
                         n += 1
                         if n % delta == 0:
-                            log.info('Saved %d for %s' % (n, self.nearby.constraint))
+                            log.info(f'Saved {n}')
         if n % delta:
-            log.info('Saved %d for %s' % (n, self.nearby.constraint))
+            log.info(f'Saved {n}')
 
 
 class NearbySimilarityDBSCAN(DBSCAN):
 
-    def __init__(self, s, constraint, epsilon, minpts):
+    def __init__(self, s, activity_group, epsilon, minpts):
         super().__init__(epsilon, minpts)
         self.__s = s
-        self.__constraint = constraint
+        self.__activity_group = activity_group
+        ajlo = aliased(ActivityJournal)
+        ajhi = aliased(ActivityJournal)
         self.__max_similarity = self.__s.query(func.max(ActivitySimilarity.similarity)). \
-            filter(ActivitySimilarity.constraint == constraint).scalar()
+            join(ajlo, ActivitySimilarity.activity_journal_lo_id == ajlo.id). \
+            join(ajhi, ActivitySimilarity.activity_journal_hi_id == ajhi.id). \
+            filter(ajlo.activity_group == activity_group,
+                   ajhi.activity_group == activity_group).scalar()
 
     def run(self):
         candidates = set(x[0] for x in
                          self.__s.query(distinct(ActivitySimilarity.activity_journal_lo_id)).
-                         filter(ActivitySimilarity.constraint == self.__constraint).all())
-        candidates.union(set(x[0] for x in
-                             self.__s.query(distinct(ActivitySimilarity.activity_journal_lo_id)).
-                             filter(ActivitySimilarity.constraint == self.__constraint).all()))
+                         join(ActivityJournal, ActivityJournal.id == ActivitySimilarity.activity_journal_lo_id).
+                         filter(ActivityJournal.activity_group == self.__activity_group).all())
+        candidates = candidates.union(set(x[0] for x in
+                         self.__s.query(distinct(ActivitySimilarity.activity_journal_hi_id)).
+                         join(ActivityJournal, ActivityJournal.id == ActivitySimilarity.activity_journal_hi_id).
+                         filter(ActivityJournal.activity_group == self.__activity_group).all()))
         candidates = sorted(candidates)
         # shuffle(candidates)  # skip for repeatability
         return super().run(candidates)
 
     def neighbourhood(self, candidate, epsilon):
         qlo = self.__s.query(ActivitySimilarity.activity_journal_lo_id). \
-            filter(ActivitySimilarity.constraint == self.__constraint,
+            join(ActivityJournal, ActivityJournal.id == ActivitySimilarity.activity_journal_lo_id). \
+            filter(ActivityJournal.activity_group == self.__activity_group,
                    ActivitySimilarity.activity_journal_hi_id == candidate,
                    (self.__max_similarity - ActivitySimilarity.similarity) / self.__max_similarity < epsilon)
         qhi = self.__s.query(ActivitySimilarity.activity_journal_hi_id). \
-            filter(ActivitySimilarity.constraint == self.__constraint,
+            join(ActivityJournal, ActivityJournal.id == ActivitySimilarity.activity_journal_hi_id). \
+            filter(ActivityJournal.activity_group == self.__activity_group,
                    ActivitySimilarity.activity_journal_lo_id == candidate,
                    (self.__max_similarity - ActivitySimilarity.similarity) / self.__max_similarity < epsilon)
         return [x[0] for x in qlo.all()] + [x[0] for x in qhi.all()]
 
 
-class NearbyCalculator(UniProcCalculator):
-
-    def __init__(self, *args, constraint=None, **kargs):
-        self.constraint = self._assert('constraint', constraint)
-        super().__init__(*args, **kargs)
+class NearbyCalculator(OwnerInMixin, UniProcCalculator):
 
     def _missing(self, s):
-        latest_similarity = Timestamp.get(s, self.owner_in, constraint=self.constraint)
-        latest_groups = Timestamp.get(s, self.owner_out, constraint=self.constraint)
+        # todo - should really be per-activity group
+        latest_similarity = Timestamp.get(s, self.owner_in)
+        latest_groups = Timestamp.get(s, self.owner_out)
         if not latest_groups or latest_similarity.time > latest_groups.time:
             self._delete(s)  # missing isn't really missing...
             return [True]
@@ -253,21 +238,21 @@ class NearbyCalculator(UniProcCalculator):
             return []
 
     def _delete(self, s):
-        Timestamp.clear(s, self.owner_out, constraint=self.constraint)
-        s.query(ActivityNearby).filter(ActivityNearby.constraint == self.constraint).delete()
+        Timestamp.clear(s, self.owner_out)
+        s.query(ActivityNearby).delete()
 
     def _run_one(self, s, missed):
-        with Timestamp(owner=self.owner_out, constraint=self.constraint).on_success(s):
-            d_min, n = expand_max(0, 1, 5, lambda d: len(self.dbscan(s, d)))
-            log.info(f'{n} groups at d={d_min}')
-            self.save(s, self.dbscan(s, d_min))
+        with Timestamp(owner=self.owner_out).on_success(s):
+            for activity_group in s.query(ActivityGroup).all():
+                d_min, n = expand_max(0, 1, 5, lambda d: len(self.dbscan(s, d, activity_group)))
+                log.info(f'{n} groups at d={d_min}')
+                self.save(s, self.dbscan(s, d_min, activity_group), activity_group)
 
-    def dbscan(self, s, d):
-        return NearbySimilarityDBSCAN(s, self.constraint, d, 3).run()
+    def dbscan(self, s, d, activity_group):
+        return NearbySimilarityDBSCAN(s, activity_group, d, 3).run()
 
-    def save(self, s, groups):
+    def save(self, s, groups, activity_group):
         for i, group in enumerate(groups):
-            log.info(f'Group {i} has {len(group)} members')
+            log.info(f'Group {i} has {len(group)} members ({activity_group.name})')
             for activity_journal_id in group:
-                s.add(ActivityNearby(constraint=self.constraint, group=i,
-                                     activity_journal_id=activity_journal_id))
+                s.add(ActivityNearby(group=i, activity_journal_id=activity_journal_id))

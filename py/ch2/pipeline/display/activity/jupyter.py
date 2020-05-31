@@ -1,9 +1,10 @@
 
 from .nearby import fmt_nearby, nearby_any_time
-from ..display import ActivityJournalDelegate
+from ..utils import ActivityJournalDelegate
 from ....diary.model import text, link, optional_text, COMPARE_LINKS
 from ....lib import time_to_local_time
-from ....lib.date import format_date
+from ....lib.date import format_date, local_date_to_time
+from ....sql import ActivityJournal
 
 
 class JupyterDelegate(ActivityJournalDelegate):
@@ -18,6 +19,11 @@ class JupyterDelegate(ActivityJournalDelegate):
         yield link('All Similar', db=(time_to_local_time(ajournal.start), ajournal.activity_group.name))
 
     @optional_text('Jupyter', tag='jupyter-activity')
-    def read_schedule(self, s, date, schedule):
-        finish = schedule.next_frame(date)
-        yield link('All Activities', db=(format_date(date), format_date(finish)))
+    def read_interval(self, s, interval):
+        if s.query(ActivityJournal). \
+            filter(ActivityJournal.start > local_date_to_time(interval.start),
+                   ActivityJournal.finish < local_date_to_time(interval.finish),
+                   ActivityJournal.activity_group_id == interval.activity_group_id).count():
+            yield link('Group Activities', db=(format_date(interval.start), format_date(interval.finish),
+                                               interval.activity_group.name))
+

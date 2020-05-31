@@ -3,7 +3,7 @@ from math import exp
 
 from ..lib import to_time
 from ..sql import StatisticJournal, Constant, ActivityGroup
-from ..names import FTHR
+from ..names import Names
 
 # values from british cycling online calculator
 # these are upper limits
@@ -44,7 +44,7 @@ def edwards(hr, max_hr):
 
 def hr_zones_from_database(s, local_time, activity_group):
     activity_group = ActivityGroup.from_name(s, activity_group)
-    fthr = StatisticJournal.before(s, to_time(local_time), FTHR, Constant, activity_group)
+    fthr = StatisticJournal.before(s, to_time(local_time), Names.FTHR, Constant, activity_group)
     if fthr:
         return hr_zones(fthr.value)
     else:

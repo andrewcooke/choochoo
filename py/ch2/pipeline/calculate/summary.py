@@ -5,10 +5,10 @@ from random import choice
 from sqlalchemy import func, inspect, and_, select
 from sqlalchemy.sql.functions import coalesce
 
-from .calculate import MultiProcCalculator, IntervalCalculatorMixin
-from ...names import MAX, MIN, SUM, CNT, AVG, MSR
+from .utils import MultiProcCalculator, IntervalCalculatorMixin
+from ...names import Summaries as S
 from ...lib.date import local_date_to_time
-from ...sql.tables.source import Interval
+from ...sql.tables.source import Interval, Source
 from ...sql.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, StatisticJournalInteger, \
     StatisticJournalFloat, StatisticJournalText, TYPE_TO_JOURNAL_CLASS
 
@@ -26,8 +26,8 @@ def fuzz(n, q):
 
 class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
 
-    def __init__(self, *args, owner_in='[unused]', **kargs):
-        super().__init__(*args, owner_in=owner_in, **kargs)
+    def __init__(self, *args, grouped=True, **kargs):
+        super().__init__(*args, grouped=grouped, **kargs)
 
     def _startup(self, s):
         Interval.clean(s)
@@ -50,18 +50,18 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         for statistic_name in data:
             summaries = statistic_name.summaries
             for summary in summaries:
-                value, units = self._calculate_value(s, statistic_name, summary, MIN in summaries,
+                value, units = self._calculate_value(s, statistic_name, summary, S.MIN in summaries,
                                                      start, finish, interval, measures)
                 if value is not None:
-                    name = self.fmt_name(statistic_name.name, summary, self.schedule)
+                    title = self.fmt_title(statistic_name.title, summary, self.schedule)
                     # we need to infer the type
-                    if summary in (MAX, MIN, SUM):
+                    if summary in (S.MAX, S.MIN, S.SUM):
                         new_type = TYPE_TO_JOURNAL_CLASS[type(value)]
-                    elif summary in (AVG,):
+                    elif summary in (S.AVG,):
                         new_type = StatisticJournalFloat
                     else:
                         new_type = StatisticJournalInteger
-                    loader.add(name, units, None, statistic_name.activity_group, interval, value, start, new_type,
+                    loader.add(title, units, None, interval, value, start, new_type,
                                description=self._describe(statistic_name, summary, interval))
         # add and commit these here - what else can we do?
         log.debug(f'Adding {len(measures)} measures')
@@ -75,54 +75,57 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         sji = inspect(StatisticJournalInteger).local_table
         sjf = inspect(StatisticJournalFloat).local_table
         sjt = inspect(StatisticJournalText).local_table
+        src = inspect(Source).local_table
 
         units = statistic_name.units
         values = coalesce(sjf.c.value, sji.c.value, sjt.c.value)
+        activity_group_id = interval.activity_group.id if interval.activity_group else None
 
-        if summary == MAX:
+        if summary == S.MAX:
             result = func.max(values)
-        elif summary == MIN:
+        elif summary == S.MIN:
             result = func.min(values)
-        elif summary == SUM:
+        elif summary == S.SUM:
             result = func.sum(values)
-        elif summary == CNT:
+        elif summary == S.CNT:
             result = func.count(values)
             units = None
-        elif summary == AVG:
+        elif summary == S.AVG:
             result = func.avg(values)
-        elif summary == MSR:
+        elif summary == S.MSR:
             self._calculate_measures(s, statistic_name, order_asc, start_time, finish_time, interval, measures)
             return None, None
         else:
             raise Exception('Bad summary: %s' % summary)
 
         stmt = select([result]). \
-            select_from(sj.outerjoin(sjf).outerjoin(sji).outerjoin(sjt)). \
+            select_from(sj.join(src).outerjoin(sjf).outerjoin(sji).outerjoin(sjt)). \
             where(and_(sj.c.statistic_name_id == statistic_name.id,
                        sj.c.time >= start_time,
-                       sj.c.time < finish_time))
+                       sj.c.time < finish_time,
+                       src.c.activity_group_id == activity_group_id))
 
         return next(s.connection().execute(stmt))[0], units
 
     def _describe(self, statistic_name, summary, interval):
-        adjective = {MAX: 'highest', MIN: 'lowest', SUM: 'total', CNT: 'number of', AVG: 'average'}[summary]
+        adjective = {S.MAX: 'highest', S.MIN: 'lowest', S.SUM: 'total', S.CNT: 'number of', S.AVG: 'average'}[summary]
         period = interval.schedule.describe().lower()
         if period == 'all':
             period = period + ' time'
         else:
             period = 'one ' + period
-        return f'The {adjective} {statistic_name.name} over {period}.'
+        return f'The {adjective} {statistic_name.title} over {period}.'
 
     def _calculate_measures(self, s, statistic_name, order_asc, start_time, finish_time, interval, measures):
-
         data = sorted([x for x in
                        s.query(StatisticJournal).
-                           filter(StatisticJournal.statistic_name == statistic_name,
-                                 StatisticJournal.time >= start_time,
-                                 StatisticJournal.time < finish_time).all()
+                      join(Source).
+                      filter(StatisticJournal.statistic_name == statistic_name,
+                             StatisticJournal.time >= start_time,
+                             StatisticJournal.time < finish_time,
+                             Source.activity_group == interval.activity_group).all()
                        if x is not None and x.value is not None],
                       key=lambda x: x.value, reverse=not order_asc)
-
         n, local_measures = len(data), []
         for rank, journal in enumerate(data, start=1):
             if n > 1:
@@ -138,12 +141,12 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         log.debug('Ranked %s' % statistic_name)
 
     @classmethod
-    def parse_name(cls, name):
+    def parse_title(cls, name):
         left, right = name.split(' ', 1)
         summary, period = left.split('/')
         return summary, period, right
 
     @classmethod
-    def fmt_name(cls, name, summary, schedule):
-        title = summary[1:-1].capitalize()   # see parse_name
+    def fmt_title(cls, name, summary, schedule):
+        title = summary.capitalize()
         return '%s/%s %s' % (title, schedule.describe(), name)

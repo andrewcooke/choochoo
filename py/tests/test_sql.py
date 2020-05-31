@@ -1,16 +1,12 @@
-
-import datetime as dt
 from logging import getLogger
-from tests import LogTestCase
 
 import sqlalchemy as s
 from sqlalchemy.orm import sessionmaker
-from urwid import WidgetWrap, Pile, Edit, Filler
 
-from ch2.sql.binders import Binder
+from ch2.names import SPACE
 from ch2.sql.support import Base
-from ch2.sql.types import Date
-from ch2.urwid.tui.widgets import Integer
+from ch2.sql.types import Date, simple_name
+from tests import LogTestCase
 
 log = getLogger(__name__)
 
@@ -36,80 +32,10 @@ class Database:
         Base.metadata.create_all(self.engine)
 
 
-class DataWidget(WidgetWrap):
+class TestName(LogTestCase):
 
-    def __init__(self):
-        self.integer = Integer('An integer: ')
-        self.text = Edit('Some text: ')
-        super().__init__(Filler(Pile([self.integer, self.text]), valign='top'))
-
-
-class TestSqueal(LogTestCase):
-
-    def test_bind(self):
-
-        db = Database()
-        session = db.session()
-
-        data = Data(integer=42, text='abc')
-        session.add(data)
-        widget = DataWidget()
-        binder = Binder(session, widget, Data, defaults={'integer': 42})
-
-        self.assertEqual(binder.instance.text, 'abc', binder.instance.text)
-        self.assertEqual(widget.text.edit_text, 'abc', widget.text.edit_text)
-        self.assertEqual(binder.instance.integer, 42, binder.instance.integer)
-        self.assertEqual(widget.integer.state, 42, widget.integer.state)
-
-        # edit the text
-        size = (10,)
-        for key in ('right', 'right', 'delete'):
-            widget.text.keypress(size, key)
-        self.assertEqual(widget.text.edit_text, 'ab', widget.text.edit_text)
-        self.assertEqual(binder.instance.text, 'ab', binder.instance.text)
-        self.assertEqual(binder.instance.integer, 42, binder.instance.integer)
-
-        # modify the primary key
-        size = (10, 10)
-        for key in ('right', 'right'):
-            widget.integer.keypress(size, key)
-        with self.assertRaises(Exception):
-            widget.integer.keypress(size, 'delete')
-
-        session.expunge_all()
-        # no need to add data - it was saved when the first binder above did a query
-        widget = DataWidget()
-        binder = Binder(session, widget, Data, multirow=True, defaults={'integer': 42})
-
-        self.assertEqual(binder.instance.text, 'abc', binder.instance.text)
-        self.assertEqual(widget.text.edit_text, 'abc', widget.text.edit_text)
-        self.assertEqual(binder.instance.integer, 42, binder.instance.integer)
-        self.assertEqual(widget.integer.state, 42, widget.integer.state)
-
-        # edit the text
-        size = (10,)
-        for key in ('home', 'right', 'right', 'delete'):
-            log.info('Keypress %s' % key)
-            widget.text.keypress(size, key)
-        self.assertEqual(widget.text.edit_text, 'ab', widget.text.edit_text)
-        self.assertEqual(binder.instance.text, 'ab', binder.instance.text)
-        self.assertEqual(binder.instance.integer, 42, binder.instance.integer)
-
-        # modify the primary key
-        size = (10, 10)
-        for key in ('right', 'right', 'delete'):
-            widget.integer.keypress(size, key)
-
-        self.assertEqual(binder.instance.integer, 4, binder.instance.integer)
-        self.assertEqual(binder.instance.text, '', binder.instance.text)
-
-        # and back again
-        widget.integer.keypress(size, '2')
-        self.assertEqual(binder.instance.integer, 42, binder.instance.integer)
-        self.assertEqual(binder.instance.text, 'ab', binder.instance.text)
-
-        # try setting date
-        binder.instance.date = dt.date(2018, 7, 1)
-        session.commit()
-        data = session.query(Data).filter(Data.integer == 42).one()
-        self.assertEqual(data.date, dt.date(2018, 7, 1))
+    def test_tokenzie(self):
+        self.assertEqual(simple_name('ABC 123 *^%'), 'abc-123-%')  # support for like
+        self.assertEqual(simple_name('****'), SPACE)
+        self.assertEqual(simple_name('123'), '-123')
+        self.assertEqual(simple_name('Fitness 7d'), 'fitness-7d')

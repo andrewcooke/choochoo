@@ -37,10 +37,10 @@ function Delete(props) {
                 <p>You can delete the current version from the base directory,
                     removing all data in the database,
                     along with old logs and jupyter notebooks.</p>
-                <p>Activity data can then read from FIT files
-                    (assuming they were saved to <code>permanent</code>).
-                    In most cases, user data from a previous version can also be imported
-                    (assuming the previous database still exists).</p>
+                <p>Activity data can then be re-read from FIT files (see 'Directories').
+                    In most cases, user data from a <b>previous</b> version can also be imported
+                    (assuming the previous database still exists), but user data entered
+                    into <b>this</b> version will be <b>lost</b>.</p>
             </Text></Grid>
             <ConfirmedWriteButton xs={4} pad={8} label='Delete' variant='contained' method='post'
                                   href='/api/configure/delete' setData={reload}

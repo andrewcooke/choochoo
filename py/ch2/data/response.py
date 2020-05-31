@@ -9,7 +9,8 @@ from pandas import DataFrame, Series
 from scipy import optimize
 
 from .lib import decay_params, inplace_decay
-from ..names import FITNESS_D_ANY, FATIGUE_D_ANY, like, _delta, FITNESS, RECOVERY_D, EARNED_D, PLATEAU_D
+from ..lib.data import safe_dict
+from ..names import Titles, like, N, SPACE
 
 log = getLogger(__name__)
 
@@ -154,30 +155,31 @@ def fit_ff_params(data, params, performances, method='L1', max_reject=0, thresho
         rejected.append((i, t))
 
 
+@safe_dict
 def response_stats(df, prev_secs):
     from math import log
     digits = re.compile(r'(\d+)')
     stats = {}
-    for pattern in FITNESS_D_ANY, FATIGUE_D_ANY:
+    for pattern in (N.FITNESS_ANY, N.FATIGUE_ANY):
         for name in like(pattern, df.columns):
+            days = int(digits.search(name).group(1))
             lower, higher = df[name][0], df[name][-1]
             delta = higher - lower
-            stats[_delta(name)] = delta
-            days = int(digits.search(name).group(1))
+            stats[N._delta(name)] = delta
             tau = days * 24 * 60 * 60
             # this is the time needed for the value to return to where it was before the activity
             # so for fitness it's kinda the time 'bought' within which you're not getting worse and
             # for fatigue it's the recovery time.
             revert = tau * log(1 + delta / lower)
-            if FITNESS in name:
-                stats[EARNED_D % days] = revert
+            if N.FITNESS in name:
+                stats[N.EARNED_D % days] = revert
                 if prev_secs:
                     # this was an experiment.  if you exercise regularly at the same intensity then you
                     # will tend to a certain fitness level.  this is an estimate of that level, assuming
                     # that activities repeat at the same interval as the time from the previous activity.
                     # it was a cute idea, but turns out to be way too noisy to be useful.
                     plateau = delta / (exp(prev_secs / tau) - 1)
-                    stats[PLATEAU_D % days] = plateau
+                    stats[N.PLATEAU_D % days] = plateau
             else:
-                stats[RECOVERY_D % days] = revert
+                stats[N.RECOVERY_D % days] = revert
     return stats

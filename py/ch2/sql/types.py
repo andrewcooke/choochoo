@@ -3,11 +3,9 @@ import datetime as dt
 from json import dumps, loads
 from logging import getLogger
 from pydoc import locate
+from re import sub
 
 from sqlalchemy import TypeDecorator, Integer, Float, Text
-
-from ..lib.date import to_time, to_date
-from ..lib.schedule import Schedule
 
 log = getLogger(__name__)
 
@@ -17,6 +15,7 @@ class Date(TypeDecorator):
     impl = Integer
 
     def process_literal_param(self, date, dialect):
+        from ..lib.date import to_date
         if date is None:
             return date
         return to_date(date).toordinal()
@@ -37,6 +36,7 @@ class Time(TypeDecorator):
     impl = Float
 
     def process_literal_param(self, time, dialect):
+        from ..lib.date import to_time
         if time is None:
             return time
         else:
@@ -112,21 +112,7 @@ def short_cls(cls):
     return cls
 
 
-class Str(TypeDecorator):
-
-    impl = Text
-
-    def process_literal_param(self, value, dialect):
-        if value is None:
-            return value
-        if isinstance(value, int):
-            raise Exception('Passing primary key instead of class?')
-        return str(value)
-
-    process_bind_param = process_literal_param
-
-
-class NullStr(TypeDecorator):
+class NullText(TypeDecorator):
     '''
     None (NULL) values are converted to 'None'.
 
@@ -161,6 +147,7 @@ class Sched(TypeDecorator):
     impl = Text
 
     def process_literal_param(self, sched, dialect):
+        from ..lib.schedule import Schedule
         if sched is None:
             return sched
         if not isinstance(sched, Schedule):
@@ -170,6 +157,7 @@ class Sched(TypeDecorator):
     process_bind_param = process_literal_param
 
     def process_result_value(self, value, dialect):
+        from ..lib.schedule import Schedule
         if value is None:
             return None
         return Schedule(value)
@@ -178,6 +166,7 @@ class Sched(TypeDecorator):
 class OpenSched(Sched):
 
     def process_literal_param(self, sched, dialect):
+        from ..lib.schedule import Schedule
         if sched is None:
             return sched
         if not isinstance(sched, Schedule):
@@ -199,3 +188,76 @@ class Sort(TypeDecorator):
         return value
 
     process_bind_param = process_literal_param
+
+
+def simple_name(name, none=True, strip=True):
+    # allows % and ? for LIKE and templates (although sqlite uses _ instead of ?)
+    # also allows ':' so that we don't mess up composites
+    from ch2.names import POW_2, POW_M1, SPACE
+    if name is None and none:
+        return None
+    name = name.replace(POW_2, '2')
+    name = name.replace(POW_M1, '')  # ms^-1 -> ms which is standard convention
+    name = name.replace('Δ', 'd ')
+    if strip: name = name.strip()
+    name = name.lower()
+    name = sub(r'\s+', SPACE, name)
+    name = sub(r'[^a-z0-9%?:]', SPACE, name)
+    name = sub(r'^(\d)', SPACE + r'\1', name)
+    name = sub(SPACE + '+', SPACE, name)
+    return name
+
+
+class Name(TypeDecorator):
+
+    impl = Text
+
+    def process_literal_param(self, value, dialect):
+        return simple_name(value)
+
+    process_bind_param = process_literal_param
+
+
+class QualifiedName(TypeDecorator):
+
+    impl = Text
+
+    def process_literal_param(self, value, dialect):
+        if value and ':' in value:
+            left, right = value.rsplit(':', 1)
+            return simple_name(left) + ':' + simple_name(right)
+        else:
+            return simple_name(value)
+
+    process_bind_param = process_literal_param
+
+
+NAME = 'name'
+TITLE = 'title'
+OWNER = 'owner'
+
+
+def name_and_title(kargs):
+    '''
+    allow one or the other to be specified, with special treatment for name only to support legacy code.
+    '''
+
+    def add_owner(msg):
+        if OWNER in kargs: msg += f' (owner {short_cls(kargs[OWNER])})'
+        return msg
+
+    if kargs.get(NAME, None):  # not missing and not None
+        name = kargs[NAME]
+        if not kargs.get(TITLE, None):
+            kargs[TITLE] = name
+            log.warning(add_owner(f'Setting title from name "{name}"'))
+            kargs[NAME] = simple_name(name)
+        else:
+            if kargs[NAME] != simple_name(name):
+                log.warning(add_owner(f'Unusual name ({name}) for title ({kargs[TITLE]})'))
+    elif kargs.get(TITLE, None):
+        log.debug(f'Setting name from title ({kargs[TITLE]})')
+        kargs[NAME] = simple_name(kargs[TITLE])
+    else:
+        raise Exception(f'Provide {NAME} or {TITLE}')
+    return kargs

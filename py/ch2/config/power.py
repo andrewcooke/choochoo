@@ -1,35 +1,61 @@
 
 from logging import getLogger
 
-from .database import name_constant, add_enum_constant, add_statistics
-from ..pipeline.calculate.power import Power, ExtendedPowerCalculator
+from .database import add_enum_constant, add_statistics
+from ..pipeline.calculate.power import PowerModel, PowerCalculator, BikeModel
 
 log = getLogger(__name__)
 
-POWER_ESTIMATE_CNAME = 'PowerEstimate'
+POWER_MODEL_CNAME = 'power-model'
 
 
-def add_power_estimate(s, c, activity_group, bike=None,
-                       rider_weight='${DiaryTopic:Weight:All}',
-                       vary='wind_speed, wind_heading, slope'):
+def add_simple_power_estimate(s, c, activity_group, cda, crr, bike_weight, rider_weight):
     '''
-    Add the constants necessary to estimate power output.
+    Configure parameters directly.
     '''
-    log.debug(f'Adding power statistics for {activity_group.name}')
-    if not bike: bike = '${Constant:Power.${SegmentReader:kit:%s}:All}' % activity_group.name
-    power_name = name_constant(POWER_ESTIMATE_CNAME, activity_group)
-    add_enum_constant(s, power_name, Power,
-                      {'bike': bike, 'rider_weight': rider_weight, 'vary': vary},
-                      single=False, activity_group=activity_group.name, description='''
-Parameters used in estimating power.
+    power_model = add_enum_constant(s, POWER_MODEL_CNAME, PowerModel,
+                                    {'bike_model': {'cda': cda, 'crr': crr, 'bike_weight': bike_weight},
+                                     'rider_weight': rider_weight},
+                                    single=False, activity_group=activity_group, description='''
+Parameters used in estimating power (for the given activity group).
 
-These are complex and reference other statistics.  
-For example, ${SegmentReader:kit} is the kit specified when the activity is uploaded.
-
-* Bike is an expression that expends to identify a constant named by the kit which itself contains CdA, Crr and weight data for the bike.
-* Rider_weight is an expression that expends to read the weight from the diary.
-* Vary is an experimental parameter to select what attributes of the ride are modelled (leave blank).
+This is the direct (simpler) configuration (unless it has been modified).  
+The physical parameters are encoded directly below.
+* CdA is the coefficient of drag multiplied by frontal area.
+* Crr is the coefficient of rolling resistance.
+* bike_weight is the weight of the bike.
+* rider_weight is the weight of the rider.
+In more complex configurations these can be references to other constants.
 ''')
-    add_statistics(s, ExtendedPowerCalculator, c, owner_in='[unused - data via activity_statistics]',
-                   power=name_constant(POWER_ESTIMATE_CNAME, activity_group),
-                   activity_group=activity_group.name)
+    add_statistics(s, PowerCalculator, c, power_model=power_model.name, activity_group=activity_group.name)
+
+
+def add_kit_power_estimate(s, c, activity_groups):
+    '''
+    Configure parameters indirectly.  This uses a single constant, but must be run for each group.
+    The constant doesn't specify the group, so the current group will be used.
+    '''
+    power_model = add_enum_constant(s, POWER_MODEL_CNAME, PowerModel,
+                                    # no activity group is given so the default on expansion will be used
+                                    # which will be taken from the context (in this case the activity)
+                                    {'bike_model': '${Constant.power-${SegmentReader.kit}}',
+                                     'rider_weight': '${DiaryTopic.Weight:}'},
+                                    single=True, description='''
+Parameters used in estimating power (for the given activity group).
+
+This is the indirect (complex) configuration which delegates to a kit-specific bike model and reads
+the weight from a diary entry.
+''')
+    for activity_group in activity_groups:
+        add_statistics(s, PowerCalculator, c, power_model=power_model.name, activity_group=activity_group)
+
+
+def add_kit_power_model(s, kit, activity_group, cda, crr, bike_weight):
+    add_enum_constant(s, 'power-' + kit, BikeModel,
+                      {'cda': cda, 'crr': crr, 'bike_weight': bike_weight},
+                      single=False, activity_group=activity_group, description='''
+Parameters used in estimating power (for the given kit and activity group).
+* CdA is the coefficient of drag multiplied by frontal area.
+* Crr is the coefficient of rolling resistance.
+* bike_weight is the weight of the bike.
+''')

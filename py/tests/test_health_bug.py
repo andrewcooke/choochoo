@@ -1,8 +1,7 @@
 
 from tests import LogTestCase
 
-from ch2.data import session, std_health_statistics
-from ch2.names import REST_HR
+from ch2.data import session, std_health_statistics, Names as N
 
 
 class TestHealthBug(LogTestCase):
@@ -14,4 +13,4 @@ class TestHealthBug(LogTestCase):
         s = session('-v2')
         df = std_health_statistics(s)
         print(df.describe())
-        print(df[REST_HR].describe())
+        print(df[N.REST_HR_BPM].describe())

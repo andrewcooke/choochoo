@@ -4,10 +4,10 @@ from functools import lru_cache
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
 
-from .file import SRTM1_DIR, SAMPLES, ElevationSupport, elevation_from_constant, cached_file_reader
+from .file import SRTM1_DIR_CNAME, SAMPLES, ElevationSupport, elevation_from_constant, cached_file_reader
 
 
-def spline_elevation_from_constant(s, dir_name=SRTM1_DIR, smooth=0):
+def spline_elevation_from_constant(s, dir_name=SRTM1_DIR_CNAME, smooth=0):
     return elevation_from_constant(s, lambda dir: SplineElevation(dir, smooth), dir_name=dir_name)
 
 

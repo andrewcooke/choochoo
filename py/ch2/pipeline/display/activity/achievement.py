@@ -3,7 +3,7 @@ from logging import getLogger
 
 from sqlalchemy import desc
 
-from ..display import ActivityJournalDelegate
+from ..utils import ActivityJournalDelegate
 from ....diary.model import optional_text, text
 from ....sql import Achievement
 
@@ -24,7 +24,7 @@ class AchievementDelegate(ActivityJournalDelegate):
                 order_by(desc(Achievement.sort)).limit(5).all():   # limit 5 for compact display
             yield text(achievement.text)
 
-    def read_schedule(self, s, date, schedule):
+    def read_interval(self, s, interval):
         # todo?
         return
         yield

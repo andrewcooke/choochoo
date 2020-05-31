@@ -18,14 +18,14 @@ class System(MappedDatabase):
         if version:
             log.info(f'Database version {version}')
         else:
-            log.warning('Unconfigured')
+            log.warning('Database unconfigured')
 
     def _sessionmaker(self):
         return sessionmaker(bind=self.engine, expire_on_commit=False)
 
     def get_constant(self, name, none=False):
         with self.session_context() as s:
-            return SystemConstant.get(s, name, none=none)
+            return SystemConstant.from_name(s, name, none=none)
 
     def set_constant(self, name, value, force=False):
         with self.session_context() as s:

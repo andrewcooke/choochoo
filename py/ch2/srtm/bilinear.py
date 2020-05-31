@@ -1,8 +1,8 @@
 
-from .file import SRTM1_DIR, SAMPLES, ElevationSupport, elevation_from_constant
+from .file import SRTM1_DIR_CNAME, SAMPLES, ElevationSupport, elevation_from_constant
 
 
-def bilinear_elevation_from_constant(s, dir_name=SRTM1_DIR):
+def bilinear_elevation_from_constant(s, dir_name=SRTM1_DIR_CNAME):
     return elevation_from_constant(s, BilinearElevation, dir_name=dir_name)
 
 

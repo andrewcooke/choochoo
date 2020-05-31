@@ -3,7 +3,7 @@ from sys import stdout
 
 from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, \
     START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT, CMD, VALUE, BASE
-from ..names import KM, S, _s
+from ..names import Units, Names
 from ..diary.model import TYPE, UNITS
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_km, \
     is_local_time
@@ -176,9 +176,9 @@ def show(s, name, date, csv=None, output=stdout):
             print(line, file=output)
 
 
-CHILDREN = {KitGroup.SIMPLE_NAME: _s(KitItem.SIMPLE_NAME),
-            KitItem.SIMPLE_NAME: _s(KitComponent.SIMPLE_NAME),
-            KitComponent.SIMPLE_NAME: _s(KitModel.SIMPLE_NAME)}
+CHILDREN = {KitGroup.SIMPLE_NAME: Names._s(KitItem.SIMPLE_NAME),
+            KitItem.SIMPLE_NAME: Names._s(KitComponent.SIMPLE_NAME),
+            KitComponent.SIMPLE_NAME: Names._s(KitModel.SIMPLE_NAME)}
 
 
 def model_children(model):
@@ -219,9 +219,9 @@ def statistics(s, name, csv=False, output=stdout):
 
 def stats_children(model):
     names = [key for key in model.keys() if key not in (NAME, UNITS)]
-    if model[UNITS] == KM:
+    if model[UNITS] == Units.KM:
         format = format_km
-    elif model[UNITS] == S:
+    elif model[UNITS] == Units.S:
         format = lambda s: format_minutes(int(s))
     else:
         format = lambda x: x

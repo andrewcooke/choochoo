@@ -7,7 +7,7 @@ from sqlalchemy import Column, Integer, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 
-from .source import SourceType, Source, Interval
+from .source import SourceType, Interval, UngroupedSource, GroupedSource
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from .system import SystemConstant
 from ..support import Base
@@ -27,7 +27,7 @@ class Topic:
     '''
 
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False, server_default='')
+    title = Column(Text, nullable=False, server_default='')
     description = Column(Text, nullable=False, server_default='')
     sort = Column(Sort, nullable=False, server_default='0')
 
@@ -49,7 +49,7 @@ class DiaryTopic(Base, Topic):
         # http://docs.sqlalchemy.org/en/latest/orm/self_referential.html
         return relationship('DiaryTopic', backref=backref('parent', remote_side=[cls.id]))
 
-    def __init__(self, id=None, parent=None, parent_id=None, schedule=None, name=None, description=None, sort=None):
+    def __init__(self, id=None, parent=None, parent_id=None, schedule=None, title=None, description=None, sort=None):
         # Topic instances are only created in config.  so we intercept here to
         # duplicate data for start and finish - it's not needed elsewhere.
         if not isinstance(schedule, Schedule):
@@ -58,22 +58,26 @@ class DiaryTopic(Base, Topic):
         self.parent = parent
         self.parent_id = parent_id
         self.schedule = schedule
-        self.name = name
+        self.title = title
         self.description = description
         self.sort = sort
         self.start = schedule.start
         self.finish = schedule.finish
 
     def __str__(self):
-        return 'DiaryTopic "%s" (%s)' % (self.name, self.schedule)
+        return 'DiaryTopic "%s" (%s)' % (self.title, self.schedule)
 
 
 class ActivityTopic(Base, Topic):
+
     __tablename__ = 'activity_topic'
 
     parent_id = Column(Integer, ForeignKey('activity_topic.id'), nullable=True)
     activity_group_id = Column(Integer, ForeignKey('activity_group.id', ondelete='cascade'), nullable=True)
     activity_group = relationship('ActivityGroup')
+
+    ROOT = 'Root'
+    ROOT_DESCRIPTION = 'The root topic for all activities (should not be displayed).'
 
     @declared_attr
     def children(cls):
@@ -81,10 +85,11 @@ class ActivityTopic(Base, Topic):
         return relationship('ActivityTopic', backref=backref('parent', remote_side=[cls.id]))
 
     def __str__(self):
-        return 'ActivityTopic "%s" (%s)' % (self.name, self.activity_group)
+        return 'ActivityTopic "%s" (%s)' % (self.title, self.activity_group)
 
 
 class TopicField:
+
     id = Column(Integer, primary_key=True)
     sort = Column(Sort, nullable=False, server_default='0')
     model = Column(Json, nullable=False, server_default=dumps({}))
@@ -100,6 +105,7 @@ class TopicField:
 
 
 class DiaryTopicField(Base, TopicField):
+
     # diary topic fields are associated with statistics whose constraints are the diary topic.
     # this lets us use the same name under different 'headings'.
 
@@ -114,24 +120,20 @@ class DiaryTopicField(Base, TopicField):
     UniqueConstraint('statistic_name_id')
 
     def __str__(self):
-        return 'DiaryTopicField "%s"/"%s"' % (self.diary_topic.name, self.statistic_name.name)
+        return 'DiaryTopicField "%s"/"%s"' % (self.diary_topic.title, self.statistic_name.name)
 
 
 class ActivityTopicField(Base, TopicField):
+
     # activity topic fields are associated with statistics whose constraints are the activity group.
     # this correlates to some extent with the activity topic, which is also specific to an activity group
     # (so you will never see a field for group X if it has parent activity for group Y).
 
-    NAME = 'Name'
     NAME_DESCRIPTION = 'The title for the activity.'
 
     __tablename__ = 'activity_topic_field'
 
-    # unlike diary topic fields, this can have a null parent.  that means that it is a child to the
-    # 'top' of the activity.
-    # the 'Name' field with a null parent is the activity title,
-    # this is loaded with a default (based on file name) when data are read from FIT files.
-    activity_topic_id = Column(Integer, ForeignKey('activity_topic.id', ondelete='cascade'), nullable=True)
+    activity_topic_id = Column(Integer, ForeignKey('activity_topic.id', ondelete='cascade'), nullable=False)
     activity_topic = relationship('ActivityTopic',
                                   backref=backref('fields', cascade='all, delete-orphan',
                                                   passive_deletes=True,
@@ -139,7 +141,8 @@ class ActivityTopicField(Base, TopicField):
     UniqueConstraint('statistic_name_id')
 
     def __str__(self):
-        return 'ActivityTopicField "%s"/"%s"' % (self.activity_topic.name, self.statistic_name.name)
+        name = self.activity_topic.title if self.activity_topic else None
+        return f'ActivityTopicField {name} / {self.statistic_name.name}'
 
 
 class Cache:
@@ -151,19 +154,21 @@ class Cache:
         self.__cache = {field_id: statistic for field_id, statistic in query.all()}
 
     def __getitem__(self, field):
-        if field.id in self.__cache:
-            return self.__cache[field.id]
-        else:
+        if field.id not in self.__cache:
+            log.debug(f'Creating {field}')
             name = field.statistic_name
-            return add(self.__session,
-                       STATISTIC_JOURNAL_CLASSES[name.statistic_journal_type](
-                           statistic_name=name, source=self.__source, time=self.__time))
+            self.__cache[field.id] = add(self.__session,
+                                         STATISTIC_JOURNAL_CLASSES[name.statistic_journal_type](
+                                             statistic_name=name, source=self.__source, time=self.__time))
+        log.debug(f'Returning {field}')
+        return self.__cache[field.id]
 
     def __len__(self):
         return len(self.__cache)
 
 
-class DiaryTopicJournal(Source):
+class DiaryTopicJournal(UngroupedSource):
+
     __tablename__ = 'diary_topic_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
@@ -213,43 +218,24 @@ class DiaryTopicJournal(Source):
         return start, start + dt.timedelta(days=1)
 
 
-class ActivityTopicJournal(Source):
+class ActivityTopicJournal(GroupedSource):
+
     __tablename__ = 'activity_topic_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False)
+    file_hash_id = Column(Integer, ForeignKey('file_hash.id'),
+                          nullable=False, index=True, unique=True)
     file_hash = relationship('FileHash', backref=backref('activity_topic_journal', uselist=False))
-    UniqueConstraint(file_hash_id)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ACTIVITY_TOPIC
     }
 
-    def get_named(self, s, qname, owner=None):
-        from ...sql import StatisticJournal, StatisticName, ActivityGroup, FileHash, ActivityJournal
-        from ...data.constraint import parse_qname
-        name, group = parse_qname(qname)
-        q = s.query(StatisticJournal). \
-            join(ActivityTopicJournal). \
-            join(StatisticName). \
-            filter(StatisticName.name.ilike(name),
-                   StatisticJournal.source_id == self.id)
-        if owner:
-            q = q.filter(StatisticName.owner == owner)
-        if group:
-            q = q.join(FileHash).join(ActivityGroup).filter(ActivityGroup.name.ilike(group))
-        elif group is None:
-            q = q.join(ActivityGroup). \
-                join(FileHash). \
-                join(ActivityJournal). \
-                filter(ActivityGroup.id == ActivityJournal.activity_group_id)
-        return q.all()
-
     @classmethod
-    def get_or_add(cls, s, file_hash):
+    def get_or_add(cls, s, file_hash, activity_group):
         instance = s.query(ActivityTopicJournal).filter(ActivityTopicJournal.file_hash == file_hash).one_or_none()
         if not instance:
-            instance = add(s, ActivityTopicJournal(file_hash=file_hash))
+            instance = add(s, ActivityTopicJournal(file_hash=file_hash, activity_group=activity_group))
         return instance
 
     def cache(self, s):
@@ -257,3 +243,8 @@ class ActivityTopicJournal(Source):
                      s.query(ActivityTopicField.id, StatisticJournal).
                      filter(ActivityTopicField.statistic_name_id == StatisticJournal.statistic_name_id,
                             StatisticJournal.source_id == self.id))
+
+    def time_range(self, s):
+        return None, None
+
+

@@ -56,7 +56,7 @@ def from_field(topic_field, statistic_journal):
     type = kargs[TYPE]
     del kargs[TYPE]
     kargs.update(value=statistic_journal.value,
-                 label=statistic_journal.statistic_name.name,
+                 label=statistic_journal.statistic_name.title,
                  db=statistic_journal)
     if statistic_journal.statistic_name.units:
         kargs.update(units=statistic_journal.statistic_name.units)

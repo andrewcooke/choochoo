@@ -1,16 +1,19 @@
 
 from distutils.util import strtobool
 
-import numpy as np
-import scipy as sp
-import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scipy as sp
 from bokeh.plotting import figure, output_notebook, show
 from scipy.optimize import fmin
 
+from ch2.data import *
 from ch2.data.power import *
-from ch2.lib import bookend
 from ch2.jupyter.decorator import template
+from ch2.lib import bookend
+from ch2.names import N
+from ch2.pipeline.owners import *
 
 
 @template
@@ -44,8 +47,9 @@ def fit_power_parameters(bookmark, large):
     '''
     s = session('-v 5')
     large = strtobool(large)
-    route = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE,
-                                ELEVATION, SPEED, CADENCE, bookmarks=bookmarks(s, bookmark))
+    route = Statistics(s, bookmarks=bookmarks(s, bookmark)). \
+        by_name(SegmentReader, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y,
+                N.DISTANCE, N.ELEVATION, N.SPEED, N.CADENCE)
     route.sort_index(inplace=True)  # bookmarks are not sorted by time
     if large:
         route, max_gap = bookend(route), None
@@ -85,10 +89,10 @@ def fit_power_parameters(bookmark, large):
     '''
     output_notebook()
     f = figure(plot_width=500, plot_height=400)
-    clean = route.loc[route[DELTA_ENERGY] < 0].dropna()
-    cs = pd.DataFrame({CDA: [(0, cda) for cda in clean[CDA]],
-                       CRR: [(crr, 0) for crr in clean[CRR]]})
-    f.multi_line(xs=CDA, ys=CRR, source=cs, line_alpha=0.1, line_color='black')
+    clean = route.loc[route[N.DELTA_ENERGY] < 0].dropna()
+    cs = pd.DataFrame({N.CDA: [(0, cda) for cda in clean[N.CDA]],
+                       N.CRR: [(crr, 0) for crr in clean[N.CRR]]})
+    f.multi_line(xs=N.CDA, ys=N.CRR, source=cs, line_alpha=0.1, line_color='black')
     f.xaxis.axis_label = 'CdA'
     f.yaxis.axis_label = 'Crr'
     show(f)
@@ -104,17 +108,17 @@ def fit_power_parameters(bookmark, large):
     '''
     bins = np.linspace(0, 1.5, 30)
     width = bins[1] - bins[0]
-    counts = clean[CDA].groupby(pd.cut(clean[CDA], bins)).size()
+    counts = clean[N.CDA].groupby(pd.cut(clean[N.CDA], bins)).size()
     print(counts.describe())
 
-    cda = pd.DataFrame({CDA: 0.5 * (bins[:-1] + bins[1:]), 'n': counts.values})
+    cda = pd.DataFrame({N.CDA: 0.5 * (bins[:-1] + bins[1:]), 'n': counts.values})
     f = figure(plot_width=900, plot_height=300)
     f.quad(top=counts, left=bins[:-1]+0.1*width, right=bins[1:]-0.1*width, bottom=0)
     for order in range(2, 20, 2):
-        coeff = sp.polyfit(cda[CDA], cda['n'], order)
+        coeff = sp.polyfit(cda[N.CDA], cda['n'], order)
         p = sp.poly1d(coeff)
         print(order, fmin(lambda x: -p(x), 0.6, disp=0)[0])
-        f.line(x=cda['CdA'], y=p(cda['CdA']), line_color='orange')
+        f.line(x=cda[N.CDA], y=p(cda[N.CDA]), line_color='orange')
     show(f)
 
     '''
@@ -134,8 +138,8 @@ def fit_power_parameters(bookmark, large):
 
     def sample():
         clean.loc[:, 'random'] = np.random.random(size=len(clean))
-        clean.loc[:, 'x'] = clean[CDA] * clean['random']
-        clean.loc[:, 'y'] = clean[CRR] * (1 - clean['random'])
+        clean.loc[:, 'x'] = clean[N.CDA] * clean['random']
+        clean.loc[:, 'y'] = clean[N.CRR] * (1 - clean['random'])
         return clean.loc[:, ['x', 'y']]
 
     s = pd.concat([sample() for _ in range(100 if large else 10)])

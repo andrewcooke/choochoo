@@ -6,7 +6,7 @@ import {Schedule} from "./elements";
 import {FMT_YEAR} from "../../../constants";
 
 
-export default function Month(props) {
+export default function Year(props) {
 
     const {match, history} = props;
     const {date} = match.params;

@@ -108,8 +108,8 @@ class WebServer:
             Rule('/api/configure/profiles', endpoint=self.check(configure.read_profiles, config=False), methods=(GET,)),
             Rule('/api/configure/initial', endpoint=self.check(configure.write_profile, config=False), methods=(POST,)),
             Rule('/api/configure/delete', endpoint=self.check(configure.delete, config=False), methods=(POST,)),
-            Rule('/api/configure/upgrade', endpoint=self.check(configure.read_upgrade), methods=(GET,)),
-            Rule('/api/configure/upgrade', endpoint=self.check(configure.write_upgrade), methods=(POST,)),
+            Rule('/api/configure/import', endpoint=self.check(configure.read_import), methods=(GET,)),
+            Rule('/api/configure/import', endpoint=self.check(configure.write_import), methods=(POST,)),
             Rule('/api/configure/constants', endpoint=self.check(configure.read_constants), methods=(GET,)),
             Rule('/api/configure/constant', endpoint=self.check(configure.write_constant), methods=(PUT,)),
 

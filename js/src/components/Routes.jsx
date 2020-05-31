@@ -2,7 +2,7 @@ import React from 'react';
 import {BrowserRouter, Route, Switch} from 'react-router-dom';
 import {Analysis, Search, Upload, Welcome} from "./pages";
 import {Edit, Snapshot, Statistics} from "./pages/kit";
-import {Constants, Initial, Upgrade} from "./pages/configure";
+import {Constants, Initial, Import} from "./pages/configure";
 import {Day, Month, Year} from "./pages/diary";
 
 
@@ -17,7 +17,7 @@ export default function Routes() {
                 <Route path='/analysis' exact={true} component={Analysis}/>
                 <Route path='/search' exact={true} component={Search}/>
                 <Route path='/configure/initial' exact={true} component={Initial}/>
-                <Route path='/configure/upgrade' exact={true} component={Upgrade}/>
+                <Route path='/configure/import' exact={true} component={Import}/>
                 <Route path='/configure/constants' exact={true} component={Constants}/>
                 <Route path='/upload' exact={true} component={Upload}/>
                 <Route path='/kit/edit' exact={true} component={Edit}/>

@@ -1,6 +1,6 @@
 import React from 'react';
 import {Grid, Typography} from "@material-ui/core";
-import {JupyterAllActivities, ShrimpField, SummaryField} from "./index";
+import {JupyterGroupActivities, ShrimpField, SummaryField} from "./index";
 import {makeStyles} from "@material-ui/core/styles";
 import {Break, ColumnCard, ColumnList, LinkButton, Loading, SearchResults, Text} from "../../../elements";
 import {addMonths, addYears, format} from 'date-fns';
@@ -11,6 +11,13 @@ const useStyles = makeStyles(theme => ({
     grid: {
         justifyContent: 'flex-start',
         alignItems: 'baseline',
+    },
+    right: {
+        textAlign: 'right',
+    },
+    title: {
+        background: theme.palette.secondary.dark,
+        paddingBottom: '0px',
     },
 }));
 
@@ -33,11 +40,32 @@ function childrenFromRest(head, rest, level, history) {
 }
 
 
+function Title(props) {
+
+    const {header} = props;
+    const classes = useStyles();
+
+    return <ColumnCard className={classes.title}>
+        <Grid item xs={12} className={classes.right}><Typography variant='h2' component='span'>{header}</Typography></Grid>
+    </ColumnCard>
+}
+
+
 function TopLevelPaper(props) {
     const {json, history} = props;
     const [head, ...rest] = json;
-    const children = childrenFromRest(head.tag, rest,3, history);
-    return (<ColumnCard header={head.value}>{children}</ColumnCard>);
+    if (head.tag === 'activities') {
+        // splice activity groups into top level
+        return rest.map((row, i) => <TopLevelPaper json={row} history={history} key={i}/>);
+    } else if (head.tag === 'activity-group') {
+        return (<>
+           <Title header={head.value}/>
+           {rest.map((row, i) => <TopLevelPaper json={row} history={history} key={i}/>)}
+        </>)
+    } else {
+        const children = childrenFromRest(head.tag, rest, 3, history);
+        return (<ColumnCard header={head.value}>{children}</ColumnCard>);
+    }
 }
 
 
@@ -68,8 +96,8 @@ function Field(props) {
             return (<Grid item xs={4}>
                 <LinkButton href='api/jupyter/health'><Text>{json.value}</Text></LinkButton>
             </Grid>);
-        } else if (json.tag === 'all-activities') {
-            return <JupyterAllActivities json={json}/>
+        } else if (json.tag === 'group-activities') {
+            return <JupyterGroupActivities json={json}/>
         } else {
             return (<Grid item xs={4}><Text>Unsupported link: {JSON.stringify(json)}</Text></Grid>);
         }

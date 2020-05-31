@@ -4,15 +4,14 @@ from os.path import splitext, basename
 from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
 
-from .read import AbortImportButMarkScanned, MultiProcFitReader
+from .utils import AbortImportButMarkScanned, MultiProcFitReader
 from ... import FatalException
-from ...commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no
-from ...names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION, \
-    SPORT_GENERIC, PC, MIN, summaries, AVG, KM, _cov
+from ...commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no, FILENAME_KIT
+from ...names import N, T, Units, Sports, Summaries as S, UNDEF
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
-from ...lib.date import to_time
+from ...lib.date import to_time, time_to_local_time
 from ...lib.io import split_fit_path
 from ...sql.database import Timestamp, StatisticJournalText
 from ...sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
@@ -31,19 +30,20 @@ log = getLogger(__name__)
 
 class ActivityReader(MultiProcFitReader):
 
-    KIT = 'Kit'
+    KIT = 'kit'
 
-    def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, kit=True, **kargs):
+    def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, filename_kit=True,
+                 sub_dir=UNDEF, **kargs):
         from ...commands.upload import ACTIVITY
         self.define = define if define else {}
-        self.kit = kit
+        self.filename_kit = filename_kit
         self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
-        self.record_to_db = [(field, name, units, STATISTIC_JOURNAL_CLASSES[type])
-                             for field, (name, units, type)
+        self.record_to_db = [(field, title, units, STATISTIC_JOURNAL_CLASSES[type])
+                             for field, (title, units, type)
                              in self._assert('record_to_db', record_to_db).items()]
-        self.add_elevation = not any(name == ELEVATION for (field, name, units, type) in self.record_to_db)
+        self.add_elevation = not any(title == T.ELEVATION for (field, title, units, type) in self.record_to_db)
         self.__ajournal = None  # save for coverage
-        super().__init__(*args, sub_dir=ACTIVITY, **kargs)
+        super().__init__(*args, sub_dir=ACTIVITY if sub_dir is UNDEF else sub_dir, **kargs)
 
     def _base_command(self):
         if self.define:
@@ -51,7 +51,7 @@ class ActivityReader(MultiProcFitReader):
         else:
             define = ''
         force = ' ' + mm(FORCE) if self.force else ''
-        nokit = ' ' + mm(no(KIT)) if not self.kit else ''
+        nokit = ' ' + mm(no(KIT)) if not self.filename_kit else ''
         return f'{ACTIVITIES}{force}{define}{nokit}'
 
     def _startup(self, s):
@@ -60,9 +60,13 @@ class ActivityReader(MultiProcFitReader):
 
     def _build_define(self, path):
         define = dict(self.define)
-        if self.kit:
+        if self.filename_kit:
             _, kit = split_fit_path(path)
             if kit:
+                if ActivityReader.KIT in define and define[ActivityReader.KIT] != kit:
+                    log.warning(f'Changing {ActivityReader.KIT} from {define[ActivityReader.KIT]} '
+                                f'(given on command line) to {kit} (inferred from file name.  '
+                                f'Use {mm(no(FILENAME_KIT))} to discard filename value.')
                 log.debug(f'Adding {ActivityReader.KIT}={kit} to definitions')
                 define[ActivityReader.KIT] = kit
             else:
@@ -125,7 +129,7 @@ class ActivityReader(MultiProcFitReader):
         if DEFAULT in lookup:
             return self._activity_group(s, path, sport, lookup[DEFAULT], define)
         log.warning('Unrecognised sport: "%s" in %s' % (sport, path))
-        if sport in (SPORT_GENERIC,):
+        if sport in (Sports.SPORT_GENERIC,):
             raise Exception(f'Ignoring {sport} entry')
         else:
             raise FatalException(f'There is no group configured for {sport} entries in the FIT file.')
@@ -185,7 +189,7 @@ class ActivityReader(MultiProcFitReader):
                 description = 'Kit used in activity.'
             else:
                 description = 'Attribute defined on reading activity.'
-            StatisticJournalText.add(s, name, None, None, self.owner_out, ajournal.activity_group,
+            StatisticJournalText.add(s, name, None, None, self.owner_out,
                                      ajournal, value, ajournal.start, description=description)
 
     @staticmethod
@@ -194,13 +198,18 @@ class ActivityReader(MultiProcFitReader):
         log.debug('Saving name')
         # first, do we have the 'Name' field defined?
         # this should be triggered at most once per group if it was not already defined
+        root = s.query(ActivityTopic). \
+            filter(ActivityTopic.title == ActivityTopic.ROOT,
+                   ActivityTopic.activity_group == ajournal.activity_group).one_or_none()
+        if not root:
+            root = add(s, ActivityTopic(name=ActivityTopic.ROOT, description=ActivityTopic.ROOT_DESCRIPTION,
+                                        activity_group=ajournal.activity_group))
         if not s.query(ActivityTopicField). \
                 join(StatisticName). \
-                filter(StatisticName.name == ActivityTopicField.NAME,
-                       StatisticName.activity_group == ajournal.activity_group,
+                filter(StatisticName.name == N.NAME,
                        StatisticName.owner == ActivityTopic,
-                       ActivityTopicField.activity_topic_id == None).one_or_none():
-           add_activity_topic_field(s, None, ActivityTopicField.NAME, -10, StatisticJournalType.TEXT,
+                       ActivityTopicField.activity_topic == root).one_or_none():
+           add_activity_topic_field(s, root, T.NAME, -10, StatisticJournalType.TEXT,
                                      ajournal.activity_group, model={TYPE: EDIT},
                                      description=ActivityTopicField.NAME_DESCRIPTION)
         # second, do we already have a journal for this file, or do we need to add one?
@@ -208,25 +217,34 @@ class ActivityReader(MultiProcFitReader):
             filter(ActivityTopicJournal.file_hash_id == file_scan.file_hash_id). \
             one_or_none()
         if not source:
-            source = add(s, ActivityTopicJournal(file_hash_id=file_scan.file_hash_id))
+            source = add(s, ActivityTopicJournal(file_hash_id=file_scan.file_hash_id,
+                                                 activity_group=ajournal.activity_group))
         # and third, does that journal contain a name?
         if not s.query(StatisticJournal). \
                 join(StatisticName). \
                 filter(StatisticJournal.source == source,
                        StatisticName.owner == ActivityTopic,
-                       StatisticName.activity_group == ajournal.activity_group,
-                       StatisticName.name == ActivityTopicField.NAME).one_or_none():
+                       StatisticName.name == N.NAME).one_or_none():
             value = splitext(basename(file_scan.path))[0]
-            StatisticJournalText.add(s, ActivityTopicField.NAME, None, None, ActivityTopic, ajournal.activity_group,
+            StatisticJournalText.add(s, N.NAME, None, None, ActivityTopic,
                                      source, value, ajournal.start)
+
+    def _check_overlap(self, s, start, finish, ajournal):
+        overlap = s.query(ActivityJournal). \
+            filter(ActivityJournal.finish >= start,
+                   ActivityJournal.start <= finish,
+                   ActivityJournal.id != ajournal.id).first()
+        if overlap:
+            def fmt(ajournal):
+                return f'{ajournal} {ajournal.file_hash.file_scan.path}'
+            log.error(f'Overlapping activities: {fmt(ajournal)} / {fmt(overlap)}')
+            raise Exception(f'Overlapping activities: '
+                            f'{time_to_local_time(ajournal.start)} / {time_to_local_time(overlap.start)}')
 
     def _load_data(self, s, loader, data):
 
         ajournal, activity_group, first_timestamp, file_scan, define, records = data
         timespan, warned, logged, last_timestamp = None, 0, 0, to_time(0.0)
-        self._load_define(s, define, ajournal)
-        self._save_name(s, ajournal, file_scan)
-        self.__ajournal = ajournal
 
         log.debug(f'Loading {self.record_to_db}')
 
@@ -240,6 +258,12 @@ class ActivityReader(MultiProcFitReader):
         have_timespan = any(is_event(record, 'start') for record in records)
         only_records = list(filter(lambda x: x.name == 'record', records))
         final_timestamp = only_records[-1].timestamp
+
+        self._check_overlap(s, first_timestamp, final_timestamp, ajournal)
+        self._load_define(s, define, ajournal)
+        self._save_name(s, ajournal, file_scan)
+        self.__ajournal = ajournal
+
         if not have_timespan:
             first_timestamp = only_records[0].timestamp
             log.warning('Experimental handling of data without timespans')
@@ -259,33 +283,33 @@ class ActivityReader(MultiProcFitReader):
                 if record.value.timestamp > last_timestamp:
                     lat, lon, timestamp = None, None, record.value.timestamp
                     # customizable loader
-                    for field, name, units, type in self.record_to_db:
+                    for field, title, units, type in self.record_to_db:
                         value = record.data.get(field, None)
                         if logged < 3:
-                            log.debug(f'{name} = {value}')
+                            log.debug(f'{title} = {value}')
                         if value is not None:
                             value = value[0][0]
-                            if units == KM:  # internally everything uses M
+                            if units == Units.KM:  # internally everything uses M
                                 value /= 1000
-                            loader.add(name, units, None, activity_group, ajournal, value, timestamp, type,
+                            loader.add(title, units, None, ajournal, value, timestamp, type,
                                        description=f'The value of field {field} in the FIT record.')
-                            if name == LATITUDE:
+                            if title == T.LATITUDE:
                                 lat = value
-                            elif name == LONGITUDE:
+                            elif title == T.LONGITUDE:
                                 lon = value
                     logged += 1
                     # values derived from lat/lon
                     if lat is not None and lon is not None:
                         x, y = Point.from_latitude_longitude(lat, lon).meters
-                        loader.add(SPHERICAL_MERCATOR_X, M, None, activity_group, ajournal, x, timestamp,
+                        loader.add(T.SPHERICAL_MERCATOR_X, Units.M, None, ajournal, x, timestamp,
                                    StatisticJournalFloat, description='The WGS84 X coordinate')
-                        loader.add(SPHERICAL_MERCATOR_Y, M, None, activity_group, ajournal, y, timestamp,
+                        loader.add(T.SPHERICAL_MERCATOR_Y, Units.M, None, ajournal, y, timestamp,
                                    StatisticJournalFloat, description='The WGS84 Y coordinate')
                         if self.add_elevation:
                             elevation = self.__oracle.elevation(lat, lon)
                             if elevation:
-                                loader.add(RAW_ELEVATION, M, None, activity_group, ajournal, elevation, timestamp,
-                                           StatisticJournalFloat,
+                                loader.add(T.RAW_ELEVATION, Units.M, None, ajournal, elevation,
+                                           timestamp, StatisticJournalFloat,
                                            description='The elevation from SRTM1 at this location')
                 else:
                     log.warning('Ignoring duplicate record data for %s at %s - some data may be missing' %
@@ -308,8 +332,8 @@ class ActivityReader(MultiProcFitReader):
 
     def _read(self, s, path):
         loader = super()._read(s, path)
-        for (name, activity_group), percent in loader.coverage_percentages():
-            StatisticJournalFloat.add(s, _cov(name), PC, summaries(MIN, AVG), self.owner_out,
-                                      activity_group, self.__ajournal, percent, self.__ajournal.start,
-                                      description=f'Coverage (% of FIT records with data) for {name}.')
+        for title, percent in loader.coverage_percentages():
+            StatisticJournalFloat.add(s, T._cov(title), Units.PC, S.join(S.MIN, S.AVG), self.owner_out,
+                                      self.__ajournal, percent, self.__ajournal.start,
+                                      description=f'Coverage (% of FIT records with data) for {title}.')
         s.commit()

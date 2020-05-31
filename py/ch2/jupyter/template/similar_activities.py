@@ -2,15 +2,16 @@
 from bokeh.plotting import output_file, show
 
 from ch2.data import *
-from ch2.lib import *
+from ch2.pipeline.owners import *
+from ch2.names import N
 from ch2.jupyter.decorator import template
 
 
 @template
-def similar_activities(local_time, activity_group):
+def similar_activities(local_time):
 
     f'''
-    # Similar Activities: {local_time.split()[0]} ({activity_group})
+    # Similar Activities: {local_time.split()[0]}
     '''
 
     '''
@@ -26,12 +27,11 @@ def similar_activities(local_time, activity_group):
     s = session('-v2')
 
     maps = [map_thumbnail(100, 120, data)
-            for data in (activity_statistics(s, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
-                                             ACTIVE_DISTANCE, ACTIVE_TIME,
-                                             activity_journal=similar[0])
-                         for similar in nearby_activities(s, local_time=local_time,
-                                                          activity_group=activity_group))
-            if len(data[SPHERICAL_MERCATOR_X].dropna()) > 10]
+            for data in (Statistics(s, activity_journal=similar[0]).
+                             by_name(SegmentReader, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y).
+                             by_name(ActivityCalculator, N.ACTIVE_DISTANCE, N.ACTIVE_TIME).df
+                         for similar in nearby_activities(s, local_time=local_time))
+            if len(data[N.SPHERICAL_MERCATOR_X].dropna()) > 10]
 
     print(f'Found {len(maps)} activities')
 

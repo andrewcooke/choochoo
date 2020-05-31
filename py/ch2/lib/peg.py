@@ -112,7 +112,7 @@ def single(parser):
             # unique non-hashable values (assuming sorted)
             results = [x for (x, y) in zip_longest(results, results[1:]) if x != y]
         if not results:
-            raise Exception(f'Could not parse {string}')
+            raise Exception(f'Could not parse {string} (no match in grammar)')
         elif len(results) != 1:
             for result in results:
                 log.warning(f'Possible AST: {result}')

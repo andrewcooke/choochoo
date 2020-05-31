@@ -3,7 +3,7 @@ from colorsys import hsv_to_rgb
 
 from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, Range1d
 
-from ...names import DISTANCE_KM, LOCAL_TIME
+from ...names import Names
 
 
 def tooltip(name):
@@ -14,7 +14,7 @@ def make_tools(y):
     tools = [PanTool(dimensions='width'),
              ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),
              ResetTool(),
-             HoverTool(tooltips=[tooltip(x) for x in (y, DISTANCE_KM, LOCAL_TIME)])]
+             HoverTool(tooltips=[tooltip(x) for x in (y, Names.DISTANCE_KM, Names.LOCAL_TIME)])]
     return tools
 
 

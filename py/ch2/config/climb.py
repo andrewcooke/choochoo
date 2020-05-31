@@ -6,7 +6,7 @@ from ..data.climb import Climb, MAX_CLIMB_GRADIENT, MIN_CLIMB_GRADIENT, MAX_CLIM
 
 log = getLogger(__name__)
 
-CLIMB_CNAME = 'Climb'
+CLIMB_CNAME = 'climb'
 
 
 def add_climb(s, phi=0.7):

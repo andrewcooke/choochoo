@@ -19,7 +19,7 @@ class TestPlan(LogTestCase):
             plan.create(db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
-                root = s.query(DiaryTopic).filter(DiaryTopic.parent_id == None, DiaryTopic.name == 'Plan').one()
+                root = s.query(DiaryTopic).filter(DiaryTopic.parent_id == None, DiaryTopic.title == 'Plan').one()
                 self.assertEqual(len(root.children), 1)
                 self.assertTrue(root.schedule)
                 self.assertEqual(root.schedule.start, to_date('2018-07-25'))
@@ -36,7 +36,7 @@ class TestPlan(LogTestCase):
             plan.create(db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
-                root = s.query(DiaryTopic).filter(DiaryTopic.parent_id == None, DiaryTopic.name == 'Plan').one()
+                root = s.query(DiaryTopic).filter(DiaryTopic.parent_id == None, DiaryTopic.title == 'Plan').one()
                 self.assertEqual(len(root.children), 1)
                 parent = root.children[0]
                 self.assertEqual(len(parent.children), 46)
@@ -50,7 +50,7 @@ class TestPlan(LogTestCase):
             plan.create(db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
-                root = s.query(DiaryTopic).filter(DiaryTopic.parent_id == None, DiaryTopic.name == 'Plan').one()
+                root = s.query(DiaryTopic).filter(DiaryTopic.parent_id == None, DiaryTopic.title == 'Plan').one()
                 self.assertEqual(len(root.children), 1)
                 parent = root.children[0]
                 self.assertEqual(len(parent.children), 14)

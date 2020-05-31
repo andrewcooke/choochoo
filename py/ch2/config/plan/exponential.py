@@ -18,13 +18,13 @@ class Builder(ORMUtils):
 
     def create(self, db, parent='Plan', sort=10):
         with db.session_context() as s:
-            root = self._get_or_create(s, DiaryTopic, name=parent, sort=sort)
+            root = self._get_or_create(s, DiaryTopic, title=parent, sort=sort)
             child = DiaryTopic(parent=root, schedule=self._spec,
-                               name=self._name, description=self._description, sort=sort)
+                               title=self._name, description=self._description, sort=sort)
             s.add(child)
             root.schedule = Schedule.include(root.schedule, child.schedule)
             for day in self._spec.locations_from(self._spec.start):
-                s.add(DiaryTopic(parent=child, schedule=str(day), name=self._next_value()))
+                s.add(DiaryTopic(parent=child, schedule=str(day), title=self._next_value()))
 
     @abstractmethod
     def _next_value(self):

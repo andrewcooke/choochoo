@@ -2,31 +2,33 @@
 from collections import defaultdict
 from logging import getLogger
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, desc, or_
+from sqlalchemy import Column, Integer, ForeignKey, desc, or_
 from sqlalchemy.orm import relationship, aliased, backref
 from sqlalchemy.orm.exc import NoResultFound
 
-from .source import Source, SourceType, Composite, CompositeComponent
+from .source import Source, SourceType, Composite, CompositeComponent, UngroupedSource
 from .statistic import StatisticJournal, StatisticName, StatisticJournalTimestamp
 from ..support import Base
+from ..types import Name
 from ..utils import add
 from ...commands.args import FORCE, mm
-from ...names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE, KM, S, _s, AGE, D, ALL
 from ...diary.model import TYPE, DB, UNITS
 from ...lib import now, time_to_local_time
 from ...lib.date import YMD
 from ...lib.utils import inside_interval
+from ...names import Titles, Names, Units
+from .activity import ActivityGroup
 
 log = getLogger(__name__)
 
 NAME = 'name'
 GROUP = 'group'
 ITEM = 'item'
-ITEMS = _s(ITEM)
+ITEMS = Names._s(ITEM)
 COMPONENT = 'component'
-COMPONENTS = _s(COMPONENT)
+COMPONENTS = Names._s(COMPONENT)
 MODEL = 'model'
-MODELS = _s(MODEL)
+MODELS = Names._s(MODEL)
 STATISTICS = 'statistics'
 N = 'n'
 SUM = 'sum'
@@ -48,6 +50,14 @@ difficult design decisions here.
   * tie-in with activities to get active time / distance
 in the end, what drove the design was the commands (see commands/kit.py) - trying to keep them as simple as possible.
 unfortunately that pushed some extra complexity into the data model (eg to guarantee all names unique).
+
+update: later, decided to force all names to lowercase.  this fits with my own use and makes it easier to match.
+similarly with activity groups. 
+
+KitGroup - groups kit (bikes, shoes, etc.)
+KitItem - a particular item of kit (a bike, pair of shoes, etc)
+KitComponent - the classes of things that go into a KitItem (wheels, tyres, laces, etc)
+KitModel - a particular instance of a component (a particular wheel, a particular tyre, etc) 
 '''
 
 
@@ -63,9 +73,9 @@ def get_name(s, name, classes=None, require=False):
         raise Exception(f'Cannot find "{name}"')
 
 
-def assert_name_does_not_exist(s, name, use):
+def assert_name_does_not_exist(s, name):
     instance = get_name(s, name)
-    if instance and not isinstance(instance, use):
+    if instance:
         raise Exception(f'The name "{name}" is already used for a {type(instance).SIMPLE_NAME}')
 
 
@@ -96,9 +106,7 @@ class StatisticsMixin:
     '''
 
     def _base_statistic_query(self, s, statistic, *sources, owner=None):
-        from .activity import ActivityGroup
         sources = (self,) + sources
-        all = ActivityGroup.from_name(s, ALL)
         subq = s.query(Composite.id.label('composite_id'))
         for source in sources:
             cc = aliased(CompositeComponent)
@@ -107,8 +115,7 @@ class StatisticsMixin:
         q = s.query(StatisticJournal). \
             join(StatisticName). \
             outerjoin(subq, subq.c.composite_id == StatisticJournal.source_id). \
-            filter(StatisticName.name == statistic,
-                   StatisticName.activity_group == all)
+            filter(StatisticName.name == statistic)
         if len(sources) == 1:
             q = q.filter(or_(StatisticJournal.source == self, subq.c.composite_id != None))
         else:
@@ -149,26 +156,26 @@ class StatisticsMixin:
         else:
             source = self
         owner = owner or self
-        return StatisticJournalTimestamp.add(s, statistic, None, None, owner, ALL, source, time,
+        return StatisticJournalTimestamp.add(s, statistic, None, None, owner, source, time,
                                              description='A timestamp for tracking kit use.')
 
     def time_added(self, s):
-        return self._get_statistic(s, KIT_ADDED).time
+        return self._get_statistic(s, Names.KIT_ADDED).time
 
     def time_expired(self, s):
         try:
-            return self._get_statistic(s, KIT_RETIRED).time
+            return self._get_statistic(s, Names.KIT_RETIRED).time
         except AttributeError:
             return None
 
     def add_use(self, s, time, source=None, owner=None):
-        self._add_timestamp(s, KIT_USED, time, source=source, owner=owner)
+        self._add_timestamp(s, Titles.KIT_USED, time, source=source, owner=owner)
 
     def active_times(self, s):
-        return self._base_use_query(s, ACTIVE_TIME).all()
+        return self._base_use_query(s, Names.ACTIVE_TIME).all()
 
     def active_distances(self, s):
-        return self._base_use_query(s, ACTIVE_DISTANCE).all()
+        return self._base_use_query(s, Names.ACTIVE_DISTANCE).all()
 
     def lifetime(self, s):
         added, expired = self.time_added(s), self.time_expired(s)
@@ -177,10 +184,10 @@ class StatisticsMixin:
 
     def _add_individual_statistics(self, s, model):
         model_statistics = []
-        self._calculate_individual_statistics(model_statistics, ACTIVE_DISTANCE, self.active_distances(s), KM)
-        self._calculate_individual_statistics(model_statistics, ACTIVE_TIME, self.active_times(s), S)
+        self._calculate_individual_statistics(model_statistics, Titles.ACTIVE_DISTANCE, self.active_distances(s), Units.KM)
+        self._calculate_individual_statistics(model_statistics, Titles.ACTIVE_TIME, self.active_times(s), Units.S)
         expire = self.time_expired(s) or now()
-        model_statistics.append({NAME: AGE, N: 1, SUM: (expire - self.time_added(s)).days, UNITS: D})
+        model_statistics.append({NAME: Titles.AGE, N: 1, SUM: (expire - self.time_added(s)).days, UNITS: Units.D})
         model[STATISTICS] = model_statistics
 
     def _calculate_individual_statistics(self, model_statistics, name, values, units):
@@ -227,14 +234,14 @@ class KitGroup(ModelMixin, Base):
     SIMPLE_NAME = 'group'
 
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False, index=True, unique=True)
+    name = Column(Name, nullable=False, index=True, unique=True)
 
     @classmethod
     def get_or_add(cls, s, name, force=False):
         try:
             return s.query(KitGroup).filter(KitGroup.name == name).one()
         except NoResultFound:
-            assert_name_does_not_exist(s, name, KitGroup)
+            assert_name_does_not_exist(s, name)
             if force:
                 log.warning(f'Forcing creation of new group ({name})')
                 return add(s, KitGroup(name=name))
@@ -259,7 +266,7 @@ class KitGroup(ModelMixin, Base):
         return f'KitGroup "{self.name}"'
 
 
-class KitItem(ModelMixin, StatisticsMixin, Source):
+class KitItem(ModelMixin, StatisticsMixin, UngroupedSource):
     '''
     an individual kit item (a particular bike, a particular shoe, etc)
     '''
@@ -270,7 +277,7 @@ class KitItem(ModelMixin, StatisticsMixin, Source):
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     group_id = Column(Integer, ForeignKey('kit_group.id', ondelete='cascade'), nullable=False, index=True)
     group = relationship('KitGroup', backref=backref('items', passive_deletes=True))
-    name = Column(Text, nullable=False, index=True, unique=True)
+    name = Column(Name, nullable=False, index=True, unique=True)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ITEM
@@ -282,13 +289,13 @@ class KitItem(ModelMixin, StatisticsMixin, Source):
         if s.query(KitItem).filter(KitItem.name == name).count():
             raise Exception(f'Item {name} of group {group.name} already exists')
         else:
-            assert_name_does_not_exist(s, name, KitItem)
+            assert_name_does_not_exist(s, name)
             item = add(s, KitItem(group=group, name=name))
             item._add_statistics(s, date)
             return item
 
     def _add_statistics(self, s, time):
-        self._add_timestamp(s, KIT_ADDED, time)
+        self._add_timestamp(s, Titles.KIT_ADDED, time)
 
     @classmethod
     def get(cls, s, name):
@@ -307,10 +314,10 @@ class KitItem(ModelMixin, StatisticsMixin, Source):
     def finish(self, s, date, force):
         if self.time_expired(s):
             if force:
-                self._remove_statistic(s, KIT_RETIRED, owner=self)
+                self._remove_statistic(s, Names.KIT_RETIRED, owner=self)
             else:
                 raise Exception(f'Item {self.name} is already retired')
-        self._add_timestamp(s, KIT_RETIRED, date)
+        self._add_timestamp(s, Titles.KIT_RETIRED, date)
 
     def delete(self, s):
         s.delete(self)
@@ -347,7 +354,7 @@ class KitComponent(ModelMixin, Base):
     SIMPLE_NAME = 'component'
 
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False, index=True)
+    name = Column(Name, nullable=False, index=True, unique=True)
 
     @classmethod
     def get(cls, s, name, require=True):
@@ -361,7 +368,7 @@ class KitComponent(ModelMixin, Base):
         try:
             return s.query(KitComponent).filter(KitComponent.name == name).one()
         except NoResultFound:
-            assert_name_does_not_exist(s, name, KitComponent)
+            assert_name_does_not_exist(s, name)
             if force:
                 log.warning(f'Forcing creation of new component ({name})')
                 return add(s, KitComponent(name=name))
@@ -426,7 +433,7 @@ class KitComponent(ModelMixin, Base):
         return f'KitComponent "{self.name}"'
 
 
-class KitModel(ModelMixin, StatisticsMixin, Source):
+class KitModel(ModelMixin, StatisticsMixin, UngroupedSource):
     '''
     a particular piece of a kit item (a particular bike wheel, a particular set of laces, etc).
     '''
@@ -435,11 +442,13 @@ class KitModel(ModelMixin, StatisticsMixin, Source):
     SIMPLE_NAME = 'model'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    item_id = Column(Integer, ForeignKey('kit_item.id', ondelete='cascade'), nullable=False, index=True)
+    item_id = Column(Integer, ForeignKey('kit_item.id', ondelete='cascade'),
+                     nullable=False, index=True)
     item = relationship('KitItem', foreign_keys=[item_id], backref=backref('models', passive_deletes=True))
-    component_id = Column(Integer, ForeignKey('kit_component.id', ondelete='cascade'), nullable=False, index=True)
+    component_id = Column(Integer, ForeignKey('kit_component.id', ondelete='cascade'),
+                          nullable=False, index=True)
     component = relationship('KitComponent', backref=backref('models', passive_deletes=True))
-    name = Column(Text, nullable=False, index=True)
+    name = Column(Name, nullable=False, index=True)   # not unique!!
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.MODEL
@@ -457,7 +466,7 @@ class KitModel(ModelMixin, StatisticsMixin, Source):
         if s.query(StatisticJournal). \
                 join(StatisticName). \
                 join(KitModel, KitModel.id == StatisticJournal.source_id). \
-                filter(StatisticName.name == KIT_ADDED,
+                filter(StatisticName.name == Names.KIT_ADDED,
                        StatisticJournal.time == time,
                        KitModel.name == name,
                        KitModel.component == component,
@@ -468,35 +477,35 @@ class KitModel(ModelMixin, StatisticsMixin, Source):
     def _add_instance(cls, s, item, component, name):
         # TODO - restrict name to a particular component
         if not s.query(KitModel).filter(KitModel.name == name).count():
-            assert_name_does_not_exist(s, name, KitModel)
+            assert_name_does_not_exist(s, name)
             log.warning(f'Model {name} does not match any previous entries')
         return add(s, KitModel(item=item, component=component, name=name))
 
     def _add_statistics(self, s, time):
-        self._add_timestamp(s, KIT_ADDED, time)
+        self._add_timestamp(s, Titles.KIT_ADDED, time)
         before = self.before(s, time)
         after = self.after(s, time)
         if before:
             before_expiry = before.time_expired(s)
             if before_expiry and before_expiry > time:
-                before._remove_statistic(s, KIT_RETIRED)
+                before._remove_statistic(s, Names.KIT_RETIRED)
                 before_expiry = None
             if not before_expiry:
-                before._add_timestamp(s, KIT_RETIRED, time)
+                before._add_timestamp(s, Titles.KIT_RETIRED, time)
                 log.info(f'Retired previous {self.component.name} ({before.name})')
         if after:
             after_added = after.time_added(s)
-            self._add_timestamp(s, KIT_RETIRED, after_added)
+            self._add_timestamp(s, Titles.KIT_RETIRED, after_added)
             log.info(f'Retired new {self.component.name} ({self.name})')
 
     @classmethod
     def get_all_at(cls, s, item, time):
         beforeq = s.query(StatisticJournalTimestamp.source_id, StatisticJournalTimestamp.time). \
             join(StatisticName). \
-            filter(StatisticName.name == KIT_ADDED).subquery()
+            filter(StatisticName.name == Names.KIT_ADDED).subquery()
         afterq = s.query(StatisticJournalTimestamp.source_id, StatisticJournalTimestamp.time). \
             join(StatisticName). \
-            filter(StatisticName.name == KIT_RETIRED).subquery()
+            filter(StatisticName.name == Names.KIT_RETIRED).subquery()
         return s.query(KitModel). \
             join(beforeq, beforeq.c.source_id == KitModel.id). \
             outerjoin(afterq, afterq.c.source_id == KitModel.id). \
@@ -517,10 +526,10 @@ class KitModel(ModelMixin, StatisticsMixin, Source):
         if time:
             beforeq = s.query(StatisticJournalTimestamp.source_id, StatisticJournalTimestamp.time). \
                 join(StatisticName). \
-                filter(StatisticName.name == KIT_ADDED).subquery()
+                filter(StatisticName.name == Names.KIT_ADDED).subquery()
             afterq = s.query(StatisticJournalTimestamp.source_id, StatisticJournalTimestamp.time). \
                 join(StatisticName). \
-                filter(StatisticName.name == KIT_RETIRED).subquery()
+                filter(StatisticName.name == Names.KIT_RETIRED).subquery()
             q = q.join(beforeq, beforeq.c.source_id == KitModel.id). \
                 outerjoin(afterq, afterq.c.source_id == KitModel.id). \
                 filter(beforeq.c.time <= time,
@@ -545,13 +554,13 @@ class KitModel(ModelMixin, StatisticsMixin, Source):
     def before(self, s, time=None):
         if not time:
             time = self.time_added(s)
-        return self._base_sibling_query(s, KIT_ADDED).filter(StatisticJournal.time < time). \
+        return self._base_sibling_query(s, Names.KIT_ADDED).filter(StatisticJournal.time < time). \
             order_by(desc(StatisticJournal.time)).first()
 
     def after(self, s, time=None):
         if not time:
             time = self.time_added(s)
-        return self._base_sibling_query(s, KIT_ADDED).filter(StatisticJournal.time > time). \
+        return self._base_sibling_query(s, Names.KIT_ADDED).filter(StatisticJournal.time > time). \
             order_by(StatisticJournal.time).first()
 
     def undo(self, s):
@@ -559,10 +568,10 @@ class KitModel(ModelMixin, StatisticsMixin, Source):
         s.delete(self)
         before = self.before(s, time)
         if before:
-            before._remove_statistic(s, KIT_RETIRED)
+            before._remove_statistic(s, Names.KIT_RETIRED)
             after = self.after(s, time)
             if after:
-                before._add_timestamp(s, KIT_RETIRED, after.time_added(s))
+                before._add_timestamp(s, Titles.KIT_RETIRED, after.time_added(s))
 
     def time_range(self, s):
         return None, None

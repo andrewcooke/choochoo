@@ -10,7 +10,7 @@ from typing import Mapping
 log = getLogger(__name__)
 
 # this can be modified during development.  it will be reset from setup.py on release.
-CH2_VERSION = '0.32.0'
+CH2_VERSION = '0.33.0'
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 DB_EXTN = '.db'   # used to use .sql but auto-complete for sqlite3 didn't work
@@ -30,6 +30,7 @@ FIT = 'fit'
 FIX_FIT = 'fix-fit'
 GARMIN = 'garmin'
 H, HELP = 'h', 'help'
+IMPORT = 'import'
 JUPYTER = 'jupyter'
 KIT = 'kit'
 LOAD = 'load'
@@ -39,9 +40,9 @@ PACKAGE_FIT_PROFILE = 'package-fit-profile'
 SEARCH = 'search'
 STATISTICS = 'statistics'
 TEST_SCHEDULE = 'test-schedule'
+TEXT = 'text'
 THUMBNAIL = 'thumbnail'
 UNLOCK = 'unlock'
-UPGRADE = 'upgrade'
 UPLOAD = 'upload'
 WEB = 'web'
 
@@ -88,10 +89,12 @@ DIR = 'dir'
 DISCARD = 'discard'
 DROP = 'drop'
 EMPTY = 'empty'
+ENABLE = 'enable'
 F = 'f'
 FAST = 'fast'
 FIELD = 'field'
 FIELDS = 'fields'
+FILENAME_KIT = 'filename-kit'
 FIX = 'fix'
 FINISH = 'finish'
 FIX_CHECKSUM = 'fix-checksum'
@@ -170,11 +173,11 @@ SHOW = 'show'
 SINGLE = 'single'
 SLICES = 'slices'
 SOURCE = 'source'
+SOURCES = 'sources'
 SOURCE_ID = 'source-id'
 START = 'start'
 STATISTIC_NAMES = 'statistic-names'
 STATISTIC_JOURNALS = 'statistic-journals'
-STATISTIC_QUARTILES = 'statistic-quartiles'
 STATUS = 'status'
 STOP = 'stop'
 SUB_COMMAND = 'sub-command'
@@ -186,6 +189,7 @@ TOPIC = 'topic'
 UNDO = 'undo'
 UNLIKE = 'unlike'
 UNSAFE = 'unsafe'
+UNSET = 'unset'
 USER = 'user'
 VALIDATE = 'validate'
 V, VERBOSITY = 'v', 'verbosity'
@@ -224,9 +228,6 @@ class NamespaceWithVariables(Mapping):
 
     def __len__(self):
         return len(self.__dict__)
-
-    def clone_with(self, **kargs):
-        pass
 
 
 def base_system_path(base, subdir=None, file=None, version=DB_VERSION, create=True):
@@ -305,40 +306,33 @@ def make_parser(with_noop=False):
     upload.add_argument(mm(DELETE), action='store_true',
                         help='delete source on success')
 
-    # replaced by web interface(?)
-    # diary = subparsers.add_parser(DIARY, help='daily diary and summary')
-    # diary.add_argument(DATE, metavar='DATE', nargs='?',
-    #                    help='an optional date to display (default is today)')
-    # diary.add_argument(mm(FAST), action='store_true',
-    #                    help='skip update of statistics on exit')
-    # diary_summary = diary.add_mutually_exclusive_group()
-    # diary_summary.add_argument(m(M), mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
-    #                            help='show monthly summary')
-    # diary_summary.add_argument(m(Y), mm(YEAR), action='store_const', dest=SCHEDULE, const='y',
-    #                            help='show yearly summary')
-    # diary_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
-    #                            help='show summary for given schedule')
+    def add_search_query(cmd):
+        cmd.add_argument(QUERY, metavar='QUERY', default=[], nargs='+',
+                         help='search terms (similar to SQL)')
+        cmd.add_argument(mm(SHOW), metavar='NAME', default=[], nargs='+',
+                         help='show value from matching entries')
+        cmd.add_argument(mm(SET), metavar='NAME=VALUE', help='update matching entries')
 
-    search = subparsers.add_parser(SEARCH, help='search activities')
-    search.add_argument(QUERY, metavar='QUERY', help='search terms')
-    search.add_argument(m(A), mm(ADVANCED), action='store_true',
-                        help='advanced search (similar to SQL)')
-    search.add_argument(mm(SHOW), metavar='NAME', action='append', default=[], nargs='+',
-                        help='show value from matching activities')
-    search.add_argument(mm(SET), metavar='NAME=VALUE', help='update matching activities')
+    search = subparsers.add_parser(SEARCH, help='search the database')
+    search_cmds = search.add_subparsers(title='search target', dest=SUB_COMMAND, required=True)
+    search_text = search_cmds.add_parser(TEXT, help='search for text in activities')
+    add_search_query(search_text)
+    search_activities = search_cmds.add_parser(ACTIVITIES, help='search for activities')
+    add_search_query(search_activities)
+    search_sources = search_cmds.add_parser(SOURCES, help='search for sources')
+    add_search_query(search_sources)
 
     # low-level commands used often
 
     constants = subparsers.add_parser(CONSTANTS, help='set and examine constants')
     constants_cmds = constants.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    constants_list = constants_cmds.add_parser(LIST, help='list all names')
     constants_show = constants_cmds.add_parser(SHOW, help='show a value (or all values)')
     constants_show.add_argument(NAME, nargs='?', metavar='NAME', help='name (omit for all)')
     constants_show.add_argument(DATE, nargs='?', metavar='DATE',
                                help='date of value to show (omit for all)')
     constants_add = constants_cmds.add_parser(ADD, help='add a new constant')
     constants_add.add_argument(NAME, metavar='NAME', help='name')
-    constants_add.add_argument(GROUP, nargs='?', metavar='GROUP',
-                              help='activity group (optional)')
     constants_add.add_argument(mm(SINGLE), action='store_true', help='allow only a single (constant) value')
     constants_add.add_argument(mm(DESCRIPTION), help='optional description')
     constants_add.add_argument(mm(VALIDATE), help='optional validation class')
@@ -348,11 +342,11 @@ def make_parser(with_noop=False):
     constants_set.add_argument(DATE, nargs='?', metavar='DATE',
                               help='date when measured (omit for all time)')
     constants_set.add_argument(mm(FORCE), action='store_true', help='allow over-writing existing values')
-    constants_delete = constants_cmds.add_parser(DELETE, help='delete a value (or all values)')
-    constants_delete.add_argument(NAME, metavar='NAME', help='name')
-    constants_delete.add_argument(DATE, nargs='?', metavar='DATE',
+    constants_unset = constants_cmds.add_parser(UNSET, help='delete a value (or all values)')
+    constants_unset.add_argument(NAME, metavar='NAME', help='name')
+    constants_unset.add_argument(DATE, nargs='?', metavar='DATE',
                                  help='date of value to delete (omit for all)')
-    constants_delete.add_argument(mm(FORCE), action='store_true', help='allow deletion of all values')
+    constants_unset.add_argument(mm(FORCE), action='store_true', help='allow deletion of all values')
     constants_remove = constants_cmds.add_parser(REMOVE, help='remove a constant (after deleting all values)')
     constants_remove.add_argument(NAME, metavar='NAME', help='name')
     constants_remove.add_argument(mm(FORCE), action='store_true', help='allow remove of multiple constants')
@@ -428,8 +422,15 @@ def make_parser(with_noop=False):
     configure_delete = configure_cmds.add_parser(DELETE, help='delete current data')
     configure_delete.add_argument(mm(FORCE), action='store_true', help='are you sure?')
 
-    upgrade = subparsers.add_parser(UPGRADE, help='copy diary entries from a previous version')
-    upgrade.add_argument(SOURCE, help='version or path to import')
+    import_ = subparsers.add_parser(IMPORT, help='copy diary entries from a previous version')
+    import_.add_argument(SOURCE, help='version or path to import')
+    import_.add_argument(mm(ENABLE), action='store_true',
+                         help='other options enable sub-imports (they disable by default)')
+    import_.add_argument(mm(DIARY), action='store_true', help='disable (or enable) import of diary data')
+    import_.add_argument(mm(ACTIVITIES), action='store_true', help='disable (or enable) import of activity data')
+    import_.add_argument(mm(KIT), action='store_true', help='disable (or enable) import of kit data')
+    import_.add_argument(mm(CONSTANTS), action='store_true', help='disable (or enable) import of constant data')
+    import_.add_argument(mm(SEGMENTS), action='store_true', help='disable (or enable) import of segment data')
 
     activities = subparsers.add_parser(ACTIVITIES, help='read activity data')
     activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
@@ -438,7 +439,8 @@ def make_parser(with_noop=False):
                             help='statistic to be stored with the activities (can be repeated)')
     activities.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
                             help='keyword argument to be passed to the pipelines (can be repeated)')
-    activities.add_argument(mm(no(KIT)), action='store_false', dest=KIT, help='ignore kit encoded in file name')
+    activities.add_argument(mm(no(FILENAME_KIT)), action='store_false', dest=FILENAME_KIT,
+                            help='ignore kit encoded in file name')
     activities.add_argument(mm(WORKER), metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
 
@@ -472,42 +474,6 @@ def make_parser(with_noop=False):
                             help='keyword argument to be passed to the pipelines (can be repeated)')
     statistics.add_argument(mm(WORKER), metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
-
-    dump = subparsers.add_parser(DUMP, help='display database contents')  # todo - this one needs tests!
-    dump_format = dump.add_mutually_exclusive_group()
-    dump_format.add_argument(mm(PRINT), action='store_const', dest=FORMAT, const=PRINT, help='default format')
-    dump_format.add_argument(mm(CSV), action='store_const', dest=FORMAT, const=CSV, help='CVS format')
-    dump_format.add_argument(mm(DESCRIBE), action='store_const', dest=FORMAT, const=DESCRIBE, help='summary format')
-    dump.add_argument(mm(MAX_COLUMNS), metavar='N', type=int, help='pandas max_columns attribute')
-    dump.add_argument(mm(MAX_COLWIDTH), metavar='N', type=int, help='pandas max_colwidth attribute')
-    dump.add_argument(mm(MAX_ROWS), metavar='N', type=int, help='pandas max_rows attribute')
-    dump.add_argument(mm(WIDTH), metavar='N', type=int, help='pandas width attribute')
-    dump_sub = dump.add_subparsers(dest=SUB_COMMAND)
-    dump_statistics = dump_sub.add_parser(STATISTICS)
-    dump_statistics.add_argument(NAMES, nargs='*', metavar='NAME', help='statistic names')
-    dump_statistics.add_argument(mm(START), metavar='TIME', help='start time')
-    dump_statistics.add_argument(mm(FINISH), metavar='TIME', help='finish time')
-    dump_statistics.add_argument(mm(OWNER), metavar='OWNER',
-                                 help='typically the class that created the data')
-    dump_statistics.add_argument(mm(GROUP), metavar='GROUP',
-                                 help='activity group')
-    dump_statistics.add_argument(mm(SOURCE_ID), action='append', metavar='ID', type=int,
-                                 help='the source ID for the statistic (can be repeated)')
-    dump_statistic_quartiles = dump_sub.add_parser(STATISTIC_QUARTILES)
-    dump_statistic_quartiles.add_argument(NAMES, nargs='*', metavar='NAME', help='statistic names')
-    dump_statistic_quartiles.add_argument(mm(START), metavar='TIME', help='start time')
-    dump_statistic_quartiles.add_argument(mm(FINISH), metavar='TIME', help='finish time')
-    dump_statistic_quartiles.add_argument(mm(OWNER), metavar='OWNER',
-                                          help='typically the class that created the data')
-    dump_statistic_quartiles.add_argument(mm(GROUP), metavar='GROUP',
-                                          help='activity group')
-    dump_statistic_quartiles.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
-                                          help='the schedule on which some statistics are calculated')
-    dump_statistic_quartiles.add_argument(mm(SOURCE_ID), action='append', metavar='ID', type=int,
-                                          help='the source ID for the statistic (can be repeated)')
-    dump_table = dump_sub.add_parser(TABLE)
-    dump_table.add_argument(NAME, metavar='NAME', help='table name')
-    dump.set_defaults(format=PRINT)
 
     fit = subparsers.add_parser(FIT, help='display contents of fit file')
     fit_cmds = fit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)

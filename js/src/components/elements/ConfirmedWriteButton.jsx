@@ -11,6 +11,7 @@ import {
 } from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {handleJson} from "../functions";
+import log from "loglevel";
 
 
 const useStyles = makeStyles(theme => ({

@@ -2,8 +2,6 @@
 from logging import getLogger
 
 from ..lib.date import to_time
-from ch2.pipeline.read.activity import ActivityReader
-from ch2.pipeline.read.segment import SegmentReader
 from ..sql import ActivityBookmark, ActivityGroup, StatisticName
 from ..sql.database import connect
 
@@ -33,6 +31,9 @@ class CoastingBookmark:
                                owner=self, constraint=constraint))
 
     def __find(self, s, kit, min_time, max_cadence, min_speed, group):
+
+        from ..pipeline.owners import ActivityReader, SegmentReader
+
         group = ActivityGroup.from_name(s, group)
         cadence_statistic = StatisticName.from_name(s, 'Cadence', SegmentReader, group)
         distance_statistic = StatisticName.from_name(s, 'Distance', SegmentReader, group)

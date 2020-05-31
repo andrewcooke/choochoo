@@ -10,9 +10,11 @@ from string import ascii_letters
 import pandas as pd
 from binascii import hexlify
 
-from ..names import ALL, BOOKMARK
+from .log import log_current_exception
+from ..names import Titles
 
 log = getLogger(__name__)
+DEV = False  # set when args parsed
 
 
 class WarnDict(dict):
@@ -101,12 +103,13 @@ def reftuple(name, *args, **kargs):
 
     class klass(namedtuple(name, *args, **kargs)):
 
-        def expand(self, s, time, default_owner=None, default_activity_group=ALL):
+        def expand(self, s, time, default_owner=None, default_activity_group=None):
             instance = self
             for name in self._fields:
                 value = getattr(instance, name)
                 log.debug(f'Expanding {name}: {value} at {time}')
-                value = expand(s, value, time, default_owner=default_owner, default_activity_group=default_activity_group)
+                value = expand(s, value, time, default_owner=default_owner,
+                               default_activity_group=default_activity_group)
                 log.debug(f'Setting {name} = {value}')
                 instance = instance._replace(**{name: value})
             return instance
@@ -166,7 +169,7 @@ def linscale(series, lo=0, hi=None, min=0, max=1, gamma=1):
 
 def sorted_numeric_labels(labels, text=None):
     if text:
-        labels = [label for label in labels if text in label]
+        labels = [label for label in labels if label.startswith(text)]
     return sorted(labels, key=lambda label: int(sub(r'\D', '', label)))
 
 
@@ -187,20 +190,24 @@ def left_interpolate(left, right, **kargs):
     return both.loc[both[tmp] == True].drop(columns=[tmp])
 
 
-def bookend(df, column=BOOKMARK):
+def bookend(df, column=Titles.BOOKMARK):
     # https://stackoverflow.com/questions/53927414/get-only-the-first-and-last-rows-of-each-group-with-pandas
     g = df.groupby(column)
     return pd.concat([g.head(1), g.tail(1)]).drop_duplicates().sort_index()
 
 
-def expand(s, text, before, vars=None, default_owner=None, default_activity_group=ALL):
+def expand(s, text, before, vars=None, default_owner=None, default_activity_group=None):
     '''
     Recursively expand any ${name} occurrences in the text using vars (if given) and database.
 
     May be too much magic going on here - can return objects, values as well as strings.
     '''
 
-    from ..sql import StatisticName, StatisticJournal, ActivityGroup
+    from ..sql import StatisticName, StatisticJournal
+
+    if not isinstance(text, str):
+        log.debug(f'{text} already expanded (Not string)')
+        return text
 
     if vars is None: vars = {}
     pattern = compile(r'(.*)\${([^}]+)}(.*)')
@@ -215,8 +222,7 @@ def expand(s, text, before, vars=None, default_owner=None, default_activity_grou
         else:
             owner, statistic, activity_group = StatisticName.parse(name, default_owner=default_owner,
                                                                    default_activity_group=default_activity_group)
-            value = StatisticJournal.before_not_null(s, before, statistic, owner,
-                                                     ActivityGroup.from_name(s, activity_group))
+            value = StatisticJournal.before_not_null(s, before, statistic, owner, activity_group)
         if value is None:
             raise Exception(f'No value defined for {name} ({owner}:{statistic}:{activity_group}) before {before}')
         elif left == '' and right == '':
@@ -241,3 +247,49 @@ def median(list):
         return list[n//2]
     else:
         return (list[n//2] + list[n//2+1]) / 2
+
+
+def safe_return(make_retval):
+
+    def safe(f):
+
+        def wrapped(*args, **kargs):
+            try:
+                return f(*args, **kargs)
+            except Exception as e:
+                log.warning(f'Error in {f.__name__}: {e}')
+                log_current_exception(traceback=DEV)
+                return make_retval()
+
+        return wrapped
+
+    return safe
+
+
+safe_dict = safe_return(lambda: {})
+safe_none = safe_return(lambda: None)
+
+
+def safe_yield(f):
+
+    def wrapped(*args, **kargs):
+        try:
+            yield from f(*args, **kargs)
+        except Exception as e:
+            log.warning(f'Error in {f.__name__}: {e}')
+            log_current_exception(traceback=DEV)
+
+    return wrapped
+
+
+def safe_first(f):
+
+    def wrapped(first, *args, **kargs):
+        try:
+            return f(first, *args, **kargs)
+        except Exception as e:
+            log.warning(f'Error in {f.__name__}: {e}')
+            log_current_exception(traceback=DEV)
+            return first
+
+    return wrapped

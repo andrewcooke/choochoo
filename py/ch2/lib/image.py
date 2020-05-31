@@ -9,7 +9,7 @@ from rasterio.plot import reshape_as_image
 from scipy.ndimage import shift
 from skimage.draw import polygon_perimeter
 
-from ..names import LATITUDE, LONGITUDE
+from ..names import Names
 
 log = getLogger(__name__)
 
@@ -73,7 +73,7 @@ def matplot_image(ax, image):
 
 
 def matplot_route(ax, image, df):
-    lat, lon = df[LATITUDE].values, df[LONGITUDE].values
+    lat, lon = df[Names.LATITUDE].values, df[Names.LONGITUDE].values
     x, y = latlon_to_xy(image, lat, lon)
     ax.plot(x, y, color='red', linewidth='1')
 

@@ -16,7 +16,12 @@ log = getLogger(__name__)
 
 
 def terminal_width(width=None):
-    return get_terminal_size()[0] if width is None else width
+    width = get_terminal_size()[0] if width is None else width
+    if width is None:
+        log.warning('No terminal width available')
+    else:
+        log.debug(f'Terminal width is {width}')
+    return width
 
 
 def tui(command):

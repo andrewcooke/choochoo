@@ -1,3 +1,4 @@
+
 from abc import abstractmethod
 from contextlib import nullcontext
 from logging import getLogger
@@ -6,7 +7,7 @@ from time import time
 from psutil import cpu_count
 from sqlalchemy import text
 
-from .read.loader import StatisticJournalLoader
+from .loader import StatisticJournalLoader
 from ..lib import format_seconds
 from ..lib.workers import ProgressTree, Workers
 from ..sql import Pipeline
@@ -203,7 +204,18 @@ class UniProcPipeline(MultiProcPipeline):
 
 class LoaderMixin:
 
-    def _get_loader(self, s, **kargs):
+    def _get_loader(self, s, add_serial=None, **kargs):
         if 'owner' not in kargs:
             kargs['owner'] = self.owner_out
+        if add_serial is None:
+            raise Exception('Select serial use')
+        else:
+            kargs['add_serial'] = add_serial
         return StatisticJournalLoader(s, **kargs)
+
+
+class OwnerInMixin:
+
+    def __init__(self, *args, owner_in=None, **kargs):
+        self.owner_in = self._assert('owner_in', owner_in)
+        super().__init__(*args, **kargs)

@@ -33,7 +33,7 @@ def some_activities(constraint):
             for data in (activity_statistics(s, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
                                              ACTIVE_DISTANCE, TOTAL_CLIMB,
                                              activity_journal=aj)
-                         for aj in constrained_activities(s, constraint))
+                         for aj in constrained_sources(s, constraint))
             if len(data[SPHERICAL_MERCATOR_X].dropna()) > 10]
     print(f'Found {len(maps)} activities')
 

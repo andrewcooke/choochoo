@@ -15,8 +15,8 @@ from ..pipeline.read.monitor import missing_dates
 
 log = getLogger(__name__)
 
-GARMIN_USER = 'Garmin.User'
-GARMIN_PASSWORD = 'Garmin.Password'
+GARMIN_USER = 'garmin_user'
+GARMIN_PASSWORD = 'garmin_password'
 
 
 def garmin(args, sys, db):
