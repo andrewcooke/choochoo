@@ -1,5 +1,6 @@
 
 import datetime as dt
+from collections import defaultdict
 from logging import getLogger
 
 import numpy as np
@@ -74,14 +75,14 @@ class MonitorLoader(StatisticJournalLoader):
                                StatisticJournal.time >= self.start,
                                StatisticJournal.time <= self.finish).delete()
         except:
-            log.debug('Failed to clean database')
+            log.warning('Failed to clean database')
             self._s.rollback()
             raise
         return dummy
 
     def _resolve_duplicate(self, name, instance, prev):
-        log.warning(f'Using sum of duplicate values at {instance.time} for {name} ({instance.value}/{prev.value})')
-        prev.value = prev.value + instance.value
+        log.warning(f'Using max of duplicate values at {instance.time} for {name} ({instance.value}/{prev.value})')
+        prev.value = max(prev.value, instance.value)
 
 
 NEW_STEPS = N._new(N.STEPS)
@@ -165,6 +166,7 @@ class MonitorReader(MultiProcFitReader):
 
     def _load_data(self, s, loader, data):
         first_timestamp, last_timestamp, mjournal, records = data
+        steps_by_activity = defaultdict(lambda: 0)
         for record in records:
             if HEART_RATE_ATTR in record.data and record.data[HEART_RATE_ATTR][0][0]:
                 loader.add(T.HEART_RATE, Units.BPM, None, mjournal,
@@ -173,11 +175,17 @@ class MonitorReader(MultiProcFitReader):
             if STEPS_ATTR in record.data:
                 # we ignore activity type here (used to store it when activity group and statistic name
                 # were mixed together, but never used it anywhere)
-                for steps in record.data[STEPS_ATTR][0]:
-                    loader.add(T.CUMULATIVE_STEPS, Units.STEPS_UNITS, None,
-                               mjournal, steps,
-                               record.timestamp, StatisticJournalInteger,
-                               description='''The number of steps in a day to this point in time.''')
+                reset = False
+                for activity, steps in zip(record.data[ACTIVITY_TYPE_ATTR][0], record.data[STEPS_ATTR][0]):
+                    reset = reset or steps < steps_by_activity[activity]
+                if reset: steps_by_activity = defaultdict(lambda: 0)
+                for activity, steps in zip(record.data[ACTIVITY_TYPE_ATTR][0], record.data[STEPS_ATTR][0]):
+                    steps_by_activity[activity] = steps
+                total = sum(steps_by_activity.values())
+                loader.add(T.CUMULATIVE_STEPS, Units.STEPS_UNITS, None,
+                           mjournal, total,
+                           record.timestamp, StatisticJournalInteger,
+                           description='''The number of steps in a day to this point in time.''')
 
     def _shutdown(self, s):
         super()._shutdown(s)
