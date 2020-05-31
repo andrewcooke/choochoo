@@ -1,5 +1,6 @@
 
 from logging import getLogger
+from subprocess import run
 from tempfile import TemporaryDirectory
 
 import sqlalchemy.sql.functions as func
@@ -56,6 +57,14 @@ class TestMonitor(LogTestCase):
                            StatisticJournal.time < local_date_to_time('2018-09-07'),
                            StatisticName.owner == MonitorCalculator,
                            StatisticName.name == N.DAILY_STEPS).one()
+                if summary.value != 12757:
+                    path = args.system_path(subdir='data', file='activity.db')
+                    run('sqlite3 %s "select * from statistic_journal as j, statistic_journal_integer as i, '
+                        'statistic_name as n where j.id = i.id and j.statistic_name_id = n.id and '
+                        'n.name = \'steps\' order by j.time"' % path, shell=True)
+                    run('sqlite3 %s "select * from statistic_journal as j, statistic_journal_integer as i, '
+                        'statistic_name as n where j.id = i.id and j.statistic_name_id = n.id and '
+                        'n.name = \'cumulative-steps\' order by j.time"' % path, shell=True)
                 # connect has 12757 for this date,
                 self.assertEqual(summary.value, 12757)
 
