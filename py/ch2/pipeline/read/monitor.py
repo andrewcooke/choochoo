@@ -80,8 +80,8 @@ class MonitorLoader(StatisticJournalLoader):
         return dummy
 
     def _resolve_duplicate(self, name, instance, prev):
-        log.warning(f'Using max of duplicate values at {instance.time} for {name} ({instance.value}/{prev.value})')
-        prev.value = max(prev.value, instance.value)
+        log.warning(f'Using sum of duplicate values at {instance.time} for {name} ({instance.value}/{prev.value})')
+        prev.value = prev.value + instance.value
 
 
 NEW_STEPS = N._new(N.STEPS)
