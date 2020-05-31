@@ -11,7 +11,7 @@ from sqlalchemy.sql.functions import count
 from .utils import UniProcCalculator
 from ..pipeline import LoaderMixin, OwnerInMixin
 from ..read.segment import SegmentReader
-from ...data import Statistics
+from ...data import Statistics, present
 from ...data.response import sum_to_hour, calc_response
 from ...lib.date import round_hour, to_time, local_date_to_time, now
 from ...names import Names as N, SPACE
@@ -180,8 +180,9 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
         name = N._cov(N.HEART_RATE)
         df = Statistics(s).by_name(SegmentReader, name).with_. \
             rename({name: N.COVERAGE}).into(df, tolerance='10s')
-        df[N.COVERAGE].fillna(axis='index', method='ffill', inplace=True)
-        df[N.COVERAGE].fillna(100, axis='index', inplace=True)
+        if present(df, N.COVERAGE):
+            df[N.COVERAGE].fillna(axis='index', method='ffill', inplace=True)
+            df[N.COVERAGE].fillna(100, axis='index', inplace=True)
         return df
 
     def __make_sources(self, s, data):

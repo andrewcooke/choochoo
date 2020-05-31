@@ -29,7 +29,7 @@ class TestPeg(LogTestCase):
         self.assertEqual(list(pattern(r'\d(\d+)')('123x')), [(['23'], 'x')])
 
     def test_name(self):
-        self.assertEqual(list(constraint('Active Distance > 10')), [('Active Distance', '>', 10.0)])
+        self.assertEqual(list(constraint('active-distance > 10')), [('active-distance', '>', 10.0)])
 
     def test_term(self):
         self.assertEqual(list(constraint('a = "b" and (c <= 2 or 1.2 > e)')),

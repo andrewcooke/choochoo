@@ -209,7 +209,7 @@ class ActivityReader(MultiProcFitReader):
                 filter(StatisticName.name == N.NAME,
                        StatisticName.owner == ActivityTopic,
                        ActivityTopicField.activity_topic == root).one_or_none():
-           add_activity_topic_field(s, root, N.NAME, -10, StatisticJournalType.TEXT,
+           add_activity_topic_field(s, root, T.NAME, -10, StatisticJournalType.TEXT,
                                      ajournal.activity_group, model={TYPE: EDIT},
                                      description=ActivityTopicField.NAME_DESCRIPTION)
         # second, do we already have a journal for this file, or do we need to add one?

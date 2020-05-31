@@ -248,7 +248,7 @@ def add_activity_topic(s, title, sort, description=None, activity_group=None):
                                 activity_group=ActivityGroup.from_name(s, activity_group)))
 
 
-def add_child_activity_topic(s, parent, name, sort, description=None):
+def add_child_activity_topic(s, parent, title, sort, description=None):
     '''
     Add a child topic.
 
@@ -260,10 +260,10 @@ def add_child_activity_topic(s, parent, name, sort, description=None):
     For example, the parent topic might be "injuries" and permanent, while children are defined for
     specific injuries with a schedule that gives start and end dates.
     '''
-    return add(s, ActivityTopic(parent=parent, name=name, sort=sort, description=description))
+    return add(s, ActivityTopic(parent=parent, title=title, sort=sort, description=description))
 
 
-def add_activity_topic_field(s, activity_topic, name, sort, type, activity_group,
+def add_activity_topic_field(s, activity_topic, title, sort, type, activity_group,
                              description=None, units=None, summary=None, model=None):
     '''
     Add a field and associated statistic to a topic entry.
@@ -275,7 +275,7 @@ def add_activity_topic_field(s, activity_topic, name, sort, type, activity_group
     if activity_topic and activity_topic.id is None:
         s.flush()
     # cannot simply add as this is also called during loading
-    statistic_name = StatisticName.add_if_missing(s, name, type, units, summary, ActivityTopic,
+    statistic_name = StatisticName.add_if_missing(s, title, type, units, summary, ActivityTopic,
                                                   description=description)
     if model is None: model = {}
     return add(s, ActivityTopicField(activity_topic=activity_topic, sort=sort, model=model,

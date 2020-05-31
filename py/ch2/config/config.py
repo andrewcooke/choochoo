@@ -248,7 +248,7 @@ so do not use an important password that applies to many accounts.
             c = Counter()
             root = add_activity_topic(s, ActivityTopic.ROOT, c, description=ActivityTopic.ROOT_DESCRIPTION,
                                       activity_group=activity_group)
-            add_activity_topic_field(s, root, N.NAME, c, StatisticJournalType.TEXT,
+            add_activity_topic_field(s, root, 'Name', c, StatisticJournalType.TEXT,
                                      activity_group, model={TYPE: EDIT},
                                      description=ActivityTopicField.NAME_DESCRIPTION)
             # note that these have empty toic parents because they are children of the entry itself

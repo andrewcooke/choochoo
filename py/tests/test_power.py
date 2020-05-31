@@ -6,7 +6,7 @@ import pandas as pd
 from ch2 import activities
 from ch2.commands.args import bootstrap_dir, mm, DEV, V, m
 from ch2.config.profile.default import default
-from ch2.data import activity_statistics, Names as N, Statistics
+from ch2.data import Names as N, Statistics
 from ch2.pipeline.read import SegmentReader
 from tests import LogTestCase
 

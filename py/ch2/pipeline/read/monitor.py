@@ -173,11 +173,13 @@ class MonitorReader(MultiProcFitReader):
             if STEPS_ATTR in record.data:
                 # we ignore activity type here (used to store it when activity group and statistic name
                 # were mixed together, but never used it anywhere)
+                print(record.data)
                 for steps in record.data[STEPS_ATTR][0]:
-                    loader.add(T.CUMULATIVE_STEPS, Units.STEPS_UNITS, None,
-                               mjournal, steps,
-                               record.timestamp, StatisticJournalInteger,
-                               description='''The number of steps in a day to this point in time.''')
+                    if True or 'walking' in record.data[ACTIVITY_TYPE_ATTR][0]:
+                        loader.add(T.CUMULATIVE_STEPS, Units.STEPS_UNITS, None,
+                                   mjournal, steps,
+                                   record.timestamp, StatisticJournalInteger,
+                                   description='''The number of steps in a day to this point in time.''')
 
     def _shutdown(self, s):
         super()._shutdown(s)
