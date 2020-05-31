@@ -63,9 +63,9 @@ First, I will add my Cotic bike:
     > ch2 kit start bike cotic --force
     usage: ch2 [-h] [--base DIR] [--read-only] [--log FILE] [--color COLOR] [-v N]
                [--dev] [-V]
-               {help,web,upload,search,constants,check,jupyter,kit,configure,upgrade,activities,garmin,monitor,statistics,dump,fit,fix-fit,thumbnail,package-fit-profile,test-schedule,unlock}
+               {help,web,upload,search,constants,check,jupyter,kit,configure,import,activities,garmin,monitor,statistics,fit,fix-fit,thumbnail,package-fit-profile,test-schedule,unlock}
                ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'search', 'constants', 'check', 'jupyter', 'kit', 'configure', 'upgrade', 'activities', 'garmin', 'monitor', 'statistics', 'dump', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'test-schedule', 'unlock')
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'search', 'constants', 'check', 'jupyter', 'kit', 'configure', 'import', 'activities', 'garmin', 'monitor', 'statistics', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'test-schedule', 'unlock')
 
 
 We're introducing a completely new *group* (bike) and so the `--force`
@@ -77,9 +77,9 @@ Now I have a bike I am going to add some inner tubes at various dates.
     > ch2 kit change cotic front-tube michelin 2019-01-01 --force
     usage: ch2 [-h] [--base DIR] [--read-only] [--log FILE] [--color COLOR] [-v N]
                [--dev] [-V]
-               {help,web,upload,search,constants,check,jupyter,kit,configure,upgrade,activities,garmin,monitor,statistics,dump,fit,fix-fit,thumbnail,package-fit-profile,test-schedule,unlock}
+               {help,web,upload,search,constants,check,jupyter,kit,configure,import,activities,garmin,monitor,statistics,fit,fix-fit,thumbnail,package-fit-profile,test-schedule,unlock}
                ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'search', 'constants', 'check', 'jupyter', 'kit', 'configure', 'upgrade', 'activities', 'garmin', 'monitor', 'statistics', 'dump', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'test-schedule', 'unlock')
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'search', 'constants', 'check', 'jupyter', 'kit', 'configure', 'import', 'activities', 'garmin', 'monitor', 'statistics', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'test-schedule', 'unlock')
 
 
 Again the system catches the first use of `front-tube` so we flag that
@@ -88,9 +88,9 @@ it is OK with `--force`.
     > ch2 kit change cotic front-tube michelin 2019-03-01
     usage: ch2 [-h] [--base DIR] [--read-only] [--log FILE] [--color COLOR] [-v N]
                [--dev] [-V]
-               {help,web,upload,search,constants,check,jupyter,kit,configure,upgrade,activities,garmin,monitor,statistics,dump,fit,fix-fit,thumbnail,package-fit-profile,test-schedule,unlock}
+               {help,web,upload,search,constants,check,jupyter,kit,configure,import,activities,garmin,monitor,statistics,fit,fix-fit,thumbnail,package-fit-profile,test-schedule,unlock}
                ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'search', 'constants', 'check', 'jupyter', 'kit', 'configure', 'upgrade', 'activities', 'garmin', 'monitor', 'statistics', 'dump', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'test-schedule', 'unlock')
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'search', 'constants', 'check', 'jupyter', 'kit', 'configure', 'import', 'activities', 'garmin', 'monitor', 'statistics', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'test-schedule', 'unlock')
 
 
 Previous tubes are *retired* as new ones are added.  You don't need to
@@ -100,9 +100,9 @@ times should align correctly.
     > ch2 kit change cotic front-tube vittoria
     usage: ch2 [-h] [--base DIR] [--read-only] [--log FILE] [--color COLOR] [-v N]
                [--dev] [-V]
-               {help,web,upload,search,constants,check,jupyter,kit,configure,upgrade,activities,garmin,monitor,statistics,dump,fit,fix-fit,thumbnail,package-fit-profile,test-schedule,unlock}
+               {help,web,upload,search,constants,check,jupyter,kit,configure,import,activities,garmin,monitor,statistics,fit,fix-fit,thumbnail,package-fit-profile,test-schedule,unlock}
                ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'search', 'constants', 'check', 'jupyter', 'kit', 'configure', 'upgrade', 'activities', 'garmin', 'monitor', 'statistics', 'dump', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'test-schedule', 'unlock')
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'search', 'constants', 'check', 'jupyter', 'kit', 'configure', 'import', 'activities', 'garmin', 'monitor', 'statistics', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'test-schedule', 'unlock')
 
 
 That's three different inner tubes on the front.  The last uses
@@ -114,9 +114,9 @@ Now we can see the statistics:
     > ch2 kit statistics front-tube
     usage: ch2 [-h] [--base DIR] [--read-only] [--log FILE] [--color COLOR] [-v N]
                [--dev] [-V]
-               {help,web,upload,search,constants,check,jupyter,kit,configure,upgrade,activities,garmin,monitor,statistics,dump,fit,fix-fit,thumbnail,package-fit-profile,test-schedule,unlock}
+               {help,web,upload,search,constants,check,jupyter,kit,configure,import,activities,garmin,monitor,statistics,fit,fix-fit,thumbnail,package-fit-profile,test-schedule,unlock}
                ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'search', 'constants', 'check', 'jupyter', 'kit', 'configure', 'upgrade', 'activities', 'garmin', 'monitor', 'statistics', 'dump', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'test-schedule', 'unlock')
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'search', 'constants', 'check', 'jupyter', 'kit', 'configure', 'import', 'activities', 'garmin', 'monitor', 'statistics', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'test-schedule', 'unlock')
 
 
 In this example (which is auto-generated from the commands) there were

@@ -10,12 +10,11 @@
 * [jupyter](#jupyter)
 * [kit](#kit)
 * [configure](#configure)
-* [upgrade](#upgrade)
+* [import](#import)
 * [activities](#activities)
 * [garmin](#garmin)
 * [monitor](#monitor)
 * [statistics](#statistics)
-* [dump](#dump)
 * [fit](#fit)
 * [fix-fit](#fix-fit)
 * [thumbnail](#thumbnail)
@@ -71,7 +70,8 @@ Files are checked for duplication on uploading (before being scanned).
 If the uploaded file is mapped to a file path that already exists then we 
 check the following cases:
 * If the hash matches then the new data are discarded (duplicate).
-* If the hash is different, it is an error (to avoid losing activity diary entries which are keyed by hash).
+* If the hash is different, it is an error (to avoid losing activity diary 
+  entries which are keyed by hash).
 
 If the uploaded file has a hash that matches a file already read into the 
 database, but the file path does not match, then it is an error (internal 
@@ -97,36 +97,86 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
 
 ## search
 
-    > ch2 search [-a|--advanced] QUERY [--show NAME ...] [--set NAME=VALUE]
+    > ch2 search text QUERY [--show NAME ...] [--set NAME=VALUE]
+    > ch2 search activities QUERY [--show NAME ...] [--set NAME=VALUE]
+    > ch2 search sources QUERY [--show NAME ...] [--set NAME=VALUE]
 
-This searches for activities. Once a matching activity is found additional 
-statistics can be displayed (--show) and a single value modified (--set).
+Search the database.
 
-Simple searches (without --advanced) look for matches of all given words in 
-the name and notes fields for the activity.
+The first form (search text) searches for the given text in activity name and 
+description.
 
-The advanced syntax is similar to SQL, but element names are statistic names. 
-The name can include the activity group (start:bike) and SQL wildcards 
-(%fitness%). A name of the form "name:" matches any activity group; "name" 
-matches the activity group of the matched activity (usually what is needed - 
-the main exception is some statistics defined for group All).
+The second form (search activities) is similar, but allows for more complex 
+searches (similar to SQL) that target particular fields.
 
-For advanced searches string values must be quoted, negation and NULL values 
+The third form (search sources) looks for matches for any source (not just 
+activities).
+
+Note that 'search activities' treats both activity journals and activity 
+topics (ie data from FIT files and data entered by the user) as a single 
+'source', while 'search activities' treats each source as separate.
+
+Once a result is found additional statistics from that source be displayed 
+(--show) and a single value modified (--set).
+
+The search syntax (for activities and sources) is similar to SQL, but element 
+names are statistic names. A name has the format "Owner.name:group" where the 
+owner and group are optional. A trailing colon implies a NULL group (used for 
+statistics that are not specific to any activity, like diary entries). The 
+name and group also include SQL wildcards (eg "%fitness%").
+
+The owner of a name is the process that calculated the value. It works as a 
+kind of "namespace" - the database could contain multiple statistics called 
+"active_distance" but only one will have been calculated by 
+ActivityCalculator.
+
+In addition, attributes of the source can be accessed using "Class.attribute" 
+where Class is optional. For showing or setting values on the result, Class 
+must be omitted (so .start=... sets the start attribute).
+
+For complex searches, string values must be quoted, negation and NULL values 
 are not supported, and comparison must be between a name and a value (not two 
 names).
 
-### Example
+There is experimental support for null values (actually missing values). The 
+form of the query is less general than SQL - a field must always be compared 
+with a value (not another field).
 
-    > ch2 search --advanced 'name="Wrong Name"' --set 'name="Right Name"'
+### Examples
 
+    > ch2 search text bournemouth
+
+Find any activities where the text mentions Bournemouth.
+
+    > ch2 search sources 'name="Wrong Name"' --set 'name="Right Name"'
+
+Modify the name variable.
+
+    > ch2 search activities 'ActivityCalculator.active_distance:mtb > 10 and active_time < 3600'
+
+Find mtb activities that cover over 10km in under an hour.
+
+    > ch2 search activities 'name="%"' --show .start name
+
+Find activities that have a defined name and display both the name and the 
+activity start time (the 'dot' syntax allows access to an attribute on the 
+found activity).
+
+    >  ch2 search activities 'ActivityJournal.start=2020-04-17T09:27:30' --set name='Corral Quemado'
+
+Set the name on the activity at the given time (again, using the dot syntax).
 
 
 
 ## constants
 
+    > ch2 constants list
+
+Lists constant names on stdout.
+
     > ch2 constants show [NAME [DATE]]
 
-Lists constants to stdout.
+Shows constant names, descriptions, and values (if NAME is given) on stdout.
 
     > ch2 constants add NAME
 
@@ -140,13 +190,18 @@ all time (so any previously defined values are deleted).
 Note that adding / removing constants (ie their names) is separate from 
 setting / deleting entries (ie their values).
 
-    > ch2 constants delete NAME [DATE]
+    > ch2 constants unset NAME [DATE]
 
 Deletes an entry.
 
     > ch2 constants remove NAME
 
 Remove a constant (the associated entries must have been deleted first).
+
+### Names
+
+A constant name is a token (lower case letters, digits and underscores) 
+optionally followed by a colon and the name of an activity group.
 
 Names can be matched by SQL patterns. So FTHR.% matches both FTHR.Run and 
 FTHR.Bike, for example. In such a case "entry" in the descriptions above may 
@@ -257,7 +312,18 @@ Check that the current database is empty.
 
     > ch2 import 0-30
 
-Import diary entries from a previous version.
+Import data from a previous version (after starting a new version). Data must 
+be imported before any other changes are made to the database.
+
+### Examples
+
+    > ch2 import --enable --diary 0-30
+
+Import only diary entries.
+
+    > ch2 import --diary 0-30
+
+Import everything but diary entries.
 
 
 
@@ -318,31 +384,6 @@ Generate any missing statistics.
 
 Delete statistics after the date (or all, if omitted) and then generate new 
 values.
-
-
-
-## dump
-
-    > ch2 dump COMMAND
-
-Simple access to the database - similar to the interface provided in Jupyter 
-notebooks, but accessed from the command line.
-
-The format can be selected with `--print` (the default), `--csv` and 
-`--describe`.
-
-For full options see `ch2 data -h` and `ch2 data COMMAND -h`
-
-### Examples
-
-    > ch2 dump --csv table StatisticName
-
-Will print the contents of the StatisticName table in CSV format.
-
-    > ch2 dump statistics '%HR%' --group Bike --start 2018-01-01
-
-Will print HR-related statistics from the start of 2018 for the given activity 
-group.
 
 
 
