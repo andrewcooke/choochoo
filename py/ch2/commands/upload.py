@@ -47,7 +47,7 @@ def upload(args, system, db):
 
     > ch2 upload --kit ITEM [ITEM...] -- PATH [PATH ...]
 
-Upload FIT files, storing the data in the permanent store (Data.Dir) on file system.
+Upload FIT files, storing the data in the permanent store on the file system.
 Optionally (if not --fast), scan the files and appropriate entries to the database.
 Both monitor and activity files are accepted.
 
