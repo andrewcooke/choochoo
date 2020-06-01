@@ -3,9 +3,10 @@ import datetime as dt
 from json import dumps, loads
 from logging import getLogger
 from pydoc import locate
-from re import sub
 
 from sqlalchemy import TypeDecorator, Integer, Float, Text
+
+from ..names import simple_name
 
 log = getLogger(__name__)
 
@@ -188,24 +189,6 @@ class Sort(TypeDecorator):
         return value
 
     process_bind_param = process_literal_param
-
-
-def simple_name(name, none=True, strip=True):
-    # allows % and ? for LIKE and templates (although sqlite uses _ instead of ?)
-    # also allows ':' so that we don't mess up composites
-    from ch2.names import POW_2, POW_M1, SPACE
-    if name is None and none:
-        return None
-    name = name.replace(POW_2, '2')
-    name = name.replace(POW_M1, '')  # ms^-1 -> ms which is standard convention
-    name = name.replace('Δ', 'd ')
-    if strip: name = name.strip()
-    name = name.lower()
-    name = sub(r'\s+', SPACE, name)
-    name = sub(r'[^a-z0-9%?:]', SPACE, name)
-    name = sub(r'^(\d)', SPACE + r'\1', name)
-    name = sub(SPACE + '+', SPACE, name)
-    return name
 
 
 class Name(TypeDecorator):

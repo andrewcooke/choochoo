@@ -16,7 +16,7 @@ from .servlets.kit import Kit
 from .servlets.search import Search
 from .servlets.upload import Upload
 from .static import Static
-from ..commands.args import mm, BASE, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, UPLOAD
+from ..commands.args import mm, BASE, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, READ
 from ..jupyter.server import JupyterController
 from ..lib.log import log_current_exception
 from ..lib.server import BaseController
@@ -168,7 +168,7 @@ class WebServer:
         return self.wsgi_app(environ, start_response)
 
     def get_busy(self):
-        percent = self.__sys.get_percent(UPLOAD)
+        percent = self.__sys.get_percent(READ)
         if percent is None: percent = 100
         # the client uses the complete message when the problem has passed
         return {MESSAGE: 'Loading data and recalculating statistics.',

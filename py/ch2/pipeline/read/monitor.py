@@ -9,12 +9,12 @@ from sqlalchemy.sql.functions import count
 
 from .utils import AbortImport, AbortImportButMarkScanned, MultiProcFitReader
 from ..loader import StatisticJournalLoader
-from ...commands.args import MONITOR, mm, FORCE
+from ...commands.args import mm, FORCE, READ
 from ...data.frame import read_query
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...fit.profile.profile import read_fit
 from ...lib.date import time_to_local_date, format_time
-from ...names import N, T, Units, UNDEF
+from ...names import N, T, Units
 from ...sql.database import StatisticJournalType
 from ...sql.tables.monitor import MonitorJournal
 from ...sql.tables.statistic import StatisticJournalInteger, StatisticName, StatisticJournal
@@ -91,9 +91,9 @@ STEPS_DESCRIPTION = '''The increment in steps read from the FIT file.'''
 
 class MonitorReader(MultiProcFitReader):
 
-    def __init__(self, *args, sub_dir=UNDEF, **kargs):
-        from ...commands.upload import MONITOR as MONITOR_DIR
-        super().__init__(*args, sub_dir=MONITOR_DIR if sub_dir is UNDEF else sub_dir, **kargs)
+    def __init__(self, *args, **kargs):
+        from ...commands.read import MONITOR
+        super().__init__(*args, sub_dir=MONITOR, **kargs)
 
     def _get_loader(self, s, **kargs):
         if 'owner' not in kargs:
@@ -102,7 +102,7 @@ class MonitorReader(MultiProcFitReader):
 
     def _base_command(self):
         force = mm(FORCE) if self.force else ""
-        return f'{MONITOR} {force}'
+        return f'{READ} {force}'
 
     def _delete_contained(self, s, start, finish, path):
         for mjournal in s.query(MonitorJournal). \

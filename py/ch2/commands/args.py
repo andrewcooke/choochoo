@@ -10,7 +10,7 @@ from typing import Mapping
 log = getLogger(__name__)
 
 # this can be modified during development.  it will be reset from setup.py on release.
-CH2_VERSION = '0.33.0'
+CH2_VERSION = '0.34.0'
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 DB_EXTN = '.db'   # used to use .sql but auto-complete for sqlite3 didn't work
@@ -20,10 +20,9 @@ PERMANENT = 'permanent'
 PROGNAME = 'ch2'
 COMMAND = 'command'
 
-ACTIVITIES = 'activities'
-CHECK = 'check'
-CONFIGURE = 'configure'
+CALCULATE = 'calculate'
 CONSTANTS = 'constants'
+DATABASE = 'database'
 DIARY = 'diary'
 DUMP = 'dump'
 FIT = 'fit'
@@ -34,16 +33,15 @@ IMPORT = 'import'
 JUPYTER = 'jupyter'
 KIT = 'kit'
 LOAD = 'load'
-MONITOR = 'monitor'
 NO_OP = 'no-op'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
+READ = 'read'
 SEARCH = 'search'
-STATISTICS = 'statistics'
-TEST_SCHEDULE = 'test-schedule'
+SHOW_SCHEDULE = 'show-schedule'
 TEXT = 'text'
 THUMBNAIL = 'thumbnail'
 UNLOCK = 'unlock'
-UPLOAD = 'upload'
+VALIDATE = 'validate'
 WEB = 'web'
 
 A = 'a'
@@ -52,6 +50,7 @@ ACTIVITY_GROUP = 'activity-group'
 ACTIVITY_GROUPS = 'activity-groups'
 ACTIVITY_JOURNALS = 'activity-journals'
 ACTIVITY_JOURNAL_ID = 'activity-journal-id'
+ACTIVITIES = 'activities'
 ADD = 'add'
 ADD_HEADER = 'add-header'
 ADVANCED = 'advanced'
@@ -77,7 +76,6 @@ CSV = 'csv'
 D = 'd'
 DARK = 'dark'
 DATA = 'data'
-DATABASE = 'database'
 DATE = 'date'
 DEFAULT = 'default'
 DEFINE = 'define'
@@ -86,6 +84,7 @@ DESCRIBE = 'describe'
 DESCRIPTION = 'description'
 DEV = 'dev'
 DIR = 'dir'
+DISABLE = 'disable'
 DISCARD = 'discard'
 DROP = 'drop'
 EMPTY = 'empty'
@@ -132,7 +131,7 @@ MAX_ROWS = 'max-rows'
 MAX_RECORD_LEN = 'max-record-len'
 MIN_SYNC_CNT = 'min-sync-cnt'
 MODEL = 'model'
-MONITOR_JOURNALS = 'monitor-journals'
+MONITOR = 'monitor'
 MONTH = 'month'
 MONTHS = 'months'
 NAME = 'name'
@@ -176,6 +175,7 @@ SOURCE = 'source'
 SOURCES = 'sources'
 SOURCE_ID = 'source-id'
 START = 'start'
+STATISTICS = 'statistics'
 STATISTIC_NAMES = 'statistic-names'
 STATISTIC_JOURNALS = 'statistic-journals'
 STATUS = 'status'
@@ -191,7 +191,6 @@ UNLIKE = 'unlike'
 UNSAFE = 'unsafe'
 UNSET = 'unset'
 USER = 'user'
-VALIDATE = 'validate'
 V, VERBOSITY = 'v', 'verbosity'
 VALUE = 'value'
 VERSION = 'version'
@@ -292,19 +291,18 @@ def make_parser(with_noop=False):
     web_cmds.add_parser(STATUS, help='display status of web server')
     add_web_server_args(web_cmds.add_parser(SERVICE, help='internal use only - use start/stop'))
 
-    upload = subparsers.add_parser(UPLOAD, help='upload data (calls activities, monitor, statistics)')
-    upload.add_argument(mm(FORCE), action='store_true', help='reprocess existing data')
-    upload.add_argument(mm(KIT), m(K), action='append', default=[], metavar='ITEM',
-                        help='kit items associated with activities')
-    upload.add_argument(PATH, metavar='PATH', nargs='*', default=[], help='path to fit file(s) for activities')
-    upload.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
-                        help='keyword argument to be passed to the pipelines (can be repeated)')
-    upload.add_argument(mm(FAST), action='store_true',
-                        help='skip activity and statistics (just copy files)')
-    upload.add_argument(mm(UNSAFE), action='store_true',
-                        help='ignore duplicate files')
-    upload.add_argument(mm(DELETE), action='store_true',
-                        help='delete source on success')
+    read = subparsers.add_parser(READ, help='read data (also calls calculate)')
+    read.add_argument(mm(FORCE), action='store_true', help='reprocess existing data')
+    read.add_argument(mm(KIT), m(K), action='append', default=[], metavar='ITEM',
+                      help='kit items associated with activities')
+    read.add_argument(PATH, metavar='PATH', nargs='*', default=[], help='path to fit file(s) for activities')
+    read.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
+                      help='keyword argument to be passed to the pipelines (can be repeated)')
+    read.add_argument(mm(WORKER), metavar='ID', type=int, help='internal use only (identifies sub-process workers)')
+    read.add_argument(mm(DISABLE), action='store_true', help='disable following options (they enable by default)')
+    read.add_argument(mm(ACTIVITIES), action='store_true', help='enable (or disable) processing of activity data')
+    read.add_argument(mm(MONITOR), action='store_true', help='enable (or disable) processing of monitor data')
+    read.add_argument(mm(CALCULATE), action='store_true', help='enable (or disable) calculating statistics')
 
     def add_search_query(cmd):
         cmd.add_argument(QUERY, metavar='QUERY', default=[], nargs='+',
@@ -351,8 +349,8 @@ def make_parser(with_noop=False):
     constants_remove.add_argument(NAME, metavar='NAME', help='name')
     constants_remove.add_argument(mm(FORCE), action='store_true', help='allow remove of multiple constants')
 
-    check = subparsers.add_parser(CHECK, help='check (and optionally fix) system')
-    check.add_argument(mm(FIX), action='store_true', help='correct errors when possible')
+    validate = subparsers.add_parser(VALIDATE, help='check (and optionally fix) data in the database')
+    validate.add_argument(mm(FIX), action='store_true', help='correct errors when possible')
 
     jupyter = subparsers.add_parser(JUPYTER, help='access jupyter')
     jupyter_cmds = jupyter.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
@@ -405,44 +403,31 @@ def make_parser(with_noop=False):
 
     # low-level commands use rarely
 
-    configure = subparsers.add_parser(CONFIGURE, help='configure the database')
-    configure_cmds = configure.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    configure_check = configure_cmds.add_parser(CHECK, help="check config")
-    configure_check.add_argument(mm(no(DATA)), action='store_true', help='check database has no data loaded')
-    configure_check.add_argument(mm(no(CONFIGURE)), action='store_true', help='check database has no configuration')
-    configure_check.add_argument(mm(no(ACTIVITY_GROUPS)), action='store_true',
-                              help='check database has no activity groups defined')
-    configure_list = configure_cmds.add_parser(LIST, help='list available profiles')
-    configure_load = configure_cmds.add_parser(LOAD, help="configure using the given profile")
-    configure_profiles = configure_load.add_subparsers(title='profile', dest=PROFILE, required=True)
+    database = subparsers.add_parser(DATABASE, help='configure the database')
+    database_cmds = database.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    database_check = database_cmds.add_parser(CHECK, help="check config")
+    database_check.add_argument(mm(no(DATA)), action='store_true', help='check database has no data loaded')
+    database_check.add_argument(mm(no(DATABASE)), action='store_true', help='check database has no configuration')
+    database_check.add_argument(mm(no(ACTIVITY_GROUPS)), action='store_true',
+                                help='check database has no activity groups defined')
+    database_list = database_cmds.add_parser(LIST, help='list available profiles')
+    database_load = database_cmds.add_parser(LOAD, help="configure using the given profile")
+    database_profiles = database_load.add_subparsers(title='profile', dest=PROFILE, required=True)
     from ..config.utils import profiles
     for name in profiles():
-        configure_profile = configure_profiles.add_parser(name)
-        configure_profile.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
-    configure_delete = configure_cmds.add_parser(DELETE, help='delete current data')
-    configure_delete.add_argument(mm(FORCE), action='store_true', help='are you sure?')
+        database_profile = database_profiles.add_parser(name)
+        database_profile.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
+    database_delete = database_cmds.add_parser(DELETE, help='delete current data')
+    database_delete.add_argument(mm(FORCE), action='store_true', help='are you sure?')
 
-    import_ = subparsers.add_parser(IMPORT, help='copy diary entries from a previous version')
+    import_ = subparsers.add_parser(IMPORT, help='import data from a previous version')
     import_.add_argument(SOURCE, help='version or path to import')
-    import_.add_argument(mm(ENABLE), action='store_true',
-                         help='other options enable sub-imports (they disable by default)')
-    import_.add_argument(mm(DIARY), action='store_true', help='disable (or enable) import of diary data')
-    import_.add_argument(mm(ACTIVITIES), action='store_true', help='disable (or enable) import of activity data')
-    import_.add_argument(mm(KIT), action='store_true', help='disable (or enable) import of kit data')
-    import_.add_argument(mm(CONSTANTS), action='store_true', help='disable (or enable) import of constant data')
-    import_.add_argument(mm(SEGMENTS), action='store_true', help='disable (or enable) import of segment data')
-
-    activities = subparsers.add_parser(ACTIVITIES, help='read activity data')
-    activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
-    activities.add_argument(PATH, metavar='PATH', nargs='*', default=[], help='path to fit file(s)')
-    activities.add_argument(mm(DEFINE), m(D.upper()), action='append', default=[], metavar='NAME=VALUE',
-                            help='statistic to be stored with the activities (can be repeated)')
-    activities.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
-                            help='keyword argument to be passed to the pipelines (can be repeated)')
-    activities.add_argument(mm(no(FILENAME_KIT)), action='store_false', dest=FILENAME_KIT,
-                            help='ignore kit encoded in file name')
-    activities.add_argument(mm(WORKER), metavar='ID', type=int,
-                            help='internal use only (identifies sub-process workers)')
+    import_.add_argument(mm(DISABLE), action='store_true', help='disable following options (they enable by default)')
+    import_.add_argument(mm(DIARY), action='store_true', help='enable (or disable) import of diary data')
+    import_.add_argument(mm(ACTIVITIES), action='store_true', help='enable (or disable) import of activity data')
+    import_.add_argument(mm(KIT), action='store_true', help='enable (or disable) import of kit data')
+    import_.add_argument(mm(CONSTANTS), action='store_true', help='enable (or disable) import of constant data')
+    import_.add_argument(mm(SEGMENTS), action='store_true', help='enable (or disable) import of segment data')
 
     garmin = subparsers.add_parser(GARMIN, help='download monitor data from garmin connect')
     garmin.add_argument(DIR, metavar='DIR', nargs='?', help='the directory where FIT files are stored')
@@ -451,29 +436,18 @@ def make_parser(with_noop=False):
     garmin.add_argument(mm(DATE), metavar='DATE', type=to_date, help='date to download')
     garmin.add_argument(mm(FORCE), action='store_true', help='allow longer date range')
 
-    monitor = subparsers.add_parser(MONITOR, help='read monitor data')
-    monitor.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
-    monitor.add_argument(PATH, metavar='PATH', nargs='*', help='path to fit file(s)')
-    monitor.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
-                         help='keyword argument to be passed to the pipelines (can be repeated)')
-    monitor.add_argument(mm(WORKER), metavar='ID', type=int,
-                         help='internal use only (identifies sub-process workers)')
-
-    statistics = subparsers.add_parser(STATISTICS, help='(re-)generate statistics')
-    statistics.add_argument(mm(FORCE), action='store_true',
-                            help='delete existing statistics')
-    statistics.add_argument(mm(LIKE), action='append', default=[], metavar='PATTERN',
-                            help='run only matching pipeline classes')
-    statistics.add_argument(mm(UNLIKE), action='append', default=[], metavar='PATTERN',
-                            help='exclude matching pipeline classes')
-    statistics.add_argument(START, metavar='START', nargs='?',
-                            help='optional start date')
-    statistics.add_argument(FINISH, metavar='FINISH', nargs='?',
-                            help='optional finish date (if start also given)')
-    statistics.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
-                            help='keyword argument to be passed to the pipelines (can be repeated)')
-    statistics.add_argument(mm(WORKER), metavar='ID', type=int,
-                            help='internal use only (identifies sub-process workers)')
+    calculate = subparsers.add_parser(CALCULATE, help='(re-)calculate statistics')
+    calculate.add_argument(mm(FORCE), action='store_true', help='delete existing statistics')
+    calculate.add_argument(mm(LIKE), action='append', default=[], metavar='PATTERN',
+                           help='run only matching pipeline classes')
+    calculate.add_argument(mm(UNLIKE), action='append', default=[], metavar='PATTERN',
+                           help='exclude matching pipeline classes')
+    calculate.add_argument(START, metavar='START', nargs='?', help='optional start date')
+    calculate.add_argument(FINISH, metavar='FINISH', nargs='?', help='optional finish date (if start also given)')
+    calculate.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
+                           help='keyword argument to be passed to the pipelines (can be repeated)')
+    calculate.add_argument(mm(WORKER), metavar='ID', type=int,
+                           help='internal use only (identifies sub-process workers)')
 
     fit = subparsers.add_parser(FIT, help='display contents of fit file')
     fit_cmds = fit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
@@ -493,42 +467,29 @@ def make_parser(with_noop=False):
                          help='skip initial bytes')
         cmd.add_argument(mm(LIMIT_BYTES), type=int, metavar='N', default=-1,
                          help='limit number of bytes displayed')
-        cmd.add_argument(m(W), mm(WARN), action='store_true',
-                         help='log additional warnings')
-        cmd.add_argument(mm(no(VALIDATE)), action='store_true',
-                         help='do not validate checksum, length')
+        cmd.add_argument(m(W), mm(WARN), action='store_true', help='log additional warnings')
+        cmd.add_argument(mm(no(VALIDATE)), action='store_true', help='do not validate checksum, length')
         cmd.add_argument(mm(MAX_DELTA_T), type=float, metavar='S',
                          help='validate seconds between timestamps (and non-decreasing)')
-        cmd.add_argument(mm(NAME), action='store_true',
-                         help='print file name')
-        cmd.add_argument(PATH, metavar='PATH', nargs='+',
-                         help='path to fit file')
+        cmd.add_argument(mm(NAME), action='store_true', help='print file name')
+        cmd.add_argument(PATH, metavar='PATH', nargs='+', help='path to fit file')
 
     def add_fit_grep(cmd):
-        cmd.add_argument(mm(NOT), action='store_true',
-                         help='print file names that don\'t match (with --name)')
-        cmd.add_argument(mm(MATCH), type=int, default=-1,
-                         help='max number of matches (default -1 for all)')
-        cmd.add_argument(mm(COMPACT), action='store_true',
-                         help='no space between records')
-        cmd.add_argument(mm(CONTEXT), action='store_true',
-                         help='display entire record')
+        cmd.add_argument(mm(NOT), action='store_true', help='print file names that don\'t match (with --name)')
+        cmd.add_argument(mm(MATCH), type=int, default=-1, help='max number of matches (default -1 for all)')
+        cmd.add_argument(mm(COMPACT), action='store_true', help='no space between records')
+        cmd.add_argument(mm(CONTEXT), action='store_true', help='display entire record')
         cmd.add_argument(m(P), mm(PATTERN), nargs='+', metavar='MSG:FLD[=VAL]', required=True,
                          help='pattern to match (separate from PATH with --)')
 
     def add_fit_high_level(cmd):
-        cmd.add_argument(m(M), mm(MESSAGE), nargs='+', metavar='MSG',
-                         help='display named messages')
-        cmd.add_argument(m(F), mm(FIELD), nargs='+', metavar='FLD',
-                         help='display named fields')
-        cmd.add_argument(mm(INTERNAL), action='store_true',
-                         help='display internal messages')
+        cmd.add_argument(m(M), mm(MESSAGE), nargs='+', metavar='MSG', help='display named messages')
+        cmd.add_argument(m(F), mm(FIELD), nargs='+', metavar='FLD', help='display named fields')
+        cmd.add_argument(mm(INTERNAL), action='store_true', help='display internal messages')
 
     def add_fit_very_high_level(cmd):
-        cmd.add_argument(mm(ALL_MESSAGES), action='store_true',
-                         help='display undocumented messages')
-        cmd.add_argument(mm(ALL_FIELDS), action='store_true',
-                         help='display undocumented fields')
+        cmd.add_argument(mm(ALL_MESSAGES), action='store_true', help='display undocumented messages')
+        cmd.add_argument(mm(ALL_FIELDS), action='store_true', help='display undocumented fields')
 
     for cmd in fit_grep, fit_records, fit_tables, fit_csv, fit_tokens, fit_fields:
         add_fit_general(cmd)
@@ -546,35 +507,26 @@ def make_parser(with_noop=False):
                          help='display width')
 
     fix_fit = subparsers.add_parser(FIX_FIT, help='fix a corrupted fit file')
-    fix_fit.add_argument(PATH, metavar='PATH', nargs='+',
-                         help='path to fit file')
-    fix_fit.add_argument(m(W), mm(WARN), action='store_true',
-                         help='additional warning messages')
+    fix_fit.add_argument(PATH, metavar='PATH', nargs='+', help='path to fit file')
+    fix_fit.add_argument(m(W), mm(WARN), action='store_true', help='additional warning messages')
     fix_fit_output = fix_fit.add_argument_group(title='output (default hex to stdout)').add_mutually_exclusive_group()
     fix_fit_output.add_argument(m(O), mm(OUTPUT), action='store',
                                 help='output file for fixed data (otherwise, stdout)')
-    fix_fit_output.add_argument(mm(DISCARD), action='store_true',
-                                help='discard output (otherwise, stdout)')
-    fix_fit_output.add_argument(mm(RAW), action='store_true',
-                                help='raw binary to stdout (otherwise, hex encoded)')
+    fix_fit_output.add_argument(mm(DISCARD), action='store_true', help='discard output (otherwise, stdout)')
+    fix_fit_output.add_argument(mm(RAW), action='store_true', help='raw binary to stdout (otherwise, hex encoded)')
     fix_fit_output.add_argument(mm(NAME_BAD), action='store_false', dest=NAME, default=None,
                                 help='print file name if bad')
     fix_fit_output.add_argument(mm(NAME_GOOD), action='store_true', dest=NAME, default=None,
                                 help='print file name if good')
     fix_fit_process = fix_fit.add_argument_group(title='processing (default disabled)')
-    fix_fit_process.add_argument(mm(ADD_HEADER), action='store_true',
-                                 help='preprend a new header')
+    fix_fit_process.add_argument(mm(ADD_HEADER), action='store_true', help='preprend a new header')
     fix_fit_stage = fix_fit_process.add_mutually_exclusive_group()
     fix_fit_stage.add_argument(mm(DROP), action='store_true',
                                help='search for data that can be dropped to give a successful parse')
-    fix_fit_stage.add_argument(mm(SLICES), metavar='A:B,C:D,...',
-                               help='data slices to pick')
-    fix_fit_stage.add_argument(mm(START), type=to_time, metavar='TIME',
-                               help='change start time')
-    fix_fit_process.add_argument(mm(FIX_HEADER), action='store_true',
-                                 help='modify the header')
-    fix_fit_process.add_argument(mm(FIX_CHECKSUM), action='store_true',
-                                 help='modify the checksum')
+    fix_fit_stage.add_argument(mm(SLICES), metavar='A:B,C:D,...', help='data slices to pick')
+    fix_fit_stage.add_argument(mm(START), type=to_time, metavar='TIME', help='change start time')
+    fix_fit_process.add_argument(mm(FIX_HEADER), action='store_true', help='modify the header')
+    fix_fit_process.add_argument(mm(FIX_CHECKSUM), action='store_true', help='modify the checksum')
     fix_fit_process.add_argument(mm(no(FORCE)), action='store_false', dest=FORCE,
                                  help='don\'t parse record contents')
     fix_fit_process.add_argument(mm(no(VALIDATE)), action='store_false', dest=VALIDATE,
@@ -615,13 +567,10 @@ def make_parser(with_noop=False):
     package_fit_profile.add_argument(m(W), mm(WARN), action='store_true',
                                      help='additional warning messages')
 
-    test_schedule = subparsers.add_parser(TEST_SCHEDULE, help='print schedule locations in a calendar')
-    test_schedule.add_argument(SCHEDULE, metavar='SCHEDULE',
-                               help='schedule to test')
-    test_schedule.add_argument(mm(START), metavar='DATE',
-                               help='date to start displaying data')
-    test_schedule.add_argument(mm(MONTHS), metavar='N', type=int,
-                               help='number of months to display')
+    show_schedule = subparsers.add_parser(SHOW_SCHEDULE, help='print schedule locations in a calendar')
+    show_schedule.add_argument(SCHEDULE, metavar='SCHEDULE', help='schedule to test')
+    show_schedule.add_argument(mm(START), metavar='DATE', help='date to start displaying data')
+    show_schedule.add_argument(mm(MONTHS), metavar='N', type=int, help='number of months to display')
 
     unlock = subparsers.add_parser(UNLOCK, help='remove database locking')
 
@@ -677,3 +626,13 @@ def parse_pairs(pairs, convert=True, multi=False, comma=False):
             else:
                 d[name] = value
     return d
+
+
+def infer_flags(args, *names):
+    flags = {name: args[name] for name in names}
+    # if none were given, all are assumed
+    if all(not flags[name] for name in names):
+        for name in names: flags[name] = True
+    if args[DISABLE]:
+        for name in flags: flags[name] = not flags[name]
+    return flags

@@ -5,7 +5,7 @@ from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
 from ..pipeline import MultiProcPipeline, UniProcPipeline, LoaderMixin
-from ...commands.args import STATISTICS
+from ...commands.args import CALCULATE
 from ...lib import local_time_to_time, time_to_local_time, to_date, format_date, log_current_exception
 from ...lib.schedule import Schedule
 from ...sql import Timestamp, StatisticName, StatisticJournal, ActivityJournal, ActivityGroup, SegmentJournal, Interval
@@ -30,7 +30,7 @@ class CalculatorMixin:
         return start, finish
 
     def _base_command(self):
-        return f'{STATISTICS}'
+        return f'{CALCULATE}'
 
 
 class MultiProcCalculator(CalculatorMixin, MultiProcPipeline):

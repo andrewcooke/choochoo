@@ -38,7 +38,7 @@ class FitReaderMixin(LoaderMixin):
         pass
 
     def _expand_paths(self, s, paths):
-        from ...commands.upload import DOT_FIT
+        from ...commands.read import DOT_FIT
         if paths: return paths
         data_dir = base_system_path(self.base, version=PERMANENT)
         if self.sub_dir:

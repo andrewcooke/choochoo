@@ -6,13 +6,13 @@ from sqlalchemy.sql.functions import count
 
 from .utils import AbortImportButMarkScanned, MultiProcFitReader
 from ... import FatalException
-from ...commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no, FILENAME_KIT
-from ...names import N, T, Units, Sports, Summaries as S, UNDEF
+from ...commands.args import mm, FORCE, DEFAULT, KIT, no, FILENAME_KIT, READ
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
 from ...lib.date import to_time, time_to_local_time
 from ...lib.io import split_fit_path
+from ...names import N, T, Units, Sports, Summaries as S
 from ...sql.database import Timestamp, StatisticJournalText
 from ...sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES, StatisticName, \
@@ -32,27 +32,20 @@ class ActivityReader(MultiProcFitReader):
 
     KIT = 'kit'
 
-    def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, filename_kit=True,
-                 sub_dir=UNDEF, **kargs):
-        from ...commands.upload import ACTIVITY
+    def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, **kargs):
+        from ...commands.read import ACTIVITY
         self.define = define if define else {}
-        self.filename_kit = filename_kit
         self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
         self.record_to_db = [(field, title, units, STATISTIC_JOURNAL_CLASSES[type])
                              for field, (title, units, type)
                              in self._assert('record_to_db', record_to_db).items()]
         self.add_elevation = not any(title == T.ELEVATION for (field, title, units, type) in self.record_to_db)
         self.__ajournal = None  # save for coverage
-        super().__init__(*args, sub_dir=ACTIVITY if sub_dir is UNDEF else sub_dir, **kargs)
+        super().__init__(*args, sub_dir=ACTIVITY, **kargs)
 
     def _base_command(self):
-        if self.define:
-            define = ' '.join(f'{mm(DEFINE)} "{name}={value}"' for name, value in self.define.items()) + ' -- '
-        else:
-            define = ''
-        force = ' ' + mm(FORCE) if self.force else ''
-        nokit = ' ' + mm(no(KIT)) if not self.filename_kit else ''
-        return f'{ACTIVITIES}{force}{define}{nokit}'
+        force = mm(FORCE) if self.force else ''
+        return f'{READ} {force}'
 
     def _startup(self, s):
         super()._startup(s)
@@ -60,17 +53,16 @@ class ActivityReader(MultiProcFitReader):
 
     def _build_define(self, path):
         define = dict(self.define)
-        if self.filename_kit:
-            _, kit = split_fit_path(path)
-            if kit:
-                if ActivityReader.KIT in define and define[ActivityReader.KIT] != kit:
-                    log.warning(f'Changing {ActivityReader.KIT} from {define[ActivityReader.KIT]} '
-                                f'(given on command line) to {kit} (inferred from file name.  '
-                                f'Use {mm(no(FILENAME_KIT))} to discard filename value.')
-                log.debug(f'Adding {ActivityReader.KIT}={kit} to definitions')
-                define[ActivityReader.KIT] = kit
-            else:
-                log.debug(f'No {ActivityReader.KIT} in {path}')
+        _, kit = split_fit_path(path)
+        if kit:
+            if ActivityReader.KIT in define and define[ActivityReader.KIT] != kit:
+                log.warning(f'Changing {ActivityReader.KIT} from {define[ActivityReader.KIT]} '
+                            f'(given on command line) to {kit} (inferred from file name.  '
+                            f'Use {mm(no(FILENAME_KIT))} to discard filename value.')
+            log.debug(f'Adding {ActivityReader.KIT}={kit} to definitions')
+            define[ActivityReader.KIT] = kit
+        else:
+            log.debug(f'No {ActivityReader.KIT} in {path}')
         return define
 
     def _read_data(self, s, file_scan):

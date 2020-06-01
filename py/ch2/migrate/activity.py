@@ -4,7 +4,7 @@ from logging import getLogger
 from . import journal_imported, match_statistic_name, copy_statistic_journal, any_attr
 from ..lib.log import log_current_exception
 from ..sql import ActivityTopicJournal, FileHash, ActivityTopic, ActivityGroup
-from ..sql.types import simple_name
+from ..names import simple_name
 
 log = getLogger(__name__)
 
@@ -77,14 +77,21 @@ def create_activity_topic_journal(record, old_s, old, old_activity_topic_journal
     new_file_hash = FileHash.get_or_add(new_s, any_attr(old_file_hash, 'hash', 'md5'))
     log.debug(f'Found new file_hash {new_file_hash}')
     activity_group = old.meta.tables['activity_group']
+    source = old.meta.tables['source']
     try:
-        # old style, group associated with statistics
+        # new style both
         old_activity_group = old_s.query(activity_group). \
-            filter(activity_group.c.id == old_statistic_name.activity_group_id).one()
+            join(source, source.c.activity_group_id == activity_group.c.id). \
+            filter(source.c.id == old_activity_topic_journal.id).one()
     except:
-        # new style (0-33), group associated with source
-        old_activity_group = old_s.query(activity_group). \
-            filter(activity_group.c.id == old_activity_topic_journal.activity_group_id).one()
+        try:
+            # old style, group associated with statistics
+            old_activity_group = old_s.query(activity_group). \
+                filter(activity_group.c.id == old_statistic_name.activity_group_id).one()
+        except:
+            # old / new style (0-33), group associated with source
+            old_activity_group = old_s.query(activity_group). \
+                filter(activity_group.c.id == old_activity_topic_journal.activity_group_id).one()
     log.debug(f'Found old activity_group {old_activity_group}')
     new_activity_group = new_s.query(ActivityGroup). \
         filter(ActivityGroup.name == simple_name(old_activity_group.name)).one()

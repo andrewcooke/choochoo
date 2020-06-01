@@ -7,10 +7,10 @@ from sqlalchemy.orm import relationship, backref
 
 from .source import Source, SourceType, GroupedSource
 from ..support import Base
-from ..types import Time, Sort, ShortCls, NullText, Name, name_and_title, simple_name
+from ..types import Time, Sort, ShortCls, NullText, Name, name_and_title
 from ...lib.date import format_time, local_date_to_time, local_time_to_time
 from ...lib.utils import timing
-from ...names import Titles, UNDEF
+from ...names import Titles, UNDEF, simple_name
 
 log = getLogger(__name__)
 

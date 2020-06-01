@@ -8,17 +8,17 @@ from ..pipeline.pipeline import run_pipeline
 log = getLogger(__name__)
 
 
-def statistics(args, sys, db):
+def calculate(args, sys, db):
     '''
-## statistics
+## calculate
 
-    > ch2 statistics
+    > ch2 calculate
 
-Generate any missing statistics.
+Calculate any missing statistics.
 
-    > ch2 statistics --force [DATE]
+    > ch2 calculate --force [START [FINISH]]
 
-Delete statistics after the date (or all, if omitted) and then generate new values.
+Delete statistics in the date range (or all, if omitted) and then calculate new values.
     '''
     run_statistic_pipelines(sys, db, args[BASE], force=args[FORCE], like=args[LIKE], unlike=args[UNLIKE],
                             start=args[START], finish=args[FINISH], worker=args[WORKER] is not None, id=args[WORKER],

@@ -14,9 +14,8 @@ from ...data.power import add_differentials, add_energy_budget, add_loss_estimat
     add_air_speed
 from ...lib import log_current_exception
 from ...lib.data import reftuple, MissingReference
-from ...names import N, Units, Summaries, T
+from ...names import N, Units, Summaries, T, simple_name
 from ...sql import StatisticJournalFloat, Constant
-from ...sql.types import simple_name
 
 log = getLogger(__name__)
 

@@ -10,12 +10,12 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from .source import Interval
 from ..support import Base
-from ..types import Time, ShortCls, Name, name_and_title, simple_name
+from ..types import Time, ShortCls, Name, name_and_title
 from ..utils import add
 from ...diary.model import TYPE, MEASURES, SCHEDULES
 from ...lib.date import format_seconds, local_date_to_time, time_to_local_time
 from ...lib.utils import sigfig
-from ...names import Units
+from ...names import Units, simple_name
 
 log = getLogger(__name__)
 

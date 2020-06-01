@@ -3,7 +3,7 @@ from logging import getLogger
 from os.path import join, exists
 from shutil import rmtree
 
-from .args import no, mm, SUB_COMMAND, CHECK, DATA, CONFIGURE, ACTIVITY_GROUPS, LIST, PROFILE, DIARY, DELETE, FORCE, \
+from .args import no, mm, SUB_COMMAND, CHECK, DATA, DATABASE, ACTIVITY_GROUPS, LIST, PROFILE, DIARY, DELETE, FORCE, \
     BASE
 from .help import Markdown
 from ..config.utils import profiles, get_profile
@@ -14,23 +14,23 @@ from ..sql.tables.statistic import StatisticName, StatisticJournal
 log = getLogger(__name__)
 
 
-def configure(args, sys, db):
+def database(args, sys, db):
     '''
-## configure
+## database
 
-    > ch2 configure load default
+    > ch2 database load default
 
-Generate a simple initial configuration.
+Load the initial database schema.
 
 Please see the documentation at http://andrewcooke.github.io/choochoo - you have a lot more options!
 
-    > ch2 configure check --no-config --no-data
+    > ch2 database check --no-config --no-data
 
 Check that the current database is empty.
     '''
     action = args[SUB_COMMAND]
     if action == CHECK:
-        check(db, args[no(CONFIGURE)], args[no(DATA)], args[no(ACTIVITY_GROUPS)])
+        check(db, args[no(DATABASE)], args[no(DATA)], args[no(ACTIVITY_GROUPS)])
     elif action == LIST:
         list()
     elif action == DELETE:

@@ -128,7 +128,7 @@ class GarminConnect:
         log.info('Downloaded data for %s to %s' % (date, path))
 
     def get_monitoring_to_fit_file(self, date, data_dir, old_format=False):
-        from ...commands.upload import write_file, DATA, hash_file, NAME, parse_fit_data, build_path
+        from ...commands.read import write_file, DATA, hash_file, NAME, parse_fit_data, build_path
         response = self.get_monitoring(date)
         zipfile = ZipFile(BytesIO(response.content))
         for name in zipfile.namelist():

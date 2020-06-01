@@ -19,13 +19,12 @@ class FatalException(Exception):
     pass
 
 
-from .commands.activities import activities
 from .commands.args import COMMAND, make_parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
-    PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, CONFIGURE, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, UPLOAD, IMPORT, THUMBNAIL, CHECK, SEARCH
+    PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DATABASE, CONSTANTS, CALCULATE, SHOW_SCHEDULE, MONITOR, GARMIN, \
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE
 from .commands.constants import constants
-from .commands.check import check
-from .commands.configure import configure
+from .commands.validate import validate
+from .commands.database import database
 from .commands.fit import fit
 from .commands.fix_fit import fix_fit
 from .commands.garmin import garmin
@@ -33,14 +32,13 @@ from .commands.help import help, Markdown
 from .commands.import_ import import_
 from .commands.jupyter import jupyter
 from .commands.kit import kit
-from .commands.monitor import monitor
 from .commands.package_fit_profile import package_fit_profile
 from .commands.search import search
-from .commands.statistics import statistics
-from .commands.test_schedule import test_schedule
+from .commands.calculate import calculate
+from .commands.show_schedule import show_schedule
 from .commands.thumbnail import thumbnail
 from .commands.unlock import unlock
-from .commands.upload import upload
+from .commands.read import read
 from .commands.web import web
 from .lib.io import tui
 from .lib.log import make_log_from_args, log_current_exception, set_log_color
@@ -61,10 +59,8 @@ at the command line.
     pass
 
 
-COMMANDS = {ACTIVITIES: activities,
-            CHECK: check,
-            CONSTANTS: constants,
-            CONFIGURE: configure,
+COMMANDS = {CONSTANTS: constants,
+            DATABASE: database,
             FIT: fit,
             FIX_FIT: fix_fit,
             GARMIN: garmin,
@@ -72,15 +68,15 @@ COMMANDS = {ACTIVITIES: activities,
             IMPORT: import_,
             JUPYTER: jupyter,
             KIT: kit,
-            MONITOR: monitor,
-            STATISTICS: statistics,
+            CALCULATE: calculate,
             NO_OP: no_op,
             PACKAGE_FIT_PROFILE: package_fit_profile,
+            READ: read,
             SEARCH: search,
-            TEST_SCHEDULE: test_schedule,
+            SHOW_SCHEDULE: show_schedule,
             THUMBNAIL: thumbnail,
             UNLOCK: unlock,
-            UPLOAD: upload,
+            VALIDATE: validate,
             WEB: web
             }
 
@@ -104,7 +100,7 @@ def main():
     enable_callback_tracebacks(True)  # experimental - wondering what this does / whether it is useful?
     set_log_color(args, sys)
     try:
-        if db.no_data() and (not command or command_name not in (CONFIGURE, PACKAGE_FIT_PROFILE, HELP, WEB)):
+        if db.no_data() and (not command or command_name not in (DATABASE, PACKAGE_FIT_PROFILE, HELP, WEB)):
             refuse_until_configured(db.path)
         elif command:
             command(args, sys, db)
@@ -150,4 +146,4 @@ To generate a default configuration use the command
     %s %s
 
 NOTE: The default configuration is only an example.  Please see the docs
-for more details.''' % (PROGNAME, CONFIGURE))
+for more details.''' % (PROGNAME, DATABASE))

@@ -32,8 +32,10 @@ class Pipeline(Base):
     sort = Column(Sort, nullable=False)
 
     @classmethod
-    def _query(cls, s, type, like=tuple(), unlike=tuple(), id=None):
-        q = s.query(Pipeline).filter(Pipeline.type == type)
+    def _query(cls, s, type=None, like=tuple(), unlike=tuple(), id=None):
+        q = s.query(Pipeline)
+        if type is not None:  # enum can be 0
+            q = q.filter(Pipeline.type == type)
         if like:
             q = q.filter(or_(*[Pipeline.cls.like(pattern) for pattern in like]))
         if unlike:

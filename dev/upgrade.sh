@@ -39,7 +39,7 @@ if [ -d $NEW_BASE ]; then
 fi
 
 echo -e "\ninstalling"
-dev/ch2 --dev --color DARK configure load acooke || { echo -e "\ninstall failed"; exit 2; }
+dev/ch2 --dev --color DARK database load acooke || { echo -e "\ndatabase failed"; exit 2; }
 
 echo -e "\nimporting old data"
 dev/ch2 --dev import $OLD_VERSION || { echo -e "\nimport failed"; exit 3; }
@@ -49,7 +49,7 @@ if [ -e dev/set-constants.sh ]; then
 fi
 
 echo -e "\nrebuilding"
-dev/ch2 --dev upload || { echo -e "\nupload failed"; exit 4; }
+dev/ch2 --dev read || { echo -e "\nread failed"; exit 4; }
 
-echo -e "\nchecking (and fixing)"
-dev/ch2 check --fix
+echo -e "\nvalidating (and fixing)"
+dev/ch2 validate --fix

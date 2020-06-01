@@ -1,7 +1,7 @@
 from logging import getLogger
 from sys import stdout
 
-from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, \
+from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, CALCULATE, NAME, SHOW, CSV, \
     START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT, CMD, VALUE, BASE
 from ..names import Units, Names
 from ..diary.model import TYPE, UNITS
@@ -87,7 +87,7 @@ but in general must be unique.  They can contain spaces if quoted.
                 undo(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[ALL])
             elif cmd == SHOW:
                 show(s, args[NAME], args[DATE], csv=args[CSV], output=output)
-            elif cmd == STATISTICS:
+            elif cmd == CALCULATE:
                 statistics(s, args[NAME], csv=args[CSV], output=output)
             elif cmd == DUMP:
                 dump(s, args[CMD])
@@ -231,9 +231,9 @@ def stats_children(model):
 def to_stats(model):
     if TYPE in model:
         label = f'{model[TYPE]}: {model[NAME]}'
-        if STATISTICS in model:
+        if CALCULATE in model:
             log.debug(f'Extracting statistics from {model[TYPE]}')
-            return label, model[STATISTICS]
+            return label, model[CALCULATE]
         else:
             log.debug('No statistics in model')
             return label, None
@@ -248,8 +248,8 @@ def to_stats(model):
 def to_stats_csv(model):
     if TYPE in model:
         label = f'{q(model[TYPE])},{q(model[NAME])}'
-        if STATISTICS in model:
-            return label, model[STATISTICS]
+        if CALCULATE in model:
+            return label, model[CALCULATE]
         else:
             return label, None
     elif VALUE not in model:

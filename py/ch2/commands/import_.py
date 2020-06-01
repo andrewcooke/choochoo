@@ -3,10 +3,10 @@ from logging import getLogger
 from os.path import sep, exists, join, isfile
 
 from .args import SOURCE, ACTIVITY, DB_EXTN, base_system_path, BASE, SEGMENTS, CONSTANTS, KIT, ACTIVITIES, DIARY, \
-    ENABLE
-from .upload import DATA
-from ..lib.utils import clean_path
+    infer_flags
+from .read import DATA
 from ..lib.log import Record
+from ..lib.utils import clean_path
 from ..migrate.activity import import_activity
 from ..migrate.constant import import_constant
 from ..migrate.diary import import_diary
@@ -26,20 +26,20 @@ def import_(args, sys, db):
 Import data from a previous version (after starting a new version).
 Data must be imported before any other changes are made to the database.
 
+By default all types of data (diary, activities, kit, constants and segments) are imported.
+Additional flags can enable or disable specific data types.
+
 ### Examples
-
-    > ch2 import --enable --diary 0-30
-
-Import only diary entries.
 
     > ch2 import --diary 0-30
 
+Import only diary entries.
+
+    > ch2 import --disable --diary 0-30
+
 Import everything but diary entries.
     '''
-    flags = {name: args[name] for name in (DIARY, ACTIVITIES, KIT, CONSTANTS, SEGMENTS)}
-    if not args[ENABLE]:
-        for name in flags:
-            flags[name] = not flags[name]
+    flags = infer_flags(args, DIARY, ACTIVITIES, KIT, CONSTANTS, SEGMENTS)
     import_path(Record(log), args[BASE], args[SOURCE], db, flags=flags)
 
 

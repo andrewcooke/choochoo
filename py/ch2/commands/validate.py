@@ -1,7 +1,5 @@
 from logging import getLogger
 
-from sqlalchemy import join
-
 from .args import FIX
 from ..lib.log import Record
 from ..sql import ActivityTopicJournal, FileHash, FileScan, StatisticJournal, ActivityJournal
@@ -9,11 +7,11 @@ from ..sql import ActivityTopicJournal, FileHash, FileScan, StatisticJournal, Ac
 log = getLogger(__name__)
 
 
-def check(args, system, db):
+def validate(args, system, db):
     '''
-## check
+## validate
 
-    > ch2 check
+    > ch2 validate
 
 This is still in development.
     '''
@@ -22,6 +20,7 @@ This is still in development.
 
 
 def check_all(record, db, fix=False):
+    # todo - add flags
     check_activity_diary_missing_files(record, db, fix=fix)
     check_activity_journal_groups(record, db, fix=fix)
 

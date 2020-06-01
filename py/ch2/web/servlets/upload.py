@@ -1,10 +1,10 @@
-
+from collections import defaultdict
 from logging import getLogger
 
 import psutil as ps
 
-from ...commands.args import mm, WEB, UPLOAD, LOG, BASE, VERBOSITY, FORCE
-from ...commands.upload import upload_files_and_update, STREAM, NAME
+from ...commands.args import mm, WEB, READ, LOG, BASE, VERBOSITY, FORCE
+from ...commands.read import upload_files_and_update, STREAM, NAME
 from ...lib.log import Record
 from ...lib.utils import parse_bool
 from ...lib.workers import command_root
@@ -25,12 +25,13 @@ class Upload:
         force = parse_bool(request.form.get('force'))
         # we do this in two stages
         # first, immediate saving of files while web browser waiting for response
-        upload_files_and_update(Record(log), self._sys, self._db, self._base, files=files, items=items, fast=True)
+        upload_files_and_update(Record(log), self._sys, self._db, self._base, files=files, items=items,
+                                flags=defaultdict(lambda: False))
         # second, start rest of ingest process in background
         # tui to avoid stdout appearing on web service output
-        cmd = f'{command_root()} {mm(VERBOSITY)} 0 {mm(BASE)} {self._base} {mm(LOG)} {WEB}-{UPLOAD}.log {UPLOAD}'
+        cmd = f'{command_root()} {mm(VERBOSITY)} 0 {mm(BASE)} {self._base} {mm(LOG)} {WEB}-{READ}.log {READ}'
         if force: cmd += f' {mm(FORCE)}'
         log.info(f'Starting {cmd}')
         ps.Popen(args=cmd, shell=True)
         # wait so that the progress has time to kick in
-        self._sys.wait_for_progress(UPLOAD)
+        self._sys.wait_for_progress(READ)

@@ -14,17 +14,17 @@ log = getLogger(__name__)
 INDENT = '   '
 
 
-def test_schedule(args, system, db):
+def show_schedule(args, system, db):
     '''
-## test-schedule
+## show-schedule
 
-    > ch2 test-schedule SCHEDULE
+    > ch2 show-schedule SCHEDULE
 
 Print a calendar showing how the given schedule is interpreted.
 
 ### Example
 
-    > ch2 test-schedule 2w[1mon,2sun]
+    > ch2 show-schedule 2w[1mon,2sun]
 
 (Try it and see)
     '''

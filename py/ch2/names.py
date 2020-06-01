@@ -1,6 +1,5 @@
 import re
-
-from ch2.sql.types import simple_name
+from re import sub
 
 UNDEF = object()
 
@@ -288,3 +287,21 @@ class Names(Titles, metaclass=NamesMeta): pass
 
 
 T, N = Titles, Names
+
+
+def simple_name(name, none=True, strip=True):
+    # allows % and ? for LIKE and templates (although sqlite uses _ instead of ?)
+    # also allows ':' so that we don't mess up composites
+    from ch2.names import POW_2, POW_M1, SPACE
+    if name is None and none:
+        return None
+    name = name.replace(POW_2, '2')
+    name = name.replace(POW_M1, '')  # ms^-1 -> ms which is standard convention
+    name = name.replace('Δ', 'd ')
+    if strip: name = name.strip()
+    name = name.lower()
+    name = sub(r'\s+', SPACE, name)
+    name = sub(r'[^a-z0-9%?:]', SPACE, name)
+    name = sub(r'^(\d)', SPACE + r'\1', name)
+    name = sub(SPACE + '+', SPACE, name)
+    return name

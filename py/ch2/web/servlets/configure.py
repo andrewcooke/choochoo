@@ -2,7 +2,7 @@ from json import loads, dumps
 from logging import getLogger
 
 from ...commands.args import base_system_path
-from ...commands.configure import load, delete
+from ...commands.database import load, delete
 from ...commands.help import HTML, filter, parse, P, LI, PRE
 from ...commands.import_ import import_path
 from ...config.utils import profiles
