@@ -46,6 +46,7 @@ Import everything but diary entries.
 def import_path(record, base, source, new, flags=None):
     if flags is None: flags = defaultdict(lambda: True)
     path = build_source_path(record, base, source)
+    # todo - need to use uris
     old = ReflectedDatabase(path, read_only=True)
     if not old.meta.tables:
         record.raise_(f'No tables found in {path}')

@@ -2,10 +2,10 @@ from logging import getLogger
 
 from sqlalchemy.orm import sessionmaker
 
-from .database import SystemConstant, Process, MappedDatabase
+from .database import SystemConstant, Process, MappedDatabase, sqlite_uri, Database
 from .support import SystemBase
 from .tables.system import Progress
-from ..commands.args import SYSTEM
+from ..commands.args import SYSTEM, DB_EXTN, DATA
 
 log = getLogger(__name__)
 
@@ -13,7 +13,8 @@ log = getLogger(__name__)
 class System(MappedDatabase):
 
     def __init__(self, args):
-        super().__init__(SYSTEM, SystemConstant, SystemBase, args)
+        path = args.system_path(DATA, SYSTEM + DB_EXTN)
+        super().__init__(sqlite_uri(path), SystemConstant, SystemBase)
         version = self.get_constant(SystemConstant.DB_VERSION, none=True)
         if version:
             log.info(f'Database version {version}')
@@ -72,3 +73,12 @@ class System(MappedDatabase):
     def wait_for_progress(self, name, timeout=60):
         with self.session_context() as s:
             return Progress.wait_for_progress(s, name, timeout=timeout)
+
+    def get_database(self):
+        db_uri = self.get_constant(SystemConstant.DB_URI, none=True)
+        if db_uri:
+            return Database(db_uri)
+        else:
+            log.warning('No database URI configured')
+            return None
+

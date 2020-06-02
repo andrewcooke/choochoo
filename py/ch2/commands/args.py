@@ -578,10 +578,11 @@ def make_parser(with_noop=False):
 
 
 def bootstrap_dir(base, *args, configurator=None, post_config=None):
+    # used in tests, given a base directory
 
     from ..lib.log import make_log_from_args
-    from ..sql.database import Database, connect
-    from ..sql.system import System
+    from ..sql.database import connect, sqlite_uri
+    from ..sql.system import System, SystemConstant
 
     args = [mm(BASE), base] + list(args)
     if configurator:
@@ -592,8 +593,9 @@ def bootstrap_dir(base, *args, configurator=None, post_config=None):
     args += post_config if post_config else []
     ns = NamespaceWithVariables(make_parser().parse_args(args))
     make_log_from_args(ns)
-    db = Database(ns)
     sys = System(ns)
+    sys.set_constant(SystemConstant.DB_URI, sqlite_uri(join(base, ACTIVITY + DB_EXTN)))
+    db = sys.get_database()
 
     return ns, sys, db
 

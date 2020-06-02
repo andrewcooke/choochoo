@@ -5,15 +5,13 @@ from sqlite3 import OperationalError
 
 from sqlalchemy import create_engine, event, MetaData
 from sqlalchemy.engine import Engine
-from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.functions import count
 
 from . import *
 from .support import Base
-from ..commands.args import NamespaceWithVariables, NO_OP, make_parser, DATA, DB_EXTN, ACTIVITY, READ_ONLY
+from ..commands.args import NamespaceWithVariables, NO_OP, make_parser
 from ..lib.log import make_log_from_args
-
 
 # mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
 Source,  Interval, Dummy, Composite, CompositeComponent
@@ -62,15 +60,17 @@ def analyze_pragma_on_close(dbapi_con, _con_record):
         cursor.close()
 
 
+def sqlite_uri(path, read_only=False):
+    uri = f'sqlite:///{path}'
+    if read_only: uri += '?mode=ro'
+    return uri
+
+
 class DatabaseBase:
 
-    def __init__(self, path, read_only=False):
-        self.path = path
-        log.info('Using database at %s' % self.path)
-        uri = f'sqlite:///{path}'
-        if read_only:
-            log.warning('Read-only database')
-            uri += '?mode=ro'
+    def __init__(self, uri):
+        self.uri = uri
+        log.info('Using database at %s' % self.uri)
         self.engine = create_engine(uri, echo=False)
         self.session = self._sessionmaker()
 
@@ -94,14 +94,13 @@ class DatabaseBase:
             session.close()
 
     def __str__(self):
-        return f'{self.__class__.__name__} at {self.path}'
+        return f'{self.__class__.__name__} at {self.uri}'
 
 
 class MappedDatabase(DatabaseBase):
 
-    def __init__(self, name, table, base, args, **kargs):
-        if args[READ_ONLY]: kargs.update({'read_only': True})
-        super().__init__(args.system_path(DATA, name + DB_EXTN), **kargs)
+    def __init__(self, uri, table, base):
+        super().__init__(uri)
         if self.no_schema(table):
             log.info('Creating tables')
             base.metadata.create_all(self.engine)
@@ -109,8 +108,8 @@ class MappedDatabase(DatabaseBase):
 
 class Database(MappedDatabase):
 
-    def __init__(self, args):
-        super().__init__(ACTIVITY, Source, Base, args)
+    def __init__(self, uri):
+        super().__init__(uri, Source, Base)
 
     def no_data(self,):
         with self.session_context() as s:
@@ -124,6 +123,7 @@ def connect(args):
     '''
     Bootstrap from commandline-like args.
     '''
+    from .system import System
     if len(args) == 1 and isinstance(args[0], str):
         args = args[0].split()
     elif args:
@@ -133,7 +133,8 @@ def connect(args):
     args.append(NO_OP)
     ns = NamespaceWithVariables(make_parser(with_noop=True).parse_args(args))
     make_log_from_args(ns)
-    db = Database(ns)
+    sys = System(ns)
+    db = sys.get_database()
     return ns, db
 
 

@@ -54,6 +54,7 @@ class SystemConstant(SystemBase):
     LAST_GARMIN = 'last-garmin'
     DB_VERSION = 'db-version'
     LOG_COLOR = 'log-color'
+    DB_URI = 'db-uri'
 
 
 class Process(SystemBase):

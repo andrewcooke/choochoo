@@ -42,13 +42,13 @@ from .commands.read import read
 from .commands.web import web
 from .lib.io import tui
 from .lib.log import make_log_from_args, set_log_color
-from .sql.database import Database
+from .sql.database import SystemConstant
 from .sql.system import System
 
 log = getLogger(__name__)
 
 
-@tui
+@tui  # todo - can we drop this and remove tui completely?
 def no_op(args, system, db):
     '''
 ## no-op
@@ -95,19 +95,22 @@ def main():
     log.info('Version %s' % CH2_VERSION)
     if version_info < (3, 7):
         raise Exception('Please user Python 3.7 or more recent')
-    db = Database(args)
     sys = System(args)
+    db = sys.get_database()
     enable_callback_tracebacks(True)  # experimental - wondering what this does / whether it is useful?
     set_log_color(args, sys)
     try:
-        if db.no_data() and (not command or command_name not in (DATABASE, PACKAGE_FIT_PROFILE, HELP, WEB)):
-            refuse_until_configured(db.path)
-        elif command:
-            command(args, sys, db)
-        else:
+        if not command:
             log.debug('If you are seeing the "No command given" error during development ' +
                       'you may have forgotten to set the command name via `set_defaults()`.')
             raise Exception('No command given (try `ch2 help`)')
+        elif not db:
+            if command_name not in (DATABASE, PACKAGE_FIT_PROFILE, HELP):
+                refuse_until_configured(db.uri)
+        elif db.no_data():
+            if command_name not in (DATABASE, PACKAGE_FIT_PROFILE, HELP, WEB):
+                refuse_until_configured(db.uri)
+        command(args, sys, db)
     except KeyboardInterrupt:
         log.critical('User abort')
         exit(1)
