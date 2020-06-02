@@ -14,7 +14,7 @@ from .log import log_current_exception
 from ..names import Titles
 
 log = getLogger(__name__)
-DEV = False  # set when args parsed
+DEV = False  # set when args parsed (allow global swicth on tracebacks)
 
 
 class WarnDict(dict):
@@ -258,7 +258,7 @@ def safe_return(make_retval):
                 return f(*args, **kargs)
             except Exception as e:
                 log.warning(f'Error in {f.__name__}: {e}')
-                log_current_exception(traceback=DEV)
+                log_current_exception()
                 return make_retval()
 
         return wrapped
@@ -277,7 +277,7 @@ def safe_yield(f):
             yield from f(*args, **kargs)
         except Exception as e:
             log.warning(f'Error in {f.__name__}: {e}')
-            log_current_exception(traceback=DEV)
+            log_current_exception()
 
     return wrapped
 
@@ -289,7 +289,7 @@ def safe_first(f):
             return f(first, *args, **kargs)
         except Exception as e:
             log.warning(f'Error in {f.__name__}: {e}')
-            log_current_exception(traceback=DEV)
+            log_current_exception()
             return first
 
     return wrapped

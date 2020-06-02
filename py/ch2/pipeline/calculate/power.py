@@ -69,7 +69,7 @@ class PowerCalculator(ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, Mu
             log.warning(f'Power configuration incorrect ({e})')
         except Exception as e:
             log.warning(f'Failed to generate statistics for power ({ajournal.activity_group.name}): {e}')
-            log_current_exception(traceback=True)
+            log_current_exception()
 
     def _calculate_stats(self, s, ajournal, dfs):
         df, ldf = dfs

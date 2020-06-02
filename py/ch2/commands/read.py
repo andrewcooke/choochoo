@@ -172,7 +172,7 @@ def parse_fit_data(file, items=None):
             file[EXTRA] = '-' + ','.join(items) if items else ''
             log.debug(f'File {file[NAME]} contains activity data')
     except Exception as e:
-        log_current_exception(traceback=False)
+        log_current_exception()
         raise Exception(f'Could not parse {file[NAME]} as a fit file')
 
 
@@ -198,7 +198,7 @@ def write_file(file):
             log.info(f'Writing {file[NAME]} to {file[WRITE_PATH]}')
             out.write(file[DATA])
     except Exception as e:
-        log_current_exception(traceback=False)
+        log_current_exception()
         raise Exception(f'Could not save {file[NAME]}')
 
 

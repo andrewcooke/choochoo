@@ -31,7 +31,7 @@ class KitCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, MultiProcCalcu
                             kit_instance.add_use(s, ajournal.start, source=ajournal, owner=self.owner_out)
                             log.debug(f'Added usage for {kit_instance}')
                     except Exception as e:
-                        log_current_exception(traceback=True)
+                        log_current_exception()
                         log.warning(f'Could not add statistics for {kit_name}: {e}')
             else:
                 log.debug(f'No kit defined for this activity ({time})')

@@ -7,8 +7,7 @@ from math import atan2, cos, sin, sqrt, pi
 
 from .frame import linear_resample, median_dt, present, linear_resample_time
 from ..lib.data import safe_dict
-from ..lib.log import log_current_exception
-from ..names import Names, Titles
+from ..names import Names
 
 log = getLogger(__name__)
 

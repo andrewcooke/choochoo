@@ -41,7 +41,7 @@ from .commands.unlock import unlock
 from .commands.read import read
 from .commands.web import web
 from .lib.io import tui
-from .lib.log import make_log_from_args, log_current_exception, set_log_color
+from .lib.log import make_log_from_args, set_log_color
 from .sql.database import Database
 from .sql.system import System
 
@@ -113,7 +113,6 @@ def main():
         exit(1)
     except Exception as e:
         log.critical(e)
-        log_current_exception(warning=False)
         log.info('See `%s %s` for available commands.' % (PROGNAME, HELP))
         log.info('Docs at http://andrewcooke.github.io/choochoo')
         if not args or args[DEV]:

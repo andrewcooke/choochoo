@@ -7,7 +7,6 @@ from logging import getLogger
 import numpy as np
 
 from .frame import linear_resample, present
-from ..lib.log import log_current_exception
 from ..lib.data import nearest_index, get_index_loc, safe_yield, safe_none
 from ..names import Names as N
 from ..sql import StatisticName, StatisticJournal, Source

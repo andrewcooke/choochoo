@@ -7,6 +7,7 @@ from traceback import format_tb
 from colorlog import ColoredFormatter
 
 from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG, COLOR, DARK, LIGHT, DEV
+from ..names import UNDEF
 
 log = getLogger(__name__)
 
@@ -122,7 +123,10 @@ def set_log_color(args, sys):
                                                             'CRITICAL': 'bold_red'}}))
 
 
-def log_current_exception(traceback=True, warning=True):
+def log_current_exception(traceback=UNDEF, warning=True):
+    from .data import DEV
+    if traceback is UNDEF:
+        traceback = DEV
     t, e, tb = exc_info()
     try:
         log.debug(f'Exception: {e}')
