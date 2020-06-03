@@ -42,7 +42,7 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'shapely',
                      'sklearn',
                      'sqlalchemy',
-                     'urwid',
+                     'uritools',
                      'werkzeug',
                      ],
                  entry_points={

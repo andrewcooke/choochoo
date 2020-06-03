@@ -13,7 +13,7 @@ from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ...sql.utils import add
 
 
-def acooke(sys, s, base, no_diary=False):
+def acooke(s, base):
     '''
 ## acooke
 
@@ -25,7 +25,7 @@ This extends the default configuration with:
 
 Unlikely to be useful to others, but works as an example of how you can extend the code yourself.
     '''
-    ACooke(sys, base, no_diary=no_diary).load(s)
+    ACooke(base).load(s)
 
 
 ROAD = 'Road'

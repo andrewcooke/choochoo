@@ -1,13 +1,11 @@
 from json import dumps
 from logging import getLogger
 
-from ..pipeline.calculate.activity import ActivityCalculator
-from ..pipeline.calculate.nearby import Nearby, SimilarityCalculator, NearbyCalculator
+from ..names import simple_name
 from ..sql import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
     DiaryTopic, DiaryTopicField, Dummy, ActivityTopic, ActivityTopicField
 from ..sql.tables.constant import ValidateNamedTuple
-from ..sql.types import long_cls, short_cls
-from ..names import simple_name
+from ..sql.types import long_cls
 
 log = getLogger(__name__)
 

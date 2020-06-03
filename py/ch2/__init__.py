@@ -106,10 +106,10 @@ def main():
             raise Exception('No command given (try `ch2 help`)')
         elif not db:
             if command_name not in (DATABASE, PACKAGE_FIT_PROFILE, HELP):
-                refuse_until_configured(db.uri)
+                refuse_until_configured(False)
         elif db.no_data():
             if command_name not in (DATABASE, PACKAGE_FIT_PROFILE, HELP, WEB):
-                refuse_until_configured(db.uri)
+                refuse_until_configured(True)
         command(args, sys, db)
     except KeyboardInterrupt:
         log.critical('User abort')
@@ -123,29 +123,11 @@ def main():
         exit(2)
 
 
-def refuse_until_configured(path):
-    dir = dirname(abspath(path))
-    if len(glob(join(dir, '*'))) > 1:
-        Markdown().print('''
+def refuse_until_configured(exists):
+        Markdown().print(f'''
 Welcome to Choochoo.
 
-There is no database available for this release, but you may have a database from a previous version.
-For information on how to upgrade an old database, 
-please see the documentation at http://andrewcooke.github.io/choochoo/version-upgrades
+You must configure the database before use.
 
-Otherwise, you will need to configure the system.
-Please see the documentation at http://andrewcooke.github.io/choochoo''')
-    else:
-        Markdown().print('''
-Welcome to Choochoo.
-
-Before using the ch2 command you must configure the system.
-
-Please see the documentation at http://andrewcooke.github.io/choochoo
-
-To generate a default configuration use the command
-
-    %s %s
-
-NOTE: The default configuration is only an example.  Please see the docs
-for more details.''' % (PROGNAME, DATABASE))
+Please use the {PROGNAME} {DATABASE} command.
+''')

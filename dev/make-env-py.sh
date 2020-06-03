@@ -13,7 +13,7 @@ pip install jupyter
 pip install matplotlib
 pip install numpy
 pip install openpyxl
-pip install pandas==0.25.3
+pip install pandas
 pip install pendulum
 pip install psutil
 pip install pyGeoTile
@@ -26,7 +26,7 @@ pip install sentinelsat
 pip install shapely
 pip install sklearn
 pip install sqlalchemy
-pip install urwid
+pip install uritools
 pip install werkzeug
 
 pip install setuptools wheel twine

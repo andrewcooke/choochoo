@@ -147,6 +147,7 @@ OWNER = 'owner'
 PASS = 'pass'
 PATH = 'path'
 P, PATTERN = 'p', 'pattern'
+POSTGRESQL = 'postgresql'
 PLAN = 'plan'
 PORT = 'port'
 PRINT = 'print'
@@ -174,6 +175,7 @@ SLICES = 'slices'
 SOURCE = 'source'
 SOURCES = 'sources'
 SOURCE_ID = 'source-id'
+SQLITE = 'sqlite'
 START = 'start'
 STATISTICS = 'statistics'
 STATISTIC_NAMES = 'statistic-names'
@@ -190,6 +192,7 @@ UNDO = 'undo'
 UNLIKE = 'unlike'
 UNSAFE = 'unsafe'
 UNSET = 'unset'
+URI = 'uri'
 USER = 'user'
 V, VERBOSITY = 'v', 'verbosity'
 VALUE = 'value'
@@ -405,20 +408,21 @@ def make_parser(with_noop=False):
 
     database = subparsers.add_parser(DATABASE, help='configure the database')
     database_cmds = database.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    database_check = database_cmds.add_parser(CHECK, help="check config")
-    database_check.add_argument(mm(no(DATA)), action='store_true', help='check database has no data loaded')
-    database_check.add_argument(mm(no(DATABASE)), action='store_true', help='check database has no configuration')
-    database_check.add_argument(mm(no(ACTIVITY_GROUPS)), action='store_true',
-                                help='check database has no activity groups defined')
+    database_show = database_cmds.add_parser(SHOW, help='show current configuration')
     database_list = database_cmds.add_parser(LIST, help='list available profiles')
-    database_load = database_cmds.add_parser(LOAD, help="configure using the given profile")
+    database_load = database_cmds.add_parser(LOAD, help='configure using the given profile')
+    database_load.add_argument(mm(DELETE), action='store_true', help='delete existing data (overwrite / replace)')
+    database_engines = database_load.add_mutually_exclusive_group(required=True)
+    database_engines.add_argument(mm(SQLITE), dest=URI, action='store_const', const=SQLITE,
+                                  help='use an sqlite database with standard parameters')
+    database_engines.add_argument(mm(POSTGRESQL), dest=URI, action='store_const', const=POSTGRESQL,
+                                  help='use a postgresql database with standard parameters')
+    database_engines.add_argument(mm(URI), help='use the given database URI')
     database_profiles = database_load.add_subparsers(title='profile', dest=PROFILE, required=True)
     from ..config.utils import profiles
     for name in profiles():
         database_profile = database_profiles.add_parser(name)
         database_profile.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
-    database_delete = database_cmds.add_parser(DELETE, help='delete current data')
-    database_delete.add_argument(mm(FORCE), action='store_true', help='are you sure?')
 
     import_ = subparsers.add_parser(IMPORT, help='import data from a previous version')
     import_.add_argument(SOURCE, help='version or path to import')
@@ -510,8 +514,7 @@ def make_parser(with_noop=False):
     fix_fit.add_argument(PATH, metavar='PATH', nargs='+', help='path to fit file')
     fix_fit.add_argument(m(W), mm(WARN), action='store_true', help='additional warning messages')
     fix_fit_output = fix_fit.add_argument_group(title='output (default hex to stdout)').add_mutually_exclusive_group()
-    fix_fit_output.add_argument(m(O), mm(OUTPUT), action='store',
-                                help='output file for fixed data (otherwise, stdout)')
+    fix_fit_output.add_argument(m(O), mm(OUTPUT), help='output file for fixed data (otherwise, stdout)')
     fix_fit_output.add_argument(mm(DISCARD), action='store_true', help='discard output (otherwise, stdout)')
     fix_fit_output.add_argument(mm(RAW), action='store_true', help='raw binary to stdout (otherwise, hex encoded)')
     fix_fit_output.add_argument(mm(NAME_BAD), action='store_false', dest=NAME, default=None,

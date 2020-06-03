@@ -12,7 +12,7 @@ from ..migrate.constant import import_constant
 from ..migrate.diary import import_diary
 from ..migrate.kit import import_kit
 from ..migrate.segment import import_segment
-from ..sql.database import ReflectedDatabase
+from ..sql.database import ReflectedDatabase, sqlite_uri
 
 log = getLogger(__name__)
 
@@ -46,8 +46,8 @@ Import everything but diary entries.
 def import_path(record, base, source, new, flags=None):
     if flags is None: flags = defaultdict(lambda: True)
     path = build_source_path(record, base, source)
-    # todo - need to use uris
-    old = ReflectedDatabase(path, read_only=True)
+    uri = sqlite_uri(path, read_only=True)
+    old = ReflectedDatabase(uri)
     if not old.meta.tables:
         record.raise_(f'No tables found in {path}')
     log.info(f'Importing data from {path}')

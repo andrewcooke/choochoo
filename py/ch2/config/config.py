@@ -54,10 +54,8 @@ class Config:
     A class-based approach so that we can easily modify the config for different profiles.
     '''
 
-    def __init__(self, sys, base, no_diary=False):
-        self._sys = sys
+    def __init__(self, base):
         self._base = base
-        self._no_diary = no_diary
         self._activity_groups = {}
 
     def load(self, s):
@@ -70,20 +68,19 @@ class Config:
         self._load_diary_pipeline(s, Counter())
         self._load_monitor_pipeline(s, Counter())
         self._load_constants(s)
-        if not self._no_diary:
-            self._load_diary_topics(s, Counter())
-            self._load_activity_topics(s, Counter())
-            self._post_diary(s)
+        self._load_diary_topics(s, Counter())
+        self._load_activity_topics(s, Counter())
+        self._post_diary(s)
         self._post(s)
 
     def _pre(self, s):
-        self._sys.set_constant(SystemConstant.DB_VERSION, DB_VERSION + ' ' + BROKEN)
+        pass
 
     def _post_diary(self, s):
         pass
 
     def _post(self, s):
-        self._sys.set_constant(SystemConstant.DB_VERSION, DB_VERSION, force=True)
+        pass
 
     def _load_specific_activity_groups(self, s):
         # statistic rankings (best of month etc) are calculated per group
