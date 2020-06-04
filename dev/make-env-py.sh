@@ -28,6 +28,7 @@ pip install shapely
 pip install sklearn
 pip install sqlalchemy
 pip install sqlalchemy-utils
+pip install sqlalchemy-batch-inserts
 pip install uritools
 pip install werkzeug
 

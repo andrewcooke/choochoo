@@ -91,6 +91,7 @@ def main():
         ns.verbose = 0
     args = NamespaceWithVariables(ns)
     commands.args.GLOBAL_DEV_FLAG = args[DEV]
+    log.debug(f'Global dev flag: {commands.args.GLOBAL_DEV_FLAG}')
     make_log_from_args(args)
     log.info('Version %s' % CH2_VERSION)
     if version_info < (3, 7):

@@ -8,8 +8,9 @@ from sqlalchemy import desc, and_, or_, func
 from sqlalchemy.sql.functions import count
 
 from .utils import AbortImport, AbortImportButMarkScanned, MultiProcFitReader
-from ..loader import StatisticJournalLoader
-from ...commands.args import mm, FORCE, READ
+from ..loader import SqliteLoader, PostgresqlLoader
+from ..pipeline import LoaderMixin
+from ...commands.args import mm, FORCE, READ, SQLITE, POSTGRESQL
 from ...data.frame import read_query
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...fit.profile.profile import read_fit
@@ -56,7 +57,7 @@ def missing_dates(s, force=False):
         log.warning('No dates to download')
 
 
-class MonitorLoader(StatisticJournalLoader):
+class SqliteMonitorLoader(SqliteLoader):
 
     def _preload(self):
         dummy = super()._preload()
@@ -80,16 +81,29 @@ class MonitorLoader(StatisticJournalLoader):
             raise
         return dummy
 
-    def _resolve_duplicate(self, name, instance, prev):
-        log.warning(f'Using max of duplicate values at {instance.time} for {name} ({instance.value}/{prev.value})')
+    def _resolve_duplicate(self, instance, prev):
+        log.warning(f'Using max of duplicate values at {instance.time} for {instance.name} '
+                    f'({instance.value}/{prev.value})')
         prev.value = max(prev.value, instance.value)
+
+
+class PostgresqlMonitorLoader(PostgresqlLoader):
+
+    def _resolve_duplicate(self, instance, prev):
+        log.warning(f'Using max of duplicate values at {instance.time} for {instance.name} '
+                    f'({instance.value}/{prev.value})')
+        prev.value = max(prev.value, instance.value)
+
 
 
 NEW_STEPS = N._new(N.STEPS)
 STEPS_DESCRIPTION = '''The increment in steps read from the FIT file.'''
 
 
-class MonitorReader(MultiProcFitReader):
+class MonitorReader(MultiProcFitReader, LoaderMixin):
+
+    loaders = {SQLITE: SqliteMonitorLoader,
+               POSTGRESQL: PostgresqlMonitorLoader}
 
     def __init__(self, *args, **kargs):
         from ...commands.read import MONITOR
@@ -98,7 +112,7 @@ class MonitorReader(MultiProcFitReader):
     def _get_loader(self, s, **kargs):
         if 'owner' not in kargs:
             kargs['owner'] = self.owner_out
-        return MonitorLoader(s, **kargs)
+        return super()._get_loader(s, **kargs)
 
     def _base_command(self):
         force = mm(FORCE) if self.force else ""
@@ -230,7 +244,7 @@ class MonitorReader(MultiProcFitReader):
             s.query(StatisticJournal.id). \
                 filter(StatisticJournal.time.in_(times),
                        StatisticJournal.statistic_name == steps).delete(synchronize_session=False)
-        loader = StatisticJournalLoader(s, owner=self.owner_out)
+        loader = SqliteLoader(s, owner=self.owner_out)
         for time, row in df.loc[(df[NEW_STEPS] != df[N.STEPS]) & ~df[NEW_STEPS].isna()].iterrows():
             loader.add(T.STEPS, Units.STEPS_UNITS, None, row[N.SOURCE], int(row[NEW_STEPS]),
                        time, StatisticJournalInteger, description=STEPS_DESCRIPTION)

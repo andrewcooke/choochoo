@@ -30,7 +30,7 @@ class SegmentDelegate(ActivityJournalDelegate):
                                    for name in (Names.SEGMENT_TIME, Names.SEGMENT_HEART_RATE))
                      if field]
             if stats:
-                yield [text(sjournal.segment.name, tag='segment')] + stats
+                yield [text(sjournal.segment.title, tag='segment')] + stats
 
     @staticmethod
     def __field(s, date, sjournal, name):
@@ -43,7 +43,7 @@ class SegmentDelegate(ActivityJournalDelegate):
                             for name in self.__names(s, Names.SEGMENT_TIME, Names.SEGMENT_HEART_RATE)]
             segment_rows = list(filter(bool, segment_rows))
             if segment_rows:
-                yield [text(segment.name)] + segment_rows
+                yield [text(segment.title)] + segment_rows
 
     @staticmethod
     def __names(s, *names):

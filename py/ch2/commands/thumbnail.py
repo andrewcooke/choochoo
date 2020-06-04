@@ -7,7 +7,6 @@ from matplotlib.pyplot import show, figure
 
 from .args import ACTIVITY, base_system_path, THUMBNAIL, BASE
 from ..data.query import Statistics
-from ..lib import local_time_to_time
 from ..names import Names
 from ..pipeline.read.segment import SegmentReader
 from ..sql import ActivityJournal

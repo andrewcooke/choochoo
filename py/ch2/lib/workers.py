@@ -6,8 +6,8 @@ from time import sleep, time
 
 from math import floor
 
-import ch2.pipeline.pipeline
-from ..commands.args import mm, BASE, VERBOSITY, WORKER, LOG
+from ..commands import args
+from ..commands.args import mm, BASE, VERBOSITY, WORKER, LOG, DEV
 from ..sql.types import short_cls
 
 log = getLogger(__name__)
@@ -19,27 +19,29 @@ REPORT_TIME = 60
 
 class Workers:
 
-    def __init__(self, system, base, n_parallel, owner, cmd):
-        self.__system = system
+    def __init__(self, sys, base, n_parallel, owner, cmd):
+        self.__sys = sys
         self.n_parallel = n_parallel
         self.owner = owner
         self.cmd = cmd
         self.__workers_to_logs = {}  # map from Popen to log index
-        self.ch2 = f'{command_root()} {mm(BASE)} {base} {mm(VERBOSITY)} 0'
+        log.debug(f'Global dev flag {args.GLOBAL_DEV_FLAG}')  # via module to read latest value
+        dev = mm(DEV) if args.GLOBAL_DEV_FLAG else ''
+        self.ch2 = f'{command_root()} {mm(BASE)} {base} {dev} {mm(VERBOSITY)} 0'
         self.clear_all()
 
     def clear_all(self):
         for worker in self.__workers_to_logs:
             log.warning(f'Killing PID {worker.pid} ({worker.args})')
-            self.__system.delete_process(self.owner, worker.pid)
-        self.__system.delete_all_processes(self.owner)
+            self.__sys.delete_process(self.owner, worker.pid)
+        self.__sys.delete_all_processes(self.owner)
 
     def run(self, id, args):
         self.wait(self.n_parallel - 1)
         log_index = self._free_log_index()
         log_name = f'{short_cls(self.owner)}.{log_index}.{LOG}'
         cmd = self.ch2 + f' {mm(LOG)} {log_name} {self.cmd} {mm(WORKER)} {id} {args}'
-        worker = self.__system.run_process(self.owner, cmd, log_name)
+        worker = self.__sys.run_process(self.owner, cmd, log_name)
         self.__workers_to_logs[worker] = log_index
 
     def wait(self, n_workers=0):
@@ -50,7 +52,7 @@ class Workers:
                 last_report = time()
             for worker in list(self.__workers_to_logs.keys()):
                 worker.poll()
-                process = self.__system.get_process(self.owner, worker.pid)
+                process = self.__sys.get_process(self.owner, worker.pid)
                 if worker.returncode is not None:
                     if worker.returncode:
                         msg = f'Command "{process.command}" exited with return code {worker.returncode} ' + \
@@ -61,7 +63,7 @@ class Workers:
                     else:
                         log.debug(f'Command "{process.command}" finished successfully')
                         del self.__workers_to_logs[worker]
-                        self.__system.delete_process(self.owner, worker.pid)
+                        self.__sys.delete_process(self.owner, worker.pid)
             sleep(SLEEP_TIME)
         if last_report:
             log.debug(f'Now have {len(self.__workers_to_logs)} workers')

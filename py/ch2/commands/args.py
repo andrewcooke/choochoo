@@ -8,6 +8,7 @@ from re import sub
 from typing import Mapping
 
 from ch2.lib.utils import clean_path
+from ch2.names import UNDEF
 
 log = getLogger(__name__)
 
@@ -17,6 +18,7 @@ CH2_VERSION = '0.34.0'
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 DB_EXTN = '.db'   # used to use .sql but auto-complete for sqlite3 didn't work
 
+# TODO _ access via function
 GLOBAL_DEV_FLAG = False
 
 PROGNAME = 'ch2'
@@ -272,7 +274,7 @@ def make_parser(with_noop=False):
                         help='the file name for the log (command name by default)')
     parser.add_argument(mm(COLOR), type=color,
                         help=f'pretty stdout log - {LIGHT}|{DARK}|{OFF} (CAPS to save)')
-    parser.add_argument(m(V), mm(VERBOSITY), default=4, type=int, metavar='N',
+    parser.add_argument(m(V), mm(VERBOSITY), default=UNDEF, type=int, metavar='N',
                         help='output level for stderr (0: silent; 5:noisy)')
     parser.add_argument(mm(DEV), action='store_true',
                         help='verbose log and stack trace on error')

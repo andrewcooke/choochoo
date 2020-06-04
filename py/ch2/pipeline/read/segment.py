@@ -50,12 +50,12 @@ class SegmentReader(ActivityReader):
         if not waypoints:
             log.warning('No waypoints')
             return
-        matches = sorted(self._initial_matches(s, waypoints), key=lambda m: m[2].name)
+        matches = sorted(self._initial_matches(s, waypoints), key=lambda m: m[2].title)
         if not matches:
             log.info('No segment matches')
             return
         for segment, segment_matches in groupby(matches, key=lambda m: m[2]):
-            log.debug(f'Considering {segment.name}')
+            log.debug(f'Considering {segment.title}')
             ordered = sorted(segment_matches, key=lambda m: m[0])
             coallesced = list(self._coallesce(ordered))
             starts, finishes, segment = self._split(coallesced)
@@ -75,7 +75,7 @@ class SegmentReader(ActivityReader):
 
     def _try_segment(self, s, starts, finishes, waypoints, segment, ajournal):
         try:
-            log.info('Trying segment %s-%s for %s' % (starts, finishes, segment.name))
+            log.info('Trying segment %s-%s for %s' % (starts, finishes, segment.title))
             d = waypoints[self._mid(finishes)].distance - waypoints[self._mid(starts)].distance
             if abs(d - segment.distance) / segment.distance > 0.2:
                 raise CalcFailed('Distance between start and finish (%.1fkm) doesn\'t match segment (%.1fkm)' %
@@ -86,7 +86,7 @@ class SegmentReader(ActivityReader):
                                              start=start_time, finish=finish_time,
                                              activity_group=ajournal.activity_group))
             log.info('Added %s for %s - %s' %
-                     (segment.name, format_time(start_time), format_time(finish_time)))
+                     (segment.title, format_time(start_time), format_time(finish_time)))
             s.commit()  # needed to get id on sjournal (and let other workers in)
             # since source is sjournal we cannot use on_success
             Timestamp.set(s, self, constraint=segment, source=sjournal)
@@ -268,11 +268,11 @@ class SegmentReader(ActivityReader):
         for i, waypoint in enumerate(waypoints):
             for start, segment in self.__segments[[(waypoint.lon, waypoint.lat)]]:
                 if segment not in found:
-                    log.info(f'Candidate segment "{segment.name}" at ({segment.start_lon}, {segment.start_lat}) - '
+                    log.info(f'Candidate segment "{segment.title}" at ({segment.start_lon}, {segment.start_lat}) - '
                              f'({segment.finish_lon}, {segment.finish_lat})')
                     found.add(segment)
                 log.debug(f'Match at {(waypoint.lon, waypoint.lat)} '
-                          f'for {segment.name} {"start" if start else "finish"}')
+                          f'for {segment.title} {"start" if start else "finish"}')
                 yield i, start, segment
 
     def _read_segments(self, s):

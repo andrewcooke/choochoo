@@ -18,8 +18,10 @@ def make_log_from_args(args):
     name = args[LOG] if LOG in args and args[LOG] else (
             (args[COMMAND] if COMMAND in args and args[COMMAND] else PROGNAME) + f'.{LOG}')
     path = args.system_path(LOGS, name)
-    verbosity = 5 if args[DEV] else args[VERBOSITY]
-
+    if args[VERBOSITY] is UNDEF:
+        verbosity = 5 if args[DEV] else 2
+    else:
+        verbosity = args[VERBOSITY]
     make_log(path, verbosity=verbosity)
 
 
@@ -124,9 +126,10 @@ def set_log_color(args, sys):
 
 
 def log_current_exception(traceback=UNDEF, warning=True):
-    from ..commands.args import GLOBAL_DEV_FLAG
+    from ..commands import args
     if traceback is UNDEF:
-        traceback = GLOBAL_DEV_FLAG
+        log.debug(f'Global dev flag: {args.GLOBAL_DEV_FLAG}')
+        traceback = args.GLOBAL_DEV_FLAG
     t, e, tb = exc_info()
     try:
         log.debug(f'Exception: {e}')

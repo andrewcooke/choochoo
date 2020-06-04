@@ -6,12 +6,13 @@ from time import time
 
 from psutil import cpu_count
 from sqlalchemy import text
+from uritools import urisplit
 
-from .loader import StatisticJournalLoader
-from ..commands.args import SQLITE
+from .loader import SqliteLoader, PostgresqlLoader
+from ..commands.args import SQLITE, POSTGRESQL
 from ..lib import format_seconds
 from ..lib.workers import ProgressTree, Workers
-from ..sql import Pipeline
+from ..sql import Pipeline, SystemConstant
 from ..sql.types import short_cls
 
 log = getLogger(__name__)
@@ -51,9 +52,9 @@ class BasePipeline:
 
 class MultiProcPipeline(BasePipeline):
 
-    def __init__(self, system, db, *args, base=None, owner_out=None, force=False, progress=None,
+    def __init__(self, sys, db, *args, base=None, owner_out=None, force=False, progress=None,
                  overhead=1, cost_calc=20, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
-        self.__system = system
+        self._sys = sys
         self.__db = db
         self.base = base
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
@@ -170,7 +171,7 @@ class MultiProcPipeline(BasePipeline):
         # errors in our timing estimates
 
         n_missing = len(missing)
-        workers = Workers(self.__system, self.base, n_parallel, self.owner_out, self._base_command())
+        workers = Workers(self._sys, self.base, n_parallel, self.owner_out, self._base_command())
         start, finish = None, -1
         for i in range(n_total):
             start = finish + 1
@@ -205,6 +206,8 @@ class UniProcPipeline(MultiProcPipeline):
 
 class LoaderMixin:
 
+    loaders = {SQLITE: SqliteLoader, POSTGRESQL: PostgresqlLoader}
+
     def _get_loader(self, s, add_serial=None, **kargs):
         if 'owner' not in kargs:
             kargs['owner'] = self.owner_out
@@ -212,7 +215,12 @@ class LoaderMixin:
             raise Exception('Select serial use')
         else:
             kargs['add_serial'] = add_serial
-        return StatisticJournalLoader(s, **kargs)
+        scheme = urisplit(self._sys.get_constant(SystemConstant.DB_URI)).scheme
+        if scheme in self.loaders:
+            log.debug(f'Using loader for {scheme}')
+            return self.loaders[scheme](s, **kargs)
+        else:
+            raise Exception(f'Unknown scheme: {scheme}')
 
 
 class OwnerInMixin:

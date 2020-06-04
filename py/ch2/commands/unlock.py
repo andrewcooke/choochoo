@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from ch2.pipeline.loader import StatisticJournalLoader
+from ch2.pipeline.loader import SqliteLoader
 
 log = getLogger(__name__)
 
@@ -18,5 +18,5 @@ This should not be needed in normal use.  DO NOT use when worker processes are s
     '''
     with db.session_context() as s:
         log.info('Removing dummy entry...')
-        StatisticJournalLoader.unlock(s)
+        SqliteLoader.unlock(s)
         log.info('Removed (if present)')

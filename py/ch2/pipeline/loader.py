@@ -1,9 +1,10 @@
-
+from abc import ABC, abstractmethod
 from collections import defaultdict, namedtuple
 from logging import getLogger
 from time import sleep
 
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy_batch_inserts import enable_batch_inserting
 
 from ..commands.args import UNLOCK
 from ..sql import StatisticJournal, StatisticName, Dummy, Interval
@@ -13,7 +14,110 @@ from ..sql.types import short_cls
 log = getLogger(__name__)
 
 
-class StatisticJournalLoader:
+class BaseLoader(ABC):
+
+    def __init__(self, s, owner, add_serial=True, clear_timestamp=True):
+        self._s = s
+        self._owner = owner
+        self.__statistic_name_cache = dict()
+        self._staging = defaultdict(list)
+        self.__by_name_then_time = defaultdict(dict)
+        self.__add_serial = add_serial
+        self._start = None
+        self._finish = None
+        self.__last_time = None
+        self.__serial = 0 if add_serial else None
+        self.__clear_timestamp = clear_timestamp
+        self.__counts = defaultdict(lambda: 0)
+
+    def __bool__(self):
+        return bool(self._staging)
+
+    @abstractmethod
+    def load(self):
+        # should call postload on success
+        raise NotImplementedError(f'{self.__class__.__name__}.load')
+
+    def _postload(self):
+        # manually clean out intervals because we're doing a fast load
+        if self.__clear_timestamp and self._start and self._finish:
+            Interval.mark_dirty_times(self._s, self._start, self._finish)
+            self._s.commit()
+
+    def add(self, name, units, summary, source, value, time, cls, description=None, title=None):
+        # note that name is used as title if title is None, and name is reduced to a simple name.
+        # so legacy code works correctly
+
+        if value is None or value != value:
+            raise Exception(f'Bad value for {name}: {value}')
+
+        if self.__add_serial:
+            if self.__last_time is None:
+                self.__last_time = time
+            elif time > self.__last_time:
+                self.__last_time = time
+                self.__serial += 1
+            elif time < self.__last_time:
+                raise Exception('Time travel - timestamp for statistic decreased')
+
+        self._start = min(self._start, time) if self._start else time
+        self._finish = max(self._finish, time) if self._finish else time
+
+        if name not in self.__statistic_name_cache:
+            if not description: log.warning(f'No description for {name} ({self._owner})')
+            self.__statistic_name_cache[name] = \
+                StatisticName.add_if_missing(self._s, name, STATISTIC_JOURNAL_TYPES[cls],
+                                             units, summary, self._owner,
+                                             description=description, title=title)
+
+        try:
+            source = source.id
+        except AttributeError:
+            pass  # literal id
+        statistic_name = self.__statistic_name_cache[name]
+        journal_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
+        if cls != journal_class:
+            raise Exception(f'Inconsistent class for {name}: {cls}/{journal_class}')
+        instance = journal_class(statistic_name_id=statistic_name.id, source_id=source, value=value,
+                                 time=time, serial=self.__serial)
+
+        if instance.time in self.__by_name_then_time[name]:
+            previous = self.__by_name_then_time[name][instance.time]
+            if instance.value == previous.value:
+                log.warning(f'Discarding duplicate for {name} at {instance.time} (value {instance.value})')
+            else:
+                self._resolve_duplicate(instance, previous)
+            return
+        else:
+            self.__by_name_then_time[name][instance.time] = instance
+
+        self._staging[journal_class].append(instance)
+        self.__counts[name] += 1
+
+    def _resolve_duplicate(self, instance, prev):
+        raise Exception(f'Conflict at ({instance.time}) for {instance.name} '
+                        f'(values {instance.value}/{prev.value})')
+
+    def as_waypoints(self, names):
+        Waypoint = make_waypoint(names.values())
+        time_to_waypoint = defaultdict(lambda: Waypoint())
+        statistic_ids = dict((name.id, name) for name in self.__statistic_name_cache.values())
+        for type in self._staging:
+            for sjournal in self._staging[type]:
+                name = statistic_ids[sjournal.statistic_name_id].name
+                if name in names:
+                    time_to_waypoint[sjournal.time] = \
+                        time_to_waypoint[sjournal.time]._replace(**{'time': sjournal.time,
+                                                                    names[name]: sjournal.value})
+        return [time_to_waypoint[time] for time in sorted(time_to_waypoint.keys())]
+
+    def coverage_percentages(self):
+        total = max(self.__counts.values())
+        for name, count in self.__counts.items():
+            yield name, 100 * count / total
+
+
+class SqliteLoader(BaseLoader):
 
     # we want to load multiple tables (because we're using inheritance) quickly and safely.
     # to do this, we need to generate IDs ourselves (to avoid reading the ID for the base class)
@@ -32,33 +136,11 @@ class StatisticJournalLoader:
     # the while loop below.
 
     def __init__(self, s, owner, add_serial=True, clear_timestamp=True, abort_after=100):
-        self._s = s
-        self._owner = owner
-        self.__statistic_name_cache = dict()
-        self.__staging = defaultdict(list)
-        self.__latest = dict()
-        self.__add_serial = add_serial
-        self.__start = None
-        self.__finish = None
-        self.__last_time = None
-        self.__serial = 0 if add_serial else None
-        self.__clear_timestamp = clear_timestamp
+        super().__init__(s, owner, add_serial=add_serial, clear_timestamp=clear_timestamp)
         self.__abort_after = abort_after
-        self.__counts = defaultdict(lambda: 0)
-
-    @property
-    def start(self):
-        return self.__start
-
-    @property
-    def finish(self):
-        return self.__finish
-
-    def __bool__(self):
-        return bool(self.__staging)
 
     def load(self):
-        if not self.__start:
+        if not self:
             log.warning('No data to load')
             return
         self._s.commit()
@@ -96,28 +178,22 @@ class StatisticJournalLoader:
 
     def _load_ids(self, dummy):
         rowid, count = dummy.id + 1, 0
-        for type in self.__staging:
-            log.debug('Loading %d values for type %s' % (len(self.__staging[type]), short_cls(type)))
-            for i in range(min(5, len(self.__staging[type]))):
-                sjournal = self.__staging[type][i]
+        for type in self._staging:
+            log.debug('Loading %d values for type %s' % (len(self._staging[type]), short_cls(type)))
+            for i in range(min(5, len(self._staging[type]))):
+                sjournal = self._staging[type][i]
                 log.debug(f'Example: {sjournal.value} at {sjournal.time}')
-            for sjournal in self.__staging[type]:
+            for sjournal in self._staging[type]:
                 sjournal.id = rowid
                 rowid += 1
-            self._s.bulk_save_objects(self.__staging[type])
-            count += len(self.__staging[type])
+            self._s.bulk_save_objects(self._staging[type])
+            count += len(self._staging[type])
         self._s.commit()
         log.info(f'Loaded {count} statistics')
         log.debug('Removing Dummy')
         self._s.delete(dummy)
         self._s.commit()
         log.debug('Dummy removed')
-
-    def _postload(self):
-        # manually clean out intervals because we're doing a fast load
-        if self.__clear_timestamp and self.start and self.finish:
-            Interval.mark_dirty_times(self._s, self.start, self.finish)
-            self._s.commit()
 
     @classmethod
     def unlock(cls, s):
@@ -127,88 +203,6 @@ class StatisticJournalLoader:
                    StatisticJournal.statistic_name == dummy_name).delete()
         s.commit()
 
-    def add(self, name, units, summary, source, value, time, cls, description=None, title=None):
-
-        if value is None:
-            raise Exception(f'Trying to save null value for {name}')
-        if value != value:
-            raise Exception(f'Trying to save nan value for {name}')
-
-        # note that name is used as title if title is None, and name is reduced to a simple name.
-        # so legacy code works correctly
-
-        if self.__add_serial:
-            if self.__last_time is None:
-                self.__last_time = time
-            elif time > self.__last_time:
-                self.__last_time = time
-                self.__serial += 1
-            elif time < self.__last_time:
-                raise Exception('Time travel - timestamp for statistic decreased')
-
-        self.__start = min(self.__start, time) if self.__start else time
-        self.__finish = max(self.__finish, time) if self.__finish else time
-
-        if name not in self.__statistic_name_cache:
-            if not description: log.warning(f'No description for {name} ({self._owner})')
-            self.__statistic_name_cache[name] = \
-                StatisticName.add_if_missing(self._s, name, STATISTIC_JOURNAL_TYPES[cls],
-                                             units, summary, self._owner, 
-                                             description=description, title=title)
-
-        try:
-            source = source.id
-        except AttributeError:
-            pass  # literal id
-        statistic_name = self.__statistic_name_cache[name]
-        journal_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
-        if cls != journal_class:
-            raise Exception(f'Inconsistent class for {name}: {cls}/{journal_class}')
-        instance = journal_class(statistic_name_id=statistic_name.id, source_id=source, value=value,
-                                 time=time, serial=self.__serial)
-        if name in self.__latest:
-            prev = self.__latest[name]
-            if instance.time > prev.time:
-                self.__latest[name] = instance
-                self.__staging[journal_class].append(instance)
-                self.__counts[name] += 1
-            elif instance.time == prev.time:
-                if instance.value == prev.value:
-                    log.debug(f'Skipping duplicate for {name}')
-                else:
-                    self._resolve_duplicate(name, instance, prev)
-            else:
-                self.__staging[journal_class].append(instance)
-                self.__counts[name] += 1
-        else:
-            self.__latest[name] = instance
-            self.__staging[journal_class].append(instance)
-            self.__counts[name] += 1
-
-    def _resolve_duplicate(self, name, instance, prev):
-        raise Exception(f'Duplicate time ({prev.time}) for {name} ({instance.value}/{prev.value})')
-
-    def latest(self, name, constraint):
-        return self.__latest.get((name, constraint))
-
-    def as_waypoints(self, names):
-        Waypoint = make_waypoint(names.values())
-        time_to_waypoint = defaultdict(lambda: Waypoint())
-        statistic_ids = dict((name.id, name) for name in self.__statistic_name_cache.values())
-        for type in self.__staging:
-            for sjournal in self.__staging[type]:
-                name = statistic_ids[sjournal.statistic_name_id].name
-                if name in names:
-                    time_to_waypoint[sjournal.time] = \
-                        time_to_waypoint[sjournal.time]._replace(**{'time': sjournal.time,
-                                                                    names[name]: sjournal.value})
-        return [time_to_waypoint[time] for time in sorted(time_to_waypoint.keys())]
-
-    def coverage_percentages(self):
-        total = max(self.__counts.values())
-        for name, count in self.__counts.items():
-            yield name, 100 * count / total
-
 
 def make_waypoint(names, extra=None):
     names = list(names)
@@ -217,3 +211,22 @@ def make_waypoint(names, extra=None):
     names = ['time'] + names
     defaults = [None] * len(names)
     return namedtuple('Waypoint', names, defaults=defaults)
+
+
+class PostgresqlLoader(BaseLoader):
+
+    def __init__(self, s, owner, add_serial=True, clear_timestamp=True, **kargs):
+        super().__init__(s, owner, add_serial=add_serial, clear_timestamp=clear_timestamp)
+        if kargs: log.debug(f'Ignoring {kargs}')
+
+    def load(self):
+        if self:
+            enable_batch_inserting(self._s)
+            for type in self._staging:
+                log.debug(f'Adding {len(self._staging[type])} instances of {type}')
+                for instance in self._staging[type]:
+                    self._s.add(instance)
+                self._s.commit()
+            self._postload()
+        else:
+            log.warning('No data to load')

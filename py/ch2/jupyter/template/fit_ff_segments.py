@@ -13,10 +13,10 @@ from ch2.sql import *
 
 
 @template
-def fit_ff_segments(group, *segment_names):
+def fit_ff_segments(group, *segment_titles):
 
     f'''
-    # Fit FF Parameters for {group} to {', '.join(segment_names)}
+    # Fit FF Parameters for {group} to {', '.join(segment_titles)}
 
     This notebook allows you to estimate a personal time scale (decay period) for the
     [FF model](https://andrewcooke.github.io/choochoo/impulse) using your times (more exactly, the speed)
@@ -44,9 +44,9 @@ def fit_ff_segments(group, *segment_names):
     # hr10 = statistics(s, HR_IMPULSE_10, activity_group=ActivityGroup.from_name(s, 'all'))
     hr10 = Statistics(s).by_name(MonitorReader, N.HR_IMPULSE_10).df
     print(hr10.describe())
-    segments = [s.query(Segment).filter(Segment.name == segment_name).one() for segment_name in segment_names]
+    segments = [s.query(Segment).filter(Segment.title == segment_title).one() for segment_title in segment_titles]
     for segment in segments:
-        print(segment.name, segment.distance)
+        print(segment.title, segment.distance)
     kit_statistic = StatisticName.from_name(s, ActivityReader.KIT, SegmentReader)
     journals_by_kit_by_segment = \
         {segment: group_to_dict(s.query(StatisticJournalText.value, SegmentJournal).
@@ -65,7 +65,7 @@ def fit_ff_segments(group, *segment_names):
             if len(times.columns) and len(times.index) > 2:
                 times.index = times.index.round('1H')
                 performances.append(Series(segment.distance / times.iloc[:, 0], times.index,
-                                           name=f'{segment.name}/{kit}'))
+                                           name=f'{segment.title}/{kit}'))
     n_performances = sum(len(performance) for performance in performances)
 
     hr3600 = sum_to_hour(hr10, HR_IMPULSE_10)

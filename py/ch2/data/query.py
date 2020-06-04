@@ -89,7 +89,7 @@ class Statistics:
                 log.info(f'Retrieving {label}')
                 q = self.__s.query(*self.__columns(type_class, label)). \
                     filter(type_class.statistic_name_id == statistic_name.id)
-                q = self.__constrain_journal(q)
+                q = self.__constrain_journal(q).order_by(N.INDEX)
                 with timing(f'Slow query for {label}?\n{q}', self.__warn_over):
                     df = read_query(q, index=N.INDEX)
                 self.__merge(df)
@@ -117,7 +117,7 @@ class Statistics:
                         filter(type_class.statistic_name_id == statistic_name.id). \
                         join(Source, type_class.source_id == Source.id). \
                         filter(Source.activity_group_id == activity_group_id)
-                    q = self.__constrain_journal(q)
+                    q = self.__constrain_journal(q).order_by(N.INDEX)
                     with timing(f'Slow query for {label}?\n{q}', self.__warn_over):
                         df = read_query(q, index=N.INDEX)
                     self.__merge(df)

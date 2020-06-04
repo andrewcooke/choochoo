@@ -83,4 +83,4 @@ class Segment(Base):
             return self.finish
 
     def __str__(self):
-        return f'Segment "{self.name}"'
+        return f'Segment "{self.title}"'

@@ -44,6 +44,7 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'sklearn',
                      'sqlalchemy',
                      'sqlalchemy-utils',
+                     'sqlalchemy-batch-inserts',
                      'uritools',
                      'werkzeug',
                      ],
