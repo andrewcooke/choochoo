@@ -1,18 +1,17 @@
 
 from logging import getLogger
-from os.path import join, exists
-from shutil import rmtree
+from os import unlink
 
+from sqlalchemy_utils import create_database, drop_database, database_exists
 from uritools import urisplit
 
-from .args import no, mm, SUB_COMMAND, CHECK, DATA, DATABASE, ACTIVITY_GROUPS, LIST, PROFILE, DIARY, DELETE, FORCE, \
-    BASE, SHOW, DB_VERSION, URI, SQLITE, base_system_path, ACTIVITY
+from .args import mm, SUB_COMMAND, LIST, PROFILE, BASE, SHOW, DB_VERSION, URI, SQLITE, POSTGRESQL, \
+    FORCE, DELETE
 from .help import Markdown
 from ..config.utils import profiles, get_profile
-from ..lib.utils import slow_warning
-from ..sql import SystemConstant, ActivityGroup
-from ..sql.database import sqlite_uri
-from ..sql.tables.statistic import StatisticName, StatisticJournal
+from ..lib.utils import clean_path
+from ..sql import SystemConstant
+from ..sql.database import sqlite_uri, postgresql_uri
 
 log = getLogger(__name__)
 
@@ -32,20 +31,31 @@ List the available profiles.
     > ch2 database show
 
 Show the current database state.
+
+    > ch2 database delete
+
+Delete the current database.
     '''
     action = args[SUB_COMMAND]
     if action == SHOW:
         show(sys)
     elif action == LIST:
         list()
+    elif action == DELETE:
+        uri = args[URI] or sys.get_constant(SystemConstant.DB_URI, none=True)
+        if not uri: raise Exception('No current database is defined')
+        delete(uri, sys)
     else:
-        load(sys, args[BASE], args[PROFILE], args[URI], args[DELETE])
+        load(sys, args[BASE], args[PROFILE], args[URI], args[FORCE])
 
 
 def show(sys):
     uri = sys.get_constant(SystemConstant.DB_URI, none=True)
+    version = sys.get_constant(SystemConstant.DB_VERSION, none=True)
     if uri:
         print(f'{URI}: {uri}')
+        print(f'version: {version}')
+        print(f'exists: {database_exists(uri)}')
     else:
         print('no database configured')
     return
@@ -61,43 +71,60 @@ def list():
             print(f' ## {name} - lacks docstring\n')
 
 
-def delete(sys, uri):
-    uri_parts = urisplit(uri)
-    if uri_parts.scheme == SQLITE:
-        log.warning(f'Deleteing {uri_parts.path}')
-        rmtree(uri_parts.path)
-    else:
-        raise Exception(f'Unsupported URI {uri}')
-    sys.delete_constant(SystemConstant.DB_URI)
-
-
-def check_and_delete(sys, delete):
-    existing = sys.get_constant(SystemConstant.DB_VERSION, none=True)
-    if bool(existing) != delete:
-        if existing:
-            raise Exception(f'Database already exists {existing} (use {mm(DELETE)})')
+def delete(uri, sys):
+    if database_exists(uri):
+        log.debug(f'Deleting database at {uri}')
+        uri_parts = urisplit(uri)
+        if uri_parts.scheme == SQLITE:
+            path = clean_path(uri_parts.path)
+            log.warning(f'Deleting {path}')
+            unlink(path)
+        elif uri_parts.scheme == POSTGRESQL:
+            drop_database(uri)
         else:
-            raise Exception(f'You specified {mm(DELETE)} but no database exists')
-    if existing:
-        delete(sys, existing)
-
-
-def create(sys, base, scheme):
-    if scheme == SQLITE:
-        uri = sqlite_uri(base_system_path(base, subdir=DATA, file=ACTIVITY))
+            raise Exception(f'Unsupported URI {uri}')
     else:
-        raise Exception(f'Unsupported scheme {scheme}')
-    log.debug(f'New database at {uri}')
-    sys.set_constant(SystemConstant.DB_URI, uri)
+        log.debug(f'No database at {uri} (so not deleting)')
+    if uri == sys.get_constant(SystemConstant.DB_URI, none=True):
+        log.debug(f'Removing {uri} as current {SystemConstant.DB_URI}')
+        sys.delete_constant(SystemConstant.DB_URI)
 
 
-def load(sys, base, profile, scheme, delete=False):
-    check_and_delete(sys, delete)
-    create(sys, base, scheme)
+def delete_and_check(uri, force, sys):
+    if force: delete(uri, sys)
+    if database_exists(uri):
+        raise Exception(f'A schema exists at {uri} (use {mm(FORCE)}?)')
+
+
+def write(uri, profile, sys, base):
     fn, spec = get_profile(profile)
     log.info(f'Loading profile {profile}')
-    db = sys.get_database()
+    db = sys.get_database(uri)  # writes schema automatically
     with db.session_context() as s:
         fn(s, base)
     log.info(f'Profile {profile} loaded successfully')
-    sys.set_constant(SystemConstant.DB_VERSION, DB_VERSION)
+    sys.set_constant(SystemConstant.DB_URI, uri, force=True)
+    sys.set_constant(SystemConstant.DB_VERSION, DB_VERSION, force=True)
+
+
+def make_uri(base, scheme_or_uri):
+    if scheme_or_uri == SQLITE:
+        uri = sqlite_uri(base)
+    elif scheme_or_uri == POSTGRESQL:
+        uri = postgresql_uri(base)
+    else:
+        uri = scheme_or_uri
+    log.debug(f'Using URI {uri}')
+    return uri
+
+
+def create(uri):
+    log.debug(f'Creating database at {uri}')
+    create_database(uri)
+
+
+def load(sys, base, profile, scheme_or_uri, force):
+    uri = make_uri(base, scheme_or_uri)
+    delete_and_check(uri, force, sys)
+    create(uri)
+    write(uri, profile, sys, base)

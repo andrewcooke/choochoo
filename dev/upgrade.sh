@@ -39,14 +39,10 @@ if [ -d $NEW_BASE ]; then
 fi
 
 echo -e "\ninstalling"
-if [[ `dev/ch2 -v0 database show` == uri* ]]; then
-    dev/ch2 --dev --color DARK database load --postgresql --delete acooke || { echo -e "\ndatabase failed"; exit 2; }
-else
-    dev/ch2 --dev --color DARK database load --postgresql acooke || { echo -e "\ndatabase failed"; exit 2; }
-fi
+dev/ch2 --dev --color DARK database load --postgresql --force acooke || { echo -e "\ndatabase failed"; exit 2; }
 
 echo -e "\nimporting old data"
-dev/ch2 --dev import $OLD_VERSION || { echo -e "\nimport failed"; exit 3; }
+dev/ch2 --dev import --sqlite $OLD_VERSION || { echo -e "\nimport failed"; exit 3; }
 
 if [ -e dev/set-constants.sh ]; then
     dev/set-constants.sh

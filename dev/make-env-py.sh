@@ -16,6 +16,7 @@ pip install openpyxl
 pip install pandas
 pip install pendulum
 pip install psutil
+pip install psycopg2
 pip install pyGeoTile
 pip install pyproj
 pip install rasterio
@@ -26,6 +27,7 @@ pip install sentinelsat
 pip install shapely
 pip install sklearn
 pip install sqlalchemy
+pip install sqlalchemy-utils
 pip install uritools
 pip install werkzeug
 

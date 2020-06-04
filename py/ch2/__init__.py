@@ -21,7 +21,7 @@ class FatalException(Exception):
 
 from .commands.args import COMMAND, make_parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DATABASE, CONSTANTS, CALCULATE, SHOW_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, BASE
 from .commands.constants import constants
 from .commands.validate import validate
 from .commands.database import database
@@ -82,7 +82,7 @@ COMMANDS = {CONSTANTS: constants,
 
 
 def main():
-    import ch2.lib.data
+    from . import commands
     parser = make_parser()
     ns = parser.parse_args()
     command_name = ns.command if hasattr(ns, COMMAND) else None
@@ -90,12 +90,12 @@ def main():
     if command and hasattr(command, 'tui') and command.tui:
         ns.verbose = 0
     args = NamespaceWithVariables(ns)
-    ch2.lib.data.DEV = args[DEV]
+    commands.args.GLOBAL_DEV_FLAG = args[DEV]
     make_log_from_args(args)
     log.info('Version %s' % CH2_VERSION)
     if version_info < (3, 7):
         raise Exception('Please user Python 3.7 or more recent')
-    sys = System(args)
+    sys = System(args[BASE])
     db = sys.get_database()
     enable_callback_tracebacks(True)  # experimental - wondering what this does / whether it is useful?
     set_log_color(args, sys)

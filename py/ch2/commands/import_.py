@@ -2,8 +2,11 @@ from collections import defaultdict
 from logging import getLogger
 from os.path import sep, exists, join, isfile
 
+from sqlalchemy_utils import database_exists
+from uritools import urisplit
+
 from .args import SOURCE, ACTIVITY, DB_EXTN, base_system_path, BASE, SEGMENTS, CONSTANTS, KIT, ACTIVITIES, DIARY, \
-    infer_flags
+    infer_flags, ENGINE, SQLITE, POSTGRESQL, mm
 from .read import DATA
 from ..lib.log import Record
 from ..lib.utils import clean_path
@@ -12,7 +15,7 @@ from ..migrate.constant import import_constant
 from ..migrate.diary import import_diary
 from ..migrate.kit import import_kit
 from ..migrate.segment import import_segment
-from ..sql.database import ReflectedDatabase, sqlite_uri
+from ..sql.database import ReflectedDatabase, sqlite_uri, postgresql_uri, SystemConstant
 
 log = getLogger(__name__)
 
@@ -40,22 +43,48 @@ Import only diary entries.
 Import everything but diary entries.
     '''
     flags = infer_flags(args, DIARY, ACTIVITIES, KIT, CONSTANTS, SEGMENTS)
-    import_path(Record(log), args[BASE], args[SOURCE], db, flags=flags)
+    import_source(Record(log), args[BASE], args[SOURCE], args[ENGINE], db, sys, flags=flags)
 
 
-def import_path(record, base, source, new, flags=None):
-    if flags is None: flags = defaultdict(lambda: True)
-    path = build_source_path(record, base, source)
-    uri = sqlite_uri(path, read_only=True)
-    old = ReflectedDatabase(uri)
-    if not old.meta.tables:
-        record.raise_(f'No tables found in {path}')
-    log.info(f'Importing data from {path}')
-    if flags[DIARY]: import_diary(record, old, new)
-    if flags[ACTIVITIES]: import_activity(record, old, new)
-    if flags[KIT]: import_kit(record, old, new)
-    if flags[CONSTANTS]: import_constant(record, old, new)
-    if flags[SEGMENTS]: import_segment(record, old, new)
+def infer_uri(base, source, engine, sys):
+    uri = None
+    if ':' in source:
+        if engine:
+            raise Exception(f'Do not specify engine with (what looks like) a URI')
+        uri = source
+    elif len(source) < 8:
+        if not engine:
+            current = sys.get_constant(SystemConstant.DB_URI, none=True)
+            if not current:
+                raise Exception(f'Specify {mm(SQLITE)} or {mm(POSTGRESQL)}')
+            engine = urisplit(current).scheme
+        if engine == SQLITE:
+            uri = sqlite_uri(base, version=source)
+        elif engine == POSTGRESQL:
+            uri = postgresql_uri(base, version=source)
+        else:
+            raise Exception(f'Unknown engine {engine}')
+    else:
+        raise Exception(f'Unexpected version or URI {source}')
+    if database_exists(uri):
+        return uri
+    else:
+        raise Exception(f'No database at {uri}')
+
+
+def import_source(record, base, source, engine, new, sys, flags=None):
+    with record.record_exceptions():
+        uri = infer_uri(base, source, engine, sys)
+        if flags is None: flags = defaultdict(lambda: True)
+        old = ReflectedDatabase(uri)
+        if not old.meta.tables:
+            record.raise_(f'No tables found in {uri}')
+        log.info(f'Importing data from {uri}')
+        if flags[DIARY]: import_diary(record, old, new)
+        if flags[ACTIVITIES]: import_activity(record, old, new)
+        if flags[KIT]: import_kit(record, old, new)
+        if flags[CONSTANTS]: import_constant(record, old, new)
+        if flags[SEGMENTS]: import_segment(record, old, new)
 
 
 def build_source_path(record, base, source):

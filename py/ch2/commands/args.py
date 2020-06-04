@@ -7,6 +7,8 @@ from os.path import join
 from re import sub
 from typing import Mapping
 
+from ch2.lib.utils import clean_path
+
 log = getLogger(__name__)
 
 # this can be modified during development.  it will be reset from setup.py on release.
@@ -15,7 +17,7 @@ CH2_VERSION = '0.34.0'
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 DB_EXTN = '.db'   # used to use .sql but auto-complete for sqlite3 didn't work
 
-PERMANENT = 'permanent'
+GLOBAL_DEV_FLAG = False
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
@@ -89,6 +91,7 @@ DISCARD = 'discard'
 DROP = 'drop'
 EMPTY = 'empty'
 ENABLE = 'enable'
+ENGINE = 'engine'
 F = 'f'
 FAST = 'fast'
 FIELD = 'field'
@@ -147,6 +150,7 @@ OWNER = 'owner'
 PASS = 'pass'
 PATH = 'path'
 P, PATTERN = 'p', 'pattern'
+PERMANENT = 'permanent'
 POSTGRESQL = 'postgresql'
 PLAN = 'plan'
 PORT = 'port'
@@ -259,7 +263,8 @@ def make_parser(with_noop=False):
 
     parser = ArgumentParser(prog=PROGNAME)
 
-    parser.add_argument(mm(BASE), default=f'~/.ch2', metavar='DIR',
+    # type here is important - it expands to unique representation (hashed for PG URI)
+    parser.add_argument(mm(BASE), default='~/.ch2', type=clean_path, metavar='DIR',
                         help='the base directory for data (default ~/.ch2)')
     parser.add_argument(mm(READ_ONLY), action='store_true',
                         help='read-only database (so errors on write)')
@@ -411,7 +416,7 @@ def make_parser(with_noop=False):
     database_show = database_cmds.add_parser(SHOW, help='show current configuration')
     database_list = database_cmds.add_parser(LIST, help='list available profiles')
     database_load = database_cmds.add_parser(LOAD, help='configure using the given profile')
-    database_load.add_argument(mm(DELETE), action='store_true', help='delete existing data (overwrite / replace)')
+    database_load.add_argument(mm(FORCE), action='store_true', help='overwrite existing database')
     database_engines = database_load.add_mutually_exclusive_group(required=True)
     database_engines.add_argument(mm(SQLITE), dest=URI, action='store_const', const=SQLITE,
                                   help='use an sqlite database with standard parameters')
@@ -423,9 +428,21 @@ def make_parser(with_noop=False):
     for name in profiles():
         database_profile = database_profiles.add_parser(name)
         database_profile.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
+    database_delete = database_cmds.add_parser(DELETE, help='delete the current database (or one at a given URI)')
+    database_engines = database_delete.add_mutually_exclusive_group(required=False)
+    database_engines.add_argument(mm(SQLITE), dest=URI, action='store_const', const=SQLITE,
+                                  help='use an sqlite database with standard parameters')
+    database_engines.add_argument(mm(POSTGRESQL), dest=URI, action='store_const', const=POSTGRESQL,
+                                  help='use a postgresql database with standard parameters')
+    database_engines.add_argument(mm(URI), help='use the given database URI')
 
     import_ = subparsers.add_parser(IMPORT, help='import data from a previous version')
-    import_.add_argument(SOURCE, help='version or path to import')
+    import_.add_argument(SOURCE, help='version or uri to import')
+    import_engines = import_.add_mutually_exclusive_group(required=False)
+    import_engines.add_argument(mm(SQLITE), dest=ENGINE, action='store_const', const=SQLITE,
+                                help='version is an sqlite database (default as current)')
+    import_engines.add_argument(mm(POSTGRESQL), dest=ENGINE, action='store_const', const=POSTGRESQL,
+                                help='version is a postgresql database (default as current)')
     import_.add_argument(mm(DISABLE), action='store_true', help='disable following options (they enable by default)')
     import_.add_argument(mm(DIARY), action='store_true', help='enable (or disable) import of diary data')
     import_.add_argument(mm(ACTIVITIES), action='store_true', help='enable (or disable) import of activity data')
@@ -590,14 +607,14 @@ def bootstrap_dir(base, *args, configurator=None, post_config=None):
     args = [mm(BASE), base] + list(args)
     if configurator:
         ns, db = connect(args)
-        sys = System(ns)
+        sys = System(ns[BASE])
         with db.session_context() as s:
             configurator(sys, s, base)
     args += post_config if post_config else []
     ns = NamespaceWithVariables(make_parser().parse_args(args))
     make_log_from_args(ns)
-    sys = System(ns)
-    sys.set_constant(SystemConstant.DB_URI, sqlite_uri(join(base, ACTIVITY + DB_EXTN)))
+    sys = System(ns[BASE])
+    sys.set_constant(SystemConstant.DB_URI, sqlite_uri(base))
     db = sys.get_database()
 
     return ns, sys, db

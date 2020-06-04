@@ -4,7 +4,7 @@ from logging import getLogger
 from ...commands.args import base_system_path
 from ...commands.database import load, delete
 from ...commands.help import HTML, filter, parse, P, LI, PRE
-from ...commands.import_ import import_path
+from ...commands.import_ import import_source
 from ...config.utils import profiles
 from ...lib import time_to_local_time, local_time_to_time
 from ...lib.log import Record
@@ -85,7 +85,7 @@ class Configure:
     def write_import(self, request, s):
         data = request.json
         record = Record(log)
-        import_path(record, self.__base, data[VERSION], self.__db)
+        import_source(record, self.__base, data[VERSION], self.__db)
         return record.json()
 
     def read_constants(self, request, s):

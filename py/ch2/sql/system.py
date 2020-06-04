@@ -12,9 +12,8 @@ log = getLogger(__name__)
 
 class System(MappedDatabase):
 
-    def __init__(self, args):
-        path = args.system_path(DATA, SYSTEM + DB_EXTN)
-        super().__init__(sqlite_uri(path), SystemConstant, SystemBase)
+    def __init__(self, base):
+        super().__init__(sqlite_uri(base, name=SYSTEM), SystemConstant, SystemBase)
         version = self.get_constant(SystemConstant.DB_VERSION, none=True)
         if version:
             log.info(f'Database version {version}')
@@ -74,10 +73,10 @@ class System(MappedDatabase):
         with self.session_context() as s:
             return Progress.wait_for_progress(s, name, timeout=timeout)
 
-    def get_database(self):
-        db_uri = self.get_constant(SystemConstant.DB_URI, none=True)
-        if db_uri:
-            return Database(db_uri)
+    def get_database(self, uri=None):
+        if not uri: uri = self.get_constant(SystemConstant.DB_URI, none=True)
+        if uri:
+            return Database(uri)
         else:
             log.warning('No database URI configured')
             return None

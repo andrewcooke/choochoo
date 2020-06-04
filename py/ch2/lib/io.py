@@ -42,6 +42,7 @@ def file_hash(file_path):
 
 
 def data_hash(data):
+    if isinstance(data, str): data = data.encode('utf-8')
     hash = md5()
     hash.update(data)
     return hash.hexdigest()

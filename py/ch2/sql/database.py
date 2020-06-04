@@ -1,7 +1,8 @@
 
 from contextlib import contextmanager
 from logging import getLogger
-from sqlite3 import OperationalError
+from re import sub
+from sqlite3 import OperationalError, Connection
 
 from sqlalchemy import create_engine, event, MetaData
 from sqlalchemy.engine import Engine
@@ -10,7 +11,9 @@ from sqlalchemy.sql.functions import count
 
 from . import *
 from .support import Base
-from ..commands.args import NamespaceWithVariables, NO_OP, make_parser
+from ..commands.args import NamespaceWithVariables, NO_OP, make_parser, DB_EXTN, base_system_path, DATA, ACTIVITY, BASE, \
+    DB_VERSION, POSTGRESQL
+from ..lib.io import data_hash
 from ..lib.log import make_log_from_args
 
 # mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
@@ -32,38 +35,70 @@ log = getLogger(__name__)
 # https://stackoverflow.com/questions/13712381/how-to-turn-on-pragma-foreign-keys-on-in-sqlalchemy-migration-script-or-conf
 @event.listens_for(Engine, "connect")
 def fk_pragma_on_connect(dbapi_con, _con_record):
-    cursor = dbapi_con.cursor()
+    if isinstance(dbapi_con, Connection):
+        cursor = dbapi_con.cursor()
 
-    def pragma(cmd):
-        full_cmd = f'PRAGMA {cmd}'
-        cursor.execute(full_cmd)
+        def pragma(cmd):
+            full_cmd = f'PRAGMA {cmd}'
+            cursor.execute(full_cmd)
 
-    pragma('foreign_keys=ON;')  # https://www.sqlite.org/pragma.html#pragma_foreign_keys
-    pragma('temp_store=MEMORY;')  # https://www.sqlite.org/pragma.html#pragma_temp_store
-    pragma('threads=4;')  # https://www.sqlite.org/pragma.html#pragma_threads
-    pragma('cache_size=-1000000;')  # 1GB  https://www.sqlite.org/pragma.html#pragma_cache_size
-    pragma('secure_delete=OFF;')  # https://www.sqlite.org/pragma.html#pragma_secure_delete
-    pragma('journal_mode=WAL;')  # https://www.sqlite.org/wal.html
-    pragma(f'busy_timeout={5 * 60 * 1000};')  # https://www.sqlite.org/pragma.html#pragma_busy_timeout
-    cursor.close()
+        pragma('foreign_keys=ON;')  # https://www.sqlite.org/pragma.html#pragma_foreign_keys
+        pragma('temp_store=MEMORY;')  # https://www.sqlite.org/pragma.html#pragma_temp_store
+        pragma('threads=4;')  # https://www.sqlite.org/pragma.html#pragma_threads
+        pragma('cache_size=-1000000;')  # 1GB  https://www.sqlite.org/pragma.html#pragma_cache_size
+        pragma('secure_delete=OFF;')  # https://www.sqlite.org/pragma.html#pragma_secure_delete
+        pragma('journal_mode=WAL;')  # https://www.sqlite.org/wal.html
+        pragma(f'busy_timeout={5 * 60 * 1000};')  # https://www.sqlite.org/pragma.html#pragma_busy_timeout
+        cursor.close()
 
 
 @event.listens_for(Engine, 'close')
 def analyze_pragma_on_close(dbapi_con, _con_record):
-    cursor = dbapi_con.cursor()
-    try:
-        # this can fail if another process is using the database
-        cursor.execute("PRAGMA optimize;")  # https://www.sqlite.org/pragma.html#pragma_optimize
-    except OperationalError as e:
-        log.debug("Optimize DB aborted (DB likely still in use)")
-    finally:
-        cursor.close()
+    if isinstance(dbapi_con, Connection):
+        cursor = dbapi_con.cursor()
+        try:
+            # this can fail if another process is using the database
+            cursor.execute("PRAGMA optimize;")  # https://www.sqlite.org/pragma.html#pragma_optimize
+        except OperationalError as e:
+            log.debug("Optimize DB aborted (DB likely still in use)")
+        finally:
+            cursor.close()
 
 
-def sqlite_uri(path, read_only=False):
+def sqlite_uri(base, read_only=False, name=ACTIVITY, version=DB_VERSION):
+    path = base_system_path(base, subdir=DATA, file=name + DB_EXTN, version=version)
     uri = f'sqlite:///{path}'
     if read_only: uri += '?mode=ro'
     return uri
+
+
+def compact(initial, target=6):
+    '''
+    Shrink initial text and append a disambiguating hash.
+    Used to make a quasi-readable hash of the base directory.
+    Compression discards letters evenly across the word.
+    '''
+    text = sub(r'\W', '', initial)
+    while len(text) > target:  # retry on rounding error
+        to_drop = len(text) - target
+        space = target - 1
+        delta = space / to_drop  # need to discard to_drop / space per letter advancement
+        offset = 1
+        while len(text) > target and int(offset) < len(text):
+            ioffset = int(offset)
+            text = text[:ioffset] + text[ioffset+1:]
+            offset += delta
+    hash = data_hash(initial)
+    text = text + '-' + hash[0:3]
+    log.debug(f'Compressed {initial} to {text}')
+    return text
+
+
+def postgresql_uri(base, read_only=False, version=DB_VERSION):
+    if read_only: log.warning('Read-only not supported yet for Postgres')
+    prefix = compact(base)
+    name = f'{prefix}-{ACTIVITY}-{version}'
+    return f'{POSTGRESQL}://postgres@localhost/{name}'
 
 
 class DatabaseBase:
@@ -108,6 +143,8 @@ class MappedDatabase(DatabaseBase):
 
 class Database(MappedDatabase):
 
+    # please create via sys.get_database !!
+
     def __init__(self, uri):
         super().__init__(uri, Source, Base)
 
@@ -133,7 +170,7 @@ def connect(args):
     args.append(NO_OP)
     ns = NamespaceWithVariables(make_parser(with_noop=True).parse_args(args))
     make_log_from_args(ns)
-    sys = System(ns)
+    sys = System(ns[BASE])
     db = sys.get_database()
     return ns, db
 

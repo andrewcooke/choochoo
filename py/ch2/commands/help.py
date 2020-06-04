@@ -4,8 +4,9 @@ from logging import getLogger
 from sys import stdout
 import re
 
-from .args import TOPIC, HELP, PROGNAME, m
+from .args import TOPIC, HELP, PROGNAME, m, BASE
 from ..lib.io import terminal_width
+from ..sql.database import compact
 
 log = getLogger(__name__)
 
@@ -44,6 +45,7 @@ Displays this information.
 
 Lists available topics.
     '''
+    compact(args[BASE])
     from .. import COMMANDS
     if args[TOPIC] in COMMANDS:
         Markdown().print(COMMANDS[args[TOPIC]].__doc__)

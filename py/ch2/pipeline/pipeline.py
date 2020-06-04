@@ -8,6 +8,7 @@ from psutil import cpu_count
 from sqlalchemy import text
 
 from .loader import StatisticJournalLoader
+from ..commands.args import SQLITE
 from ..lib import format_seconds
 from ..lib.workers import ProgressTree, Workers
 from ..sql import Pipeline
@@ -97,11 +98,11 @@ class MultiProcPipeline(BasePipeline):
 
     def __flush_wal(self, session):
         session.commit()
-        cnx = session.connection()
-        log.debug('Clearing WAL')
-        cnx.execute(text('pragma wal_checkpoint(RESTART);'))
-        log.debug('Cleared WAL')
-        session.commit()
+        if str(session.get_bind().url).startswith(SQLITE):
+            log.debug('Clearing WAL')
+            session.execute(text('pragma wal_checkpoint(RESTART);'))
+            session.commit()
+            log.debug('Cleared WAL')
 
     def _run_all(self, s, missing, progress=None):
         local_progress = progress.increment_or_complete if progress else nullcontext

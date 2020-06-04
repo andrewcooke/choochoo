@@ -124,9 +124,9 @@ def set_log_color(args, sys):
 
 
 def log_current_exception(traceback=UNDEF, warning=True):
-    from .data import DEV
+    from ..commands.args import GLOBAL_DEV_FLAG
     if traceback is UNDEF:
-        traceback = DEV
+        traceback = GLOBAL_DEV_FLAG
     t, e, tb = exc_info()
     try:
         log.debug(f'Exception: {e}')

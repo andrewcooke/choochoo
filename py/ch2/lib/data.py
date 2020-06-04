@@ -14,7 +14,6 @@ from .log import log_current_exception
 from ..names import Titles
 
 log = getLogger(__name__)
-DEV = False  # set when args parsed (allow global swicth on tracebacks)
 
 
 class WarnDict(dict):
