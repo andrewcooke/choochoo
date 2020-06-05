@@ -6,13 +6,14 @@ from time import time
 
 from psutil import cpu_count
 from sqlalchemy import text
-from uritools import urisplit
 
 from .loader import SqliteLoader, PostgresqlLoader
-from ..commands.args import SQLITE, POSTGRESQL
+from ..commands.args import SQLITE, POSTGRESQL, BATCH, mm, KARG
 from ..lib import format_seconds
+from ..lib.utils import parse_bool
 from ..lib.workers import ProgressTree, Workers
 from ..sql import Pipeline, SystemConstant
+from ..sql.database import scheme
 from ..sql.types import short_cls
 
 log = getLogger(__name__)
@@ -189,7 +190,6 @@ class MultiProcPipeline(BasePipeline):
 
     @abstractmethod
     def _base_command(self):
-        # this should start with the worker ID
         raise NotImplementedError()
 
     @property
@@ -208,6 +208,15 @@ class LoaderMixin:
 
     loaders = {SQLITE: SqliteLoader, POSTGRESQL: PostgresqlLoader}
 
+    def __init__(self, *args, batch=True, **kargs):
+        super().__init__(*args, **kargs)
+        self.__batch = batch
+
+    def _base_command(self):
+        cmd = super()._base_command()
+        if not self.__batch: cmd += f' {mm(KARG)} {BATCH}={False}'
+        return cmd
+
     def _get_loader(self, s, add_serial=None, **kargs):
         if 'owner' not in kargs:
             kargs['owner'] = self.owner_out
@@ -215,12 +224,15 @@ class LoaderMixin:
             raise Exception('Select serial use')
         else:
             kargs['add_serial'] = add_serial
-        scheme = urisplit(self._sys.get_constant(SystemConstant.DB_URI)).scheme
-        if scheme in self.loaders:
-            log.debug(f'Using loader for {scheme}')
-            return self.loaders[scheme](s, **kargs)
+        scheme_ = scheme(self._sys.get_constant(SystemConstant.DB_URI))
+        if scheme_ == POSTGRESQL and 'batch' not in kargs:
+            kargs['batch'] = self.__batch
+            self.__batch = False  # only set once or we get multiple callbacks
+        if scheme_ in self.loaders:
+            log.debug(f'Using loader for {scheme_}')
+            return self.loaders[scheme_](s, **kargs)
         else:
-            raise Exception(f'Unknown scheme: {scheme}')
+            raise Exception(f'Unknown scheme: {scheme_}')
 
 
 class OwnerInMixin:

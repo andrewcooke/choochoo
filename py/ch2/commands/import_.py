@@ -3,7 +3,6 @@ from logging import getLogger
 from os.path import sep, exists, join, isfile
 
 from sqlalchemy_utils import database_exists
-from uritools import urisplit
 
 from .args import SOURCE, ACTIVITY, DB_EXTN, base_system_path, BASE, SEGMENTS, CONSTANTS, KIT, ACTIVITIES, DIARY, \
     infer_flags, ENGINE, SQLITE, POSTGRESQL, mm
@@ -15,7 +14,7 @@ from ..migrate.constant import import_constant
 from ..migrate.diary import import_diary
 from ..migrate.kit import import_kit
 from ..migrate.segment import import_segment
-from ..sql.database import ReflectedDatabase, sqlite_uri, postgresql_uri, SystemConstant
+from ..sql.database import ReflectedDatabase, sqlite_uri, postgresql_uri, SystemConstant, scheme
 
 log = getLogger(__name__)
 
@@ -57,7 +56,7 @@ def infer_uri(base, source, engine, sys):
             current = sys.get_constant(SystemConstant.DB_URI, none=True)
             if not current:
                 raise Exception(f'Specify {mm(SQLITE)} or {mm(POSTGRESQL)}')
-            engine = urisplit(current).scheme
+            engine = scheme(current)
         if engine == SQLITE:
             uri = sqlite_uri(base, version=source)
         elif engine == POSTGRESQL:

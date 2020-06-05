@@ -7,7 +7,7 @@ from os.path import join
 from re import sub
 from typing import Mapping
 
-from ch2.lib.utils import clean_path
+from ch2.lib.utils import clean_path, parse_bool
 from ch2.names import UNDEF
 
 log = getLogger(__name__)
@@ -66,6 +66,7 @@ ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
 ARG = 'arg'
 BASE = 'base'
+BATCH = 'batch'
 BIND = 'bind'
 BORDER = 'border'
 CHANGE = 'change'
@@ -632,7 +633,7 @@ def parse_pairs(pairs, convert=True, multi=False, comma=False):
         for pair in pairs:
             name, value = pair.split('=', 1)
             if convert:
-                for type in (int, float, to_time):
+                for type in (int, float, to_time, lambda x: parse_bool(x, default=None)):
                     try:
                         value = type(value)
                         break

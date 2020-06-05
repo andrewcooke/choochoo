@@ -215,13 +215,18 @@ def make_waypoint(names, extra=None):
 
 class PostgresqlLoader(BaseLoader):
 
-    def __init__(self, s, owner, add_serial=True, clear_timestamp=True, **kargs):
+    def __init__(self, s, owner, add_serial=True, clear_timestamp=True, batch=True, **kargs):
         super().__init__(s, owner, add_serial=add_serial, clear_timestamp=clear_timestamp)
+        self.__batch = batch
         if kargs: log.debug(f'Ignoring {kargs}')
 
     def load(self):
         if self:
-            enable_batch_inserting(self._s)
+            if self.__batch:
+                log.debug('Enabling batch load')
+                enable_batch_inserting(self._s)
+            else:
+                log.debug('Leaving batch mode unchanged')
             for type in self._staging:
                 log.debug(f'Adding {len(self._staging[type])} instances of {type}')
                 for instance in self._staging[type]:

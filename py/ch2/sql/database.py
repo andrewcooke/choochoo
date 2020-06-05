@@ -8,6 +8,7 @@ from sqlalchemy import create_engine, event, MetaData
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.functions import count
+from uritools import urisplit
 
 from . import *
 from .support import Base
@@ -65,6 +66,10 @@ def analyze_pragma_on_close(dbapi_con, _con_record):
             cursor.close()
 
 
+def scheme(uri):
+    return urisplit(uri).scheme
+
+
 def sqlite_uri(base, read_only=False, name=ACTIVITY, version=DB_VERSION):
     path = base_system_path(base, subdir=DATA, file=name + DB_EXTN, version=version)
     uri = f'sqlite:///{path}'
@@ -106,7 +111,10 @@ class DatabaseBase:
     def __init__(self, uri):
         self.uri = uri
         log.info('Using database at %s' % self.uri)
-        self.engine = create_engine(uri, echo=False)
+        options = {'echo': False}
+        if POSTGRESQL == scheme(uri): options.update(executemany_mode="values")
+        log.debug(f'Creating engine for {uri} with options {options}')
+        self.engine = create_engine(uri, **options)
         self.session = self._sessionmaker()
 
     def _sessionmaker(self):
