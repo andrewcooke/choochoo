@@ -112,7 +112,7 @@ class DatabaseBase:
     def _sessionmaker(self):
         return sessionmaker(bind=self.engine)
 
-    def no_schema(self, table):
+    def _no_schema(self, table):
         # https://stackoverflow.com/questions/33053241/sqlalchemy-if-table-does-not-exist
         return not self.engine.dialect.has_table(self.engine, table.__tablename__)
 
@@ -136,7 +136,7 @@ class MappedDatabase(DatabaseBase):
 
     def __init__(self, uri, table, base):
         super().__init__(uri)
-        if self.no_schema(table):
+        if self._no_schema(table):
             log.info('Creating tables')
             base.metadata.create_all(self.engine)
 

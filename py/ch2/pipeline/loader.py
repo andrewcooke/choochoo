@@ -86,7 +86,7 @@ class BaseLoader(ABC):
             if instance.value == previous.value:
                 log.warning(f'Discarding duplicate for {name} at {instance.time} (value {instance.value})')
             else:
-                self._resolve_duplicate(instance, previous)
+                self._resolve_duplicate(name, instance, previous)
             return
         else:
             self.__by_name_then_time[name][instance.time] = instance
@@ -94,8 +94,8 @@ class BaseLoader(ABC):
         self._staging[journal_class].append(instance)
         self.__counts[name] += 1
 
-    def _resolve_duplicate(self, instance, prev):
-        raise Exception(f'Conflict at ({instance.time}) for {instance.name} '
+    def _resolve_duplicate(self, name, instance, prev):
+        raise Exception(f'Conflict at ({instance.time}) for {name} '
                         f'(values {instance.value}/{prev.value})')
 
     def as_waypoints(self, names):

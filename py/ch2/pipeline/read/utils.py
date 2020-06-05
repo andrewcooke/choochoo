@@ -31,10 +31,7 @@ class FitReaderMixin(LoaderMixin):
         super().__init__(*args, **kargs)
 
     def _delete(self, s):
-        # forcing does two things:
-        # first, it by-passes the checks on last-scan date and duplicates
-        # second, we delete any overlapping activities on load (when we know the times)
-        # (without force, overlapping activities trigger an error)
+        # not used
         pass
 
     def _expand_paths(self, s, paths):

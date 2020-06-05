@@ -1,19 +1,19 @@
 from collections import defaultdict
 from glob import glob
 from logging import getLogger
-from os import makedirs, unlink
+from os import makedirs
 from os.path import basename, join, exists, dirname
 
 from math import sqrt
 
 from .calculate import run_statistic_pipelines
 from .garmin import run_garmin
-from ..commands.args import KIT, FAST, READ, BASE, FORCE, DELETE, PATH, base_system_path, \
-    PERMANENT, mm, WORKER, parse_pairs, KARG, infer_flags, ACTIVITIES, CALCULATE
+from ..commands.args import KIT, READ, BASE, FORCE, PATH, base_system_path, PERMANENT, WORKER, parse_pairs, \
+    KARG, infer_flags, ACTIVITIES, CALCULATE
 from ..lib.date import time_to_local_time, Y, YMDTHMS
 from ..lib.io import data_hash, split_fit_path, touch
 from ..lib.log import log_current_exception, Record
-from ..lib.utils import clean_path, slow_warning
+from ..lib.utils import clean_path
 from ..lib.workers import ProgressTree, SystemProgressTree
 from ..pipeline.pipeline import run_pipeline
 from ..pipeline.read.activity import ActivityReader
@@ -84,7 +84,7 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
         flags = infer_flags(args, *FLAGS)
         nfiles, files = open_files(args[PATH])
         upload_files_and_update(record, sys, db, args[BASE], files=files, nfiles=nfiles, force=args[FORCE],
-                                items=args[KIT], flags=flags)
+                                items=args[KIT], flags=flags, **parse_pairs(args[KARG]))
 
 
 class SkipFile(Exception):
@@ -227,7 +227,7 @@ def upload_files(record, db, base, files=tuple(), nfiles=1, items=tuple(), progr
 
 
 def upload_files_and_update(record, sys, db, base, files=tuple(), nfiles=1, force=False, items=tuple(),
-                            flags=None):
+                            flags=None, **kargs):
     # this expects files to be a list of maps from name to stream (or an iterator, if nfiles provided)
     if not flags:
         flags = defaultdict(lambda: True)
@@ -243,11 +243,11 @@ def upload_files_and_update(record, sys, db, base, files=tuple(), nfiles=1, forc
     # todo - add record to pipelines?
     if flags[ACTIVITIES]:
         log.info('Running activity pipelines')
-        run_pipeline(sys, db, base, PipelineType.READ_ACTIVITY, force=force, progress=progress)
+        run_pipeline(sys, db, base, PipelineType.READ_ACTIVITY, force=force, progress=progress, **kargs)
     if flags[MONITOR]:
         # run before and after so we know what exists before we update, and import what we read
         log.info('Running monitor pipelines')
-        run_pipeline(sys, db, base, PipelineType.READ_MONITOR, force=force, progress=progress)
+        run_pipeline(sys, db, base, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
         with db.session_context() as s:
             try:
                 log.info('Running Garmin download')
@@ -255,7 +255,7 @@ def upload_files_and_update(record, sys, db, base, files=tuple(), nfiles=1, forc
             except Exception as e:
                 log.warning(f'Could not get data from Garmin: {e}')
         log.info('Running monitor pipelines (again)')
-        run_pipeline(sys, db, base, PipelineType.READ_MONITOR, force=force, progress=progress)
+        run_pipeline(sys, db, base, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
     if flags[CALCULATE]:
         log.info('Running statistics pipelines')
-        run_statistic_pipelines(sys, db, base, force=force, progress=progress)
+        run_statistic_pipelines(sys, db, base, force=force, progress=progress, **kargs)
