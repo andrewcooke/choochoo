@@ -114,11 +114,12 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
         inputs = s.query(CompositeComponent.input_source_id). \
             join(StatisticJournal, StatisticJournal.source_id == CompositeComponent.output_source_id). \
             filter(StatisticJournal.statistic_name_id.in_(response_ids))
-        unused = s.query(count(distinct(StatisticJournal.source_id))). \
+        unused = s.query(count(StatisticJournal.source_id)). \
             join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
             filter(StatisticName.name == self.prefix + SPACE + N.HR_IMPULSE_10,
                    StatisticName.owner == self.owner_in,
                    ~StatisticJournal.source_id.in_(inputs))
+        log.debug(unused)
         return bool(unused.scalar())
 
     def __start(self, s):

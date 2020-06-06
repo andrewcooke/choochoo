@@ -10,7 +10,7 @@ from ...names import Summaries as S
 from ...lib.date import local_date_to_time
 from ...sql.tables.source import Interval, Source
 from ...sql.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, StatisticJournalInteger, \
-    StatisticJournalFloat, StatisticJournalText, TYPE_TO_JOURNAL_CLASS
+    StatisticJournalFloat, StatisticJournalText, TYPE_TO_JOURNAL_CLASS, STATISTIC_JOURNAL_CLASSES
 
 log = getLogger(__name__)
 
@@ -71,27 +71,22 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
 
     def _calculate_value(self, s, statistic_name, summary, order_asc, start_time, finish_time, interval, measures):
 
-        sj = inspect(StatisticJournal).local_table
-        sji = inspect(StatisticJournalInteger).local_table
-        sjf = inspect(StatisticJournalFloat).local_table
-        sjt = inspect(StatisticJournalText).local_table
+        sjx = inspect(STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]).local_table
         src = inspect(Source).local_table
-
         units = statistic_name.units
-        values = coalesce(sjf.c.value, sji.c.value, sjt.c.value)
         activity_group_id = interval.activity_group.id if interval.activity_group else None
 
         if summary == S.MAX:
-            result = func.max(values)
+            result = func.max(sjx.value)
         elif summary == S.MIN:
-            result = func.min(values)
+            result = func.min(sjx.value)
         elif summary == S.SUM:
-            result = func.sum(values)
+            result = func.sum(sjx.value)
         elif summary == S.CNT:
-            result = func.count(values)
+            result = func.count(sjx.value)
             units = None
         elif summary == S.AVG:
-            result = func.avg(values)
+            result = func.avg(sjx.value)
         elif summary == S.MSR:
             self._calculate_measures(s, statistic_name, order_asc, start_time, finish_time, interval, measures)
             return None, None
@@ -99,10 +94,10 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
             raise Exception('Bad summary: %s' % summary)
 
         stmt = select([result]). \
-            select_from(sj.join(src).outerjoin(sjf).outerjoin(sji).outerjoin(sjt)). \
-            where(and_(sj.c.statistic_name_id == statistic_name.id,
-                       sj.c.time >= start_time,
-                       sj.c.time < finish_time,
+            select_from(sjx). \
+            where(and_(sjx.c.statistic_name_id == statistic_name.id,
+                       sjx.c.time >= start_time,
+                       sjx.c.time < finish_time,
                        src.c.activity_group_id == activity_group_id))
 
         return next(s.connection().execute(stmt))[0], units
