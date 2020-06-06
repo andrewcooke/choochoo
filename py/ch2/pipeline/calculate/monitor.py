@@ -10,7 +10,7 @@ from ..pipeline import LoaderMixin, OwnerInMixin
 from ...lib import local_date_to_time, time_to_local_date, to_date, format_date, log_current_exception
 from ...names import Titles, Names, Summaries as S, Units
 from ...sql import MonitorJournal, StatisticJournalInteger, StatisticName, StatisticJournal, Composite, \
-    CompositeComponent, Source, ActivityGroup
+    CompositeComponent, Source
 from ...sql.utils import add
 
 log = getLogger(__name__)
@@ -96,15 +96,15 @@ class MonitorCalculator(OwnerInMixin, LoaderMixin, MultiProcCalculator):
                        StatisticName.owner == self.owner_out).scalar():
             self._delete_time_range(s, start, finish)
         try:
-            input_source_ids, data = self._read_data(s, start, finish)
-            if not input_source_ids:
-                raise Exception(f'No sources found on {start}')
+            input_source_ids, daily_steps = self._read_data(s, start, finish)
+            if not input_source_ids: raise Exception(f'No sources found on {start}')
+            if daily_steps is None: raise Exception(f'No steps data for {start}')
             output_source = add(s, Composite(n_components=len(input_source_ids)))
             for input_source_id in input_source_ids:
                 s.add(CompositeComponent(input_source_id=input_source_id, output_source=output_source))
             s.commit()
             loader = self._get_loader(s, add_serial=False, clear_timestamp=False)
-            self._calculate_results(s, output_source, data, loader, start)
+            self._calculate_results(s, output_source, daily_steps, loader, start)
             loader.load()
             self._prev_loader = loader
         except Exception as e:
@@ -112,7 +112,6 @@ class MonitorCalculator(OwnerInMixin, LoaderMixin, MultiProcCalculator):
             log_current_exception()
 
     def _read_data(self, s, start, finish):
-        rest_heart_rate = []
         daily_steps = s.query(func.sum(StatisticJournalInteger.value)).join(StatisticName). \
             filter(StatisticName.name == Names.STEPS,
                    StatisticName.owner == self.owner_in,
@@ -121,10 +120,9 @@ class MonitorCalculator(OwnerInMixin, LoaderMixin, MultiProcCalculator):
         input_source_ids = [row[0] for row in s.query(MonitorJournal.id).
             filter(MonitorJournal.start < finish,
                    MonitorJournal.finish >= start).all()]
-        return input_source_ids, (rest_heart_rate, daily_steps)
+        return input_source_ids, daily_steps
 
-    def _calculate_results(self, s, source, data, loader, start):
-        rest_heart_rate, daily_steps = data
+    def _calculate_results(self, s, source, dataily_steps, loader, start):
         loader.add(Titles.DAILY_STEPS, Units.STEPS_UNITS, S.join(S.SUM, S.AVG, S.CNT, S.MAX, S.MSR),
                    source, daily_steps, start, StatisticJournalInteger,
                    description='''The number of steps in a day.''')

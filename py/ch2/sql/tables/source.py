@@ -291,17 +291,18 @@ class Composite(Source):
 
     @classmethod
     def clean(cls, s):
+        log.debug('Searching for invalid composites')
         # see test_recursive
         q_input_counts = s.query(Composite.id,
                                  count(CompositeComponent.input_source_id).label('count')). \
             outerjoin(CompositeComponent, CompositeComponent.output_source_id == Composite.id). \
             group_by(Composite.id).cte()
-
         q_bad_nodes = s.query(Composite.id). \
             join(q_input_counts, q_input_counts.c.id == Composite.id). \
             filter(Composite.n_components != q_input_counts.c.count)
-
-        if s.query(count(Composite.id)).filter(Composite.id.in_(q_bad_nodes)).scalar():
+        q_count = s.query(count(Composite.id)).filter(Composite.id.in_(q_bad_nodes))
+        log.debug(q_count)
+        if q_count.scalar():
             log.warning('Need to clean expired composite sources (may take some time)')
             q_bad_nodes = q_bad_nodes.cte(recursive=True)
             q_all_nodes = q_bad_nodes. \

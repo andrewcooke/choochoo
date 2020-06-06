@@ -7,7 +7,7 @@ from time import sleep, time
 from math import floor
 
 from ..commands import args
-from ..commands.args import mm, BASE, VERBOSITY, WORKER, LOG, DEV
+from ..commands.args import mm, BASE, VERBOSITY, WORKER, LOG, DEV, global_dev
 from ..sql.types import short_cls
 
 log = getLogger(__name__)
@@ -25,8 +25,7 @@ class Workers:
         self.owner = owner
         self.cmd = cmd
         self.__workers_to_logs = {}  # map from Popen to log index
-        log.debug(f'Global dev flag {args.GLOBAL_DEV_FLAG}')  # via module to read latest value
-        dev = mm(DEV) if args.GLOBAL_DEV_FLAG else ''
+        dev = mm(DEV) if global_dev() else ''
         self.ch2 = f'{command_root()} {mm(BASE)} {base} {dev} {mm(VERBOSITY)} 0'
         self.clear_all()
 

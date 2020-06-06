@@ -10,6 +10,7 @@ from sqlalchemy.sql.functions import count
 
 from .utils import UniProcCalculator
 from ..pipeline import OwnerInMixin
+from ...lib import log_current_exception
 from ...lib.dbscan import DBSCAN
 from ...lib.optimizn import expand_max
 from ...names import Names
@@ -174,7 +175,7 @@ class SimilarityCalculator(OwnerInMixin, UniProcCalculator):
                             # both new and ordered lo-hi, or hi new and last
                             n_max = n_points[lo]
                             d_factor = d_lo / d_hi if d_lo < d_hi else 1
-                            similarity = (n_overlaps[lo][hi] / n_max) * d_factor if n_max else 0
+                        similarity = (n_overlaps[lo][hi] / n_max) * d_factor if n_max else 0
                         s.add(ActivitySimilarity(activity_journal_lo_id=lo, activity_journal_hi_id=hi,
                                                  similarity=similarity))
                         n += 1
@@ -197,6 +198,7 @@ class NearbySimilarityDBSCAN(DBSCAN):
             join(ajhi, ActivitySimilarity.activity_journal_hi_id == ajhi.id). \
             filter(ajlo.activity_group == activity_group,
                    ajhi.activity_group == activity_group).scalar()
+        if not self.__max_similarity: raise Exception('All activities unconnected')
 
     def run(self):
         candidates = set(x[0] for x in
@@ -244,9 +246,13 @@ class NearbyCalculator(OwnerInMixin, UniProcCalculator):
     def _run_one(self, s, missed):
         with Timestamp(owner=self.owner_out).on_success(s):
             for activity_group in s.query(ActivityGroup).all():
-                d_min, n = expand_max(0, 1, 5, lambda d: len(self.dbscan(s, d, activity_group)))
-                log.info(f'{n} groups at d={d_min}')
-                self.save(s, self.dbscan(s, d_min, activity_group), activity_group)
+                try:
+                    d_min, n = expand_max(0, 1, 5, lambda d: len(self.dbscan(s, d, activity_group)))
+                    log.info(f'{n} groups at d={d_min}')
+                    self.save(s, self.dbscan(s, d_min, activity_group), activity_group)
+                except Exception as e:
+                    log.warning(f'Failed to find nearby activities for {activity_group.name}: {e}')
+                    log_current_exception()
 
     def dbscan(self, s, d, activity_group):
         return NearbySimilarityDBSCAN(s, activity_group, d, 3).run()

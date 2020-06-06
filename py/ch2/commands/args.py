@@ -18,8 +18,7 @@ CH2_VERSION = '0.34.0'
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 DB_EXTN = '.db'   # used to use .sql but auto-complete for sqlite3 didn't work
 
-# TODO _ access via function
-GLOBAL_DEV_FLAG = False
+__GLOBAL_DEV_FLAG = False
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
@@ -661,3 +660,14 @@ def infer_flags(args, *names):
     if args[DISABLE]:
         for name in flags: flags[name] = not flags[name]
     return flags
+
+
+def set_global_dev(dev):
+    global __GLOBAL_DEV_FLAG
+    __GLOBAL_DEV_FLAG = dev
+    log.debug(f'Setting global dev flag: {dev}')
+
+
+def global_dev():
+    global __GLOBAL_DEV_FLAG
+    return __GLOBAL_DEV_FLAG

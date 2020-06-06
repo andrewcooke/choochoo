@@ -93,6 +93,7 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
             return []
 
     def __missing_recent(self, s, constant, now):
+        log.debug('Searching for missing recent')
         finish = s.query(StatisticJournal.time). \
             join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
             filter(StatisticName.name == self.prefix + SPACE + constant,
@@ -107,6 +108,7 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
         return False
 
     def __missing_sources(self, s):
+        log.debug('Searching for missing sources')
         response_ids = s.query(StatisticName.id). \
             filter(StatisticName.owner == self.owner_out)
         inputs = s.query(CompositeComponent.input_source_id). \
@@ -117,20 +119,7 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
             filter(StatisticName.name == self.prefix + SPACE + N.HR_IMPULSE_10,
                    StatisticName.owner == self.owner_in,
                    ~StatisticJournal.source_id.in_(inputs))
-        missing = unused.scalar()
-        if missing:
-            if missing > 10:
-                log.debug(f'Many ({missing}) missing')
-            else:
-                unused = s.query(Source). \
-                    join(StatisticJournal). \
-                    join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
-                    filter(StatisticName.name == self.prefix + SPACE + N.HR_IMPULSE_10,
-                           StatisticName.owner == self.owner_in,
-                           ~StatisticJournal.source_id.in_(inputs))
-                for source in unused.all():
-                    log.debug(f'Missing {source}')
-        return missing
+        return bool(unused.scalar())
 
     def __start(self, s):
         # avoid constants defined at time 0
