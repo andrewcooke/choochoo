@@ -10,9 +10,8 @@ from sqlalchemy import text
 from .loader import SqliteLoader, PostgresqlLoader
 from ..commands.args import SQLITE, POSTGRESQL, BATCH, mm, KARG
 from ..lib import format_seconds
-from ..lib.utils import parse_bool
 from ..lib.workers import ProgressTree, Workers
-from ..sql import Pipeline, SystemConstant
+from ..sql import Pipeline, SystemConstant, Interval, PipelineType
 from ..sql.database import scheme
 from ..sql.types import short_cls
 
@@ -24,6 +23,8 @@ NONE = object()
 
 def run_pipeline(system, db, base, type, like=tuple(), unlike=tuple(), id=None, progress=None, **extra_kargs):
     with db.session_context() as s:
+        if type in (PipelineType.CALCULATE, PipelineType.READ_ACTIVITY, PipelineType.READ_MONITOR):
+            Interval.clean(s)
         local_progress = ProgressTree(Pipeline.count(s, type, like=like, unlike=unlike, id=id), parent=progress)
         for pipeline in Pipeline.all(s, type, like=like, unlike=unlike, id=id):
             kargs = dict(pipeline.kargs)

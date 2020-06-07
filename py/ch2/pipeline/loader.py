@@ -41,7 +41,7 @@ class BaseLoader(ABC):
     def _postload(self):
         # manually clean out intervals because we're doing a fast load
         if self.__clear_timestamp and self._start and self._finish:
-            Interval.mark_dirty_times(self._s, self._start, self._finish)
+            Interval.record_dirty_times(self._s, self._start, self._finish)
             self._s.commit()
 
     def add(self, name, units, summary, source, value, time, cls, description=None, title=None):

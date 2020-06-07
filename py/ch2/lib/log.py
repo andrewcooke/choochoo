@@ -126,7 +126,7 @@ def set_log_color(args, sys):
 
 
 def log_current_exception(traceback=UNDEF, warning=True):
-    from ..commands.args import global_dev
+    from ..global_ import global_dev
     if traceback is UNDEF: traceback = global_dev()
     t, e, tb = exc_info()
     try:

@@ -1,7 +1,4 @@
-
-from glob import glob
 from logging import getLogger, NullHandler
-from os.path import abspath, dirname, join
 from sqlite3 import enable_callback_tracebacks
 from sys import version_info
 
@@ -21,8 +18,8 @@ class FatalException(Exception):
 
 from .commands.args import COMMAND, make_parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DATABASE, CONSTANTS, CALCULATE, SHOW_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, BASE, \
-    set_global_dev
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, BASE
+from .global_ import set_global_dev, set_global_sys
 from .commands.constants import constants
 from .commands.validate import validate
 from .commands.database import database
@@ -41,7 +38,6 @@ from .commands.thumbnail import thumbnail
 from .commands.unlock import unlock
 from .commands.read import read
 from .commands.web import web
-from .lib.io import tui
 from .lib.log import make_log_from_args, set_log_color
 from .sql.database import SystemConstant
 from .sql.system import System
@@ -49,7 +45,6 @@ from .sql.system import System
 log = getLogger(__name__)
 
 
-@tui  # todo - can we drop this and remove tui completely?
 def no_op(args, system, db):
     '''
 ## no-op
@@ -88,8 +83,7 @@ def main():
     ns = parser.parse_args()
     command_name = ns.command if hasattr(ns, COMMAND) else None
     command = COMMANDS[command_name] if command_name in COMMANDS else None
-    if command and hasattr(command, 'tui') and command.tui:
-        ns.verbose = 0
+    if command == NO_OP: ns.verbose = 0
     args = NamespaceWithVariables(ns)
     set_global_dev(args[DEV])
     make_log_from_args(args)
@@ -97,8 +91,8 @@ def main():
     if version_info < (3, 7):
         raise Exception('Please user Python 3.7 or more recent')
     sys = System(args[BASE])
+    set_global_sys(sys)
     db = sys.get_database()
-    enable_callback_tracebacks(True)  # experimental - wondering what this does / whether it is useful?
     set_log_color(args, sys)
     try:
         if not command:

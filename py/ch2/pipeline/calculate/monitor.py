@@ -122,7 +122,7 @@ class MonitorCalculator(OwnerInMixin, LoaderMixin, MultiProcCalculator):
                    MonitorJournal.finish >= start).all()]
         return input_source_ids, daily_steps
 
-    def _calculate_results(self, s, source, dataily_steps, loader, start):
+    def _calculate_results(self, s, source, daily_steps, loader, start):
         loader.add(Titles.DAILY_STEPS, Units.STEPS_UNITS, S.join(S.SUM, S.AVG, S.CNT, S.MAX, S.MSR),
                    source, daily_steps, start, StatisticJournalInteger,
                    description='''The number of steps in a day.''')

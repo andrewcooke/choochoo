@@ -24,14 +24,6 @@ def terminal_width(width=None):
     return width
 
 
-def tui(command):
-    def wrapper(*args, **kargs):
-        return command(*args, **kargs)
-    wrapper.tui = True
-    wrapper.__doc__ = command.__doc__
-    return wrapper
-
-
 # https://stackoverflow.com/a/3431838
 def file_hash(file_path):
     hash = md5()

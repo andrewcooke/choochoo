@@ -7,7 +7,8 @@ from time import sleep, time
 from math import floor
 
 from ..commands import args
-from ..commands.args import mm, BASE, VERBOSITY, WORKER, LOG, DEV, global_dev
+from ..commands.args import mm, BASE, VERBOSITY, WORKER, LOG, DEV
+from ..global_ import global_dev
 from ..sql.types import short_cls
 
 log = getLogger(__name__)

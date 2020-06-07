@@ -6,6 +6,8 @@ from sqlalchemy import func, inspect, and_, select
 from sqlalchemy.sql.functions import coalesce
 
 from .utils import MultiProcCalculator, IntervalCalculatorMixin
+from ...data.frame import _tables
+from ...global_ import global_sys
 from ...names import Summaries as S
 from ...lib.date import local_date_to_time
 from ...sql.tables.source import Interval, Source
@@ -71,22 +73,22 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
 
     def _calculate_value(self, s, statistic_name, summary, order_asc, start_time, finish_time, interval, measures):
 
+        t = _tables()
         sjx = inspect(STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]).local_table
-        src = inspect(Source).local_table
         units = statistic_name.units
         activity_group_id = interval.activity_group.id if interval.activity_group else None
 
         if summary == S.MAX:
-            result = func.max(sjx.value)
+            result = func.max(sjx.c.value)
         elif summary == S.MIN:
-            result = func.min(sjx.value)
+            result = func.min(sjx.c.value)
         elif summary == S.SUM:
-            result = func.sum(sjx.value)
+            result = func.sum(sjx.c.value)
         elif summary == S.CNT:
-            result = func.count(sjx.value)
+            result = func.count(sjx.c.value)
             units = None
         elif summary == S.AVG:
-            result = func.avg(sjx.value)
+            result = func.avg(sjx.c.value)
         elif summary == S.MSR:
             self._calculate_measures(s, statistic_name, order_asc, start_time, finish_time, interval, measures)
             return None, None
@@ -95,10 +97,11 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
 
         stmt = select([result]). \
             select_from(sjx). \
-            where(and_(sjx.c.statistic_name_id == statistic_name.id,
-                       sjx.c.time >= start_time,
-                       sjx.c.time < finish_time,
-                       src.c.activity_group_id == activity_group_id))
+            join(t.sj). \
+            where(and_(t.sj.c.statistic_name_id == statistic_name.id,
+                       t.sj.c.time >= start_time,
+                       t.sj.c.time < finish_time,
+                       t.src.c.activity_group_id == activity_group_id))
 
         return next(s.connection().execute(stmt))[0], units
 

@@ -17,6 +17,7 @@ from ...lib.date import round_hour, to_time, local_date_to_time, now
 from ...names import Names as N, SPACE
 from ...sql import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
     StatisticJournalFloat
+from ...sql.tables.source import SourceType
 from ...sql.utils import add
 
 log = getLogger(__name__)
@@ -109,18 +110,21 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
 
     def __missing_sources(self, s):
         log.debug('Searching for missing sources')
-        response_ids = s.query(StatisticName.id). \
-            filter(StatisticName.owner == self.owner_out)
-        inputs = s.query(CompositeComponent.input_source_id). \
-            join(StatisticJournal, StatisticJournal.source_id == CompositeComponent.output_source_id). \
-            filter(StatisticJournal.statistic_name_id.in_(response_ids))
-        unused = s.query(count(StatisticJournal.source_id)). \
-            join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
-            filter(StatisticName.name == self.prefix + SPACE + N.HR_IMPULSE_10,
-                   StatisticName.owner == self.owner_in,
-                   ~StatisticJournal.source_id.in_(inputs))
-        log.debug(unused)
-        return bool(unused.scalar())
+        available = s.query(count(distinct(Source.id))). \
+            join(StatisticJournal). \
+            join(StatisticName). \
+            filter(StatisticName.name == self.prefix + SPACE + N.HR_IMPULSE_10)
+        used = s.query(count(distinct(Source.id))). \
+            join(CompositeComponent, CompositeComponent.input_source_id == Source.id). \
+            join(Composite, Composite.id == CompositeComponent.output_source_id). \
+            join(StatisticJournal, StatisticJournal.source_id == Composite.id). \
+            join(StatisticName). \
+            filter(StatisticName.owner == self.owner_out,
+                   Source.type == SourceType.ACTIVITY)
+        n_avaialble = available.scalar()
+        n_used = used.scalar()
+        log.debug(f'Using {n_used} of {n_avaialble} sources')
+        return n_used != n_avaialble
 
     def __start(self, s):
         # avoid constants defined at time 0

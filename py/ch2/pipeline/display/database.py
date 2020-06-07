@@ -14,11 +14,13 @@ class DatabaseDisplayer(Displayer):
 
     @optional_text('Database')
     def _read_date(self, s, date):
-        total = s.query(count(Interval.id)).filter(Interval.dirty == True).scalar()
-        today = s.query(count(Interval.id)). \
-            filter(Interval.dirty == True,
-                   Interval.start <= date,
-                   Interval.finish > date).scalar()
+        # total = s.query(count(Interval.id)).filter(Interval.dirty == True).scalar()
+        # today = s.query(count(Interval.id)). \
+        #     filter(Interval.dirty == True,
+        #            Interval.start <= date,
+        #            Interval.finish > date).scalar()
+        # TODO!
+        total, today = 999, -1
         if not total:
             yield text('No dirty statistics')
         else:

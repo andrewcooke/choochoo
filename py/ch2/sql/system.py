@@ -1,10 +1,11 @@
 from logging import getLogger
 
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql.functions import count
 
-from .database import SystemConstant, Process, MappedDatabase, sqlite_uri, Database
+from .database import SystemConstant, Process, MappedDatabase, sqlite_uri, Database, Interval
 from .support import SystemBase
-from .tables.system import Progress
+from .tables.system import Progress, DirtyInterval
 from ..commands.args import SYSTEM, DB_EXTN, DATA
 
 log = getLogger(__name__)
@@ -81,3 +82,11 @@ class System(MappedDatabase):
             log.warning('No database URI configured')
             return None
 
+    def record_dirty_intervals(self, ids):
+        with self.session_context() as s:
+            # this doesn't have to be exact or thread safe
+            known = set(s.query(DirtyInterval.interval_id).all())
+            for id in ids:
+                if id not in known:
+                    s.add(DirtyInterval(interval_id=id))
+                    known.add(id)

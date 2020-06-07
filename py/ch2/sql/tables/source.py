@@ -9,9 +9,11 @@ from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy.sql.functions import count
 
+from .system import DirtyInterval
 from ..support import Base
 from ..types import OpenSched, Date, ShortCls, short_cls
 from ..utils import add
+from ...global_ import global_sys
 from ...lib.date import to_time, time_to_local_date, max_time, min_time, extend_range
 from ...lib.utils import timing
 from ...names import UNDEF
@@ -55,10 +57,10 @@ class Source(Base):
 
     @classmethod
     def before_flush(cls, s):
-        cls.__clean_dirty_intervals(s)
+        cls.__record_dirty_intervals(s)
 
     @classmethod
-    def __clean_dirty_intervals(cls, s):
+    def __record_dirty_intervals(cls, s):
         from .statistic import StatisticJournal, StatisticJournalText
         # sessions are generally restricted to one time region, so we'll bracket that rather than list all times
         start, finish = None, None
@@ -85,7 +87,7 @@ class Source(Base):
                      and instance.value is not None and instance.time:
                 start, finish = extend_range(start, finish, instance.time)
         if start is not None:
-            Interval.mark_dirty_times(s, start, finish)
+            Interval.record_dirty_times(s, start, finish)
 
     @classmethod
     def from_id(cls, s, id):
@@ -155,10 +157,6 @@ class Interval(Source):
     # these are for the schedule - finish is redundant (start is not because of timezone issues)
     start = Column(Date, nullable=False, index=True)
     finish = Column(Date, nullable=False, index=True)
-    dirty = Column(Boolean, nullable=False, default=False, index=True)
-
-    # todo - is this needed?
-    # Index('ungrouped_interval', schedule, owner, start, unique=False)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.INTERVAL
@@ -210,31 +208,34 @@ class Interval(Source):
     @classmethod
     def dirty_all(cls, s):
         log.warning('Dirtying all Intervals')
-        s.query(Interval).update({Interval.dirty: True}, synchronize_session=False)
+        global_sys().record_dirty_intervals(interval.id for interval in s.query(Interval).all())
 
     @classmethod
-    def mark_dirty_times(cls, s, start, finish, owner=None):
+    def record_dirty_times(cls, s, start, finish, owner=None):
         '''
-        Dirty all intervals that include data in the given TIME range,
+        Record dirty intervals that include data in the given TIME range,
         '''
-        cls.mark_dirty_dates(s, time_to_local_date(start), time_to_local_date(finish), owner=owner)
-
-    @classmethod
-    def mark_dirty_dates(cls, s, start, finish, owner=None):
-        '''
-        Dirty all summary intervals (not monitor intervals) in the given DATE range.
-        '''
-        q = s.query(Interval).filter(Interval.start <= finish, Interval.finish > start)
+        start, finish = time_to_local_date(start), time_to_local_date(finish)
+        q = s.query(Interval.id).filter(Interval.start <= finish, Interval.finish > start)
         if owner:
             q = q.filter(Interval.owner == owner)
-        q.update({Interval.dirty: True}, synchronize_session=False)
+        # do not mark in-place because we can get deadlock transactions.
+        # instead, save in sys and update later
+        global_sys().record_dirty_intervals(row[0] for row in q.all())
 
     @classmethod
     def clean(cls, s):
-        q = s.query(Interval).filter(Interval.dirty == True)
-        log.info(f'Deleting {q.count()} dirty Intervals')
-        for interval in q.all():
-            s.delete(interval)
+        log.debug('Cleaning dirty intervals')
+        sys = global_sys()
+        with sys.session_context() as s_:
+            dirty_intervals = s_.query(DirtyInterval).all()
+            if dirty_intervals:
+                dirty_ids = set(d.interval_id for d in dirty_intervals)
+                log.warning(f'Up to {len(dirty_ids)} intervals to delete')
+                s.query(Interval).filter(Interval.id.in_(dirty_ids)).delete(synchronize_session=False)
+                dirty_ids = set(d.id for d in dirty_intervals)
+                s_.query(DirtyInterval).filter(DirtyInterval.id.in_(dirty_ids)).delete(synchronize_session=False)
+        log.debug('Intervals clean')
 
 
 class Dummy(UngroupedSource):

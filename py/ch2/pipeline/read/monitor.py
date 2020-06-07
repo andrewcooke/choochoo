@@ -271,7 +271,7 @@ class MonitorReader(MultiProcFitReader, LoaderMixin):
             s.query(StatisticJournal.id). \
                 filter(StatisticJournal.time.in_(times),
                        StatisticJournal.statistic_name == steps).delete(synchronize_session=False)
-        loader = SqliteLoader(s, owner=self.owner_out)
+        loader = self._get_loader(s, owner=self.owner_out, add_serial=True)
         for time, row in df.loc[(df[NEW_STEPS] != df[N.STEPS]) & ~df[NEW_STEPS].isna()].iterrows():
             loader.add(T.STEPS, Units.STEPS_UNITS, None, row[N.SOURCE], int(row[NEW_STEPS]),
                        time, StatisticJournalInteger, description=STEPS_DESCRIPTION)

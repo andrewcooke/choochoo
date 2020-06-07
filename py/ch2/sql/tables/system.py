@@ -215,3 +215,11 @@ class Progress(SystemBase):
                 return
             elif (now() - start).total_seconds() >= timeout:
                 raise Exception(f'Did not find progress {name} before {timeout}s')
+
+
+class DirtyInterval(SystemBase):
+
+    __tablename__ = 'dirty_interval'
+
+    id = Column(Integer, primary_key=True)
+    interval_id = Column(Integer, nullable=False)   # not unique!  allows for easy inserts
