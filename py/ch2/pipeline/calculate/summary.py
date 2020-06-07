@@ -28,6 +28,8 @@ def fuzz(n, q):
 
 class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
 
+    # todo - this should have a worker per activity group
+
     def __init__(self, *args, grouped=True, **kargs):
         super().__init__(*args, grouped=grouped, **kargs)
 
@@ -47,6 +49,7 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
             filter(StatisticName.id.in_(statistics_with_data_and_summary)).all()
 
     def _calculate_results(self, s, interval, data, loader):
+        log.debug('Calculating summaries')
         start, finish = local_date_to_time(interval.start), local_date_to_time(interval.finish)
         measures = []
         for statistic_name in data:
@@ -96,11 +99,12 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
             raise Exception('Bad summary: %s' % summary)
 
         stmt = select([result]). \
-            select_from(sjx). \
-            join(t.sj). \
-            where(and_(t.sj.c.statistic_name_id == statistic_name.id,
+            select_from(sjx).select_from(t.sj).select_from(t.src). \
+            where(and_(t.sj.c.id == sjx.c.id,
+                       t.sj.c.statistic_name_id == statistic_name.id,
                        t.sj.c.time >= start_time,
                        t.sj.c.time < finish_time,
+                       t.sj.c.source_id == t.src.c.id,
                        t.src.c.activity_group_id == activity_group_id))
 
         return next(s.connection().execute(stmt))[0], units

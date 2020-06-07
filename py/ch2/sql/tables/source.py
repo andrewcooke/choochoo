@@ -233,6 +233,7 @@ class Interval(Source):
                 dirty_ids = set(d.interval_id for d in dirty_intervals)
                 log.warning(f'Up to {len(dirty_ids)} intervals to delete')
                 s.query(Interval).filter(Interval.id.in_(dirty_ids)).delete(synchronize_session=False)
+                s.commit()
                 dirty_ids = set(d.id for d in dirty_intervals)
                 s_.query(DirtyInterval).filter(DirtyInterval.id.in_(dirty_ids)).delete(synchronize_session=False)
         log.debug('Intervals clean')

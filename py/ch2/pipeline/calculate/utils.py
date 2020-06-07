@@ -206,12 +206,12 @@ class IntervalCalculatorMixin(LoaderMixin):
                 q = q.filter(Interval.start < finish)
             if repeat:
                 for interval in q.all():
-                    log.debug('Deleting %s' % interval)
+                    log.debug(f'Deleting {interval}')
                     s.delete(interval)
             else:
                 n = q.scalar()
                 if n:
-                    log.warning('Deleting %d intervals' % n)
+                    log.warning(f'Deleting {n} intervals')
                 else:
                     log.warning('No intervals to delete')
         s.commit()
