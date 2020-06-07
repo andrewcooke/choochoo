@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy_batch_inserts import enable_batch_inserting
 
 from ..commands.args import UNLOCK
+from ..lib.date import min_time, max_time
 from ..sql import StatisticJournal, StatisticName, Dummy, Interval, Source
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
 from ..sql.types import short_cls
@@ -61,8 +62,8 @@ class BaseLoader(ABC):
             elif time < self.__last_time:
                 raise Exception('Time travel - timestamp for statistic decreased')
 
-        self._start = min(self._start, time) if self._start else time
-        self._finish = max(self._finish, time) if self._finish else time
+        self._start = min_time(self._start, time)
+        self._finish = max_time(self._finish, time)
 
         if name not in self.__statistic_name_cache:
             if not description: log.warning(f'No description for {name} ({self._owner})')
@@ -70,14 +71,16 @@ class BaseLoader(ABC):
                 StatisticName.add_if_missing(self._s, name, STATISTIC_JOURNAL_TYPES[cls],
                                              units, summary, self._owner,
                                              description=description, title=title)
+        statistic_name = self.__statistic_name_cache[name]
+
         if isinstance(source, Source):
             if source.id not in self.__source_cache:
                 self.__source_cache[source.id] = source
-        elif source not in self.__source_cache:
-            self.__source_cache[source] = Source.from_id(s, source)
+        else:
+            if source not in self.__source_cache:
+                self.__source_cache[source] = Source.from_id(self._s, source)
             source = self.__source_cache[source]
 
-        statistic_name = self.__statistic_name_cache[name]
         journal_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
         if cls != journal_class:
             raise Exception(f'Inconsistent class for {name}: {cls}/{journal_class}')
@@ -105,10 +108,9 @@ class BaseLoader(ABC):
     def as_waypoints(self, names):
         Waypoint = make_waypoint(names.values())
         time_to_waypoint = defaultdict(lambda: Waypoint())
-        statistic_ids = dict((name.id, name) for name in self.__statistic_name_cache.values())
         for type in self._staging:
             for sjournal in self._staging[type]:
-                name = statistic_ids[sjournal.statistic_name_id].name
+                name = sjournal.statistic_name.name
                 if name in names:
                     time_to_waypoint[sjournal.time] = \
                         time_to_waypoint[sjournal.time]._replace(**{'time': sjournal.time,

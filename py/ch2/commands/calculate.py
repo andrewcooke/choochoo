@@ -19,6 +19,10 @@ Calculate any missing statistics.
     > ch2 calculate --force [START [FINISH]]
 
 Delete statistics in the date range (or all, if omitted) and then calculate new values.
+
+    > ch2 --dev calculate --like '%Activity%' --force 2020-01-01 -Kn_cpu=1
+
+Calculate activity statistics from 2020 onwards in a single process for debugging.
     '''
     run_statistic_pipelines(sys, db, args[BASE], force=args[FORCE], like=args[LIKE], unlike=args[UNLIKE],
                             start=args[START], finish=args[FINISH], worker=args[WORKER] is not None, id=args[WORKER],
