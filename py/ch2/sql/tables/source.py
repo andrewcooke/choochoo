@@ -15,7 +15,7 @@ from ..types import OpenSched, Date, ShortCls, short_cls
 from ..utils import add
 from ...global_ import global_sys
 from ...lib.date import to_time, time_to_local_date, max_time, min_time, extend_range
-from ...lib.utils import timing
+from ...lib.utils import timing, grouper
 from ...names import UNDEF
 
 log = getLogger(__name__)
@@ -73,19 +73,24 @@ class Source(Base):
         for instance in s.dirty:
             # ignore constants as time 0
             # ignore textual values (don't have useful stats and commonly modified fields)
-            if isinstance(instance, StatisticJournal) and s.is_modified(instance) and instance.time \
-                    and not isinstance(instance, StatisticJournalText):
-                start, finish = extend_range(start, finish, instance.time)
+            if isinstance(instance, StatisticJournal):
+                if s.is_modified(instance) and instance.time and not isinstance(instance, StatisticJournalText):
+                    start, finish = extend_range(start, finish, instance.time)
+                elif instance.statistic_name is None or instance.source is None:
+                    log.warning(f'Loading with incomplete name/source data (bad dirty logic) '
+                                f'(statistic_name_id {instance.statistic_name_id})')
         # all new statistics that aren't associated with intervals and have non-null data
         # (avoid triggering on empty diary entries)
         for instance in s.new:
             # ignore constants as time 0
             # ignore textual values
-             if isinstance(instance, StatisticJournal) and not isinstance(instance.source, Interval) \
-                     and not isinstance(instance.source, Dummy) \
-                     and not isinstance(instance.source, StatisticJournalText) \
-                     and instance.value is not None and instance.time:
-                start, finish = extend_range(start, finish, instance.time)
+            if isinstance(instance, StatisticJournal):
+                if not isinstance(instance.source, Interval) and not isinstance(instance.source, Dummy) \
+                        and not isinstance(instance.source, StatisticJournalText):
+                    start, finish = extend_range(start, finish, instance.time)
+                elif instance.statistic_name is None or instance.source is None:
+                    log.warning(f'Loading with incomplete name/source data (bad dirty logic) '
+                                f'(statistic_name_id {instance.statistic_name_id})')
         if start is not None:
             Interval.record_dirty_times(s, start, finish)
 
@@ -225,18 +230,19 @@ class Interval(Source):
 
     @classmethod
     def clean(cls, s):
-        log.debug('Cleaning dirty intervals')
         sys = global_sys()
         with sys.session_context() as s_:
             dirty_intervals = s_.query(DirtyInterval).all()
             if dirty_intervals:
+                log.debug('Cleaning dirty intervals')
                 dirty_ids = set(d.interval_id for d in dirty_intervals)
                 log.warning(f'Up to {len(dirty_ids)} intervals to delete')
-                s.query(Interval).filter(Interval.id.in_(dirty_ids)).delete(synchronize_session=False)
+                s.query(Source).filter(Source.id.in_(dirty_ids)).delete(synchronize_session=False)
                 s.commit()
                 dirty_ids = set(d.id for d in dirty_intervals)
-                s_.query(DirtyInterval).filter(DirtyInterval.id.in_(dirty_ids)).delete(synchronize_session=False)
-        log.debug('Intervals clean')
+                for ids in grouper(dirty_ids, 900):  # avoid limit in sqlite older versions
+                    s_.query(DirtyInterval).filter(DirtyInterval.id.in_(ids)).delete(synchronize_session=False)
+                log.debug('Intervals clean')
 
 
 class Dummy(UngroupedSource):

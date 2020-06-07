@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy_batch_inserts import enable_batch_inserting
 
 from ..commands.args import UNLOCK
-from ..sql import StatisticJournal, StatisticName, Dummy, Interval
+from ..sql import StatisticJournal, StatisticName, Dummy, Interval, Source
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
 from ..sql.types import short_cls
 
@@ -20,6 +20,7 @@ class BaseLoader(ABC):
         self._s = s
         self._owner = owner
         self.__statistic_name_cache = dict()
+        self.__source_cache = dict()
         self._staging = defaultdict(list)
         self.__by_name_then_time = defaultdict(dict)
         self.__add_serial = add_serial
@@ -69,17 +70,20 @@ class BaseLoader(ABC):
                 StatisticName.add_if_missing(self._s, name, STATISTIC_JOURNAL_TYPES[cls],
                                              units, summary, self._owner,
                                              description=description, title=title)
+        if isinstance(source, Source):
+            if source.id not in self.__source_cache:
+                self.__source_cache[source.id] = source
+        elif source not in self.__source_cache:
+            self.__source_cache[source] = Source.from_id(s, source)
+            source = self.__source_cache[source]
 
-        try:
-            source = source.id
-        except AttributeError:
-            pass  # literal id
         statistic_name = self.__statistic_name_cache[name]
         journal_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
         if cls != journal_class:
             raise Exception(f'Inconsistent class for {name}: {cls}/{journal_class}')
-        instance = journal_class(statistic_name_id=statistic_name.id, source_id=source, value=value,
-                                 time=time, serial=self.__serial)
+        # set statistic_name and source rather than ids so that we can correctly test in Source for dirty intervals
+        instance = journal_class(statistic_name=statistic_name, source=source, value=value, time=time,
+                                 serial=self.__serial)
 
         if instance.time in self.__by_name_then_time[name]:
             previous = self.__by_name_then_time[name][instance.time]

@@ -230,7 +230,7 @@ class NearbySimilarityDBSCAN(DBSCAN):
 class NearbyCalculator(OwnerInMixin, UniProcCalculator):
 
     def _missing(self, s):
-        # todo - should really be per-activity group
+        # todo - should really be per-activity group (ie activity group per thread)
         latest_similarity = Timestamp.get(s, self.owner_in)
         latest_groups = Timestamp.get(s, self.owner_out)
         if not latest_groups or latest_similarity.time > latest_groups.time:

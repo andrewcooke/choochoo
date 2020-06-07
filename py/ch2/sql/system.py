@@ -83,10 +83,14 @@ class System(MappedDatabase):
             return None
 
     def record_dirty_intervals(self, ids):
-        with self.session_context() as s:
-            # this doesn't have to be exact or thread safe
-            known = set(s.query(DirtyInterval.interval_id).all())
-            for id in ids:
-                if id not in known:
-                    s.add(DirtyInterval(interval_id=id))
-                    known.add(id)
+        if ids:
+            with self.session_context() as s:
+                # this doesn't have to be exact or thread safe
+                known = set(s.query(DirtyInterval.interval_id).all())
+                count = 0
+                for id in ids:
+                    if id not in known:
+                        s.add(DirtyInterval(interval_id=id))
+                        known.add(id)
+                        count += 1
+            if count: log.warning(f'Marked {count} intervals as dirty')

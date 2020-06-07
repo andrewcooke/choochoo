@@ -2,41 +2,48 @@
 from abc import abstractmethod
 from contextlib import nullcontext
 from logging import getLogger
-from time import time
 
 from psutil import cpu_count
 from sqlalchemy import text
+from sqlalchemy.sql.functions import count
 
 from .loader import SqliteLoader, PostgresqlLoader
 from ..commands.args import SQLITE, POSTGRESQL, BATCH, mm, KARG
-from ..lib import format_seconds
+from ..lib.utils import timing
 from ..lib.workers import ProgressTree, Workers
-from ..sql import Pipeline, SystemConstant, Interval, PipelineType
+from ..sql import Pipeline, SystemConstant, Interval, PipelineType, StatisticJournal
 from ..sql.database import scheme
 from ..sql.types import short_cls
 
 log = getLogger(__name__)
+
 CPU_FRACTION = 0.9
 MAX_REPEAT = 3
-NONE = object()
+
+
+def count_statistics(s):
+    return s.query(count(StatisticJournal.id)).scalar()
 
 
 def run_pipeline(system, db, base, type, like=tuple(), unlike=tuple(), id=None, progress=None, **extra_kargs):
     with db.session_context() as s:
-        if type in (PipelineType.CALCULATE, PipelineType.READ_ACTIVITY, PipelineType.READ_MONITOR):
-            Interval.clean(s)
+        if id is None:  # don't run for each worker
+            if type in (PipelineType.CALCULATE, PipelineType.READ_ACTIVITY, PipelineType.READ_MONITOR):
+                Interval.clean(s)
         local_progress = ProgressTree(Pipeline.count(s, type, like=like, unlike=unlike, id=id), parent=progress)
         for pipeline in Pipeline.all(s, type, like=like, unlike=unlike, id=id):
             kargs = dict(pipeline.kargs)
             kargs.update(extra_kargs)
-            msg = f'Running {short_cls(pipeline.cls)}'
+            msg = f'Ran {short_cls(pipeline.cls)}'
             if 'activity_group' in kargs: msg += f' ({kargs["activity_group"]})'
-            log.info(msg)
             log.debug(f'Running {pipeline.cls}({pipeline.args}, {kargs})')
-            start = time()
-            pipeline.cls(system, db, *pipeline.args, base=base, id=pipeline.id, progress=local_progress, **kargs).run()
-            duration = time() - start
-            log.info(f'Ran {short_cls(pipeline.cls)} in {format_seconds(duration)}')
+            with timing(msg):
+                before = None if id else count_statistics(s)
+                pipeline.cls(system, db, *pipeline.args, base=base, id=pipeline.id, progress=local_progress,
+                             **kargs).run()
+                after = None if id else count_statistics(s)
+            if before or after:
+                log.info(f'{msg}: statistic count {before} -> {after} (change of {after - before})')
 
 
 class BasePipeline:

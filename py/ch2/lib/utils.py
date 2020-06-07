@@ -12,8 +12,7 @@ from time import sleep
 from psutil import Process
 
 from .date import now
-from ..names import Units
-
+from ..names import Units, UNDEF
 
 log = getLogger(__name__)
 
@@ -111,11 +110,14 @@ def interleave(sep, iter):
 
 
 # https://docs.python.org/3/library/itertools.html#itertools-recipes
-def grouper(iterable, n, fillvalue=None):
+def grouper(iterable, n, fillvalue=UNDEF):
     "Collect data into fixed-length chunks or blocks"
     # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
     args = [iter(iterable)] * n
-    return zip_longest(*args, fillvalue=fillvalue)
+    for group in zip_longest(*args, fillvalue=fillvalue):
+        if fillvalue is UNDEF:
+            group = filter(lambda x: x is not UNDEF, group)
+        yield group
 
 
 PP = PrettyPrinter(indent=0, depth=1, width=80, compact=True)
