@@ -1,12 +1,12 @@
 
-from sqlalchemy import or_, desc, distinct
+from sqlalchemy import or_, desc
 from sqlalchemy.orm import aliased
-from sqlalchemy.sql.functions import min
 
 from ..utils import ActivityJournalDelegate
 from ....diary.model import text, link, optional_text
 from ....lib.date import to_time, time_to_local_time
-from ....sql import ActivityJournal, ActivitySimilarity, ActivityNearby
+from ....sql import ActivityJournal, ActivitySimilarity
+from ....sql.support import greatest
 
 NEARBY_LINKS = 'nearby-links'
 
@@ -45,7 +45,7 @@ def nearby_earlier(s, ajournal, threshold=0.3):
                or_(aj_hi.id == ajournal.id, aj_hi.start < ajournal.start),
                or_(aj_hi.id == ajournal.id, aj_lo.start < ajournal.start),
                ActivitySimilarity.similarity > threshold). \
-        order_by(desc(min(aj_lo.start, aj_hi.start)))
+        order_by(desc(greatest(aj_lo.start, aj_hi.start)))
     return [(asm.activity_journal_lo if asm.activity_journal_lo != ajournal else asm.activity_journal_hi, asm)
             for asm in q.all()]
 

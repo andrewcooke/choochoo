@@ -231,18 +231,15 @@ class Interval(Source):
     @classmethod
     def clean(cls, s):
         sys = global_sys()
-        with sys.session_context() as s_:
-            dirty_intervals = s_.query(DirtyInterval).all()
-            if dirty_intervals:
-                log.debug('Cleaning dirty intervals')
-                dirty_ids = set(d.interval_id for d in dirty_intervals)
-                log.warning(f'Up to {len(dirty_ids)} intervals to delete')
-                s.query(Source).filter(Source.id.in_(dirty_ids)).delete(synchronize_session=False)
-                s.commit()
-                dirty_ids = set(d.id for d in dirty_intervals)
-                for ids in grouper(dirty_ids, 900):  # avoid limit in sqlite older versions
-                    s_.query(DirtyInterval).filter(DirtyInterval.id.in_(ids)).delete(synchronize_session=False)
-                log.debug('Intervals clean')
+        dirty_intervals = sys.get_dirty_intervals()
+        if dirty_intervals:
+            log.debug('Cleaning dirty intervals')
+            dirty_ids = set(d.interval_id for d in dirty_intervals)
+            log.warning(f'Up to {len(dirty_ids)} intervals to delete')
+            s.query(Source).filter(Source.id.in_(dirty_ids)).delete(synchronize_session=False)
+            s.commit()
+            sys.delete_dirty_intervals(dirty_intervals)
+            log.debug('Intervals clean')
 
 
 class Dummy(UngroupedSource):

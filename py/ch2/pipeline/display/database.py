@@ -5,6 +5,7 @@ from sqlalchemy.sql.functions import count
 
 from .utils import Displayer
 from ...diary.model import value, optional_text, text
+from ...global_ import global_sys
 from ...sql import Interval
 
 log = getLogger(__name__)
@@ -14,13 +15,12 @@ class DatabaseDisplayer(Displayer):
 
     @optional_text('Database')
     def _read_date(self, s, date):
-        # total = s.query(count(Interval.id)).filter(Interval.dirty == True).scalar()
-        # today = s.query(count(Interval.id)). \
-        #     filter(Interval.dirty == True,
-        #            Interval.start <= date,
-        #            Interval.finish > date).scalar()
-        # TODO!
-        total, today = 999, -1
+        ids = set(d.interval_id for d in global_sys().get_dirty_intervals())
+        total = s.query(count(Interval.id)).filter(Interval.id.in_(ids)).count()
+        today = s.query(count(Interval.id)). \
+            filter(Interval.id.in_(ids),
+                   Interval.start <= date,
+                   Interval.finish > date).scalar()
         if not total:
             yield text('No dirty statistics')
         else:

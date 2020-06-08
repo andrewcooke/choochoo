@@ -58,7 +58,7 @@ def copy_statistic_journal(record, old_s, old, old_statistic_name, old_statistic
     previous = new_s.query(new_journal). \
         filter(new_journal.time == old_statistic_journal.time,
                new_journal.statistic_name == new_statistic_name).one_or_none()
-    # drop ugly auto-titles if nicer ones available (bug fix 0-322 to 0-33)
+    # drop ugly auto-titles if nicer ones available (bug fix 0-32 to 0-33)
     if previous and new_statistic_name.name == 'name' and \
             new_statistic_name.statistic_journal_type == StatisticJournalType.TEXT and \
             previous.value.startswith('20'):

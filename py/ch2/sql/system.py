@@ -7,6 +7,7 @@ from .database import SystemConstant, Process, MappedDatabase, sqlite_uri, Datab
 from .support import SystemBase
 from .tables.system import Progress, DirtyInterval
 from ..commands.args import SYSTEM, DB_EXTN, DATA
+from ..lib.utils import grouper
 
 log = getLogger(__name__)
 
@@ -94,3 +95,14 @@ class System(MappedDatabase):
                         known.add(id)
                         count += 1
             if count: log.warning(f'Marked {count} intervals as dirty')
+
+    def get_dirty_intervals(self):
+        with self.session_context() as s:
+            return s.query(DirtyInterval).all()
+
+    def delete_dirty_intervals(self, intervals):
+        dirty_ids = set(d.id for d in intervals)
+        with self.session_context() as s:
+            for ids in grouper(dirty_ids, 900):  # avoid limit in sqlite older versions
+                s.query(DirtyInterval).filter(DirtyInterval.id.in_(ids)).delete(synchronize_session=False)
+
