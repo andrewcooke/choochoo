@@ -5,6 +5,7 @@ from logging import getLogger
 from re import escape
 
 from sqlalchemy import union, intersect, not_
+from sqlalchemy.orm import aliased
 
 from ..lib import local_time_to_time, to_time
 from ..lib.peg import transform, choice, pattern, sequence, Recursive, drop, exhaustive, single
@@ -83,6 +84,19 @@ term.calls(choice(comparison, parens))
 constraint = single(exhaustive(choice(or_comparison, parens)))
 
 
+def trace(f):
+    # help trace source of problems in sql generation
+    def wrapper(*args, **kargs):
+        result = f(*args, **kargs)
+        try:
+            sql = result[0]
+        except:
+            sql = result
+        # log.debug(f'{f.__name__}: {sql}')
+        return result
+    return wrapper
+
+
 def constrained_sources(s, query, conversion=None):
     with timing('parse AST'):
         ast = constraint(query)[0]
@@ -143,11 +157,13 @@ def check_source_property(qname, value):
     # todo - check value type somehow
 
 
+@trace
 def build_source_query(s, ast, attrs, conversion=None):
     constraints = build_constraints(s, ast, attrs, conversion=conversion).cte()
     return s.query(Source).filter(Source.id.in_(constraints))
 
 
+@trace
 def build_constraints(s, ast, attrs, conversion=None):
     l, op, r = ast
     if op in (AND, OR):
@@ -160,13 +176,15 @@ def build_constraints(s, ast, attrs, conversion=None):
         return constraint
 
 
+@trace
 def build_join(op, lcte, rcte):
     if op == OR:
-        return union(lcte, rcte).select()
+        return aliased(union(lcte, rcte)).select()
     else:
-        return intersect(lcte, rcte).select()
+        return aliased(intersect(lcte, rcte)).select()
 
 
+@trace
 def build_constraint(s, ast, attrs, with_conversion):
     qname, op, value = ast
     if qname in attrs:
@@ -187,6 +205,7 @@ def build_property(s, ast):
     return q
 
 
+@trace
 def build_comparisons(s, ast, with_conversion):
     qname, op, value = ast
     owner, name, group = StatisticName.parse(qname, default_activity_group=UNDEF)
@@ -194,9 +213,9 @@ def build_comparisons(s, ast, with_conversion):
         if op == '=':
             return get_source_ids_for_null(s, owner, name, group, with_conversion), True
         else:
-            return union(*[get_source_ids(s, owner, name, op, value, group, type)
-                           for type in StatisticJournalType
-                           if type != StatisticJournalType.STATISTIC]).select(), False
+            return aliased(union(*[get_source_ids(s, owner, name, op, value, group, type)
+                                   for type in StatisticJournalType
+                                   if type != StatisticJournalType.STATISTIC])).select(), False
     elif isinstance(value, str):
         return get_source_ids(s, owner, name, op, value, group, StatisticJournalType.TEXT), False
     elif isinstance(value, dt.datetime):
@@ -204,7 +223,7 @@ def build_comparisons(s, ast, with_conversion):
     else:
         qint = get_source_ids(s, owner, name, op, value, group, StatisticJournalType.INTEGER)
         qfloat = get_source_ids(s, owner, name, op, value, group, StatisticJournalType.FLOAT)
-        return union(qint, qfloat).select(), False
+        return aliased(union(qint, qfloat)).select(), False
 
 
 def get_op_attr(op, value):
@@ -275,6 +294,7 @@ class Intersect(object):
     pass
 
 
+@trace
 def activity_conversion(s, source_ids, null):
     # convert the query that gives any source id and select either those that are activities directly,
     # or activities associated with a topic (eg user entered activity notes)
@@ -288,7 +308,7 @@ def activity_conversion(s, source_ids, null):
         join(FileHash). \
         join(ActivityTopicJournal). \
         filter(ActivityTopicJournal.id.in_(source_ids))
-    q = union(q_direct, q_via_topic).select()
+    q = aliased(union(q_direct, q_via_topic)).select()
 
     if null:
         # for 'is null' queries we are really asking if the data are missing (since values are not null constrained)
