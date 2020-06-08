@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from sqlalchemy import func
+from sqlalchemy import func, distinct
 
 from ..json import JsonResponse
 from ...commands.search import text_search
@@ -43,12 +43,11 @@ class Search:
             name, description, units = row
             return {NAME: name, DESCRIPTION: description, UNITS: units}
 
-        q = s.query(StatisticName.name, StatisticName.description, StatisticName.units). \
-            join(StatisticJournal). \
+        used = s.query(distinct(StatisticJournal.statistic_name_id)). \
             join(Source, Source.id == StatisticJournal.source_id). \
-            filter(Source.type.in_([SourceType.ACTIVITY_TOPIC, SourceType.ACTIVITY])). \
-            group_by(StatisticName.name). \
-            order_by(StatisticName.name)
+            filter(Source.type.in_([SourceType.ACTIVITY_TOPIC, SourceType.ACTIVITY]))
+        q = s.query(StatisticName.name, StatisticName.description, StatisticName.units). \
+            filter(StatisticName.id.in_(used))
         log.debug(q)
         return JsonResponse([format(row) for row in q.all()])
 
