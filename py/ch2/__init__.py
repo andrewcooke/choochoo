@@ -77,33 +77,46 @@ COMMANDS = {CONSTANTS: constants,
             }
 
 
-def main():
-    from . import commands
+def args_and_command():
     parser = make_parser()
     ns = parser.parse_args()
     command_name = ns.command if hasattr(ns, COMMAND) else None
     command = COMMANDS[command_name] if command_name in COMMANDS else None
-    if command == NO_OP: ns.verbose = 0
+    if command_name == NO_OP: ns.verbose = 0
     args = NamespaceWithVariables(ns)
+    return args, command, command_name
+
+
+def set_global_state(args):
     set_global_dev(args[DEV])
     make_log_from_args(args)
+    sys = System(args[BASE])
+    set_global_sys(sys)
+    set_log_color(args, sys)
+    return sys
+
+
+def versions():
     log.info('Version %s' % CH2_VERSION)
     if version_info < (3, 7):
         raise Exception('Please user Python 3.7 or more recent')
-    sys = System(args[BASE])
-    set_global_sys(sys)
-    db = sys.get_database()
-    set_log_color(args, sys)
+
+
+def main():
+    versions()
+    args, command, command_name = args_and_command()
+    sys = set_global_state(args)
     try:
+        db = None
         if not command:
             log.debug('If you are seeing the "No command given" error during development ' +
                       'you may have forgotten to set the command name via `set_defaults()`.')
             raise Exception('No command given (try `ch2 help`)')
-        elif not db:
-            if command_name not in (DATABASE, PACKAGE_FIT_PROFILE, HELP):
+        elif command_name not in (DATABASE, PACKAGE_FIT_PROFILE, HELP):
+            db = sys.get_database() if command_name not in (PACKAGE_FIT_PROFILE, HELP) else None
+            if not db:
                 refuse_until_configured(False)
-        elif db.no_data():
-            if command_name not in (DATABASE, PACKAGE_FIT_PROFILE, HELP, WEB):
+            elif db.no_data():
                 refuse_until_configured(True)
         command(args, sys, db)
     except KeyboardInterrupt:

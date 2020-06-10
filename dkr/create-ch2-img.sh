@@ -19,19 +19,18 @@ rsync --exclude tests \
 popd
 
 cat > dockerfile <<EOF
-from opensuse/leap:15.1
+from python:3.8.3-slim-buster
 copy app /app
 workdir /app
-run zypper --non-interactive install \
-    	   python3 python3-devel python3-pip \
-	   sqlite3 sqlite3-devel \
-	   postgresql postgresql-devel \
-           gcc
+run apt-get update
+run apt-get -y install \
+    sqlite3 libsqlite3-dev \
+    libpq-dev gcc
 run pip install --upgrade pip && \
     pip install wheel && \
     pip install --no-cache-dir .
 expose 8000
-cmd ch2 web service
+cmd ch2 --base /data web service
 EOF
 docker build --network=host --tag python -f dockerfile .
 

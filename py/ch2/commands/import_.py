@@ -60,7 +60,7 @@ def infer_uri(base, source, engine, sys):
         if engine == SQLITE:
             uri = sqlite_uri(base, version=source)
         elif engine == POSTGRESQL:
-            uri = postgresql_uri(base, version=source)
+            uri = postgresql_uri(version=source)
         else:
             raise Exception(f'Unknown engine {engine}')
     else:

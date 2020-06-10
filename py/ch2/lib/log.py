@@ -105,8 +105,8 @@ def set_log_color(args, sys):
                                              'CRITICAL': 'black'},
                                  secondary_log_colors={'message':
                                                            {'DEBUG': 'yellow',
-                                                            'INFO': 'black',
-                                                            'WARNING': 'blue',
+                                                            'INFO': 'blue',
+                                                            'WARNING': 'black',
                                                             'ERROR': 'bold_red',
                                                             'CRITICAL': 'bold_red'}}))
         elif color.lower() == DARK:

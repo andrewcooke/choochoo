@@ -9,6 +9,7 @@ from .args import mm, SUB_COMMAND, LIST, PROFILE, BASE, SHOW, DB_VERSION, URI, S
     FORCE, DELETE
 from .help import Markdown
 from ..config.utils import profiles, get_profile
+from ..lib import log_current_exception
 from ..lib.utils import clean_path
 from ..sql import SystemConstant
 from ..sql.database import sqlite_uri, postgresql_uri
@@ -49,13 +50,21 @@ Delete the current database.
         load(sys, args[BASE], args[PROFILE], args[URI], args[FORCE])
 
 
+def database_really_exists(uri):
+    try:
+        return database_exists(uri)
+    except Exception:
+        log_current_exception()
+        return False
+
+
 def show(sys):
     uri = sys.get_constant(SystemConstant.DB_URI, none=True)
     version = sys.get_constant(SystemConstant.DB_VERSION, none=True)
     if uri:
-        print(f'{URI}: {uri}')
+        print(f'{URI}:     {uri}')
         print(f'version: {version}')
-        print(f'exists: {database_exists(uri)}')
+        print(f'exists:  {database_really_exists(uri)}')
     else:
         print('no database configured')
     return
@@ -111,7 +120,7 @@ def make_uri(base, scheme_or_uri):
     if scheme_or_uri == SQLITE:
         uri = sqlite_uri(base)
     elif scheme_or_uri == POSTGRESQL:
-        uri = postgresql_uri(base)
+        uri = postgresql_uri()
     else:
         uri = scheme_or_uri
     log.debug(f'Using URI {uri}')

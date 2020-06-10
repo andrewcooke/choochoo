@@ -2,7 +2,7 @@
 
 pushd py
 rm -fr env
-python3.7 -m venv env
+python3.8 -m venv env
 source env/bin/activate
 
 pip install --upgrade pip

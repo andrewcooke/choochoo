@@ -77,32 +77,15 @@ def sqlite_uri(base, read_only=False, name=ACTIVITY, version=DB_VERSION):
     return uri
 
 
-def compact(initial, target=6):
+def postgresql_uri(read_only=False, version=DB_VERSION):
     '''
-    Shrink initial text and append a disambiguating hash.
-    Used to make a quasi-readable hash of the base directory.
-    Compression discards letters evenly across the word.
+    We no longer use base here.  It was a confused mess.  You can still have a database that depends on base
+    because the system database still switches, so you can explcitily configure a different database uri.
+
+    We use the default postgres schema because they cannot be managed within the URI.
     '''
-    text = sub(r'\W', '', initial)
-    while len(text) > target:  # retry on rounding error
-        to_drop = len(text) - target
-        space = target - 1
-        delta = space / to_drop  # need to discard to_drop / space per letter advancement
-        offset = 1
-        while len(text) > target and int(offset) < len(text):
-            ioffset = int(offset)
-            text = text[:ioffset] + text[ioffset+1:]
-            offset += delta
-    hash = data_hash(initial)
-    text = text + '-' + hash[0:3]
-    log.debug(f'Compressed {initial} to {text}')
-    return text
-
-
-def postgresql_uri(base, read_only=False, version=DB_VERSION):
     if read_only: log.warning('Read-only not supported yet for Postgres')
-    prefix = compact(base)
-    name = f'{prefix}-{ACTIVITY}-{version}'
+    name = f'{ACTIVITY}-{version}'
     return f'{POSTGRESQL}://postgres@localhost/{name}'
 
 
