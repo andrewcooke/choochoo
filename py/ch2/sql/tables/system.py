@@ -202,7 +202,7 @@ class Progress(SystemBase):
         start = now()
         initial = s.query(Progress).filter(Progress.name == name).one_or_none()
         log.debug(f'Initial progress: {initial}')
-        if initial and exists(initial.pid, initial.start):
+        if initial and exists(initial.pid, initial.start, delta_seconds=delta_seconds):
             return
 
         # use PIDs so that we don't need to worry about expired objects
