@@ -19,4 +19,6 @@ services:
       - 'pg-data:/var/lib/postgresql/data'
 volumes:
   disk-data:
+    external: true
   pg-data:
+    external: true

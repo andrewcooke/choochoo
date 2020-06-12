@@ -71,6 +71,7 @@ class Configure:
             raise Exception(f'Bootstrap via web requires '
                             f'`{WEB} {SERVICE} ({mm(SQLITE)} | {mm(POSTGRESQL)} | {mm(URI)})`')
         load(self.__sys, self.__base, data[PROFILE], self.__uri)
+        if not s: restart_self()  # bootstrap from no database
 
     def delete(self, request, s):
         delete(self.__sys, base_system_path(self.__base), True)
