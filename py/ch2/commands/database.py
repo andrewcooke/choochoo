@@ -17,7 +17,7 @@ from ..sql.database import sqlite_uri, postgresql_uri
 log = getLogger(__name__)
 
 
-def database(args, sys, db):
+def database(args, data):
     '''
 ## database
 
@@ -39,15 +39,15 @@ Delete the current database.
     '''
     action = args[SUB_COMMAND]
     if action == SHOW:
-        show(sys)
+        show(data.sys)
     elif action == LIST:
         list()
     elif action == DELETE:
         uri = args[URI] or sys.get_constant(SystemConstant.DB_URI, none=True)
         if not uri: raise Exception('No current database is defined')
-        delete(uri, sys)
+        delete(uri, data.sys)
     else:
-        load(sys, args[BASE], args[PROFILE], args[URI], args[FORCE])
+        load(data.sys, args[BASE], args[PROFILE], args[URI], args[FORCE])
 
 
 def database_really_exists(uri):

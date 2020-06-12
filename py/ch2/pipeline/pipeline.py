@@ -25,8 +25,8 @@ def count_statistics(s):
     return s.query(count(StatisticJournal.id)).scalar()
 
 
-def run_pipeline(system, db, base, type, like=tuple(), unlike=tuple(), id=None, progress=None, **extra_kargs):
-    with db.session_context() as s:
+def run_pipeline(data, type, like=tuple(), unlike=tuple(), id=None, progress=None, **extra_kargs):
+    with data.db.session_context() as s:
         if id is None:  # don't run for each worker
             if type in (PipelineType.CALCULATE, PipelineType.READ_ACTIVITY, PipelineType.READ_MONITOR):
                 Interval.clean(s)
@@ -39,8 +39,7 @@ def run_pipeline(system, db, base, type, like=tuple(), unlike=tuple(), id=None, 
             log.debug(f'Running {pipeline.cls}({pipeline.args}, {kargs})')
             with timing(msg):
                 before = None if id else count_statistics(s)
-                pipeline.cls(system, db, *pipeline.args, base=base, id=pipeline.id, progress=local_progress,
-                             **kargs).run()
+                pipeline.cls(data, *pipeline.args, id=pipeline.id, progress=local_progress, **kargs).run()
                 after = None if id else count_statistics(s)
             if before or after:
                 log.info(f'{msg}: statistic count {before} -> {after} (change of {after - before})')
@@ -61,11 +60,9 @@ class BasePipeline:
 
 class MultiProcPipeline(BasePipeline):
 
-    def __init__(self, sys, db, *args, base=None, owner_out=None, force=False, progress=None,
+    def __init__(self, data, *args, owner_out=None, force=False, progress=None,
                  overhead=1, cost_calc=20, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
-        self._sys = sys
-        self.__db = db
-        self.base = base
+        self._data = data
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
         self.force = force  # force re-processing
         self.__progress = progress
@@ -78,7 +75,7 @@ class MultiProcPipeline(BasePipeline):
         super().__init__(*args, **kargs)
 
     def run(self):
-        with self.__db.session_context() as s:
+        with self._data.db.session_context() as s:
             self._startup(s)
 
             if self.force:
@@ -106,12 +103,12 @@ class MultiProcPipeline(BasePipeline):
                         self.__spawn(s, missing, n_total, n_parallel, local_progress)
             self._shutdown(s)
 
-    def __flush_wal(self, session):
-        session.commit()
-        if str(session.get_bind().url).startswith(SQLITE):
+    def __flush_wal(self, s):
+        s.commit()
+        if str(s.get_bind().url).startswith(SQLITE):
             log.debug('Clearing WAL')
-            session.execute(text('pragma wal_checkpoint(RESTART);'))
-            session.commit()
+            s.execute(text('pragma wal_checkpoint(RESTART);'))
+            s.commit()
             log.debug('Cleared WAL')
 
     def _run_all(self, s, missing, progress=None):
@@ -180,7 +177,7 @@ class MultiProcPipeline(BasePipeline):
         # errors in our timing estimates
 
         n_missing = len(missing)
-        workers = Workers(self._sys, self.base, n_parallel, self.owner_out, self._base_command())
+        workers = Workers(self._data, n_parallel, self.owner_out, self._base_command())
         start, finish = None, -1
         for i in range(n_total):
             start = finish + 1
@@ -199,10 +196,6 @@ class MultiProcPipeline(BasePipeline):
     @abstractmethod
     def _base_command(self):
         raise NotImplementedError()
-
-    @property
-    def db_path(self):
-        return self.__db.path
 
 
 class UniProcPipeline(MultiProcPipeline):
@@ -232,7 +225,7 @@ class LoaderMixin:
             raise Exception('Select serial use')
         else:
             kargs['add_serial'] = add_serial
-        scheme_ = scheme(self._sys.get_constant(SystemConstant.DB_URI))
+        scheme_ = scheme(self._data.sys.get_constant(SystemConstant.DB_URI))
         if scheme_ == POSTGRESQL and 'batch' not in kargs:
             kargs['batch'] = self.__batch
             self.__batch = False  # only set once or we get multiple callbacks

@@ -7,7 +7,7 @@ from ..fit.profile.profile import pickle_profile
 log = getLogger(__name__)
 
 
-def package_fit_profile(args, system, db):
+def package_fit_profile(args, data):
     '''
 ## package-fit-profile
 

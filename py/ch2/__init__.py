@@ -19,7 +19,7 @@ class FatalException(Exception):
 from .commands.args import COMMAND, make_parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DATABASE, CONSTANTS, CALCULATE, SHOW_SCHEDULE, MONITOR, GARMIN, \
     UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, BASE
-from .global_ import set_global_dev, set_global_sys
+from .global_ import set_global_dev, set_global_data
 from .commands.constants import constants
 from .commands.validate import validate
 from .commands.database import database
@@ -40,7 +40,7 @@ from .commands.read import read
 from .commands.web import web
 from .lib.log import make_log_from_args, set_log_color
 from .sql.database import SystemConstant
-from .sql.system import System
+from .sql.system import System, Data
 
 log = getLogger(__name__)
 
@@ -90,10 +90,10 @@ def args_and_command():
 def set_global_state(args):
     set_global_dev(args[DEV])
     make_log_from_args(args)
-    sys = System(args[BASE])
-    set_global_sys(sys)
-    set_log_color(args, sys)
-    return sys
+    data = Data(args[BASE])
+    set_global_data(data)
+    set_log_color(args, data.sys)
+    return data
 
 
 def versions():
@@ -105,20 +105,19 @@ def versions():
 def main():
     versions()
     args, command, command_name = args_and_command()
-    sys = set_global_state(args)
+    data = set_global_state(args)
     try:
-        db = None
         if not command:
             log.debug('If you are seeing the "No command given" error during development ' +
                       'you may have forgotten to set the command name via `set_defaults()`.')
             raise Exception('No command given (try `ch2 help`)')
         elif command_name not in (DATABASE, PACKAGE_FIT_PROFILE, HELP):
-            db = sys.get_database() if command_name not in (PACKAGE_FIT_PROFILE, HELP) else None
+            db = data.db if command_name not in (PACKAGE_FIT_PROFILE, HELP) else None
             if not db:
                 refuse_until_configured(command_name, False)
             elif db.no_data():
                 refuse_until_configured(command_name, True)
-        command(args, sys, db)
+        command(args, data)
     except KeyboardInterrupt:
         log.critical('User abort')
         exit(1)

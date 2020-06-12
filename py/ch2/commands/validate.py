@@ -7,7 +7,7 @@ from ..sql import ActivityTopicJournal, FileHash, FileScan, StatisticJournal, Ac
 log = getLogger(__name__)
 
 
-def validate(args, system, db):
+def validate(args, data):
     '''
 ## validate
 
@@ -16,7 +16,7 @@ def validate(args, system, db):
 This is still in development.
     '''
     record = Record(log)
-    check_all(record, db, fix=args[FIX])
+    check_all(record, data.db, fix=args[FIX])
 
 
 def check_all(record, db, fix=False):

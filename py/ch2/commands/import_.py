@@ -4,7 +4,7 @@ from os.path import sep, exists, join, isfile
 
 from sqlalchemy_utils import database_exists
 
-from .args import SOURCE, ACTIVITY, DB_EXTN, base_system_path, BASE, SEGMENTS, CONSTANTS, KIT, ACTIVITIES, DIARY, \
+from .args import SOURCE, ACTIVITY, DB_EXTN, base_system_path, SEGMENTS, CONSTANTS, KIT, ACTIVITIES, DIARY, \
     infer_flags, ENGINE, SQLITE, POSTGRESQL, mm
 from .read import DATA
 from ..lib.log import Record
@@ -19,7 +19,7 @@ from ..sql.database import ReflectedDatabase, sqlite_uri, postgresql_uri, System
 log = getLogger(__name__)
 
 
-def import_(args, sys, db):
+def import_(args, data):
     '''
 ## import
 
@@ -42,11 +42,10 @@ Import only diary entries.
 Import everything but diary entries.
     '''
     flags = infer_flags(args, DIARY, ACTIVITIES, KIT, CONSTANTS, SEGMENTS)
-    import_source(Record(log), args[BASE], args[SOURCE], args[ENGINE], db, sys, flags=flags)
+    import_source(data, Record(log), args[SOURCE], args[ENGINE], flags=flags)
 
 
 def infer_uri(base, source, engine, sys):
-    uri = None
     if ':' in source:
         if engine:
             raise Exception(f'Do not specify engine with (what looks like) a URI')
@@ -71,19 +70,19 @@ def infer_uri(base, source, engine, sys):
         raise Exception(f'No database at {uri}')
 
 
-def import_source(record, base, source, engine, new, sys, flags=None):
+def import_source(data, record, source, engine, flags=None):
     with record.record_exceptions():
-        uri = infer_uri(base, source, engine, sys)
+        uri = infer_uri(data.base, source, engine, data.sys)
         if flags is None: flags = defaultdict(lambda: True)
         old = ReflectedDatabase(uri)
         if not old.meta.tables:
             record.raise_(f'No tables found in {uri}')
         log.info(f'Importing data from {uri}')
-        if flags[DIARY]: import_diary(record, old, new)
-        if flags[ACTIVITIES]: import_activity(record, old, new)
-        if flags[KIT]: import_kit(record, old, new)
-        if flags[CONSTANTS]: import_constant(record, old, new)
-        if flags[SEGMENTS]: import_segment(record, old, new)
+        if flags[DIARY]: import_diary(record, old, data.db)
+        if flags[ACTIVITIES]: import_activity(record, old, data.db)
+        if flags[KIT]: import_kit(record, old, data.db)
+        if flags[CONSTANTS]: import_constant(record, old, data.db)
+        if flags[SEGMENTS]: import_segment(record, old, data.db)
 
 
 def build_source_path(record, base, source):

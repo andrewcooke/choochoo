@@ -26,7 +26,7 @@ Docs at http://andrewcooke.github.io/choochoo/index''' % (
         '\n* '.join(COMMANDS.keys()), PROGNAME, m(H), PROGNAME, HELP, PROGNAME, m(H))
 
 
-def help(args, system, db):
+def help(args, data):
     '''
 ## help
 

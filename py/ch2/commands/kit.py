@@ -19,7 +19,7 @@ from ..sql.types import long_cls
 log = getLogger(__name__)
 
 
-def kit(args, system, db, output=stdout):
+def kit(args, data, output=stdout):
     '''
 ## kit
 
@@ -70,11 +70,11 @@ Statistics for shoes:
 Names can be chosen at will (there is nothing hard-coded about 'bike', 'chain', 'cotic', etc),
 but in general must be unique.  They can contain spaces if quoted.
     '''
-    cmd, base = args[SUB_COMMAND], args[BASE]
+    cmd = args[SUB_COMMAND]
     if cmd == REBUILD:
-        rebuild(system, db, base)
+        rebuild(data)
     else:
-        with db.session_context() as s:
+        with data.db.session_context() as s:
             if cmd == START:
                 start(s, args[GROUP], args[ITEM], args[DATE], args[FORCE])
             elif cmd == FINISH:
@@ -149,8 +149,8 @@ def undo(s, item, component, model, date, all):
     component_instance.delete_if_unused(s)
 
 
-def rebuild(system, db, base):
-    run_pipeline(system, db, base, PipelineType.CALCULATE, force=True, like=[long_cls(KitCalculator)])
+def rebuild(data):
+    run_pipeline(data, PipelineType.CALCULATE, force=True, like=[long_cls(KitCalculator)])
 
 
 def show(s, name, date, csv=None, output=stdout):

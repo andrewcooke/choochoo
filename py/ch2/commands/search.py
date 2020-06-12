@@ -8,7 +8,7 @@ from ..diary.model import TEXT
 log = getLogger(__name__)
 
 
-def search(args, system, db):
+def search(args, data):
     '''
 ## search
 
@@ -76,7 +76,7 @@ Set the name on the activity at the given time (again, using the dot syntax).
     if args[SHOW] and args[SET]:
         raise Exception(f'Give at most one of {mm(SHOW)} and {mm(SET)}')
     cmd = args[SUB_COMMAND]
-    with db.session_context() as s:
+    with data.db.session_context() as s:
         if cmd == TEXT:
             query = ' and '.join([f'(ActivityTopic.name = "{word}" or ActivityTopic.notes = "{word}")'
                                   for word in args[QUERY]])

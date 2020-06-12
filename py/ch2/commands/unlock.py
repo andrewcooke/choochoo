@@ -6,7 +6,7 @@ from ch2.pipeline.loader import SqliteLoader
 log = getLogger(__name__)
 
 
-def unlock(args, system, db):
+def unlock(args, data):
     '''
 ## unlock
 
@@ -16,7 +16,8 @@ Remove the "dummy" entry from the database that is used to coordinate locking ac
 
 This should not be needed in normal use.  DO NOT use when worker processes are still running.
     '''
-    with db.session_context() as s:
+    # todo - sqlite only
+    with data.db.session_context() as s:
         log.info('Removing dummy entry...')
         SqliteLoader.unlock(s)
         log.info('Removed (if present)')

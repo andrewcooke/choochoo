@@ -43,25 +43,23 @@ VERSIONS = 'versions'
 
 class Configure:
 
-    def __init__(self, sys, db, base, uri):
-        self.__sys = sys
-        self.__db = db
-        self.__base = base
+    def __init__(self, data, uri):
+        self.__data = data
         self.__uri = uri
         self.__html = HTML(delta=1, parser=filter(parse, yes=(P, LI, PRE)))
 
     def is_configured(self):
-        return bool(self.__sys.get_constant(SystemConstant.DB_VERSION, none=True))
+        return bool(self.__data.sys.get_constant(SystemConstant.DB_VERSION, none=True))
 
     def html(self, text):
         return self.__html.str(text)
 
     def read_profiles(self, request, s):
         fn_argspec_by_name = profiles()
-        version = self.__sys.get_constant(SystemConstant.DB_VERSION, none=True)
+        version = self.__data.sys.get_constant(SystemConstant.DB_VERSION, none=True)
         data = {PROFILES: {name: self.html(fn_argspec_by_name[name][0].__doc__) for name in fn_argspec_by_name},
                 CONFIGURED: bool(version),
-                DIRECTORY: self.__base}
+                DIRECTORY: self.__data.base}
         if data[CONFIGURED]: data[VERSION] = version
         return data
 
@@ -70,27 +68,26 @@ class Configure:
         if not self.__uri:
             raise Exception(f'Bootstrap via web requires '
                             f'`{WEB} {SERVICE} ({mm(SQLITE)} | {mm(POSTGRESQL)} | {mm(URI)})`')
-        load(self.__sys, self.__base, data[PROFILE], self.__uri)
-        if not s: restart_self()  # bootstrap from no database
+        load(self.__data.sys, self.__data.base, data[PROFILE], self.__uri)
+        self.__data.reset()
 
     def delete(self, request, s):
-        delete(self.__sys, base_system_path(self.__base), True)
-        # now we need to restart because the database connections exist
-        restart_self()
+        delete(self.__uri, self.__data.sys)
+        self.__data.reset()
 
     def read_import(self, request, s):
         record = Record(log)
-        return {IMPORTED: {DIARY: diary_imported(record, self.__db),
-                           ACTIVITY: activity_imported(record, self.__db),
-                           KIT: kit_imported(record, self.__db),
-                           CONSTANT: constant_imported(record, self.__db),
-                           SEGMENT: segment_imported(record, self.__db)},
-                VERSIONS: available_versions(self.__base)}
+        return {IMPORTED: {DIARY: diary_imported(record, self.__data.db),
+                           ACTIVITY: activity_imported(record, self.__data.db),
+                           KIT: kit_imported(record, self.__data.db),
+                           CONSTANT: constant_imported(record, self.__data.db),
+                           SEGMENT: segment_imported(record, self.__data.db)},
+                VERSIONS: available_versions(self.__data.base)}
 
     def write_import(self, request, s):
         data = request.json
         record = Record(log)
-        import_source(record, self.__base, data[VERSION], self.__db)
+        import_source(self.__data, record, data[VERSION], 'postgresql')  # TODO - this should not be hardcoded
         return record.json()
 
     def read_constants(self, request, s):

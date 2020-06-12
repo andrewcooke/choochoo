@@ -46,31 +46,28 @@ class JSONRequest(Request, JSONMixin):
 
 class WebController(BaseController):
 
-    def __init__(self, args, sys, db, max_retries=1, retry_secs=1):
-        super().__init__(args, sys, WebServer, max_retries=max_retries, retry_secs=retry_secs)
+    def __init__(self, args, data, max_retries=1, retry_secs=1):
+        super().__init__(data, WebServer, max_retries=max_retries, retry_secs=retry_secs)
         self.__bind = args[BIND] if BIND in args else None
         self.__port = args[PORT] if BIND in args else None
-        self.__base = args[BASE]
         self.__dev = args[DEV]
-        self.__sys = sys
-        self.__db = db
         self.__uri = args[URI]
-        self.__jupyter = JupyterController(args, sys)
+        self.__jupyter = JupyterController(data)
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'web-service.log'
-        cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._base} ' \
+        cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._data.base} ' \
               f'{WEB} {SERVICE} {mm(BIND)} {self.__bind} {mm(PORT)} {self.__port}'
         return cmd, log_name
 
     def _run(self):
-        self._sys.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self.__bind, self.__port), force=True)
+        self._data.sys.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self.__bind, self.__port), force=True)
         run_simple(self.__bind, self.__port,
-                   WebServer(self.__sys, self.__db, self.__jupyter, self.__base, self.__uri),
+                   WebServer(self._data, self.__jupyter, self.__uri),
                    use_debugger=self.__dev, use_reloader=self.__dev)
 
     def _cleanup(self):
-        self._sys.delete_constant(SystemConstant.WEB_URL)
+        self._data.sys.delete_constant(SystemConstant.WEB_URL)
 
     def _status(self, running):
         if running:
@@ -78,7 +75,7 @@ class WebController(BaseController):
         print()
 
     def connection_url(self):
-        return self._sys.get_constant(SystemConstant.WEB_URL, none=True)
+        return self._data.sys.get_constant(SystemConstant.WEB_URL, none=True)
 
 
 def error(exception):
@@ -89,18 +86,17 @@ def error(exception):
 
 class WebServer:
 
-    def __init__(self, sys, db, jcontrol, base, uri):
-        self.__sys = sys
-        self.__db = db
+    def __init__(self, data, jcontrol, uri):
+        self.__data = data
 
         analysis = Analysis()
-        configure = Configure(sys, db, base, uri)
+        configure = Configure(data, uri)
         diary = Diary()
         jupyter = Jupyter(jcontrol)
         kit = Kit()
         static = Static('.static')
-        upload = Upload(sys, db, base)
-        thumbnail = Thumbnail(base)
+        upload = Upload(data)
+        thumbnail = Thumbnail(data.base)
         search = Search()
 
         self.url_map = Map([
@@ -156,8 +152,8 @@ class WebServer:
         try:
             endpoint, values = adapter.match()
             values.pop('_', None)
-            if self.__db:
-                with self.__db.session_context() as s:
+            if self.__data.db:
+                with self.__data.db.session_context() as s:
                     return endpoint(request, s, **values)
             else:
                 return endpoint(request, None, **values)
@@ -173,7 +169,7 @@ class WebServer:
         return self.wsgi_app(environ, start_response)
 
     def get_busy(self):
-        percent = self.__sys.get_percent(READ)
+        percent = self.__data.sys.get_percent(READ)
         if percent is None: percent = 100
         # the client uses the complete message when the problem has passed
         return {MESSAGE: 'Loading data and recalculating statistics.',

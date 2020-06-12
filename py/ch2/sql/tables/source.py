@@ -13,7 +13,7 @@ from .system import DirtyInterval
 from ..support import Base
 from ..types import OpenSched, Date, ShortCls, short_cls
 from ..utils import add
-from ...global_ import global_sys
+from ...global_ import global_data
 from ...lib.date import to_time, time_to_local_date, max_time, min_time, extend_range
 from ...lib.utils import timing, grouper
 from ...names import UNDEF
@@ -213,7 +213,7 @@ class Interval(Source):
     @classmethod
     def dirty_all(cls, s):
         log.warning('Dirtying all Intervals')
-        global_sys().record_dirty_intervals(interval.id for interval in s.query(Interval).all())
+        global_data().sys.record_dirty_intervals(interval.id for interval in s.query(Interval).all())
 
     @classmethod
     def record_dirty_times(cls, s, start, finish, owner=None):
@@ -226,19 +226,19 @@ class Interval(Source):
             q = q.filter(Interval.owner == owner)
         # do not mark in-place because we can get deadlock transactions.
         # instead, save in sys and update later
-        global_sys().record_dirty_intervals(row[0] for row in q.all())
+        global_data().sys.record_dirty_intervals(row[0] for row in q.all())
 
     @classmethod
     def clean(cls, s):
-        sys = global_sys()
-        dirty_intervals = sys.get_dirty_intervals()
+        data = global_data()
+        dirty_intervals = data.sys.get_dirty_intervals()
         if dirty_intervals:
             log.debug('Cleaning dirty intervals')
             dirty_ids = set(d.interval_id for d in dirty_intervals)
             log.warning(f'Up to {len(dirty_ids)} intervals to delete')
             s.query(Source).filter(Source.id.in_(dirty_ids)).delete(synchronize_session=False)
             s.commit()
-            sys.delete_dirty_intervals(dirty_intervals)
+            data.sys.delete_dirty_intervals(dirty_intervals)
             log.debug('Intervals clean')
 
 

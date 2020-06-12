@@ -42,7 +42,7 @@ WRITE_PATH = 'write-path'
 FLAGS = (ACTIVITIES, MONITOR, CALCULATE)
 
 
-def read(args, sys, db):
+def read(args, data):
     '''
 ## read
 
@@ -77,13 +77,13 @@ will read files (ie copy them to the permanent store), but do no other processin
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
     if args[WORKER]:
-        run_pipeline(sys, db, args[BASE], None, paths=args[PATH], force=args[FORCE], worker=bool(args[WORKER]),
+        run_pipeline(data, None, paths=args[PATH], force=args[FORCE], worker=bool(args[WORKER]),
                      id=args[WORKER], **parse_pairs(args[KARG]))
     else:
         record = Record(log)
         flags = infer_flags(args, *FLAGS)
         nfiles, files = open_files(args[PATH])
-        upload_files_and_update(record, sys, db, args[BASE], files=files, nfiles=nfiles, force=args[FORCE],
+        upload_files_and_update(record, data, files=files, nfiles=nfiles, force=args[FORCE],
                                 items=args[KIT], flags=flags, **parse_pairs(args[KARG]))
 
 
@@ -135,8 +135,8 @@ def check_path(file):
     gpath, _ = split_fit_path(path)
     match = glob(gpath)
     if match:
-        touch(match)  # trigger re-processing
-        raise SkipFile(f'A file already exists for {name} at {match}')
+        touch(match[0])  # trigger re-processing
+        raise SkipFile(f'A file already exists for {name} at {match[0]}')
     log.debug(f'File {name} cleared for path {path}')
 
 
@@ -202,14 +202,14 @@ def write_file(file):
         raise Exception(f'Could not save {file[NAME]}')
 
 
-def upload_files(record, db, base, files=tuple(), nfiles=1, items=tuple(), progress=None):
+def upload_files(record, data, files=tuple(), nfiles=1, items=tuple(), progress=None):
     try:
         local_progress = ProgressTree(len(files), parent=progress)
     except TypeError:
         local_progress = ProgressTree(nfiles, parent=progress)
     with record.record_exceptions():
-        with db.session_context() as s:
-            data_dir = base_system_path(base, version=PERMANENT)
+        with data.db.session_context() as s:
+            data_dir = base_system_path(data.base, version=PERMANENT)
             check_items(s, items)
             for file in files:
                 with local_progress.increment_or_complete():
@@ -226,36 +226,36 @@ def upload_files(record, db, base, files=tuple(), nfiles=1, items=tuple(), progr
             local_progress.complete()  # catch no files case
 
 
-def upload_files_and_update(record, sys, db, base, files=tuple(), nfiles=1, force=False, items=tuple(),
+def upload_files_and_update(record, data, files=tuple(), nfiles=1, force=False, items=tuple(),
                             flags=None, **kargs):
     # this expects files to be a list of maps from name to stream (or an iterator, if nfiles provided)
     if not flags:
         flags = defaultdict(lambda: True)
-    with db.session_context() as s:
+    with data.db.session_context() as s:
         n = ActivityJournal.number_of_activities(s)
         weight = 1 if force else max(1, int(sqrt(n)))
         log.debug(f'Weight statistics as {weight} ({n} entries)')
     n_options = sum(1 if flags[name] else 0 for name in FLAGS)
     if flags[MONITOR]: n_options += 2
-    progress = SystemProgressTree(sys, READ, [1] * n_options + [weight])
+    progress = SystemProgressTree(data.sys, READ, [1] * n_options + [weight])
     log.info(f'Uploading files')
-    upload_files(record, db, base, files=files, nfiles=nfiles, items=items, progress=progress)
+    upload_files(record, data, files=files, nfiles=nfiles, items=items, progress=progress)
     # todo - add record to pipelines?
     if flags[ACTIVITIES]:
         log.info('Running activity pipelines')
-        run_pipeline(sys, db, base, PipelineType.READ_ACTIVITY, force=force, progress=progress, **kargs)
+        run_pipeline(data, PipelineType.READ_ACTIVITY, force=force, progress=progress, **kargs)
     if flags[MONITOR]:
         # run before and after so we know what exists before we update, and import what we read
         log.info('Running monitor pipelines')
-        run_pipeline(sys, db, base, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
-        with db.session_context() as s:
+        run_pipeline(data, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
+        with data.db.session_context() as s:
             try:
                 log.info('Running Garmin download')
-                run_garmin(sys, s, base=base, progress=progress)
+                run_garmin(data.sys, s, base=data.base, progress=progress)
             except Exception as e:
                 log.warning(f'Could not get data from Garmin: {e}')
         log.info('Running monitor pipelines (again)')
-        run_pipeline(sys, db, base, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
+        run_pipeline(data, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
     if flags[CALCULATE]:
         log.info('Running statistics pipelines')
-        run_statistic_pipelines(sys, db, base, force=force, progress=progress, **kargs)
+        run_statistic_pipelines(data, force=force, progress=progress, **kargs)

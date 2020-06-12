@@ -7,7 +7,7 @@ from sqlalchemy.sql.functions import coalesce
 
 from .utils import MultiProcCalculator, IntervalCalculatorMixin
 from ...data.frame import _tables
-from ...global_ import global_sys
+from ...global_ import global_data
 from ...names import Summaries as S
 from ...lib.date import local_date_to_time
 from ...sql.tables.source import Interval, Source

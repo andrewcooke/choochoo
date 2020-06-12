@@ -106,3 +106,30 @@ class System(MappedDatabase):
             for ids in grouper(dirty_ids, 900):  # avoid limit in sqlite older versions
                 s.query(DirtyInterval).filter(DirtyInterval.id.in_(ids)).delete(synchronize_session=False)
 
+
+class Data:
+
+    def __init__(self, base):
+        self.__base = base
+        self.__sys = None
+        self.__db = None
+
+    @property
+    def base(self):
+        return self.__base
+
+    @property
+    def sys(self):
+        if not self.__sys:
+            self.__sys = System(self.__base)
+        return self.__sys
+
+    @property
+    def db(self):
+        if not self.__db:
+            self.__db = self.sys.get_database()
+        return self.__db
+
+    def reset(self):
+        self.__sys = None
+        self.__db = None

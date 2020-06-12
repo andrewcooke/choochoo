@@ -6,7 +6,7 @@ from sqlalchemy.sql.functions import count
 
 from .utils import AbortImportButMarkScanned, MultiProcFitReader
 from ... import FatalException
-from ...commands.args import mm, FORCE, DEFAULT, KIT, no, FILENAME_KIT, READ
+from ...commands.args import mm, FORCE, DEFAULT, no, FILENAME_KIT, READ
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
@@ -177,7 +177,7 @@ class ActivityReader(MultiProcFitReader):
     def _load_define(self, s, define, ajournal):
         for name, value in define.items():
             log.debug(f'Setting {name} = {value}')
-            if name == KIT:
+            if name == ActivityReader.KIT:
                 description = 'Kit used in activity.'
             else:
                 description = 'Attribute defined on reading activity.'

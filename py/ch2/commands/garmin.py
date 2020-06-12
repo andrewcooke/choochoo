@@ -19,7 +19,7 @@ GARMIN_USER = 'garmin_user'
 GARMIN_PASSWORD = 'garmin_password'
 
 
-def garmin(args, sys, db):
+def garmin(args, data):
     '''
 ## garmin
 
@@ -37,8 +37,8 @@ https://www.garmin.com/en-US/account/datamanagement/
     '''
     dates = [args[DATE]] if args[DATE] else []
     dir = clean_path(DIR) if args[DIR] else None
-    with db.session_context() as s:
-        run_garmin(sys, s, dir=dir, base=args[BASE],
+    with data.db.session_context() as s:
+        run_garmin(data.sys, s, dir=dir, base=args[BASE],
                    user=args[USER], password=args[PASS], dates=dates, force=args[FORCE])
 
 

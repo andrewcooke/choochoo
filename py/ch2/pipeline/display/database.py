@@ -5,7 +5,7 @@ from sqlalchemy.sql.functions import count
 
 from .utils import Displayer
 from ...diary.model import value, optional_text, text
-from ...global_ import global_sys
+from ...global_ import global_data
 from ...sql import Interval
 
 log = getLogger(__name__)
@@ -15,7 +15,7 @@ class DatabaseDisplayer(Displayer):
 
     @optional_text('Database')
     def _read_date(self, s, date):
-        ids = set(d.interval_id for d in global_sys().get_dirty_intervals())
+        ids = set(d.interval_id for d in global_data().sys.get_dirty_intervals())
         total = s.query(count(Interval.id)).filter(Interval.id.in_(ids)).count()
         today = s.query(count(Interval.id)). \
             filter(Interval.id.in_(ids),

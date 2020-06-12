@@ -7,7 +7,7 @@ from ..jupyter.utils import templates, get_template
 log = getLogger(__name__)
 
 
-def jupyter(args, system, db):
+def jupyter(args, data):
     '''
 ## jupyter
 
@@ -31,7 +31,7 @@ Stop the background server.
     if cmd == LIST:
         list()
     else:
-        c = JupyterController(args, system)
+        c = JupyterController(data)
         if cmd == STATUS:
             c.status()
         elif cmd == SHOW:

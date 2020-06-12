@@ -37,8 +37,8 @@ class JupyterServer(NotebookApp):
 
 class JupyterController(BaseController):
 
-    def __init__(self, args, sys, max_retries=5, retry_secs=3):
-        super().__init__(args, sys, JupyterServer, max_retries=max_retries, retry_secs=retry_secs)
+    def __init__(self, data, max_retries=5, retry_secs=3):
+        super().__init__(data, JupyterServer, max_retries=max_retries, retry_secs=retry_secs)
 
     def _status(self, running):
         if running:
@@ -47,18 +47,18 @@ class JupyterController(BaseController):
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'jupyter-service.log'
-        cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._base} {JUPYTER} {SERVICE}'
+        cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._data.base} {JUPYTER} {SERVICE}'
         return cmd, log_name
 
     def _cleanup(self):
-        self._sys.delete_constant(SystemConstant.JUPYTER_URL)
+        self._data.sys.delete_constant(SystemConstant.JUPYTER_URL)
 
     def connection_url(self):
         self.start()
-        return self._sys.get_constant(SystemConstant.JUPYTER_URL)
+        return self._data.sys.get_constant(SystemConstant.JUPYTER_URL)
 
     def base_dir(self):
-        return self._base
+        return self._data.base
 
     def _run(self):
 
@@ -67,7 +67,7 @@ class JupyterController(BaseController):
         def start():
             log.info('Starting Jupyter server in separate thread')
             asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
-            notebook_dir = base_system_path(self._base, subdir=NOTEBOOKS)
+            notebook_dir = base_system_path(self._data.base, subdir=NOTEBOOKS)
             JupyterServer.launch_instance(['--notebook-dir', notebook_dir], started=started)
 
         t = Thread(target=start)
@@ -80,7 +80,7 @@ class JupyterController(BaseController):
             log.debug('Waiting for connection URL')
             sleep(1)
 
-        self._sys.set_constant(SystemConstant.JUPYTER_URL, JupyterServer._instance.connection_url, force=True)
+        self._data.sys.set_constant(SystemConstant.JUPYTER_URL, JupyterServer._instance.connection_url, force=True)
 
         log.info('Jupyter server started')
         while True:

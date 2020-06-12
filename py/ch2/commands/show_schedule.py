@@ -14,7 +14,7 @@ log = getLogger(__name__)
 INDENT = '   '
 
 
-def show_schedule(args, system, db):
+def show_schedule(args, data):
     '''
 ## show-schedule
 

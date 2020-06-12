@@ -3,7 +3,7 @@ from logging import getLogger
 log = getLogger(__name__)
 
 __GLOBAL_DEV = False
-__GLOBAL_SYS = None
+__GLOBAL_DATA = None
 
 
 def set_global_dev(dev):
@@ -17,12 +17,11 @@ def global_dev():
     return __GLOBAL_DEV
 
 
-def set_global_sys(sys):
-    global __GLOBAL_SYS
-    __GLOBAL_SYS = sys
+def set_global_data(data):
+    global __GLOBAL_DATA
+    __GLOBAL_DATA = data
 
 
-def global_sys():
-    global __GLOBAL_SYS
-    return __GLOBAL_SYS
-
+def global_data():
+    global __GLOBAL_DATA
+    return __GLOBAL_DATA
