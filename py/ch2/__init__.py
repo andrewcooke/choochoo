@@ -115,9 +115,9 @@ def main():
         elif command_name not in (DATABASE, PACKAGE_FIT_PROFILE, HELP):
             db = sys.get_database() if command_name not in (PACKAGE_FIT_PROFILE, HELP) else None
             if not db:
-                refuse_until_configured(False)
+                refuse_until_configured(command_name, False)
             elif db.no_data():
-                refuse_until_configured(True)
+                refuse_until_configured(command_name, True)
         command(args, sys, db)
     except KeyboardInterrupt:
         log.critical('User abort')
@@ -131,11 +131,13 @@ def main():
         exit(2)
 
 
-def refuse_until_configured(exists):
-        Markdown().print(f'''
+def refuse_until_configured(command_name, uri):
+    Markdown().print(f'''
 Welcome to Choochoo.
 
-You must configure the database before use.
+You must configure the database before use (no {"schema" if uri else "uri"}).
 
 Please use the {PROGNAME} {DATABASE} command.
 ''')
+    if command_name != WEB:
+        exit(3)

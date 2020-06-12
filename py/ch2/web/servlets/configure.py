@@ -1,7 +1,7 @@
 from json import loads, dumps
 from logging import getLogger
 
-from ...commands.args import base_system_path
+from ...commands.args import base_system_path, SERVICE, WEB, mm, SQLITE, POSTGRESQL, URI
 from ...commands.database import load, delete
 from ...commands.help import HTML, filter, parse, P, LI, PRE
 from ...commands.import_ import import_source
@@ -43,10 +43,11 @@ VERSIONS = 'versions'
 
 class Configure:
 
-    def __init__(self, sys, db, base):
+    def __init__(self, sys, db, base, uri):
         self.__sys = sys
         self.__db = db
         self.__base = base
+        self.__uri = uri
         self.__html = HTML(delta=1, parser=filter(parse, yes=(P, LI, PRE)))
 
     def is_configured(self):
@@ -66,7 +67,10 @@ class Configure:
 
     def write_profile(self, request, s):
         data = request.json
-        load(self.__sys, s, self.__base, False, data[PROFILE])
+        if not self.__uri:
+            raise Exception(f'Bootstrap via web requires '
+                            f'`{WEB} {SERVICE} ({mm(SQLITE)} | {mm(POSTGRESQL)} | {mm(URI)})`')
+        load(self.__sys, self.__base, data[PROFILE], self.__uri)
 
     def delete(self, request, s):
         delete(self.__sys, base_system_path(self.__base), True)

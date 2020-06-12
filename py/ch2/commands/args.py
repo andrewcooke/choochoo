@@ -263,7 +263,6 @@ def make_parser(with_noop=False):
 
     parser = ArgumentParser(prog=PROGNAME)
 
-    # type here is important - it expands to unique representation (hashed for PG URI)
     parser.add_argument(mm(BASE), default='~/.ch2', type=clean_path, metavar='DIR',
                         help='the base directory for data (default ~/.ch2)')
     parser.add_argument(mm(READ_ONLY), action='store_true',
@@ -287,6 +286,14 @@ def make_parser(with_noop=False):
     help.add_argument(TOPIC, nargs='?', metavar=TOPIC,
                       help='the subject for help')
 
+    def add_uri_options(parser, required):
+        database_uri = parser.add_mutually_exclusive_group(required=required)
+        database_uri.add_argument(mm(SQLITE), dest=URI, action='store_const', const=SQLITE,
+                                  help='use an sqlite database with standard parameters')
+        database_uri.add_argument(mm(POSTGRESQL), dest=URI, action='store_const', const=POSTGRESQL,
+                                  help='use a postgresql database with standard parameters')
+        database_uri.add_argument(mm(URI), help='use the given database URI')
+
     web = subparsers.add_parser(WEB, help='the web interface (probably all you need)')
     web_cmds = web.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
 
@@ -297,7 +304,9 @@ def make_parser(with_noop=False):
     add_web_server_args(web_cmds.add_parser(START, help='start the web server'))
     web_cmds.add_parser(STOP, help='stop the web server')
     web_cmds.add_parser(STATUS, help='display status of web server')
-    add_web_server_args(web_cmds.add_parser(SERVICE, help='internal use only - use start/stop'))
+    web_service = web_cmds.add_parser(SERVICE, help='internal use only - use start/stop')
+    add_web_server_args(web_service)
+    add_uri_options(web_service, False)
 
     read = subparsers.add_parser(READ, help='read data (also calls calculate)')
     read.add_argument(mm(FORCE), action='store_true', help='reprocess existing data')
@@ -327,8 +336,6 @@ def make_parser(with_noop=False):
     add_search_query(search_activities)
     search_sources = search_cmds.add_parser(SOURCES, help='search for sources')
     add_search_query(search_sources)
-
-    # low-level commands used often
 
     constants = subparsers.add_parser(CONSTANTS, help='set and examine constants')
     constants_cmds = constants.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
@@ -409,20 +416,13 @@ def make_parser(with_noop=False):
     kit_dump = kit_cmds.add_parser(DUMP, help='dump to script')
     kit_dump.add_argument(mm(CMD), help='command to use instead of ch2')
 
-    # low-level commands use rarely
-
     database = subparsers.add_parser(DATABASE, help='configure the database')
     database_cmds = database.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
     database_show = database_cmds.add_parser(SHOW, help='show current configuration')
     database_list = database_cmds.add_parser(LIST, help='list available profiles')
     database_load = database_cmds.add_parser(LOAD, help='configure using the given profile')
     database_load.add_argument(mm(FORCE), action='store_true', help='overwrite existing database')
-    database_engines = database_load.add_mutually_exclusive_group(required=True)
-    database_engines.add_argument(mm(SQLITE), dest=URI, action='store_const', const=SQLITE,
-                                  help='use an sqlite database with standard parameters')
-    database_engines.add_argument(mm(POSTGRESQL), dest=URI, action='store_const', const=POSTGRESQL,
-                                  help='use a postgresql database with standard parameters')
-    database_engines.add_argument(mm(URI), help='use the given database URI')
+    add_uri_options(database_load, True)
     database_profiles = database_load.add_subparsers(title='profile', dest=PROFILE, required=True)
     from ..config.utils import profiles
     for name in profiles():

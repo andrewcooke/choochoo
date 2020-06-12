@@ -6,7 +6,10 @@ source py/env/bin/activate
 rm -fr app
 mkdir app
 
-dev/package-bundle.sh
+# give an argument to avoid js build
+if [ $# -eq 0 ]; then
+    dev/package-bundle.sh
+fi
 
 pushd py
 rsync --exclude tests \
@@ -20,6 +23,7 @@ popd
 
 cat > dockerfile <<EOF
 from python:3.8.3-slim-buster
+#from python:3.8.3-buster
 copy app /app
 workdir /app
 run apt-get update
@@ -30,9 +34,11 @@ run pip install --upgrade pip && \
     pip install wheel && \
     pip install --no-cache-dir .
 expose 8000
-cmd ch2 --base /data web service
+cmd ch2 --dev --base /data web service \
+    --uri postgresql://postgres@pg/activity-0-34 \
+    --bind ch2
 EOF
-docker build --network=host --tag python -f dockerfile .
+docker build --network=host --tag ch2 -f dockerfile .
 
 rm -fr app
 rm dockerfile

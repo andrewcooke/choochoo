@@ -132,7 +132,7 @@ def create(uri):
     create_database(uri)
 
 
-def load(sys, base, profile, scheme_or_uri, force):
+def load(sys, base, profile, scheme_or_uri, force=False):
     uri = make_uri(base, scheme_or_uri)
     delete_and_check(uri, force, sys)
     create(uri)

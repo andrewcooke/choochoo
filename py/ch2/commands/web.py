@@ -2,7 +2,7 @@
 import webbrowser
 from logging import getLogger
 
-from .args import SUB_COMMAND, SERVICE, STOP, START, STATUS
+from .args import SUB_COMMAND, SERVICE, STOP, START, STATUS, URI
 from ..web.server import WebController
 
 
@@ -28,7 +28,7 @@ Stop the server.
     cmd = args[SUB_COMMAND]
     controller = WebController(args, system, db)
     if cmd == SERVICE:
-        controller.service()
+        controller.service()  # uri only used for initial config
     elif cmd == STATUS:
         controller.status()
     elif cmd == START:

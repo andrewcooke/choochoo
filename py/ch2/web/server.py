@@ -16,7 +16,7 @@ from .servlets.kit import Kit
 from .servlets.search import Search
 from .servlets.upload import Upload
 from .static import Static
-from ..commands.args import mm, BASE, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, READ
+from ..commands.args import mm, BASE, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, READ, URI
 from ..jupyter.server import JupyterController
 from ..lib.log import log_current_exception
 from ..lib.server import BaseController
@@ -54,6 +54,7 @@ class WebController(BaseController):
         self.__dev = args[DEV]
         self.__sys = sys
         self.__db = db
+        self.__uri = args[URI]
         self.__jupyter = JupyterController(args, sys)
 
     def _build_cmd_and_log(self, ch2):
@@ -64,7 +65,8 @@ class WebController(BaseController):
 
     def _run(self):
         self._sys.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self.__bind, self.__port), force=True)
-        run_simple(self.__bind, self.__port, WebServer(self.__sys, self.__db, self.__jupyter, self.__base),
+        run_simple(self.__bind, self.__port,
+                   WebServer(self.__sys, self.__db, self.__jupyter, self.__base, self.__uri),
                    use_debugger=self.__dev, use_reloader=self.__dev)
 
     def _cleanup(self):
@@ -87,12 +89,12 @@ def error(exception):
 
 class WebServer:
 
-    def __init__(self, sys, db, jcontrol, base):
+    def __init__(self, sys, db, jcontrol, base, uri):
         self.__sys = sys
         self.__db = db
 
         analysis = Analysis()
-        configure = Configure(sys, db, base)
+        configure = Configure(sys, db, base, uri)
         diary = Diary()
         jupyter = Jupyter(jcontrol)
         kit = Kit()
@@ -154,8 +156,11 @@ class WebServer:
         try:
             endpoint, values = adapter.match()
             values.pop('_', None)
-            with self.__db.session_context() as s:
-                return endpoint(request, s, **values)
+            if self.__db:
+                with self.__db.session_context() as s:
+                    return endpoint(request, s, **values)
+            else:
+                return endpoint(request, None, **values)
         except HTTPException as e:
             return e
 
