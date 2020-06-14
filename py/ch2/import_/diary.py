@@ -12,12 +12,15 @@ log = getLogger(__name__)
 
 def import_diary(record, old, new):
     if not diary_imported(record, new):
+        record.info('Importing diary entries')
         log.debug(f'Trying to copy diary topic data from {old} to {new}')
         with old.session_context() as old_s:
             diary_topic = old.meta.tables['diary_topic']
             for old_diary_topic in old_s.query(diary_topic).filter(diary_topic.c.parent_id == None).all():
                 log.info(f'Found old (root) diary_topic {old_diary_topic}')
                 copy_diary_topic_fields(record, old_s, old, old_diary_topic, new)
+    else:
+        record.warning('Diary entries already imported')
 
 
 def diary_imported(record, new):

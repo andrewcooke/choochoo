@@ -11,13 +11,15 @@ log = getLogger(__name__)
 
 def import_activity(record, old, new):
     if not activity_imported(record, new):
-        log.debug(f'Trying to copy activity topic data from {old} to {new}')
+        record.info('Importing activity entries')
         with old.session_context() as old_s:
             copy_activity_topic_fields(record, old_s, old, None, new)
             activity_topic = old.meta.tables['activity_topic']
             for old_activity_topic in old_s.query(activity_topic).filter(activity_topic.c.parent_id == None).all():
                 log.info(f'Found old (root) activity_topic {old_activity_topic}')
                 copy_activity_topic_fields(record, old_s, old, old_activity_topic, new)
+    else:
+        record.warning('Activity entries already imported')
 
 
 def activity_imported(record, new):

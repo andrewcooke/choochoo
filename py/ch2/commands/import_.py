@@ -9,11 +9,11 @@ from .args import SOURCE, ACTIVITY, DB_EXTN, base_system_path, SEGMENTS, CONSTAN
 from .read import DATA
 from ..lib.log import Record
 from ..lib.utils import clean_path
-from ..migrate.activity import import_activity
-from ..migrate.constant import import_constant
-from ..migrate.diary import import_diary
-from ..migrate.kit import import_kit
-from ..migrate.segment import import_segment
+from ..import_.activity import import_activity
+from ..import_.constant import import_constant
+from ..import_.diary import import_diary
+from ..import_.kit import import_kit
+from ..import_.segment import import_segment
 from ..sql.database import ReflectedDatabase, sqlite_uri, postgresql_uri, SystemConstant, scheme
 
 log = getLogger(__name__)

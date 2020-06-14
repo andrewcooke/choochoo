@@ -8,12 +8,12 @@ from ...commands.import_ import import_source
 from ...config.utils import profiles
 from ...lib import time_to_local_time, local_time_to_time
 from ...lib.log import Record
-from ...migrate import available_versions
-from ...migrate.activity import activity_imported
-from ...migrate.constant import constant_imported
-from ...migrate.diary import diary_imported
-from ...migrate.kit import kit_imported
-from ...migrate.segment import segment_imported
+from ...import_ import available_versions
+from ...import_.activity import activity_imported
+from ...import_.constant import constant_imported
+from ...import_.diary import diary_imported
+from ...import_.kit import kit_imported
+from ...import_.segment import segment_imported
 from ...sql import SystemConstant, Constant, StatisticJournal
 
 log = getLogger(__name__)

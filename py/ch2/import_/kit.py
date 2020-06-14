@@ -3,7 +3,7 @@ from logging import getLogger
 
 from ..lib import format_date, time_to_local_date, to_time
 from ..lib.log import log_current_exception
-from ..names import Titles
+from ..names import Titles, simple_name
 from ..sql import KitGroup, KitComponent, KitItem, KitModel, StatisticJournalTimestamp, StatisticName, \
     StatisticJournalType
 from ..sql.utils import add
@@ -13,6 +13,7 @@ log = getLogger(__name__)
 
 def import_kit(record, old, new):
     if not kit_imported(record, new):
+        record.info('Importing kit entries')
         try:
             with old.session_context() as old_s:
                 with new.session_context() as new_s:
@@ -21,6 +22,8 @@ def import_kit(record, old, new):
         except Exception as e:
             log_current_exception()
             record.warning(f'Aborting kit import: {e}')
+    else:
+        record.warning('Kit entries already imported')
 
 
 def kit_imported(record, new):
@@ -63,7 +66,7 @@ def copy_statistics(record, old_s, old, old_source, new_s, new_source):
         old_timestamp = old_s.query(statistic_journal). \
             join(statistic_journal_timestamp). \
             join(statistic_name). \
-            filter(statistic_name.c.name.ilike(title),
+            filter(statistic_name.c.name.ilike(simple_name(title)),
                    statistic_journal.c.source_id == old_source.id).one_or_none()
         if old_timestamp:
             new_statistic_name = StatisticName.add_if_missing(new_s, title, StatisticJournalType.TIMESTAMP,

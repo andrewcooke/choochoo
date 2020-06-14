@@ -79,7 +79,7 @@ But remember that **this will also delete all your data**.
 
 Changing configuration but keeping data is difficult, but for examples
 of how to approach the problem see the migration scripts (used when
-the database schema changes) in `ch2.migrate`.
+the database schema changes) in `ch2.import_`.
 
 ## Configuring with Python
 

@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, ForeignKey, desc, or_
 from sqlalchemy.orm import relationship, aliased, backref
 from sqlalchemy.orm.exc import NoResultFound
 
-from .source import Source, SourceType, Composite, CompositeComponent, UngroupedSource
+from .source import SourceType, Composite, CompositeComponent, UngroupedSource
 from .statistic import StatisticJournal, StatisticName, StatisticJournalTimestamp
 from ..support import Base
 from ..types import Name
@@ -17,7 +17,6 @@ from ...lib import now, time_to_local_time
 from ...lib.date import YMD
 from ...lib.utils import inside_interval
 from ...names import Titles, Names, Units
-from .activity import ActivityGroup
 
 log = getLogger(__name__)
 
@@ -137,7 +136,7 @@ class StatisticsMixin:
                    StatisticJournal.source_id.in_(sourceq))
 
     def _get_statistic(self, s, statistic, *sources, owner=None):
-        return self._base_statistic_query(s, statistic, *sources, owner=owner).one_or_none()
+        return self._base_statistic_query(s, statistic, *sources, owner=owner).one()
 
     def _get_statistics(self, s, statistic, *sources, owner=None):
         return self._base_statistic_query(s, statistic, *sources, owner=owner).all()
@@ -165,7 +164,7 @@ class StatisticsMixin:
     def time_expired(self, s):
         try:
             return self._get_statistic(s, Names.KIT_RETIRED).time
-        except AttributeError:
+        except NoResultFound:
             return None
 
     def add_use(self, s, time, source=None, owner=None):

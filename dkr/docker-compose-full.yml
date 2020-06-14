@@ -1,0 +1,27 @@
+version: '3'
+services:
+  ch2:
+    image: 'ch2'
+    container_name: 'ch2'
+    ports:
+      - '127.0.0.1:8000:8000'
+    volumes:
+      - 'disk-data:/data'
+      - '/home/andrew/.ch2/0-33:/data/0-33'
+    depends_on:
+      - 'pg'
+  pg:
+    image: 'postgres:11.8-alpine'
+    container_name: 'pg'
+    shm_size: '1g'
+    ports:
+      - '127.0.0.1:5432:5432'
+    environment:
+      - 'POSTGRES_HOST_AUTH_METHOD=trust'
+    volumes:
+      - 'pg-data:/var/lib/postgresql/data'
+volumes:
+  disk-data:
+    external: true
+  pg-data:
+    external: true

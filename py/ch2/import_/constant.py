@@ -9,9 +9,12 @@ log = getLogger(__name__)
 
 def import_constant(record, old, new):
     if not constant_imported(record, new):
+        record.info('Importing constant entries')
         with old.session_context() as old_s:
             copy_constants(record, old_s, old, new)
             list_missing_constants(record, new)
+    else:
+        record.warning('Constant entries already imported')
 
 
 def constant_imported(record, new):

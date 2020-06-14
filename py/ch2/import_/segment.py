@@ -1,11 +1,15 @@
+from logging import getLogger
 
 from ..lib import log_current_exception
 from ..config.database import add
 from ..sql import Segment
 
+log = getLogger(__name__)
+
 
 def import_segment(record, old, new):
     if not segment_imported(record, new):
+        record.info('Importing segment entries')
         try:
             with old.session_context() as old_s:
                 with new.session_context() as new_s:
@@ -13,6 +17,8 @@ def import_segment(record, old, new):
         except Exception as e:
             log_current_exception()
             record.warning(f'Aborting segment import: {e}')
+    else:
+        record.warning('Segment entries already imported')
 
 
 def segment_imported(record, new):
