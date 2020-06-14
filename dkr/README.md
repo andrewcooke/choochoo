@@ -13,9 +13,11 @@ create-ch2-img.sh - create an image containing the ch2 code
 create-disk-vol.sh - create an named volume for the disk data.
 create-pg-vol.sh - create an named volume for the postgres database
 
-docker-compose.yml - configuration for running the entire system
-run-both.sh - run the entire system
-stop-both.sh - stop the entire system (can also use Ctrl-c)
+docker-compose-full.yml - config for system with volumes
+run-full.sh - run system with volumes
+
+docker-compose-local.yml - config for system with local files
+run-local.sh - run system with local files
 
 Note that when the syetem is stoppped the containers are still stored
 on disk (`docker container ls -a`).  They are not nedeed (all state is
