@@ -13,7 +13,7 @@ from uritools import urisplit
 from . import *
 from .support import Base
 from ..commands.args import NamespaceWithVariables, NO_OP, make_parser, DB_EXTN, base_system_path, DATA, ACTIVITY, BASE, \
-    DB_VERSION, POSTGRESQL
+    DB_VERSION, POSTGRESQL, SQLITE
 from ..lib.io import data_hash
 from ..lib.log import make_log_from_args
 
@@ -72,7 +72,7 @@ def scheme(uri):
 
 def sqlite_uri(base, read_only=False, name=ACTIVITY, version=DB_VERSION):
     path = base_system_path(base, subdir=DATA, file=name + DB_EXTN, version=version)
-    uri = f'sqlite:///{path}'
+    uri = f'{SQLITE}:///{path}'
     if read_only: uri += '?mode=ro'
     return uri
 
@@ -80,9 +80,10 @@ def sqlite_uri(base, read_only=False, name=ACTIVITY, version=DB_VERSION):
 def postgresql_uri(read_only=False, version=DB_VERSION):
     '''
     We no longer use base here.  It was a confused mess.  You can still have a database that depends on base
-    because the system database still switches, so you can explcitily configure a different database uri.
+    because the system database still switches, so you can explicitly configure a different database uri.
 
     We use the default postgres schema because they cannot be managed within the URI.
+    See also https://docs.sqlalchemy.org/en/13/dialects/postgresql.html#remote-schema-table-introspection-and-postgresql-search-path
     '''
     if read_only: log.warning('Read-only not supported yet for Postgres')
     name = f'{ACTIVITY}-{version}'

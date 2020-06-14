@@ -70,7 +70,8 @@ def infer_uri(base, source, engine, sys):
         raise Exception(f'No database at {uri}')
 
 
-def import_source(data, record, source, engine, flags=None):
+def import_source(data, record, source, engine=None, flags=None):
+    # engine needed if source is not a URI
     with record.record_exceptions():
         uri = infer_uri(data.base, source, engine, data.sys)
         if flags is None: flags = defaultdict(lambda: True)

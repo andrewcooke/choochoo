@@ -54,7 +54,7 @@ def database_really_exists(uri):
     try:
         return database_exists(uri)
     except Exception:
-        log_current_exception()
+        log_current_exception(traceback=False)
         return False
 
 
@@ -80,23 +80,25 @@ def list():
             print(f' ## {name} - lacks docstring\n')
 
 
-def delete(uri, sys):
-    if database_exists(uri):
-        log.debug(f'Deleting database at {uri}')
-        uri_parts = urisplit(uri)
-        if uri_parts.scheme == SQLITE:
-            path = clean_path(uri_parts.path)
-            log.warning(f'Deleting {path}')
-            unlink(path)
-        elif uri_parts.scheme == POSTGRESQL:
-            drop_database(uri)
+def delete_current(sys):
+    try:
+        uri = sys.get_constant(SystemConstant.DB_URI)
+        if database_exists(uri):
+            log.debug(f'Deleting database at {uri}')
+            uri_parts = urisplit(uri)
+            if uri_parts.scheme == SQLITE:
+                path = clean_path(uri_parts.path)
+                log.warning(f'Deleting {path}')
+                unlink(path)
+            elif uri_parts.scheme == POSTGRESQL:
+                drop_database(uri)
+            else:
+                raise Exception(f'Unsupported URI {uri}')
         else:
-            raise Exception(f'Unsupported URI {uri}')
-    else:
-        log.debug(f'No database at {uri} (so not deleting)')
-    if uri == sys.get_constant(SystemConstant.DB_URI, none=True):
-        log.debug(f'Removing {uri} as current {SystemConstant.DB_URI}')
+            log.debug(f'No database at {uri} (so not deleting)')
+    finally:
         sys.delete_constant(SystemConstant.DB_URI)
+        sys.delete_constant(SystemConstant.DB_VERSION)
 
 
 def delete_and_check(uri, force, sys):

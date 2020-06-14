@@ -195,7 +195,7 @@ your FF-model parameters (fitness and fatigue).
         add_constant(s, SRTM1_DIR_CNAME,
                      base_system_path(self._base, version=PERMANENT, subdir='srtm1', create=False),
                      description='''
-Directory containing STRM1 hgt files for elevations.
+Directory containing SRTM1 hgt files for elevations.
 
 These data are used to give improved values when using GPS elevation.
 You must create the directory and populate it with suitable files from http://dwtkns.com/srtm30m.

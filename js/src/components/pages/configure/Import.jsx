@@ -32,9 +32,11 @@ function Source(props) {
     return (<ColumnCard header='Source'>
         <Grid item xs={12}><Text>
             <p>Enter below the source for data to import.</p>
-            <p>This can be a version number
-                (if sharing the same directory structure as the current install)
-                or a database file.</p>
+            <p>
+                This can be a version number, a file path (for an SQLite database), or a database URI.
+                If you are using a docker image remember that the previous database must be visible
+                from the current container.
+            </p>
         </Text></Grid>
         <Grid item xs={9}>
             <Autocomplete options={versions} label='Source' freeSolo value={version}

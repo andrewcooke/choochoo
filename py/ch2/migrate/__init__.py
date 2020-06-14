@@ -1,14 +1,13 @@
 from collections import namedtuple
-from glob import glob
 from logging import getLogger
-from os.path import dirname, basename, join
 
 from sqlalchemy.orm.exc import NoResultFound
 
 from ..commands.args import DB_VERSION
+from ..commands.database import database_really_exists
 from ..lib import format_date, time_to_local_date, to_time
-from ..lib.utils import clean_path
 from ..sql import StatisticJournal, StatisticName, StatisticJournalType
+from ..sql.database import sqlite_uri, postgresql_uri
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ..sql.types import short_cls
 from ..sql.utils import add
@@ -42,7 +41,7 @@ def match_statistic_name(record, old_statistic_name, new_s, owner):
     except NoResultFound:
         record.raise_(f'No new equivalent to statistic {old_statistic_name.name} '
                       f'({StatisticJournalType(old_statistic_name.statistic_journal_type).name}) '
-                      f'for {short_cls(owner)} / {activity_group}')
+                      f'for {short_cls(owner)}')
 
 
 def copy_statistic_journal(record, old_s, old, old_statistic_name, old_statistic_journal,
@@ -84,23 +83,43 @@ def any_attr(instance, *names):
     raise AttributeError(f'No {names} in {instance} ({type(instance)})')
 
 
-def available_versions(base):
-    versions = []
-    base = clean_path(base)
-    if base.endswith(DB_VERSION): base = dirname(base)
-    log.debug(f'Looking for previous versions under {base}')
-    append(versions, (basename(candidate) for candidate in glob(join(base, '[0-9]-[0-9]*'))
-                      if basename(candidate) != DB_VERSION))
-    append(versions, glob(join(base, '**/database-[0-9]*-[0-9]*.sql'), recursive=True))
-    append(versions, glob(join(base, '**/database-[0-9]*-[0-9]*.db'), recursive=True))
-    return versions
-
-
-def append(versions, glob):
-    for version in sorted(glob, reverse=True):
-        log.debug(version)
-        versions.append(version)
-
-
 def clone_with(result, **kargs):
     return namedtuple('clone', result._fields, defaults=result)(**kargs)
+
+
+def available_versions(data, max_depth=3):
+    return [version[1] for version in sorted(find_versions(data, max_depth=max_depth))]
+
+
+def find_versions(data, max_depth=3):
+    current_version = [int(version) for version in DB_VERSION.split('-')]
+    yield from find_sqlite_from_base_and_version(data.base, current_version, max_depth=max_depth)
+    yield from find_postgresql_from_version(current_version, max_depth=max_depth)
+
+
+def count_down_version(current_version, restart_minor=0, max_depth=3):
+    major, minor = current_version
+    minor -= 1  # skip current
+    while major >= 0:
+        while minor >= 0 and max_depth > 0:
+            yield major, minor
+            minor -= 1
+            max_depth -= 1
+        minor = restart_minor
+        major -= 1
+
+
+def find_sqlite_from_base_and_version(base, current_version, max_depth=3):
+    for major, minor in count_down_version(current_version, max_depth=max_depth):
+        version = f'{major}-{minor}'
+        uri = sqlite_uri(base, version=version)
+        if database_really_exists(uri):
+            yield version, uri
+
+
+def find_postgresql_from_version(current_version, max_depth=3):
+    for major, minor in count_down_version(current_version, max_depth=max_depth):
+        version = f'{major}-{minor}'
+        uri = postgresql_uri(version=version)
+        if database_really_exists(uri):
+            yield version, uri

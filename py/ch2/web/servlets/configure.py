@@ -1,14 +1,13 @@
 from json import loads, dumps
 from logging import getLogger
 
-from ...commands.args import base_system_path, SERVICE, WEB, mm, SQLITE, POSTGRESQL, URI
-from ...commands.database import load, delete
+from ...commands.args import SERVICE, WEB, mm, SQLITE, POSTGRESQL, URI
+from ...commands.database import load, delete_current
 from ...commands.help import HTML, filter, parse, P, LI, PRE
 from ...commands.import_ import import_source
 from ...config.utils import profiles
 from ...lib import time_to_local_time, local_time_to_time
 from ...lib.log import Record
-from ...lib.utils import restart_self
 from ...migrate import available_versions
 from ...migrate.activity import activity_imported
 from ...migrate.constant import constant_imported
@@ -72,7 +71,7 @@ class Configure:
         self.__data.reset()
 
     def delete(self, request, s):
-        delete(self.__uri, self.__data.sys)
+        delete_current(self.__data.sys)
         self.__data.reset()
 
     def read_import(self, request, s):
@@ -82,12 +81,12 @@ class Configure:
                            KIT: kit_imported(record, self.__data.db),
                            CONSTANT: constant_imported(record, self.__data.db),
                            SEGMENT: segment_imported(record, self.__data.db)},
-                VERSIONS: available_versions(self.__data.base)}
+                VERSIONS: available_versions(self.__data)}
 
     def write_import(self, request, s):
         data = request.json
         record = Record(log)
-        import_source(self.__data, record, data[VERSION], 'postgresql')  # TODO - this should not be hardcoded
+        import_source(self.__data, record, data[VERSION])
         return record.json()
 
     def read_constants(self, request, s):

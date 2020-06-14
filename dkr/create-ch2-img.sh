@@ -21,24 +21,34 @@ rsync --exclude tests \
       -r . ../app
 popd
 
+source py/env/bin/activate
+pip freeze > requirements.txt
+
 cat > dockerfile <<EOF
+# syntax=docker/dockerfile:experimental
 from python:3.8.3-slim-buster
 #from python:3.8.3-buster
-copy app /app
-workdir /app
+workdir /tmp
 run apt-get update
 run apt-get -y install \
     sqlite3 libsqlite3-dev \
     libpq-dev gcc
-run pip install --upgrade pip && \
+copy requirements.txt /tmp
+run --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade pip && \
     pip install wheel && \
-    pip install --no-cache-dir .
+    pip install -r requirements.txt
+copy app /app
+workdir /app    
+run pip install .
 expose 8000
 cmd ch2 --dev --base /data web service \
     --uri postgresql://postgres@pg/activity-0-34 \
     --bind ch2
 EOF
-docker build --network=host --tag ch2 -f dockerfile .
+# https://stackoverflow.com/a/57282479
+DOCKER_BUILDKIT=1 docker build --network=host --tag ch2 -f dockerfile .
 
 rm -fr app
+rm requirements.txt
 rm dockerfile
