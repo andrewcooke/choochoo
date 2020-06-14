@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from itertools import zip_longest, groupby
 from logging import getLogger
 from os import getpid, close, execl
-from os.path import split, realpath, normpath, expanduser
+from os.path import split, normpath, expanduser
 from pprint import PrettyPrinter
 from sys import executable, argv
 from time import sleep
@@ -207,7 +207,8 @@ def restart_self():
 
 
 def clean_path(path):
-    return realpath(normpath(expanduser(path)))
+    # don't use realpath here since it messes up inside docker
+    return normpath(expanduser(path))
 
 
 def slow_warning(msg, n=3, pause=1):

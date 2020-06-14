@@ -88,7 +88,7 @@ def clone_with(result, **kargs):
 
 
 def available_versions(data, max_depth=3):
-    return [version[1] for version in sorted(find_versions(data, max_depth=max_depth))]
+    return [version[1] for version in sorted(find_versions(data, max_depth=max_depth), reverse=True)]
 
 
 def find_versions(data, max_depth=3):
