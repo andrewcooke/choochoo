@@ -140,6 +140,7 @@ class DataFrameCalculatorMixin(LoaderMixin):
         super().__init__(*args, **kargs)
 
     def _run_one(self, s, time_or_date):
+        log.debug(f'Calculating for {time_or_date}')
         source = self._get_source(s, time_or_date)
         with Timestamp(owner=self.owner_out, source=source).on_success(s):
             try:

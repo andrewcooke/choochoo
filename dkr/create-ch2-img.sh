@@ -32,7 +32,8 @@ workdir /tmp
 run apt-get update
 run apt-get -y install \
     sqlite3 libsqlite3-dev \
-    libpq-dev gcc
+    libpq-dev gcc \
+    emacs
 copy requirements.txt /tmp
 run --mount=type=cache,target=/root/.cache/pip \
     pip install --upgrade pip && \

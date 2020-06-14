@@ -41,7 +41,9 @@ class Time(TypeDecorator):
         if time is None:
             return time
         else:
-            converted = to_time(time).timestamp()
+            # only store 2dp (1/100 second).  trying to get something that matches on equality for float
+            # since we retrieve on equality and sqlite doesn't have decimal types
+            converted = int(100 * to_time(time).timestamp()) / 100
             # log.debug(f'Time (writing): converted {time} to {converted}')
             return converted
 
