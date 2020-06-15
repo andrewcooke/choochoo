@@ -6,7 +6,7 @@ from itertools import zip_longest
 from logging import getLogger
 from os import unlink, makedirs
 from os.path import join, exists, sep
-from re import compile, sub, DOTALL
+from re import compile, sub, DOTALL, escape
 
 import nbformat as nb
 import nbformat.v4 as nbv
@@ -272,7 +272,7 @@ def create_notebook(template, base, args, kargs):
     if all_args and kargs: all_args += ' '
     all_args += ' '.join(kargs[key] for key in sorted(kargs.keys()))
     all_args = sub(r'\s+', '-', all_args)
-    all_args = sub(sep, '-', all_args)
+    all_args = sub(escape(sep), '-', all_args)
 
     vars = dict(kargs)
     vars[BASE] = base
