@@ -7,8 +7,9 @@ from time import sleep
 
 from notebook.notebookapp import NotebookApp
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
+from uritools import urisplit, uriunsplit
 
-from ..commands.args import mm, NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, LOG, BASE, base_system_path, BIND, PORT
+from ..commands.args import mm, NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, LOG, BASE, base_system_path, BIND, PORT, PROXY
 from ..global_ import global_dev
 from ..lib.server import BaseController
 from ..sql import SystemConstant
@@ -41,6 +42,8 @@ class JupyterController(BaseController):
 
     def __init__(self, args, data, max_retries=5, retry_secs=3):
         super().__init__(JUPYTER, args, data, JupyterServer, max_retries=max_retries, retry_secs=retry_secs)
+        self._proxy_bind = args[PROXY + '-' + BIND] or self._bind
+        self._proxy_port = args[PROXY + '-' + PORT] or self._port
 
     def _status(self, running):
         if running:
@@ -51,6 +54,8 @@ class JupyterController(BaseController):
         log_name = 'jupyter-service.log'
         cmd = f'{ch2} {mm(VERBOSITY)} 5 {mm(LOG)} {log_name} {mm(BASE)} {self._data.base} ' \
               f'{JUPYTER} {SERVICE} {mm(JUPYTER + "-" + BIND)} {self._bind} {mm(JUPYTER + "-" + PORT)} {self._port}'
+        if self._proxy_bind: cmd += f' {mm(PROXY + "-" + BIND)} {self._proxy_bind}'
+        if self._proxy_port: cmd += f' {mm(PROXY + "-" + PORT)} {self._proxy_port}'
         return cmd, log_name
 
     def _cleanup(self):
@@ -90,8 +95,10 @@ class JupyterController(BaseController):
         while not hasattr(JupyterServer._instance, 'connection_url') or not JupyterServer._instance.connection_url:
             log.debug('Waiting for connection URL')
             sleep(1)
-
-        self._data.sys.set_constant(SystemConstant.JUPYTER_URL, JupyterServer._instance.connection_url, force=True)
+        old_url = JupyterServer._instance.connection_url
+        new_url = uriunsplit(urisplit(old_url)._replace(authority=f'{self._proxy_bind}:{self._proxy_port}'))
+        log.debug(f'Rewrote {old_url} -> {new_url}')
+        self._data.sys.set_constant(SystemConstant.JUPYTER_URL, new_url, force=True)
 
         log.info('Jupyter server started')
         while True:

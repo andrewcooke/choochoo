@@ -13,14 +13,8 @@ services:
     container_name: 'ch2'
     ports:
       - '127.0.0.1:8000:8000'
+      - '127.0.0.1:8001:8001'
     volumes:
       - '/home/andrew/.ch2:/data'
     depends_on:
       - 'pg'
-  ngx:
-    image: 'ngx'
-    container_name: 'ngx'
-    ports:
-      - '127.0.0.1:8001:8001'
-    depends_on:
-      - 'ch2'

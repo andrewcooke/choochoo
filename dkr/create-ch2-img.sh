@@ -47,7 +47,7 @@ run pip install .
 expose 8000
 cmd ch2 --dev --base /data web service \
     --uri postgresql://postgres@pg/activity-0-34 \
-    --web-bind ch2 --jupyter-bind ch2
+    --web-bind ch2 --jupyter-bind ch2 --proxy-bind 'localhost'
 EOF
 DOCKER_BUILDKIT=1 docker build --network=host --tag ch2 -f dockerfile .
 

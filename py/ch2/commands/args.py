@@ -161,6 +161,7 @@ PRINT = 'print'
 PROFILE = 'profile'
 PROFILE_VERSION = 'profile-version'
 PROTOCOL_VERSION = 'protocol-version'
+PROXY = 'proxy'
 PWD = 'pwd'
 QUERY = 'query'
 RAW = 'raw'
@@ -300,21 +301,23 @@ def make_parser(with_noop=False):
     web = subparsers.add_parser(WEB, help='the web interface (probably all you need)')
     web_cmds = web.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
 
-    def add_web_server_args(cmd, prefix='', default_port=WEB_PORT):
+    def add_web_server_args(cmd, prefix='', default_address='localhost', default_port=WEB_PORT):
         if prefix: prefix += '-'
         cmd.add_argument(mm(prefix + BIND), default='localhost', metavar='ADDRESS',
-                         help='bind address (default localhost)')
+                         help='bind address' + f' (default {default_address})' if default_address else '')
         cmd.add_argument(mm(prefix + PORT), default=default_port, type=int, metavar='PORT',
-                         help=f'port to use (default {default_port})')
+                         help=f'port' + f' (default {default_port})' if default_port else '')
 
     web_start = web_cmds.add_parser(START, help='start the web server')
     add_web_server_args(web_start, prefix=WEB)
     add_web_server_args(web_start, prefix=JUPYTER, default_port=JUPYTER_PORT)
+    add_web_server_args(web_start, prefix=PROXY, default_port=None, default_address=None)
     web_cmds.add_parser(STOP, help='stop the web server')
     web_cmds.add_parser(STATUS, help='display status of web server')
     web_service = web_cmds.add_parser(SERVICE, help='internal use only - use start/stop')
     add_web_server_args(web_service, prefix=WEB)
     add_web_server_args(web_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
+    add_web_server_args(web_service, prefix=PROXY, default_port=None, default_address=None)
     add_uri_options(web_service, False)
 
     read = subparsers.add_parser(READ, help='read data (also calls calculate)')
@@ -383,12 +386,15 @@ def make_parser(with_noop=False):
     jupyter_show.add_argument(NAME, help='the template name')
     jupyter_show.add_argument(ARG, nargs='*', help='template arguments')
     add_web_server_args(jupyter_show, prefix=JUPYTER, default_port=JUPYTER_PORT)
+    add_web_server_args(jupyter_show, prefix=PROXY, default_port=None, default_address=None)
     jupyter_start = jupyter_cmds.add_parser(START, help='start a background service')
     add_web_server_args(jupyter_start, prefix=JUPYTER, default_port=JUPYTER_PORT)
+    add_web_server_args(jupyter_start, prefix=PROXY, default_port=None, default_address=None)
     jupyter_cmds.add_parser(STOP, help='stop the background service')
     jupyter_cmds.add_parser(STATUS, help='display status of background service')
     jupyter_service = jupyter_cmds.add_parser(SERVICE, help='internal use only - use start/stop')
     add_web_server_args(jupyter_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
+    add_web_server_args(jupyter_service, prefix=PROXY, default_port=None, default_address=None)
 
     kit = subparsers.add_parser(KIT, help='manage kit')
     kit_cmds = kit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
