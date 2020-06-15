@@ -1,13 +1,15 @@
 
 import asyncio
 from logging import getLogger
+from os import geteuid
 from threading import Thread, Event
 from time import sleep
 
 from notebook.notebookapp import NotebookApp
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 
-from ..commands.args import mm, NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, LOG, BASE, base_system_path
+from ..commands.args import mm, NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, LOG, BASE, base_system_path, BIND, PORT
+from ..global_ import global_dev
 from ..lib.server import BaseController
 from ..sql import SystemConstant
 
@@ -37,8 +39,8 @@ class JupyterServer(NotebookApp):
 
 class JupyterController(BaseController):
 
-    def __init__(self, data, max_retries=5, retry_secs=3):
-        super().__init__(data, JupyterServer, max_retries=max_retries, retry_secs=retry_secs)
+    def __init__(self, args, data, max_retries=5, retry_secs=3):
+        super().__init__(JUPYTER, args, data, JupyterServer, max_retries=max_retries, retry_secs=retry_secs)
 
     def _status(self, running):
         if running:
@@ -47,7 +49,8 @@ class JupyterController(BaseController):
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'jupyter-service.log'
-        cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._data.base} {JUPYTER} {SERVICE}'
+        cmd = f'{ch2} {mm(VERBOSITY)} 5 {mm(LOG)} {log_name} {mm(BASE)} {self._data.base} ' \
+              f'{JUPYTER} {SERVICE} {mm(JUPYTER + "-" + BIND)} {self._bind} {mm(JUPYTER + "-" + PORT)} {self._port}'
         return cmd, log_name
 
     def _cleanup(self):
@@ -68,7 +71,15 @@ class JupyterController(BaseController):
             log.info('Starting Jupyter server in separate thread')
             asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
             notebook_dir = base_system_path(self._data.base, subdir=NOTEBOOKS)
-            JupyterServer.launch_instance(['--notebook-dir', notebook_dir], started=started)
+            options = ['--notebook-dir', notebook_dir]
+            if self._bind is not None: options += ['--ip', self._bind]
+            if self._port is not None: options += ['--port', str(self._port)]
+            if global_dev(): options += ['--debug', '--log-level=DEBUG']
+            if not geteuid(): options += ['--allow-root', '--no-browser']
+            # https://github.com/jupyter/notebook/issues/2254
+            options += ['--NotebookApp.token=""']
+            log.debug(f'Jupyter options: {options}')
+            JupyterServer.launch_instance(options, started=started)
 
         t = Thread(target=start)
         t.daemon = True

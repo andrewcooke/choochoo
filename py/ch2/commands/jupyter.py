@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from .args import SUB_COMMAND, SERVICE, START, STOP, SHOW, JUPYTER, LIST, PROGNAME, NAME, ARG, STATUS
+from .args import SUB_COMMAND, SERVICE, START, STOP, SHOW, JUPYTER, LIST, PROGNAME, NAME, ARG, STATUS, PORT, BIND
 from ..jupyter.server import set_controller, JupyterController
 from ..jupyter.utils import templates, get_template
 
@@ -31,7 +31,7 @@ Stop the background server.
     if cmd == LIST:
         list()
     else:
-        c = JupyterController(data)
+        c = JupyterController(args, data)
         if cmd == STATUS:
             c.status()
         elif cmd == SHOW:

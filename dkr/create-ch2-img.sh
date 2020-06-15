@@ -24,10 +24,12 @@ popd
 source py/env/bin/activate
 pip freeze > requirements.txt
 
+# 'experimental' and DOCKER_BUILDKIT below is related to the pip cache
+# https://stackoverflow.com/a/57282479
 cat > dockerfile <<EOF
 # syntax=docker/dockerfile:experimental
-from python:3.8.3-slim-buster
-#from python:3.8.3-buster
+#from python:3.8.3-slim-buster
+from python:3.8.3-buster
 workdir /tmp
 run apt-get update
 run apt-get -y install \
@@ -45,9 +47,8 @@ run pip install .
 expose 8000
 cmd ch2 --dev --base /data web service \
     --uri postgresql://postgres@pg/activity-0-34 \
-    --bind ch2
+    --web-bind ch2 --jupyter-bind ch2
 EOF
-# https://stackoverflow.com/a/57282479
 DOCKER_BUILDKIT=1 docker build --network=host --tag ch2 -f dockerfile .
 
 rm -fr app

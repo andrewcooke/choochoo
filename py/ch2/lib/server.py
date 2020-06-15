@@ -4,15 +4,18 @@ from logging import getLogger
 from time import sleep
 
 from .workers import command_root
-from ..commands.args import VERBOSITY, BASE
-
+from ..commands.args import VERBOSITY, BASE, BIND, PORT, DEV
 
 log = getLogger(__name__)
 
 
 class BaseController(ABC):
 
-    def __init__(self, data, server_cls, max_retries=5, retry_secs=3):
+    def __init__(self, prefix, args, data, server_cls, max_retries=5, retry_secs=3):
+        prefix += '-'
+        self._bind = args[prefix + BIND] if prefix + BIND in args else None
+        self._port = args[prefix + PORT] if prefix + PORT in args else None
+        self._dev = args[DEV]
         self._data = data
         self.__server_cls = server_cls
         self.__max_retries = max_retries

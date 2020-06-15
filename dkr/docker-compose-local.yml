@@ -1,5 +1,13 @@
 version: '3'
 services:
+  pg:
+    image: 'postgres:11.8-alpine'
+    container_name: 'pg'
+    shm_size: '1g'
+    environment:
+      - 'POSTGRES_HOST_AUTH_METHOD=trust'
+    volumes:
+      - '/home/andrew/.ch2/permanent/postgres:/var/lib/postgresql/data'
   ch2:
     image: 'ch2'
     container_name: 'ch2'
@@ -9,13 +17,10 @@ services:
       - '/home/andrew/.ch2:/data'
     depends_on:
       - 'pg'
-  pg:
-    image: 'postgres:11.8-alpine'
-    container_name: 'pg'
-    shm_size: '1g'
+  ngx:
+    image: 'ngx'
+    container_name: 'ngx'
     ports:
-      - '127.0.0.1:5432:5432'
-    environment:
-      - 'POSTGRES_HOST_AUTH_METHOD=trust'
-    volumes:
-      - '/home/andrew/.ch2/permanent/postgres:/var/lib/postgresql/data'
+      - '127.0.0.1:8001:8001'
+    depends_on:
+      - 'ch2'

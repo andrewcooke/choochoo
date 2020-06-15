@@ -16,7 +16,7 @@ from .servlets.kit import Kit
 from .servlets.search import Search
 from .servlets.upload import Upload
 from .static import Static
-from ..commands.args import mm, BASE, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, READ, URI
+from ..commands.args import mm, BASE, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, READ, URI, JUPYTER
 from ..jupyter.server import JupyterController
 from ..lib.log import log_current_exception
 from ..lib.server import BaseController
@@ -47,24 +47,22 @@ class JSONRequest(Request, JSONMixin):
 class WebController(BaseController):
 
     def __init__(self, args, data, max_retries=1, retry_secs=1):
-        super().__init__(data, WebServer, max_retries=max_retries, retry_secs=retry_secs)
-        self.__bind = args[BIND] if BIND in args else None
-        self.__port = args[PORT] if BIND in args else None
-        self.__dev = args[DEV]
+        super().__init__(WEB, args, data, WebServer, max_retries=max_retries, retry_secs=retry_secs)
         self.__uri = args[URI]
-        self.__jupyter = JupyterController(data)
+        self.__jupyter = JupyterController(args, data)
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'web-service.log'
         cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._data.base} ' \
-              f'{WEB} {SERVICE} {mm(BIND)} {self.__bind} {mm(PORT)} {self.__port}'
+              f'{WEB} {SERVICE} {mm(WEB + "-" + BIND)} {self._bind} {mm(WEB + "-" + PORT)} {self._port}' \
+              f'{mm(JUPYTER + "-" + BIND)} {self.__jupyter._bind} {mm(JUPYTER + "-" + PORT)} {self.__jupyter._port}'
         return cmd, log_name
 
     def _run(self):
-        self._data.sys.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self.__bind, self.__port), force=True)
-        run_simple(self.__bind, self.__port,
+        self._data.sys.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self._bind, self._port), force=True)
+        run_simple(self._bind, self._port,
                    WebServer(self._data, self.__jupyter, self.__uri),
-                   use_debugger=self.__dev, use_reloader=self.__dev)
+                   use_debugger=self._dev, use_reloader=self._dev)
 
     def _cleanup(self):
         self._data.sys.delete_constant(SystemConstant.WEB_URL)
