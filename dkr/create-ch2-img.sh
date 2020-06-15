@@ -1,14 +1,43 @@
 #!/bin/bash
 
-pushd ..
+CMD=$0
+FAST=0
+BASE=python:3.8.3-slim-buster
+
+help () {
+    echo -e "\n  Create the main image used to run Choochoo in Docker"
+    echo -e "\n  Usage:"
+    echo -e "\n    $CMD [--fast] [--big] [-h]"
+    echo -e "\n  --fast:  don't build JS library"
+    echo -e "  --big:   use larger base distro"
+    echo -e "  --h:     show this message\n"
+    exit 1
+}
+
+while [ $# -gt 0 ]; do
+    if [ $1 == "-h" ]; then
+	help
+    elif [ $1 == "--fast" ]; then
+	FAST=1
+    elif [ $1 == "--big" ]; then
+	BASE=python:3.8.3-slim-buster
+    else
+	echo -e "\n  do not understand $1\n"
+	help
+    fi
+    shift
+done
+
+pushd .. > /dev/null
 source py/env/bin/activate
 
 rm -fr app
 mkdir app
 
-# give an argument to avoid js build
-if [ $# -eq 0 ]; then
+if [ $FAST -eq 0 ]; then
     dev/package-bundle.sh
+else
+    echo -e "\nWARNING: skipping JS build\n"
 fi
 
 pushd py
@@ -28,8 +57,7 @@ pip freeze > requirements.txt
 # https://stackoverflow.com/a/57282479
 cat > dockerfile <<EOF
 # syntax=docker/dockerfile:experimental
-#from python:3.8.3-slim-buster
-from python:3.8.3-buster
+from $BASE
 workdir /tmp
 run apt-get update
 run apt-get -y install \

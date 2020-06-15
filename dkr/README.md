@@ -1,16 +1,17 @@
 
 This directory contans various scripts related to running ch2 in a
 Docker container.  More exactly, running the ch2 process in one
-container, a Postgres database in another, and storing the data on two
-separate named volumes (one for the Postgres database and another for
-the base directory where the system database, files and logs are
-stored).
+container, a Postgres database in another, and (optionally) storing
+the data on two separate named volumes (one for the Postgres database
+and another for the base directory where the system database, files
+and logs are stored).
 
 All scripts should be run from inside this directory.
 
 create-ch2-img.sh - create an image containing the ch2 code
 
 create-disk-vol.sh - create an named volume for the disk data.
+                     THIS WILL NEED MODIFYING FOR YOUR OWN FILES
 create-pg-vol.sh - create an named volume for the postgres database
 
 docker-compose-full.yml - config for system with volumes
@@ -29,3 +30,9 @@ run-pg.sh - run a postgres container
 run-ch2-bash.sh - open a bash session on a running ch2 container
 run-pg-bash.sh - open a bash session on a running postgres container
 run-psql.sh - open a psql session on a running postgres container
+
+auto-prune - if this file exists then unused containers are
+automatically deleted.  DANGER!!
+
+WARNING: This is intended only for local use.  All passwords are
+disabled.  Do not deploy remotely.

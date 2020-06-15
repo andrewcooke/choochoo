@@ -2,6 +2,6 @@
 
 rm docker-compose.yml
 ln -s docker-compose-full.yml docker-compose.yml
-docker container prune -f
+if [ -f auto-prune ]; then docker container prune -f; fi
 docker-compose up
 
