@@ -16,5 +16,5 @@ workdir /app
 run pip install .
 expose 8000 8001
 cmd ch2 --dev --base /data web service \
-    --uri postgresql://postgres@pg/activity-0-34 \
+    --sqlite \
     --web-bind ch2 --jupyter-bind ch2 --proxy-bind 'localhost'

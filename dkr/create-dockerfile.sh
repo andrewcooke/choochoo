@@ -9,13 +9,17 @@ CMD=$0
 BASE=python:3.8.3-slim-buster
 COMMENT="# use --cache with buildkit to enable pip cache"
 MOUNT=
+URI="--sqlite"
+FILE="Dockerfile"
 
 help () {
     echo -e "\n  Create the dev image used to run Choochoo in Docker"
     echo -e "\n  Usage:"
-    echo -e "\n    $CMD [--big] [--cache] [-h]"
-    echo -e "\n  --big:   use larger base distro"
+    echo -e "\n    $CMD [--big] [--cache] [-h] [FILE]"
+    echo -e "\n  FILE:    destination file name (default Dockerfile)"
+    echo -e "  --big:   use larger base distro"
     echo -e "  --cache: mount pip cache (buildkit)"
+    echo -e "  --pg:    assume a postgres database on host pg"
     echo -e "  --h:     show this message\n"
     exit 1
 }
@@ -28,6 +32,8 @@ while [ $# -gt 0 ]; do
     elif [ $1 == "--cache" ]; then
 	COMMENT="# syntax=docker/dockerfile:experimental"
 	MOUNT="--mount=type=cache,target=/root/.cache/pip"
+    elif [ $1 == "--pg" ]; then
+	URI="--uri postgresql://postgres@pg/activity-$VERSION"
     else
 	echo -e "\n  do not understand $1\n"
 	help
@@ -40,7 +46,7 @@ source py/env/bin/activate
 
 pip freeze > requirements.txt
 
-cat > Dockerfile <<EOF
+cat > $FILE <<EOF
 $COMMENT
 from $BASE
 workdir /tmp
@@ -59,8 +65,8 @@ workdir /app
 run pip install .
 expose 8000 8001
 cmd ch2 --dev --base /data web service \\
-    --uri postgresql://postgres@pg/activity-$VERSION \\
+    $URI \\
     --web-bind ch2 --jupyter-bind ch2 --proxy-bind 'localhost'
 EOF
 
-echo -e "\ncreated Dockerfile for $VERSION\n"
+echo -e "\ncreated $FILE for $VERSION ($URI)\n"
