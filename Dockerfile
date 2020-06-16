@@ -1,4 +1,4 @@
-# use --cache with buildkit to enable pip cache
+# syntax=docker/dockerfile:experimental
 from python:3.8.3-slim-buster
 workdir /tmp
 run apt-get update
@@ -7,7 +7,7 @@ run apt-get -y install \
     libpq-dev gcc \
     emacs
 copy requirements.txt /tmp
-run  \
+run --mount=type=cache,target=/root/.cache/pip \
     pip install --upgrade pip && \
     pip install wheel && \
     pip install -r requirements.txt
