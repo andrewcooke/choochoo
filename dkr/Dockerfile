@@ -8,16 +8,16 @@ run --mount=type=cache,target=/root/.cache/pip \
     pip install --upgrade pip && \
     pip install wheel && \
     pip install -r requirements.txt
-copy py/ch2 /app/py/ch2
-copy py/setup.py py/MANIFEST.in /app/py/
-copy js/package.json js/package-lock.json js/webpack.config.js /app/js/
+copy js/package.json js/package-lock.json js/webpack.config.js js/.babelrc      /app/js/
 workdir /app/js
 run npm install -g npm@next
 run npm install
 # do this after install so that we use a separate layer
-copy js/src /app/js/
-run npm build
+copy js/src /app/js/src
+run npm run build
 workdir /app/py
+copy py/ch2 /app/py/ch2
+copy py/setup.py py/MANIFEST.in /app/py/
 run pip install .
 workdir /app
 copy data/sdk/Profile.xlsx /app

@@ -34,7 +34,7 @@ while [ $# -gt 0 ]; do
     elif [ $1 == "--big" ]; then
 	BASE=python:3.8.3-slim-buster
     elif [ $1 == "--slow" ]; then
-	COMMENT="# pip cache disabled with --no-cache"
+	COMMENT="# pip cache disabled with --slow"
 	MOUNT=
     elif [ $1 == "--dev" ]; then
 	HAVE_JS=1
@@ -48,10 +48,9 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-pushd .. > /dev/null
-source py/env/bin/activate
+source ../py/env/bin/activate
 
-pip freeze > dkr/requirements.txt
+pip freeze > requirements.txt
 
 # basic image and support
 # (we need to install db libs whatever db we are using because of python deps)
@@ -70,38 +69,39 @@ run $MOUNT \\
     pip install --upgrade pip && \\
     pip install wheel && \\
     pip install -r requirements.txt
-copy py/ch2 /app/py/ch2
-copy py/setup.py py/MANIFEST.in /app/py/
 EOF
 
 if (( HAVE_JS )); then
     # if we're in a dev enrironment the js will have been built locally
-    if [ ! -f py/ch2/web/static/bundle.js.gz ]; then
+    if [ ! -f ../py/ch2/web/static/bundle.js.gz ]; then
 	echo -e "\nERROR: missing bundle.js.gz"
 	exit 2
     fi
 else
     # otherwise we need to do it all in the docker build :(
     cat >> $FILE <<EOF
-copy js/package.json js/package-lock.json js/webpack.config.js /app/js/
+copy js/package.json js/package-lock.json js/webpack.config.js js/.babelrc \
+     /app/js/
 workdir /app/js
 run npm install -g npm@next
 run npm install
 # do this after install so that we use a separate layer
-copy js/src /app/js/
-run npm build
+copy js/src /app/js/src
+run npm run build
 EOF
 fi
 
 # python install of ch2 package
 cat >> $FILE <<EOF
 workdir /app/py
+copy py/ch2 /app/py/ch2
+copy py/setup.py py/MANIFEST.in /app/py/
 run pip install .
 EOF
 
 if (( HAVE_JS )); then
     # if we're in a dev enrironment the profile will have been built locally
-    if [ ! -f py/ch2/fit/profile/global-profile.pkl ]; then
+    if [ ! -f ../py/ch2/fit/profile/global-profile.pkl ]; then
 	echo -e "\nERROR: missing global-profile.pkl"
 	exit 3
     fi
