@@ -7,6 +7,15 @@
 # this will tell the web server to connect to postgres - you must still
 # configure and start the database (eg using docker compose).
 
+if [ ! -f app/py/ch2/web/static/bundle.js.gz ]; then
+    echo -e "\ndelayed npm build\n"
+    pushd app/js
+    npm run build
+    popd
+else
+    echo "js already built"
+fi
+
 if [ -z ${CH2_DKR_POSTGRESQL+x} ]; then
     DB="--sqlite"
 else

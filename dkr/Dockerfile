@@ -14,7 +14,7 @@ run npm install -g npm@next
 run npm install
 # do this after install so that we use a separate layer
 copy js/src /app/js/src
-run npm run build
+# npm run build on startup
 workdir /app/py
 copy py/ch2 /app/py/ch2
 copy py/setup.py py/MANIFEST.in /app/py/
@@ -25,4 +25,4 @@ run ch2 package-fit-profile ./Profile.xlsx
 workdir /
 expose 8000 8001
 copy dkr/docker-start.sh .
-cmd ./docker-start.sh
+cmd ./docker-start.sh --npm
