@@ -13,20 +13,17 @@ MOUNT="--mount=type=cache,target=/root/.cache/pip"
 JS_PKG="npm"
 HAVE_JS=0
 URI="--sqlite"
-NPM="run npm run build"
-CMD="cmd ./docker-start.sh"
 FILE="Dockerfile"
 
 help () {
     echo -e "\n  Create the dev image used to run Choochoo in Docker"
     echo -e "\n  Usage:"
-    echo -e "\n    $CMD [--big] [--slow] [--dev] [--pg] [--late] [-h] [FILE]"
+    echo -e "\n    $CMD [--big] [--slow] [--dev] [--pg] [-h] [FILE]"
     echo -e "\n    FILE:      destination file name (default Dockerfile)"
     echo -e "  --big:       use larger base distro"
     echo -e "  --slow:      do not mount pip cache (buildkit)"
     echo -e "  --dev:       dev work (assumes node pre-built)"
     echo -e "  --pg:        assume a postgres database on host pg"
-    echo -e "  --late:      do npm build locally"
     echo -e "  -h:          show this message\n"
     exit 1
 }
@@ -44,9 +41,6 @@ while [ $# -gt 0 ]; do
 	JS_PKG=
     elif [ $1 == "--pg" ]; then
 	URI="--uri postgresql://postgres@pg/activity-$VERSION"
-    elif [ $1 == "--late" ]; then
-	NPM="# npm run build on startup"
-	CMD="cmd ./docker-start.sh --npm"
     else
 	echo -e "\nERROR: do not understand $1\n"
 	help
@@ -93,7 +87,7 @@ run npm install -g npm@next
 run npm install
 # do this after install so that we use a separate layer
 copy js/src /app/js/src
-$NPM
+run npm run build
 EOF
 fi
 
@@ -125,7 +119,7 @@ cat >> $FILE <<EOF
 workdir /
 expose 8000 8001
 copy dkr/docker-start.sh .
-$CMD
+cmd ./docker-start.sh
 EOF
 
 echo -e "\ncreated $FILE for $VERSION ($URI)\n"
