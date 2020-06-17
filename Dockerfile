@@ -26,4 +26,5 @@ workdir /
 expose 8000 8001
 cmd ch2 --dev --base /data web service \
     --sqlite \
-    --web-bind choochoo --jupyter-bind choochoo --proxy-bind 'localhost'
+    --web-bind 0.0.0.0 --jupyter-bind 0.0.0.0 --proxy-bind 'localhost' \
+    --warn-data --warn-secure

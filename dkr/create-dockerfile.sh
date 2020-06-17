@@ -13,19 +13,17 @@ MOUNT="--mount=type=cache,target=/root/.cache/pip"
 JS_PKG="npm"
 HAVE_JS=0
 URI="--sqlite"
-NET="choochoo"
 FILE="Dockerfile"
 
 help () {
     echo -e "\n  Create the dev image used to run Choochoo in Docker"
     echo -e "\n  Usage:"
-    echo -e "\n    $CMD [--big] [--slow] [--dev] [--pg] [--host NAME] [-h] [FILE]"
+    echo -e "\n    $CMD [--big] [--slow] [--dev] [--pg] [-h] [FILE]"
     echo -e "\n    FILE:      destination file name (default Dockerfile)"
     echo -e "  --big:       use larger base distro"
     echo -e "  --slow:      do not mount pip cache (buildkit)"
     echo -e "  --dev:       dev work (assumes node pre-built)"
     echo -e "  --pg:        assume a postgres database on host pg"
-    echo -e "  --host NAME: network hostname (container name)"
     echo -e "  -h:          show this message\n"
     exit 1
 }
@@ -43,9 +41,6 @@ while [ $# -gt 0 ]; do
 	JS_PKG=
     elif [ $1 == "--pg" ]; then
 	URI="--uri postgresql://postgres@pg/activity-$VERSION"
-    elif [ $1 == "--host" ]; then
-	shift
-	NET=$1
     else
 	echo -e "\nERROR: do not understand $1\n"
 	help
@@ -125,7 +120,8 @@ workdir /
 expose 8000 8001
 cmd ch2 --dev --base /data web service \\
     $URI \\
-    --web-bind $NET --jupyter-bind $NET --proxy-bind 'localhost'
+    --web-bind 0.0.0.0 --jupyter-bind 0.0.0.0 --proxy-bind 'localhost' \\
+    --warn-data --warn-secure
 EOF
 
 echo -e "\ncreated $FILE for $VERSION ($URI)\n"

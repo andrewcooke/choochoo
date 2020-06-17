@@ -16,7 +16,7 @@ from .servlets.kit import Kit
 from .servlets.search import Search
 from .servlets.upload import Upload
 from .static import Static
-from ..commands.args import mm, BASE, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, READ, URI, JUPYTER
+from ..commands.args import mm, BASE, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, READ, URI, JUPYTER, WARN, SECURE
 from ..jupyter.server import JupyterController
 from ..lib.log import log_current_exception
 from ..lib.server import BaseController
@@ -49,6 +49,8 @@ class WebController(BaseController):
     def __init__(self, args, data, max_retries=1, retry_secs=1):
         super().__init__(WEB, args, data, WebServer, max_retries=max_retries, retry_secs=retry_secs)
         self.__uri = args[URI]
+        self.__warn_data = args[WARN + '-' + DATA]
+        self.__warn_secure = args[WARN + '-' + SECURE]
         self.__jupyter = JupyterController(args, data)
 
     def _build_cmd_and_log(self, ch2):
@@ -56,13 +58,16 @@ class WebController(BaseController):
         cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._data.base} ' \
               f'{WEB} {SERVICE} {mm(WEB + "-" + BIND)} {self._bind} {mm(WEB + "-" + PORT)} {self._port}' \
               f'{mm(JUPYTER + "-" + BIND)} {self.__jupyter._bind} {mm(JUPYTER + "-" + PORT)} {self.__jupyter._port}'
+        if self.__warn_data: cmd += f' {mm(WARN + "-" + DATA)}'
+        if self.__warn_secure: cmd += f' {mm(WARN + "-" + SECURE)}'
         return cmd, log_name
 
     def _run(self):
         self._data.sys.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self._bind, self._port), force=True)
         log.debug(f'Binding to {self._bind}:{self._port} with Jupyter at {self.__jupyter} and URI {self.__uri}')
         run_simple(self._bind, self._port,
-                   WebServer(self._data, self.__jupyter, self.__uri),
+                   WebServer(self._data, self.__jupyter, self.__uri,
+                             warn_data=self.__warn_data, warn_secure=self.__warn_secure),
                    use_debugger=self._dev, use_reloader=self._dev)
 
     def _cleanup(self):
@@ -85,8 +90,10 @@ def error(exception):
 
 class WebServer:
 
-    def __init__(self, data, jcontrol, uri):
+    def __init__(self, data, jcontrol, uri, warn_data=False, warn_secure=False):
         self.__data = data
+        self.__warn_data = warn_data
+        self.__warn_secure = warn_secure
 
         analysis = Analysis()
         configure = Configure(data, uri)
@@ -137,6 +144,7 @@ class WebServer:
             Rule('/api/upload', endpoint=self.check(upload), methods=(PUT, )),
 
             Rule('/api/busy', endpoint=self.read_busy, methods=(GET, )),
+            Rule('/api/warnings', endpoint=self.read_warnings, methods=(GET, )),
             Rule('/api/<path:_>', endpoint=error(BadRequest)),
 
             # ignore path and serve index.html
@@ -177,6 +185,19 @@ class WebServer:
 
     def read_busy(self, request, s):
         return JsonResponse({BUSY: self.get_busy()})
+
+    def read_warnings(self, request, s):
+        warnings = []
+        if self.__warn_data:
+            warnings.append({'title': 'Your Data Are Not Stored Safely',
+                             'text': 'The default Docker configuration stores your data within the same '
+                                     'container that runs the code.  If you update / delete / prune the '
+                                     'container you will lose your data.'})
+        if self.__warn_secure:
+            warnings.append({'title': 'This System Is Not Secure',
+                             'text': 'Choochoo is not secure and should not be deployed on a public server.  '
+                                     'It is intended only for local, personal use.'})
+        return JsonResponse({DATA: warnings})
 
     def check(self, handler, config=True):
 

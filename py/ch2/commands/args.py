@@ -177,6 +177,7 @@ SEGMENTS = 'segments'
 SERVICE = 'service'
 SET = 'set'
 SCHEDULE = 'schedule'
+SECURE = 'secure'
 SHOW = 'show'
 SINGLE = 'single'
 SLICES = 'slices'
@@ -308,16 +309,23 @@ def make_parser(with_noop=False):
         cmd.add_argument(mm(prefix + PORT), default=default_port, type=int, metavar='PORT',
                          help=f'port' + f' (default {default_port})' if default_port else '')
 
+    def add_warning_args(cmd):
+        prefix = WARN + '-'
+        cmd.add_argument(mm(prefix + DATA), action='store_true', help='Warn user that data may be lost')
+        cmd.add_argument(mm(prefix + SECURE), action='store_true', help='Warn user that the system is insecure')
+
     web_start = web_cmds.add_parser(START, help='start the web server')
     add_web_server_args(web_start, prefix=WEB)
     add_web_server_args(web_start, prefix=JUPYTER, default_port=JUPYTER_PORT)
     add_web_server_args(web_start, prefix=PROXY, default_port=None, default_address=None)
+    add_warning_args(web_start)
     web_cmds.add_parser(STOP, help='stop the web server')
     web_cmds.add_parser(STATUS, help='display status of web server')
     web_service = web_cmds.add_parser(SERVICE, help='internal use only - use start/stop')
     add_web_server_args(web_service, prefix=WEB)
     add_web_server_args(web_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
     add_web_server_args(web_service, prefix=PROXY, default_port=None, default_address=None)
+    add_warning_args(web_service)
     add_uri_options(web_service, False)
 
     read = subparsers.add_parser(READ, help='read data (also calls calculate)')
