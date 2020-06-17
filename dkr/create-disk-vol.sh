@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -f auto-prune ]; then docker container prune -f; fi
+./prune.sh
 docker volume rm -f disk-data
 docker volume create disk-data
 docker run --rm \

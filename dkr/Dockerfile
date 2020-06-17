@@ -24,7 +24,5 @@ copy data/sdk/Profile.xlsx /app
 run ch2 package-fit-profile ./Profile.xlsx
 workdir /
 expose 8000 8001
-cmd ch2 --dev --base /data web service \
-    --sqlite \
-    --web-bind 0.0.0.0 --jupyter-bind 0.0.0.0 --proxy-bind 'localhost' \
-    --warn-data --warn-secure
+copy dkr/docker-start.sh .
+cmd ./docker-start.sh
