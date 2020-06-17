@@ -21,8 +21,8 @@ function Warning(props) {
 
     return (<ColumnCard header={warning.title} className={classes.warning}><Grid item xs={12}>
         <P>{warning.text}</P>
-        <P>For information on how to configure Docker in a safer way see&nbsp;
-            <Link href='https://andrewcooke.github.io/choochoo/'>here</Link>.</P>
+        <P>For more information on how to configure docker see&nbsp;
+            <Link href='https://andrewcooke.github.io/choochoo/docker'>here</Link>.</P>
     </Grid></ColumnCard>);
 }
 

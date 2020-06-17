@@ -189,13 +189,13 @@ class WebServer:
     def read_warnings(self, request, s):
         warnings = []
         if self.__warn_data:
-            warnings.append({'title': 'Your Data Are Not Stored Safely',
+            warnings.append({'title': 'Your Data Are Not Stored Permanently',
                              'text': 'The default Docker configuration stores your data within the same '
                                      'container that runs the code.  If you update / delete / prune the '
                                      'container you will lose your data.'})
         if self.__warn_secure:
-            warnings.append({'title': 'This System Is Not Secure',
-                             'text': 'Choochoo is not secure and should not be deployed on a public server.  '
+            warnings.append({'title': 'This System Is Not Secured For External Use',
+                             'text': 'Choochoo should not be deployed on a public server.  '
                                      'It is intended only for local, personal use.'})
         return JsonResponse({DATA: warnings})
 
