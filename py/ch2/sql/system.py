@@ -27,13 +27,16 @@ class System(MappedDatabase):
 
     def get_constant(self, name, none=False):
         with self.session_context() as s:
-            return SystemConstant.from_name(s, name, none=none)
+            value = SystemConstant.from_name(s, name, none=none)
+            return value
 
     def set_constant(self, name, value, force=False):
+        log.debug(f'Setting {name}={value}')
         with self.session_context() as s:
             return SystemConstant.set(s, name, value, force=force)
 
     def delete_constant(self, name):
+        log.debug(f'Deleting {name}')
         with self.session_context() as s:
             SystemConstant.delete(s, name)
 

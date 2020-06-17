@@ -60,6 +60,7 @@ class WebController(BaseController):
 
     def _run(self):
         self._data.sys.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self._bind, self._port), force=True)
+        log.debug(f'Binding to {self._bind}:{self._port} with Jupyter at {self.__jupyter} and URI {self.__uri}')
         run_simple(self._bind, self._port,
                    WebServer(self._data, self.__jupyter, self.__uri),
                    use_debugger=self._dev, use_reloader=self._dev)

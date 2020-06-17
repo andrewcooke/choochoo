@@ -41,4 +41,4 @@ else
 fi
 
 pushd .. > /dev/null
-DOCKER_BUILDKIT=1 docker build --network=host --tag ch2 .
+DOCKER_BUILDKIT=1 docker build --network host --tag ch2 .
