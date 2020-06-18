@@ -1,4 +1,4 @@
 #!/bin/bash
 
-pushd js
+pushd js > /dev/null
 npm run build

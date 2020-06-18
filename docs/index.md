@@ -53,6 +53,6 @@ moment, select a file, and click `UPLOAD`.
 
 ## More Information
 
-[Docker Configuration](docker).
+[Docker Cookbook](docker).
 
 [Technical Documentation](technical).

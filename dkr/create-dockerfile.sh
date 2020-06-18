@@ -12,19 +12,17 @@ COMMENT="# syntax=docker/dockerfile:experimental"
 MOUNT="--mount=type=cache,target=/root/.cache/pip"
 JS_PKG="npm"
 HAVE_JS=0
-URI="--sqlite"
 FILE="Dockerfile"
 
 help () {
     echo -e "\n  Create the dev image used to run Choochoo in Docker"
     echo -e "\n  Usage:"
-    echo -e "\n    $CMD [--big] [--slow] [--dev] [--pg] [-h] [FILE]"
+    echo -e "\n   $CMD [--big] [--slow] [--dev] [-h] [FILE]"
     echo -e "\n    FILE:      destination file name (default Dockerfile)"
     echo -e "  --big:       use larger base distro"
     echo -e "  --slow:      do not mount pip cache (buildkit)"
     echo -e "  --dev:       dev work (assumes node pre-built)"
-    echo -e "  --pg:        assume a postgres database on host pg"
-    echo -e "  -h:          show this message\n"
+    echo -e "   -h:         show this message\n"
     exit 1
 }
 
@@ -39,11 +37,8 @@ while [ $# -gt 0 ]; do
     elif [ $1 == "--dev" ]; then
 	HAVE_JS=1
 	JS_PKG=
-    elif [ $1 == "--pg" ]; then
-	URI="--uri postgresql://postgres@pg/activity-$VERSION"
     else
-	echo -e "\nERROR: do not understand $1\n"
-	help
+	FILE=$1
     fi
     shift
 done
@@ -122,4 +117,4 @@ copy dkr/docker-start.sh .
 cmd ./docker-start.sh
 EOF
 
-echo -e "\ncreated $FILE for $VERSION ($URI)\n"
+echo -e "\ncreated $FILE for $VERSION\n"

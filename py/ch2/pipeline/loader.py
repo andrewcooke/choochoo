@@ -84,9 +84,10 @@ class BaseLoader(ABC):
         journal_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
         if cls != journal_class:
             raise Exception(f'Inconsistent class for {name}: {cls}/{journal_class}')
-        # set statistic_name and source rather than ids so that we can correctly test in Source for dirty intervals
-        instance = journal_class(statistic_name=statistic_name, source=source, value=value, time=time,
-                                 serial=self.__serial)
+        # set statistic_name and source (as well as ids) so that we can correctly test in
+        # Source for dirty intervals
+        instance = journal_class(statistic_name=statistic_name, statistic_name_id=statistic_name.id,
+                                 source=source, source_id=source.id, value=value, time=time, serial=self.__serial)
 
         if instance.time in self.__by_name_then_time[name]:
             previous = self.__by_name_then_time[name][instance.time]
