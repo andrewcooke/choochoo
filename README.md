@@ -4,6 +4,9 @@
 An **open**, **hackable** and **free** training diary that is getting
 easier to use.
 
+NEW: Now available as a [Docker
+image](https://andrewcooke.github.io/choochoo/#docker)!
+
 Please see [getting started](https://andrewcooke.github.io/choochoo/)
 and [technical
 docs](https://andrewcooke.github.io/choochoo/technical).

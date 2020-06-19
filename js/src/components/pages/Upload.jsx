@@ -1,10 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import {ColumnCard, ColumnList, ConfirmedWriteButton, Layout, Loading, Text} from "../elements";
-import {Button, Grid, IconButton, TextField, FormControlLabel, Checkbox} from "@material-ui/core";
+import {Button, Grid, IconButton, TextField, FormControlLabel, Checkbox, Link} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {Autocomplete} from "@material-ui/lab";
 import {Clear} from '@material-ui/icons';
 import {handleJson} from "../functions";
+import {Link as RouterLink} from "react-router-dom";
 
 
 const useStyles = makeStyles(theme => ({
@@ -26,6 +27,22 @@ const useStyles = makeStyles(theme => ({
 }));
 
 
+function Help(props) {
+    return (<ColumnCard><Grid item xs={12}>
+        <Text>
+            <p>SELECT FILES will let you select FIT files to upload.
+                If you have <Link component={RouterLink} to='/kit'>kit</Link> defined
+                you can select which kit was used in the activities.
+                Once you have selected your files, click UPLOAD.
+            </p>
+            <p>You can also click UPLOAD without selecting any files.
+                This will process any new files that are found on disk
+                (if you added them manually to the data directory, for example)
+                or, if the checkbox is selected, will reprocess all data.</p>
+        </Text>
+    </Grid></ColumnCard>)
+}
+
 
 function FileList(props) {
 
@@ -40,7 +57,7 @@ function FileList(props) {
             <Grid item xs={11} className={classes.baseline} key={i}>
                 <Text>{file.name}</Text>
             </Grid>
-            <Grid item xs={1} className={classes.baseline} key={i+0.5}>
+            <Grid item xs={1} className={classes.baseline} key={i + 0.5}>
                 <IconButton onClick={() => onClick(i)} className={classes.noPadding}>
                     <Clear/>
                 </IconButton>
@@ -64,7 +81,7 @@ function FileSelect(props) {
         const names = files.map(file => file.name);
         for (let i = 0; i < input.files.length; i++) {
             const newFile = input.files.item(i);
-            if (! names.includes(newFile.name)) {
+            if (!names.includes(newFile.name)) {
                 newFiles.push(newFile);
                 names.push(newFile.name);
             }
@@ -91,7 +108,7 @@ function FileSelect(props) {
     const warning = force ? 'Reprocessing all data will take a long time.' :
         'The ingest process will take some time.';
 
-    return (<>
+    return (<ColumnCard>
         <Grid item xs={8}>
             <Autocomplete multiple options={items.map(item => item.name)} filterSelectedOptions
                           className={classes.wide} size='small'
@@ -116,7 +133,7 @@ function FileSelect(props) {
                               form={{'files': files, 'kit': kit, 'force': force}}>
             {warning}
         </ConfirmedWriteButton>
-    </>);
+    </ColumnCard>);
 }
 
 
@@ -131,9 +148,8 @@ function Columns(props) {
     } else {
         return (<>
             <ColumnList>
-                <ColumnCard>
-                    <FileSelect items={items} reload={reload} setError={setError}/>
-                </ColumnCard>
+                <Help/>
+                <FileSelect items={items} reload={reload} setError={setError}/>
             </ColumnList>
         </>);
     }
