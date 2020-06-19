@@ -121,10 +121,10 @@ We can create a second volume for the PostgreSQL data.
         external: true
       postgresql-data:
         external: true
-    > docker-compose --rm up
+    > docker-compose up
 
-Again, because no data are stored on the container, we can run with
-`--rm` and discard the container after use.
+Because no data are stored on the container, we can discard the
+containers after use.
 
 ## Recipes
 
