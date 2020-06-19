@@ -11,11 +11,12 @@ configure and use the Docker images.
     > docker run -p 127.0.0.1:8000:8000 -p 127.0.0.1:8001:8001 \
       andrewcooke/choochoo:latest
 
-All you data - both the FIT files and the database of statistics - is
-stored inside the Docker image.  This is not ideal because it is
-difficult to upgrade to a new version of the code (if you change to a
-new image you lose you data), hard to backup your data, and easy to
-accidentally delete the data when you delete unused Docker images.
+Running the container in this way, all your data - both the FIT files
+and the database of statistics - is stored inside the Docker image.
+This is not ideal because it is difficult to upgrade to a new version
+of the code (if you change to a new image you lose you data), hard to
+backup your data, and easy to accidentally delete the data when you
+delete unused Docker images.
 
 ### Data On Local Disk
 
@@ -40,9 +41,8 @@ computer) is that anything written to disk is owned by `root`.
 
     > docker volume create choochoo-data
 
-This creates a named volume (something like a disk) that you can use
-as a place to store data.  It can be mounted in the same way as the
-directory above:
+This creates a named volume (something like a disk) where you can
+store data.  It can be mounted in the same way as the directory above:
 
     > docker run -p 127.0.0.1:8000:8000 -p 127.0.0.1:8001:8001 \
       -v choochoo-data:/data andrewcooke/choochoo:latest
@@ -74,7 +74,7 @@ this:
           - 'POSTGRES_HOST_AUTH_METHOD=trust'
     > docker-compose up
 
-Here, using `docker-compose` we can the PostgreSQL server in a
+Here, using `docker-compose` we start a PostgreSQL server in a
 separate image and use that as the statistics database (the examples
 above all use an SQLite3 database which is stored in `/data`).
 
