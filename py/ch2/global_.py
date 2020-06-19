@@ -1,5 +1,7 @@
 from logging import getLogger
 
+from .lib.log import make_log_from_args, set_log_color
+
 log = getLogger(__name__)
 
 __GLOBAL_DEV = False
@@ -25,3 +27,14 @@ def set_global_data(data):
 def global_data():
     global __GLOBAL_DATA
     return __GLOBAL_DATA
+
+
+def set_global_state(args):
+    from .sql.system import Data
+    from .commands.args import DEV, BASE
+    set_global_dev(args[DEV])
+    make_log_from_args(args)
+    data = Data(args[BASE])
+    set_global_data(data)
+    set_log_color(args, data.sys)
+    return data

@@ -1,5 +1,5 @@
 from logging import getLogger, NullHandler
-from sqlite3 import enable_callback_tracebacks
+
 from sys import version_info
 
 getLogger('bokeh').addHandler(NullHandler())
@@ -19,7 +19,7 @@ class FatalException(Exception):
 from .commands.args import COMMAND, make_parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DATABASE, CONSTANTS, CALCULATE, SHOW_SCHEDULE, MONITOR, GARMIN, \
     UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, BASE
-from .global_ import set_global_dev, set_global_data
+from .global_ import set_global_dev, set_global_data, set_global_state
 from .commands.constants import constants
 from .commands.validate import validate
 from .commands.database import database
@@ -85,15 +85,6 @@ def args_and_command():
     if command_name == NO_OP: ns.verbose = 0
     args = NamespaceWithVariables(ns)
     return args, command, command_name
-
-
-def set_global_state(args):
-    set_global_dev(args[DEV])
-    make_log_from_args(args)
-    data = Data(args[BASE])
-    set_global_data(data)
-    set_log_color(args, data.sys)
-    return data
 
 
 def versions():

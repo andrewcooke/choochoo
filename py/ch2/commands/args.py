@@ -7,8 +7,9 @@ from os.path import join
 from re import sub
 from typing import Mapping
 
-from ch2.lib.utils import clean_path, parse_bool
-from ch2.names import UNDEF
+from ..global_ import set_global_state
+from ..lib.utils import clean_path, parse_bool
+from ..names import UNDEF
 
 log = getLogger(__name__)
 
@@ -626,24 +627,21 @@ def make_parser(with_noop=False):
 def bootstrap_dir(base, *args, configurator=None, post_config=None):
     # used in tests, given a base directory
 
-    from ..lib.log import make_log_from_args
-    from ..sql.database import connect, sqlite_uri
-    from ..sql.system import System, SystemConstant
+    from ..sql.database import sqlite_uri
+    from ..sql.system import SystemConstant
 
     args = [mm(BASE), base] + list(args)
+    parser = make_parser()
+    ns = NamespaceWithVariables(parser.parse_args(args=args))
     if configurator:
-        ns, db = connect(args)
-        sys = System(ns[BASE])
-        with db.session_context() as s:
-            configurator(sys, s, base)
+        data = set_global_state(ns)
+        with data.db.session_context() as s:
+            configurator(s, data.base)
     args += post_config if post_config else []
-    ns = NamespaceWithVariables(make_parser().parse_args(args))
-    make_log_from_args(ns)
-    sys = System(ns[BASE])
-    sys.set_constant(SystemConstant.DB_URI, sqlite_uri(base))
-    db = sys.get_database()
-
-    return ns, sys, db
+    ns = NamespaceWithVariables(parser.parse_args(args=args))
+    data = set_global_state(ns)
+    data.sys.set_constant(SystemConstant.DB_URI, sqlite_uri(data.base), force=True)
+    return data
 
 
 def parse_pairs(pairs, convert=True, multi=False, comma=False):
@@ -684,3 +682,5 @@ def infer_flags(args, *names):
     if args[DISABLE]:
         for name in flags: flags[name] = not flags[name]
     return flags
+
+
