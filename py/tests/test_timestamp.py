@@ -19,8 +19,8 @@ class TestTimestamp(LogTestCase):
 
     def test_set(self):
         with TemporaryDirectory() as f:
-            data = bootstrap_dir(f, m(V), '5')
-            data = bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+            args, data = bootstrap_dir(f, m(V), '5')
+            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
             with data.db.session_context() as s:
                 source = add(s, Source())
                 n = s.query(count(Timestamp.id)).scalar()
@@ -33,8 +33,8 @@ class TestTimestamp(LogTestCase):
 
     def test_context(self):
         with TemporaryDirectory() as f:
-            data = bootstrap_dir(f, m(V), '5')
-            data = bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+            args, data = bootstrap_dir(f, m(V), '5')
+            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
             with data.db.session_context() as s:
                 with Timestamp(owner=TestTimestamp).on_success(s):
                     n = s.query(count(Timestamp.id)).scalar()
@@ -44,8 +44,8 @@ class TestTimestamp(LogTestCase):
 
     def test_context_error(self):
         with TemporaryDirectory() as f:
-            data = bootstrap_dir(f, m(V), '5')
-            data = bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+            args, data = bootstrap_dir(f, m(V), '5')
+            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
             with data.db.session_context() as s:
                 try:
                     with Timestamp(owner=TestTimestamp).on_success(s):

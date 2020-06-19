@@ -635,13 +635,14 @@ def bootstrap_dir(base, *args, configurator=None, post_config=None):
     ns = NamespaceWithVariables(parser.parse_args(args=args))
     if configurator:
         data = set_global_state(ns)
+        data.sys.set_constant(SystemConstant.DB_URI, sqlite_uri(data.base), force=True)
         with data.db.session_context() as s:
             configurator(s, data.base)
     args += post_config if post_config else []
     ns = NamespaceWithVariables(parser.parse_args(args=args))
     data = set_global_state(ns)
     data.sys.set_constant(SystemConstant.DB_URI, sqlite_uri(data.base), force=True)
-    return data
+    return ns, data
 
 
 def parse_pairs(pairs, convert=True, multi=False, comma=False):

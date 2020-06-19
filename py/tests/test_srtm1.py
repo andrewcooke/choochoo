@@ -21,20 +21,20 @@ class TestSortem(LogTestCase):
     def bilinear(self):
         with TemporaryDirectory() as f:
             bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, sys, db = bootstrap_dir(f, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
-                                          mm(FORCE))
-            constants(args, sys, db)
-            with db.session_context() as s:
+            args, data = bootstrap_dir(f, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
+                                       mm(FORCE))
+            constants(args, data)
+            with data.db.session_context() as s:
                 yield bilinear_elevation_from_constant(s)
 
     @contextmanager
     def spline(self, smooth=0):
         with TemporaryDirectory() as f:
             bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, sys, db = bootstrap_dir(f, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
-                                          mm(FORCE))
-            constants(args, sys, db)
-            with db.session_context() as s:
+            args, data = bootstrap_dir(f, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
+                                       mm(FORCE))
+            constants(args, data)
+            with data.db.session_context() as s:
                 yield spline_elevation_from_constant(s, smooth=smooth)
 
     def test_read(self):
