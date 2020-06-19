@@ -5,16 +5,18 @@ DEV=
 BIG=
 SLOW=
 BUILDKIT=1
+PRUNE=1
 FILE=`pwd`/Dockerfile.local
 
 help () {
     echo -e "\n  Create the dev image used to run Choochoo in Docker"
     echo -e "\n  Usage:"
-    echo -e "\n   $CMD [--big] [--slow] [--dev] [-h] [FILE]"
+    echo -e "\n   $CMD [--big] [--slow] [--dev] [--keep] [-h] [FILE]"
     echo -e "\n    FILE:      destination file name (default Dockerfile)"
     echo -e "  --big:       use larger base distro"
     echo -e "  --slow:      do not mount pip cache (buildkit)"
     echo -e "  --dev:       dev work (assumes node pre-built)"
+    echo -e "  --keep:      don't wipe the old data"
     echo -e "   -h:         show this message\n"
     exit 1
 }
@@ -29,6 +31,8 @@ while [ $# -gt 0 ]; do
 	BUILDKIT=0
     elif [ $1 == "--dev" ]; then
 	DEV=$1
+    elif [ $1 == "--keep" ]; then
+        PRUNE=0
     else
 	echo -e "\nERROR: do not understand $1\n"
 	help
@@ -36,7 +40,7 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-./prune.sh
+if (( PRUNE )); then ./prune.sh; fi
 
 CMD="./create-dockerfile.sh $BIG $SLOW $DEV $FILE"
 echo -e "\n> $CMD\n"

@@ -1,6 +1,8 @@
 from json import loads, dumps
 from logging import getLogger
 
+from sqlalchemy import exists
+
 from ...commands.args import SERVICE, WEB, mm, SQLITE, POSTGRESQL, URI
 from ...commands.database import load, delete_current
 from ...commands.help import HTML, filter, parse, P, LI, PRE
@@ -14,7 +16,7 @@ from ...import_.constant import constant_imported
 from ...import_.diary import diary_imported
 from ...import_.kit import kit_imported
 from ...import_.segment import segment_imported
-from ...sql import SystemConstant, Constant, StatisticJournal
+from ...sql import SystemConstant, Constant, StatisticJournal, ActivityJournal
 
 log = getLogger(__name__)
 
@@ -49,6 +51,9 @@ class Configure:
 
     def is_configured(self):
         return bool(self.__data.sys.get_constant(SystemConstant.DB_VERSION, none=True))
+
+    def is_empty(self, s):
+        return not s.query(exists().where(ActivityJournal.id > 0)).scalar()
 
     def html(self, text):
         return self.__html.str(text)

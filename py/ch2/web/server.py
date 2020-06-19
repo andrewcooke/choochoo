@@ -129,19 +129,19 @@ class WebServer:
 
             Rule('/api/jupyter/<template>', endpoint=jupyter, methods=(GET, )),
 
-            Rule('/api/kit/edit', endpoint=self.check(kit.read_edit), methods=(GET, )),
-            Rule('/api/kit/retire-item', endpoint=self.check(kit.write_retire_item), methods=(PUT,)),
-            Rule('/api/kit/replace-model', endpoint=self.check(kit.write_replace_model), methods=(PUT,)),
-            Rule('/api/kit/add-component', endpoint=self.check(kit.write_add_component), methods=(PUT,)),
-            Rule('/api/kit/add-group', endpoint=self.check(kit.write_add_group), methods=(PUT,)),
-            Rule('/api/kit/items', endpoint=self.check(kit.read_items), methods=(GET,)),
-            Rule('/api/kit/statistics', endpoint=self.check(kit.read_statistics), methods=(GET, )),
-            Rule('/api/kit/<date>', endpoint=self.check(kit.read_snapshot), methods=(GET, )),
+            Rule('/api/kit/edit', endpoint=self.check(kit.read_edit, empty=False), methods=(GET, )),
+            Rule('/api/kit/retire-item', endpoint=self.check(kit.write_retire_item, empty=False), methods=(PUT,)),
+            Rule('/api/kit/replace-model', endpoint=self.check(kit.write_replace_model, empty=False), methods=(PUT,)),
+            Rule('/api/kit/add-component', endpoint=self.check(kit.write_add_component, empty=False), methods=(PUT,)),
+            Rule('/api/kit/add-group', endpoint=self.check(kit.write_add_group, empty=False), methods=(PUT,)),
+            Rule('/api/kit/items', endpoint=self.check(kit.read_items, empty=False), methods=(GET,)),
+            Rule('/api/kit/statistics', endpoint=self.check(kit.read_statistics, empty=False), methods=(GET, )),
+            Rule('/api/kit/<date>', endpoint=self.check(kit.read_snapshot, empty=False), methods=(GET, )),
 
             Rule('/api/thumbnail/<activity>', endpoint=thumbnail, methods=(GET, )),
             Rule('/api/static/<path:path>', endpoint=static, methods=(GET, )),
 
-            Rule('/api/upload', endpoint=self.check(upload), methods=(PUT, )),
+            Rule('/api/upload', endpoint=self.check(upload, empty=False), methods=(PUT, )),
 
             Rule('/api/busy', endpoint=self.read_busy, methods=(GET, )),
             Rule('/api/warnings', endpoint=self.read_warnings, methods=(GET, )),
@@ -199,12 +199,18 @@ class WebServer:
                                      'It is intended only for local, personal use.'})
         return JsonResponse({DATA: warnings})
 
-    def check(self, handler, config=True):
+    def check(self, handler, config=True, empty=True):
 
         def wrapper(request, s, *args, **kargs):
-            if config and not self.__configure.is_configured():
-                log.debug(f'Redirect (not configured)')
-                return JsonResponse({REDIRECT: '/configure/initial'})
+            if config:
+                if not self.__configure.is_configured():
+                    log.debug(f'Redirect (not configured)')
+                    return JsonResponse({REDIRECT: '/configure/initial'})
+                # if we don't care about config we certainly don't care about data
+                if s and empty:
+                    if self.__configure.is_empty(s):
+                        log.debug(f'Redirect (no data)')
+                        return JsonResponse({REDIRECT: '/upload'})
             busy = self.get_busy()
             if busy[PERCENT] is None or busy[PERCENT] == 100:
                 try:

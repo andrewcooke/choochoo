@@ -28,7 +28,7 @@ const useStyles = makeStyles(theme => ({
 
 
 function Help(props) {
-    return (<ColumnCard><Grid item xs={12}>
+    return (<ColumnCard header='Introduction'><Grid item xs={12}>
         <Text>
             <p>SELECT FILES will let you select FIT files to upload.
                 If you have <Link component={RouterLink} to='/kit'>kit</Link> defined
