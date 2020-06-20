@@ -39,7 +39,7 @@ if [ -d $NEW_BASE ]; then
 fi
 
 echo -e "\ninstalling"
-dev/ch2 --dev --color DARK database load --postgresql --force acooke || { echo -e "\ndatabase failed"; exit 2; }
+dev/ch2 --dev --color DARK database load --sqlite acooke || { echo -e "\ndatabase failed"; exit 2; }
 
 echo -e "\nimporting old data"
 dev/ch2 --dev import --sqlite $OLD_VERSION || { echo -e "\nimport failed"; exit 3; }

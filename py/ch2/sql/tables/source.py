@@ -14,7 +14,7 @@ from ..types import OpenSched, Date, ShortCls, short_cls
 from ..utils import add
 from ...global_ import global_data
 from ...lib.date import to_time, time_to_local_date, max_time, min_time, extend_range
-from ...lib.utils import timing
+from ...lib.utils import timing, grouper
 from ...names import UNDEF
 
 log = getLogger(__name__)
@@ -235,7 +235,8 @@ class Interval(Source):
             log.debug('Cleaning dirty intervals')
             dirty_ids = set(d.interval_id for d in dirty_intervals)
             log.warning(f'Up to {len(dirty_ids)} intervals to delete')
-            s.query(Source).filter(Source.id.in_(dirty_ids)).delete(synchronize_session=False)
+            for ids in grouper(dirty_ids, 900):  # avoid sqlite limit
+                s.query(Source).filter(Source.id.in_(ids)).delete(synchronize_session=False)
             s.commit()
             data.sys.delete_dirty_intervals(dirty_intervals)
             log.debug('Intervals clean')

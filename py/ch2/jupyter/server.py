@@ -42,8 +42,16 @@ class JupyterController(BaseController):
 
     def __init__(self, args, data, max_retries=5, retry_secs=3):
         super().__init__(JUPYTER, args, data, JupyterServer, max_retries=max_retries, retry_secs=retry_secs)
-        self._proxy_bind = args[PROXY + '-' + BIND] or self._bind
-        self._proxy_port = args[PROXY + '-' + PORT] or self._port
+        self._proxy_bind = self.__proxy_args(args, BIND, self._bind)
+        self._proxy_port = self.__proxy_args(args, PORT, self._port)
+
+    @staticmethod
+    def __proxy_args(args, name, default):
+        full_name = PROXY + '-' + name
+        if full_name in args and args[full_name]:
+            return args[full_name]
+        else:
+            return default
 
     def _status(self, running):
         if running:

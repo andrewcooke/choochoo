@@ -156,7 +156,7 @@ class MonitorReader(MultiProcFitReader, LoaderMixin):
         else:
             if s.query(MonitorJournal).filter(MonitorJournal.file_hash == file_scan.file_hash).count():
                 raise Exception(f'Duplicate for {file_scan.path}')  # should never happen
-        # adding 0.1s to the end time makes the intervals semi-open which simplifies cleanuplater
+        # adding 0.1s to the end time makes the intervals semi-open which simplifies cleanup later
         mjournal = add(s, MonitorJournal(start=first_timestamp,
                                          finish=last_timestamp + dt.timedelta(seconds=0.1),
                                          file_hash_id=file_scan.file_hash.id))

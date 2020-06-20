@@ -20,7 +20,7 @@ class SegmentJournal(GroupedSource):
     # do not use on delete cascade here since it leaves source entries without children
     # instead, to guarantee consistency, call clean()
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='set null'),
-                                 nullable=False, index=True)
+                                 index=True)
     activity_journal = relationship('ActivityJournal', foreign_keys=[activity_journal_id])
     start = Column(Time, nullable=False)
     finish = Column(Time, nullable=False)

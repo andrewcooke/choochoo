@@ -81,8 +81,11 @@ def list():
 
 
 def delete_current(sys):
+    delete(sys.get_constant(SystemConstant.DB_URI), sys)
+
+
+def delete(uri, sys):
     try:
-        uri = sys.get_constant(SystemConstant.DB_URI)
         if database_exists(uri):
             log.debug(f'Deleting database at {uri}')
             uri_parts = urisplit(uri)
@@ -95,7 +98,7 @@ def delete_current(sys):
             else:
                 raise Exception(f'Unsupported URI {uri}')
         else:
-            log.debug(f'No database at {uri} (so not deleting)')
+            log.warning(f'No database at {uri} (so not deleting)')
     finally:
         sys.delete_constant(SystemConstant.DB_URI)
         sys.delete_constant(SystemConstant.DB_VERSION)
