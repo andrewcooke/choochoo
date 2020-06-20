@@ -95,6 +95,9 @@ def command_root():
                 i = words.index(argv[1])
                 words = words[:i]
             ch2 = ' '.join(words)
+            if 'unittest' in ch2:
+                log.warning(f'Appear to be inside test runner: {ch2}')
+                ch2 = 'python -m ch2'
             log.debug(f'Using command "{ch2}"')
             return ch2
     except:
@@ -181,3 +184,6 @@ class SystemProgressTree(ProgressTree):
         self.system.update_progress(self.name, percent=floor(100 * progress))
         return progress
 
+    def complete(self):
+        super().complete()
+        self.system.remove_progress(self.name)

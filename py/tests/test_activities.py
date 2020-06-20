@@ -3,7 +3,7 @@ from tempfile import TemporaryDirectory
 
 from sqlalchemy.sql.functions import count
 
-from ch2.commands.activities import activities
+from ch2.commands.read import read
 from ch2.commands.args import m, V, DEV, mm, BASE, bootstrap_dir, FORCE
 from ch2.commands.constants import constants
 from ch2.config.profile.default import default
@@ -25,21 +25,21 @@ class TestActivities(LogTestCase):
 
             bootstrap_dir(base, m(V), '5', mm(DEV), configurator=default)
 
-            args, sys, db = bootstrap_dir(base, m(V), '5', 'constants', 'set', 'SRTM1.dir',
+            args, data = bootstrap_dir(base, m(V), '5', 'constants', 'set', 'SRTM1.dir',
                                           '/home/andrew/archive/srtm1', mm(FORCE))
-            constants(args, sys, db)
+            constants(args, data)
 
-            args, sys, db = bootstrap_dir(base, m(V), '5', mm(DEV), 'activities',
+            args, data = bootstrap_dir(base, m(V), '5', mm(DEV), 'read',
                                           'data/test/source/personal/2018-08-27-rec.fit')
-            activities(args, sys, db)
+            read(args, data)
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
-            run_pipeline(sys, db, args[BASE], PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
+            run_pipeline(data, PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
-            with db.session_context() as s:
+            with data.db.session_context() as s:
                 n_raw = s.query(count(StatisticJournalFloat.id)). \
                     join(StatisticName). \
                     filter(StatisticName.name == N.RAW_ELEVATION).scalar()
@@ -58,9 +58,9 @@ class TestActivities(LogTestCase):
 
     def test_segment_bug(self):
         with TemporaryDirectory() as f:
-            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
             paths = ['/home/andrew/archive/fit/bike/cotic/2016-07-27-pm-z4.fit']
-            run_pipeline(sys, db, args[BASE], PipelineType.READ_ACTIVITY, paths=paths, force=True)
+            run_pipeline(data, PipelineType.READ_ACTIVITY, paths=paths, force=True)
 
     def __assert_basic_stats(self, s):
         for name in [N.ACTIVE_DISTANCE, N.ACTIVE_TIME]:
@@ -77,39 +77,39 @@ class TestActivities(LogTestCase):
         with TemporaryDirectory() as f:
             bootstrap_dir(f, m(V), '5')
             bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
+            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
                                           'data/test/source/private/florian.fit')
-            activities(args, sys, db)
+            read(args, data)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(sys, db, args[BASE], PipelineType.CALCULATE, n_cpu=1)
+            run_pipeline(data, PipelineType.CALCULATE, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            with db.session_context() as s:
+            with data.db.session_context() as s:
                 self.__assert_basic_stats(s)
 
     def test_michael(self):
         with TemporaryDirectory() as f:
             bootstrap_dir(f, m(V), '5')
             bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args,sys,  db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
+            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
                                       'data/test/source/other/2019-05-09-051352-Running-iWatchSeries3.fit')
-            activities(args, sys, db)
+            read(args, data)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(sys, db, args[BASE], PipelineType.CALCULATE, n_cpu=1)
+            run_pipeline(data, PipelineType.CALCULATE, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            with db.session_context() as s:
+            with data.db.session_context() as s:
                 self.__assert_basic_stats(s)
 
     def test_heart_alarms(self):
         with TemporaryDirectory() as f:
             bootstrap_dir(f, m(V), '5')
             bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
+            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
                                       'data/test/source/personal/2016-07-19-mpu-s-z2.fit')
-            activities(args, sys, db)
+            read(args, data)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(sys, db, args[BASE], PipelineType.CALCULATE, n_cpu=1)
+            run_pipeline(data, PipelineType.CALCULATE, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            with db.session_context() as s:
+            with data.db.session_context() as s:
                 for stat in s.query(StatisticJournal). \
                         join(StatisticName). \
                         filter(StatisticName.name == N.ACTIVE_DISTANCE).all():
@@ -120,11 +120,11 @@ class TestActivities(LogTestCase):
             with TemporaryDirectory() as f:
                 bootstrap_dir(f, m(V), '5')
                 bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-                args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
+                args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
                                                f'data/test/source/other/{src}')
-                activities(args, sys, db)
+                read(args, data)
                 # run('sqlite3 %s ".dump"' % f.name, shell=True)
-                run_pipeline(sys, db, args[BASE], PipelineType.CALCULATE, n_cpu=1)
+                run_pipeline(data, PipelineType.CALCULATE, n_cpu=1)
                 # run('sqlite3 %s ".dump"' % f.name, shell=True)
-                with db.session_context() as s:
+                with data.db.session_context() as s:
                     self.__assert_basic_stats(s)

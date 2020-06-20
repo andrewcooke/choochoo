@@ -1,7 +1,7 @@
 from io import StringIO
 from tempfile import TemporaryDirectory
 
-from ch2.commands.activities import activities
+from ch2.commands.read import read
 from ch2.commands.args import bootstrap_dir, m, V, mm, DEV, D, BASE, no, KIT, FILENAME_KIT
 from ch2.commands.kit import start, change, finish, show, undo, statistics
 from ch2.config.profile.default import default
@@ -21,8 +21,8 @@ class TestKit(LogTestCase):
 
     def test_bikes(self):
         with TemporaryDirectory() as f:
-            args, sys, db = bootstrap_dir(f, m(V), '5', configurator=default)
-            with db.session_context() as s:
+            args, data = bootstrap_dir(f, m(V), '5', configurator=default)
+            with data.db.session_context() as s:
                 with self.assertRaises(Exception) as ctx:
                     start(s, 'bike', 'cotic', '2020-03-24', False)
                 self.assertTrue('--force' in str(ctx.exception), ctx.exception)
@@ -174,18 +174,18 @@ class TestKit(LogTestCase):
     def test_models(self):
         with TemporaryDirectory() as f:
 
-            args, sys, db = bootstrap_dir(f, m(V), '5', configurator=default)
-            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
+            args, data = bootstrap_dir(f, m(V), '5', configurator=default)
+            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
                                            'data/test/source/personal/2018-08-03-rec.fit',
                                            m(D.upper())+'kit=cotic', mm(no(FILENAME_KIT)))
-            activities(args, sys, db)
-            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
+            read(args, data)
+            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
                                            'data/test/source/personal/2018-08-27-rec.fit',
                                            m(D.upper())+'kit=cotic', mm(no(FILENAME_KIT)))
-            activities(args, sys, db)
-            run_pipeline(sys, db, args[BASE], PipelineType.CALCULATE, like=['%Activity%'], n_cpu=1)
+            read(args, data)
+            run_pipeline(data, PipelineType.CALCULATE, like=['%Activity%'], n_cpu=1)
 
-            with db.session_context() as s:
+            with data.db.session_context() as s:
                 start(s, 'bike', 'cotic', '2018-01-01', True)
                 start(s, 'bike', 'marin', '2018-01-01', False)
                 change(s, 'cotic', 'chain', 'sram', None, True, True)
@@ -196,9 +196,9 @@ class TestKit(LogTestCase):
                 start(s, 'bike', 'bowman', '2018-01-01', False)
                 change(s, 'bowman', 'chain', 'sram', None, False, True)
 
-            run_pipeline(sys, db, args[BASE], PipelineType.CALCULATE, like=['%Kit%'], n_cpu=1)
+            run_pipeline(data, PipelineType.CALCULATE, like=['%Kit%'], n_cpu=1)
 
-            with db.session_context() as s:
+            with data.db.session_context() as s:
                 bike = get_name(s, 'bike').to_model(s, depth=3, statistics=INDIVIDUAL, own_models=False)
                 self.assertEqual(bike[TYPE], KitGroup.SIMPLE_NAME)
                 self.assertEqual(bike[NAME], 'bike')

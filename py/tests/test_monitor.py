@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 
 import sqlalchemy.sql.functions as func
 
-from ch2 import monitor
+from ch2.commands.read import read
 from ch2.commands.args import bootstrap_dir, m, V, DEV, mm, BASE
 from ch2.config.profile.default import default
 from ch2.lib.date import to_time, local_date_to_time
@@ -24,17 +24,17 @@ class TestMonitor(LogTestCase):
 
     def test_monitor(self):
         with TemporaryDirectory() as f:
-            args, sys, db = bootstrap_dir(f, m(V), '5')
+            args, data = bootstrap_dir(f, m(V), '5')
             bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV),
-                                      'monitor', 'data/test/source/personal/25822184777.fit')
-            monitor(args, sys, db)
+            args, data = bootstrap_dir(f, m(V), '5', mm(DEV),
+                                       'read', 'data/test/source/personal/25822184777.fit')
+            read(args, data)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(sys, db, args[BASE], PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
+            run_pipeline(data, PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            with db.session_context() as s:
+            with data.db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 137)
+                self.assertEqual(n, 133)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)
 
@@ -43,12 +43,12 @@ class TestMonitor(LogTestCase):
             bootstrap_dir(f, m(V), '5')
             bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
             for file in ('24696157869', '24696160481', '24696163486'):
-                args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV),
-                                          'monitor', 'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
-                monitor(args, sys, db)
+                args, data = bootstrap_dir(f, m(V), '5', mm(DEV),
+                                          'read', 'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
+                read(args, data)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(sys, db, args[BASE], PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
-            with db.session_context() as s:
+            run_pipeline(data, PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
+            with data.db.session_context() as s:
                 mjournals = s.query(MonitorJournal).order_by(MonitorJournal.start).all()
                 assert mjournals[2].start == to_time('2018-09-06 15:06:00'), mjournals[2].start
                 # steps
@@ -72,16 +72,16 @@ class TestMonitor(LogTestCase):
 
     def generic_bug(self, files):
         with TemporaryDirectory() as f:
-            args, sys, db = bootstrap_dir(f, m(V), '5')
+            args, data = bootstrap_dir(f, m(V), '5')
             bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
             for file in files:
-                args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'monitor',
-                                               'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
-                monitor(args, sys, db)
+                args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
+                                           'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
+                read(args, data)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(sys, db, args[BASE], PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
+            run_pipeline(data, PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            with db.session_context() as s:
+            with data.db.session_context() as s:
                 # steps
                 summary = s.query(StatisticJournal).join(StatisticName). \
                     filter(StatisticJournal.time >= local_date_to_time('2018-10-07'),
@@ -100,16 +100,16 @@ class TestMonitor(LogTestCase):
     # issue 6
     def test_empty_data(self):
         with TemporaryDirectory() as f:
-            args, sys, db = bootstrap_dir(f, m(V), '5')
+            args, data = bootstrap_dir(f, m(V), '5')
             bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV),
-                                      'monitor', 'data/test/source/other/37140810636.fit')
-            monitor(args, sys, db)
+            args, data = bootstrap_dir(f, m(V), '5', mm(DEV),
+                                      'read', 'data/test/source/other/37140810636.fit')
+            read(args, data)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(sys, db, args[BASE], PipelineType.CALCULATE, n_cpu=1)
+            run_pipeline(data, PipelineType.CALCULATE, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            with db.session_context() as s:
+            with data.db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 44)
+                self.assertEqual(n, 43)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)

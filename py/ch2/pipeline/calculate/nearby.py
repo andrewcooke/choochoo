@@ -252,7 +252,7 @@ class NearbyCalculator(OwnerInMixin, UniProcCalculator):
                     self.save(s, self.dbscan(s, d_min, activity_group), activity_group)
                 except Exception as e:
                     log.warning(f'Failed to find nearby activities for {activity_group.name}: {e}')
-                    log_current_exception()
+                    log_current_exception(traceback=False)
 
     def dbscan(self, s, d, activity_group):
         return NearbySimilarityDBSCAN(s, activity_group, d, 3).run()

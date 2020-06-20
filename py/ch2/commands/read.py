@@ -231,31 +231,30 @@ def upload_files_and_update(record, data, files=tuple(), nfiles=1, force=False, 
     # this expects files to be a list of maps from name to stream (or an iterator, if nfiles provided)
     if not flags:
         flags = defaultdict(lambda: True)
-    with data.db.session_context() as s:
-        n = ActivityJournal.number_of_activities(s)
-        weight = 1 if force else max(1, int(sqrt(n)))
-        log.debug(f'Weight statistics as {weight} ({n} entries)')
     n_options = sum(1 if flags[name] else 0 for name in FLAGS)
     if flags[MONITOR]: n_options += 2
-    progress = SystemProgressTree(data.sys, READ, [1] * n_options + [weight])
+    progress = SystemProgressTree(data.sys, READ, [1] * (n_options + 1))
     log.info(f'Uploading files')
-    upload_files(record, data, files=files, nfiles=nfiles, items=items, progress=progress)
-    # todo - add record to pipelines?
-    if flags[ACTIVITIES]:
-        log.info('Running activity pipelines')
-        run_pipeline(data, PipelineType.READ_ACTIVITY, force=force, progress=progress, **kargs)
-    if flags[MONITOR]:
-        # run before and after so we know what exists before we update, and import what we read
-        log.info('Running monitor pipelines')
-        run_pipeline(data, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
-        with data.db.session_context() as s:
-            try:
-                log.info('Running Garmin download')
-                run_garmin(data.sys, s, base=data.base, progress=progress)
-            except Exception as e:
-                log.warning(f'Could not get data from Garmin: {e}')
-        log.info('Running monitor pipelines (again)')
-        run_pipeline(data, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
-    if flags[CALCULATE]:
-        log.info('Running statistics pipelines')
-        run_statistic_pipelines(data, force=force, progress=progress, **kargs)
+    try:
+        upload_files(record, data, files=files, nfiles=nfiles, items=items, progress=progress)
+        # todo - add record to pipelines?
+        if flags[ACTIVITIES]:
+            log.info('Running activity pipelines')
+            run_pipeline(data, PipelineType.READ_ACTIVITY, force=force, progress=progress, **kargs)
+        if flags[MONITOR]:
+            # run before and after so we know what exists before we update, and import what we read
+            log.info('Running monitor pipelines')
+            run_pipeline(data, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
+            with data.db.session_context() as s:
+                try:
+                    log.info('Running Garmin download')
+                    run_garmin(data.sys, s, base=data.base, progress=progress)
+                except Exception as e:
+                    log.warning(f'Could not get data from Garmin: {e}')
+            log.info('Running monitor pipelines (again)')
+            run_pipeline(data, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
+        if flags[CALCULATE]:
+            log.info('Running statistics pipelines')
+            run_statistic_pipelines(data, force=force, progress=progress, **kargs)
+    finally:
+        progress.complete()

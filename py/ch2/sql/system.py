@@ -70,6 +70,10 @@ class System(MappedDatabase):
         with self.session_context() as s:
             Progress.update(s, name, **kargs)
 
+    def remove_progress(self, name):
+        with self.session_context() as s:
+            Progress.remove(s, name)
+
     def get_percent(self, name):
         with self.session_context() as s:
             return Progress.get_percent(s, name)

@@ -15,6 +15,7 @@ from ...commands.args import mm, FORCE, READ, SQLITE, POSTGRESQL
 from ...data.frame import read_query
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...fit.profile.profile import read_fit
+from ...lib import log_current_exception
 from ...lib.date import time_to_local_date, format_time
 from ...names import N, T, Units
 from ...sql.database import StatisticJournalType, Source
@@ -68,16 +69,17 @@ class SqliteMonitorLoader(SqliteLoader):
                            StatisticName.owner == self._owner).all():
                 n = self._s.query(count(StatisticJournal.id)). \
                     filter(StatisticJournal.statistic_name == name,
-                           StatisticJournal.time >= self.start,
-                           StatisticJournal.time <= self.finish).scalar()
-                if n and self.start and self.finish:
+                           StatisticJournal.time >= self._start,
+                           StatisticJournal.time <= self._finish).scalar()
+                if n and self._start and self._finish:
                     log.debug(f'Deleting {n} overlapping {N.CUMULATIVE_STEPS}')
                     self._s.query(StatisticJournal). \
                         filter(StatisticJournal.statistic_name == name,
-                               StatisticJournal.time >= self.start,
-                               StatisticJournal.time <= self.finish).delete()
+                               StatisticJournal.time >= self._start,
+                               StatisticJournal.time <= self._finish).delete()
         except:
             log.warning('Failed to clean database')
+            log_current_exception()
             self._s.rollback()
             raise
         return dummy

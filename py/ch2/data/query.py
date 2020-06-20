@@ -220,12 +220,13 @@ class Data:
                 name, group = column.split(':', 1)
             else:
                 name, group = column, None
-            statistic_name = self.__statistic_names[name]
-            if group:
-                new_name = N._slash(name, statistic_name.units) + ':' + group
-            else:
-                new_name = N._slash(name, statistic_name.units)
-            op(column, new_name)
+            if name in self.__statistic_names:   # may not have any data
+                statistic_name = self.__statistic_names[name]
+                if group:
+                    new_name = N._slash(name, statistic_name.units) + ':' + group
+                else:
+                    new_name = N._slash(name, statistic_name.units)
+                op(column, new_name)
         return self
 
     def rename_with_units(self, *columns):

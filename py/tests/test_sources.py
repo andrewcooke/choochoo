@@ -28,9 +28,9 @@ class TestSources(LogTestCase):
 
         with TemporaryDirectory() as f:
 
-            args, sys, db = bootstrap_dir(f, m(V), '5', configurator=acooke)
+            args, data = bootstrap_dir(f, m(V), '5', configurator=acooke)
 
-            with db.session_context() as s:
+            with data.db.session_context() as s:
 
                 # add a diary entry
 
@@ -47,7 +47,7 @@ class TestSources(LogTestCase):
                 statistics[0].value = 'hello world'
                 statistics[1].value = 64.5
 
-            with db.session_context() as s:
+            with data.db.session_context() as s:
 
                 # check the diary entry was persisted
 
@@ -64,10 +64,10 @@ class TestSources(LogTestCase):
 
             # generate summary stats
 
-            SummaryCalculator(sys, db, schedule='m').run()
-            SummaryCalculator(sys, db, schedule='y').run()
+            SummaryCalculator(data, schedule='m').run()
+            SummaryCalculator(data, schedule='y').run()
 
-            with db.session_context() as s:
+            with data.db.session_context() as s:
 
                 # check the summary stats
 
@@ -94,14 +94,14 @@ class TestSources(LogTestCase):
                 self.assertEqual(month.start, to_date('2018-09-01'), month.start)
                 self.assertEqual(month.finish, to_date('2018-10-01'), month.finish)
 
-            with db.session_context() as s:
+            with data.db.session_context() as s:
 
                 # delete the diary entry
 
                 journal = DiaryTopicJournal.get_or_add(s, '2018-09-29')
                 s.delete(journal)
 
-            with db.session_context() as s:
+            with data.db.session_context() as s:
 
                 # check the delete cascade
 

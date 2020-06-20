@@ -180,6 +180,10 @@ class Progress(SystemBase):
                 raise AttributeError(name)
 
     @classmethod
+    def remove(cls, s, name):
+        s.query(Progress).filter(Progress.name == name).delete()
+
+    @classmethod
     def get_percent(cls, s, name, delta_seconds=3):
         progress = s.query(Progress).filter(Progress.name == name).one_or_none()
         if progress is None or not exists(progress.pid, progress.start, delta_seconds=delta_seconds):

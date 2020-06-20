@@ -17,14 +17,14 @@ class TestConstant(LogTestCase):
 
     def test_constant(self):
         with TemporaryDirectory() as f:
-            args, sys, db = bootstrap_dir(f, m(V), '5')
+            args, data = bootstrap_dir(f, m(V), '5')
             bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            with db.session_context() as s:
+            with data.db.session_context() as s:
                 n = s.query(count(Constant.id)).scalar()
                 self.assertEqual(n, 14)
-            args, sys, db = bootstrap_dir(f, m(V), '5', 'constants', 'set', 'fthr:%', '154', mm(FORCE))
-            constants(args, sys, db)
-            with db.session_context() as s:
+            args, data = bootstrap_dir(f, m(V), '5', 'constants', 'set', 'fthr:%', '154', mm(FORCE))
+            constants(args, data)
+            with data.db.session_context() as s:
                 n = s.query(count(Constant.id)).scalar()
                 self.assertEqual(n, 14)
                 # todo - maybe test for value?

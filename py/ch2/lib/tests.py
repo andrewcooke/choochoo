@@ -194,7 +194,7 @@ class CSVEqualContext(TextBufferContext):
                     self.compare_rows(row, us_row, them_row, us_data)
 
     def build_dict(self, row):
-        return dict((name, (value, units)) for name, value, units in grouper(row, 3))
+        return dict((name, (value, units)) for name, value, units in grouper(row, 3, fillvalue=None))
 
     def compare_rows(self, row, us_row, them_row, us_data):
         if us_row[0] == 'CompressedTimestamp': us_row[0] = 'Data'

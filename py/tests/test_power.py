@@ -3,7 +3,7 @@ from tempfile import TemporaryDirectory
 
 import pandas as pd
 
-from ch2 import activities
+from ch2.commands.read import read
 from ch2.commands.args import bootstrap_dir, mm, DEV, V, m
 from ch2.config.profile.default import default
 from ch2.data import Names as N, Statistics
@@ -21,11 +21,11 @@ class TestPower(LogTestCase):
 
             bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
 
-            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
-                                          'data/test/source/personal/2018-03-04-qdp.fit')
-            activities(args, sys, db)
+            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
+                                       'data/test/source/personal/2018-03-04-qdp.fit')
+            read(args, data)
 
-            with db.session_context() as s:
+            with data.db.session_context() as s:
                 stats = Statistics(s, activity_journal='2018-03-04 07:16:33', with_timespan=True). \
                     by_name(SegmentReader, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X,
                             N.SPHERICAL_MERCATOR_Y, N.DISTANCE, N.ELEVATION, N.SPEED, N.CADENCE, N.HEART_RATE).df

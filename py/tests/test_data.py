@@ -22,8 +22,8 @@ class TestData(LogTestCase):
         power = Power('${bike}', '${weight}')
 
         with TemporaryDirectory() as f:
-            args, sys, db = bootstrap_dir(f, m(V), '5')
-            with db.session_context() as s:
+            args, data = bootstrap_dir(f, m(V), '5')
+            with data.db.session_context() as s:
                 source = Source(type=SourceType.SOURCE)
                 s.add(source)
                 StatisticJournalText.add(s, 'Bike', None, None, self, source, '{"mass": 42}', '1980-01-01')
