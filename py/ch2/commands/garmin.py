@@ -4,7 +4,7 @@ from time import sleep
 
 from requests import HTTPError
 
-from .args import DIR, USER, PASS, DATE, FORCE, base_system_path, PERMANENT, BASE
+from .args import DIR, USER, PASS, DATE, FORCE, base_system_path, PERMANENT, BASE, mm
 from ..fit.download.connect import GarminConnect
 from ..lib import now, local_time_to_time, time_to_local_time
 from ..lib.log import log_current_exception
@@ -72,13 +72,18 @@ def run_garmin(sys, s, dir=None, base=None, user=None, password=None, dates=None
                 sleep(1)
             log.info('Downloading data for %s' % date)
             try:
-                with local_progress.increment_or_complete():
-                    connect.get_monitoring_to_fit_file(date, data_dir, old_format=old_format)
+                connect.get_monitoring_to_fit_file(date, data_dir, old_format=old_format)
+                local_progress.increment()
             except HTTPError:
                 log_current_exception(traceback=False)
-                log.info('End of data')
-                sys.set_constant(SystemConstant.LAST_GARMIN, time_to_local_time(now()), True)
-                return
+                if force:
+                    log.warning(f'No data for {date}, but continuing ({mm(FORCE)})')
+                else:
+                    log.info('End of data')
+                    break
+
+        sys.set_constant(SystemConstant.LAST_GARMIN, time_to_local_time(now()), True)
+        return
 
     finally:
         local_progress.complete()
