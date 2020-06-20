@@ -100,7 +100,6 @@ F = 'f'
 FAST = 'fast'
 FIELD = 'field'
 FIELDS = 'fields'
-FILENAME_KIT = 'filename-kit'
 FIX = 'fix'
 FINISH = 'finish'
 FIX_CHECKSUM = 'fix-checksum'
@@ -288,9 +287,9 @@ def make_parser(with_noop=False):
 
     # high-level commands used daily
 
-    help = subparsers.add_parser(HELP, help='display help')
-    help.add_argument(TOPIC, nargs='?', metavar=TOPIC,
-                      help='the subject for help')
+    help = subparsers.add_parser(HELP, help='display help',
+                                 description='display additional help (beyond -h) for any command')
+    help.add_argument(TOPIC, nargs='?', metavar=TOPIC, help='the subject for help')
 
     def add_uri_options(parser, required):
         database_uri = parser.add_mutually_exclusive_group(required=required)
@@ -300,7 +299,8 @@ def make_parser(with_noop=False):
                                   help='use a postgresql database with standard parameters')
         database_uri.add_argument(mm(URI), help='use the given database URI')
 
-    web = subparsers.add_parser(WEB, help='the web interface (probably all you need)')
+    web = subparsers.add_parser(WEB, help='the web interface (probably all you need)',
+                                description='start, stop and manage the web interface')
     web_cmds = web.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
 
     def add_web_server_args(cmd, prefix='', default_address='localhost', default_port=WEB_PORT):
@@ -312,29 +312,32 @@ def make_parser(with_noop=False):
 
     def add_warning_args(cmd):
         prefix = WARN + '-'
-        cmd.add_argument(mm(prefix + DATA), action='store_true', help='Warn user that data may be lost')
-        cmd.add_argument(mm(prefix + SECURE), action='store_true', help='Warn user that the system is insecure')
+        cmd.add_argument(mm(prefix + DATA), action='store_true', help='warn user that data may be lost')
+        cmd.add_argument(mm(prefix + SECURE), action='store_true', help='warn user that the system is insecure')
 
-    web_start = web_cmds.add_parser(START, help='start the web server')
+    web_start = web_cmds.add_parser(START, help='start the web server', description='start the web server')
     add_web_server_args(web_start, prefix=WEB)
     add_web_server_args(web_start, prefix=JUPYTER, default_port=JUPYTER_PORT)
     add_web_server_args(web_start, prefix=PROXY, default_port=None, default_address=None)
     add_warning_args(web_start)
-    web_cmds.add_parser(STOP, help='stop the web server')
-    web_cmds.add_parser(STATUS, help='display status of web server')
-    web_service = web_cmds.add_parser(SERVICE, help='internal use only - use start/stop')
+    web_cmds.add_parser(STOP, help='stop the web server', description='stop the web server')
+    web_cmds.add_parser(STATUS, help='display status of web server', description='display status of web server')
+    web_service = web_cmds.add_parser(SERVICE, help='internal use only - use start/stop',
+                                      description='internal use only - use start/stop')
     add_web_server_args(web_service, prefix=WEB)
     add_web_server_args(web_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
     add_web_server_args(web_service, prefix=PROXY, default_port=None, default_address=None)
     add_warning_args(web_service)
     add_uri_options(web_service, False)
 
-    read = subparsers.add_parser(READ, help='read data (also calls calculate)')
+    read = subparsers.add_parser(READ, help='read data (also calls calculate)',
+                                 description='read data (copy it to the permanent store) and '
+                                             'calculate statistics (add information to the database)')
     read.add_argument(mm(FORCE), action='store_true', help='reprocess existing data')
     read.add_argument(mm(KIT), m(K), action='append', default=[], metavar='ITEM',
                       help='kit items associated with activities')
-    read.add_argument(PATH, metavar='PATH', nargs='*', default=[], help='path to fit file(s) for activities')
-    read.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
+    read.add_argument(PATH, metavar='PATH', nargs='*', default=[], help='path to FIT file(s) containing data')
+    read.add_argument(mm(KARG), m(K.upper()), action='append', default=[], metavar='NAME=VALUE',
                       help='keyword argument to be passed to the pipelines (can be repeated)')
     read.add_argument(mm(WORKER), metavar='ID', type=int, help='internal use only (identifies sub-process workers)')
     read.add_argument(mm(DISABLE), action='store_true', help='disable following options (they enable by default)')
@@ -342,101 +345,124 @@ def make_parser(with_noop=False):
     read.add_argument(mm(MONITOR), action='store_true', help='enable (or disable) processing of monitor data')
     read.add_argument(mm(CALCULATE), action='store_true', help='enable (or disable) calculating statistics')
 
-    def add_search_query(cmd):
-        cmd.add_argument(QUERY, metavar='QUERY', default=[], nargs='+',
-                         help='search terms (similar to SQL)')
+    def add_search_query(cmd, query_help='search terms (similar to SQL)'):
+        cmd.add_argument(QUERY, metavar='QUERY', default=[], nargs='+', help=query_help)
         cmd.add_argument(mm(SHOW), metavar='NAME', default=[], nargs='+',
                          help='show value from matching entries')
         cmd.add_argument(mm(SET), metavar='NAME=VALUE', help='update matching entries')
 
-    search = subparsers.add_parser(SEARCH, help='search the database')
+    search = subparsers.add_parser(SEARCH, help='search the database', description='search the database')
     search_cmds = search.add_subparsers(title='search target', dest=SUB_COMMAND, required=True)
-    search_text = search_cmds.add_parser(TEXT, help='search for text in activities')
-    add_search_query(search_text)
-    search_activities = search_cmds.add_parser(ACTIVITIES, help='search for activities')
+    search_text = search_cmds.add_parser(TEXT, help='search for text in activities',
+                                         description='search for text in activities')
+    add_search_query(search_text, query_help='words to search for')
+    search_activities = search_cmds.add_parser(ACTIVITIES, help='search for activities',
+                                               description='search for activities')
     add_search_query(search_activities)
-    search_sources = search_cmds.add_parser(SOURCES, help='search for sources')
+    search_sources = search_cmds.add_parser(SOURCES, help='search for sources',
+                                            description='search for sources')
     add_search_query(search_sources)
 
-    constants = subparsers.add_parser(CONSTANTS, help='set and examine constants')
+    constants = subparsers.add_parser(CONSTANTS, help='set and examine constants',
+                                      description='set and examine constants')
     constants_cmds = constants.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    constants_list = constants_cmds.add_parser(LIST, help='list all names')
-    constants_show = constants_cmds.add_parser(SHOW, help='show a value (or all values)')
+    constants_list = constants_cmds.add_parser(LIST, help='list all constant names',
+                                               description='list all constant names')
+    constants_show = constants_cmds.add_parser(SHOW, help='show a value (or all values)',
+                                               description='show a constant\'s value (or all values)')
     constants_show.add_argument(NAME, nargs='?', metavar='NAME', help='name (omit for all)')
     constants_show.add_argument(DATE, nargs='?', metavar='DATE',
                                help='date of value to show (omit for all)')
-    constants_add = constants_cmds.add_parser(ADD, help='add a new constant')
+    constants_add = constants_cmds.add_parser(ADD, help='add a new constant name',
+                                              description='add a new constant name')
     constants_add.add_argument(NAME, metavar='NAME', help='name')
     constants_add.add_argument(mm(SINGLE), action='store_true', help='allow only a single (constant) value')
     constants_add.add_argument(mm(DESCRIPTION), help='optional description')
     constants_add.add_argument(mm(VALIDATE), help='optional validation class')
-    constants_set = constants_cmds.add_parser(SET, help='set or modify a value')
+    constants_set = constants_cmds.add_parser(SET, help='set or modify a value',
+                                              description='set or modify a constant\'s value')
     constants_set.add_argument(NAME, metavar='NAME', help='name')
     constants_set.add_argument(VALUE, metavar='VALUE', help='value')
     constants_set.add_argument(DATE, nargs='?', metavar='DATE',
                               help='date when measured (omit for all time)')
     constants_set.add_argument(mm(FORCE), action='store_true', help='allow over-writing existing values')
-    constants_unset = constants_cmds.add_parser(UNSET, help='delete a value (or all values)')
+    constants_unset = constants_cmds.add_parser(UNSET, help='delete a value (or all values)',
+                                                description='delete a value (or all values)')
     constants_unset.add_argument(NAME, metavar='NAME', help='name')
     constants_unset.add_argument(DATE, nargs='?', metavar='DATE',
                                  help='date of value to delete (omit for all)')
     constants_unset.add_argument(mm(FORCE), action='store_true', help='allow deletion of all values')
-    constants_remove = constants_cmds.add_parser(REMOVE, help='remove a constant (after deleting all values)')
+    constants_remove = constants_cmds.add_parser(REMOVE, help='remove a constant (after deleting all values)',
+                                                 description='remove a constant\'s name (after deleting all values)')
     constants_remove.add_argument(NAME, metavar='NAME', help='name')
     constants_remove.add_argument(mm(FORCE), action='store_true', help='allow remove of multiple constants')
 
-    validate = subparsers.add_parser(VALIDATE, help='check (and optionally fix) data in the database')
+    validate = subparsers.add_parser(VALIDATE, help='check (and optionally fix) data in the database',
+                                     description='check (and optionally fix) data in the database')
     validate.add_argument(mm(FIX), action='store_true', help='correct errors when possible')
 
-    jupyter = subparsers.add_parser(JUPYTER, help='access jupyter')
+    jupyter = subparsers.add_parser(JUPYTER, help='data analysis in jupyter',
+                                    description='data analysis in jupyter')
     jupyter_cmds = jupyter.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    jupyter_cmds.add_parser(LIST, help='list available templates')
-    jupyter_show = jupyter_cmds.add_parser(SHOW, help='display a template (starting server if needed)')
-    jupyter_show.add_argument(NAME, help='the template name')
-    jupyter_show.add_argument(ARG, nargs='*', help='template arguments')
+    jupyter_cmds.add_parser(LIST, help='list available templates',
+                            description='list available templates and parameters for jupyter')
+    jupyter_show = jupyter_cmds.add_parser(SHOW, help='display a template (starting server if needed)',
+                                           description='display a template in jupyter (starting server if needed)')
+    jupyter_show.add_argument(NAME, metavar='NAME', help='the template name')
+    jupyter_show.add_argument(ARG, nargs='*', metavar='PARAM', help='template arguments')
     add_web_server_args(jupyter_show, prefix=JUPYTER, default_port=JUPYTER_PORT)
     add_web_server_args(jupyter_show, prefix=PROXY, default_port=None, default_address=None)
-    jupyter_start = jupyter_cmds.add_parser(START, help='start a background service')
+    jupyter_start = jupyter_cmds.add_parser(START, help='start a background service',
+                                            description='start jupyter as a background service')
     add_web_server_args(jupyter_start, prefix=JUPYTER, default_port=JUPYTER_PORT)
     add_web_server_args(jupyter_start, prefix=PROXY, default_port=None, default_address=None)
-    jupyter_cmds.add_parser(STOP, help='stop the background service')
+    jupyter_cmds.add_parser(STOP, help='stop the background service',
+                            description='stop the jupyter background service')
     jupyter_cmds.add_parser(STATUS, help='display status of background service')
-    jupyter_service = jupyter_cmds.add_parser(SERVICE, help='internal use only - use start/stop')
+    jupyter_service = jupyter_cmds.add_parser(SERVICE, help='internal use only - use start/stop',
+                                              description='internal use only - use start/stop')
     add_web_server_args(jupyter_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
     add_web_server_args(jupyter_service, prefix=PROXY, default_port=None, default_address=None)
 
-    kit = subparsers.add_parser(KIT, help='manage kit')
+    kit = subparsers.add_parser(KIT, help='manage kit',
+                                description='add, remove, modify and display kit details')
     kit_cmds = kit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    kit_start = kit_cmds.add_parser(START, help='define a new item (new bike, new shoe)')
+    kit_start = kit_cmds.add_parser(START, help='define a new item (new bike, new shoe)',
+                                    description='define a new item (new bike, new shoe)')
     kit_start.add_argument(GROUP, help='item group (bike, shoe, etc)')
     kit_start.add_argument(ITEM, help='item name (cotic, adidas, etc)')
     kit_start.add_argument(DATE, nargs='?', help='when created (default now)')
     kit_start.add_argument(mm(FORCE), action='store_true', help='confirm creation of a new group')
-    kit_finish = kit_cmds.add_parser(FINISH, help='retire an item')
+    kit_finish = kit_cmds.add_parser(FINISH, help='retire an item',
+                                     description='retire an item (bike, shoe)')
     kit_finish.add_argument(ITEM, help='item name')
     kit_finish.add_argument(DATE, nargs='?', help='when to retire (default now)')
     kit_finish.add_argument(mm(FORCE), action='store_true', help='confirm change of existing date')
-    kit_delete = kit_cmds.add_parser(DELETE, help='remove all entries for an item or group')
+    kit_delete = kit_cmds.add_parser(DELETE, help='remove all entries for an item or group',
+                                     description='remove all entries for an item or group')
     kit_delete.add_argument(NAME, help='item or group to delete')
     kit_delete.add_argument(mm(FORCE), action='store_true', help='confirm group deletion')
-    kit_change = kit_cmds.add_parser(CHANGE, help='replace (or add) a part (wheel, innersole, etc)')
+    kit_change = kit_cmds.add_parser(CHANGE, help='replace (or add) a part (wheel, innersole, etc)',
+                                     description='replace (or add) a part (wheel, innersole, etc)')
     kit_change.add_argument(ITEM, help='item name (cotic, adidas, etc)')
     kit_change.add_argument(COMPONENT, help='component type (chain, laces, etc)')
     kit_change.add_argument(MODEL, help='model description')
     kit_change.add_argument(DATE, nargs='?', help='when changed (default now)')
     kit_change.add_argument(mm(FORCE), action='store_true', help='confirm creation of a new component')
     kit_change.add_argument(mm(START), action='store_true', help='set default date to start of item')
-    kit_undo = kit_cmds.add_parser(UNDO, help='remove a change')
+    kit_undo = kit_cmds.add_parser(UNDO, help='remove a change', description='remove a change')
     kit_undo.add_argument(ITEM, help='item name')
     kit_undo.add_argument(COMPONENT, help='component type')
     kit_undo.add_argument(MODEL, help='model description')
     kit_undo.add_argument(DATE, nargs='?', help='active date (to disambiguate models; default now)')
     kit_undo.add_argument(mm(ALL), action='store_true', help='remove all models (rather than single date)')
-    kit_show = kit_cmds.add_parser(SHOW, help='display kit data')
+    kit_show = kit_cmds.add_parser(SHOW, help='display kit data',
+                                   description='display kit data (show what stuff you use)')
     kit_show.add_argument(NAME, nargs='?', help='group or item to display (default all)')
     kit_show.add_argument(DATE, nargs='?', help='when to display (default now)')
     kit_show.add_argument(mm(CSV), action='store_true', help='CSV format')
-    kit_statistics = kit_cmds.add_parser(STATISTICS, help='display statistics')
+    kit_statistics = kit_cmds.add_parser(STATISTICS, help='display statistics',
+                                         description='display kit statistics')
     kit_statistics.add_argument(NAME, nargs='?', help='group, item, component or model')
     kit_statistics.add_argument(mm(CSV), action='store_true', help='CSV format')
     kit_rebuild = kit_cmds.add_parser(REBUILD, help='rebuild database entries')
@@ -492,7 +518,7 @@ def make_parser(with_noop=False):
                            help='exclude matching pipeline classes')
     calculate.add_argument(START, metavar='START', nargs='?', help='optional start date')
     calculate.add_argument(FINISH, metavar='FINISH', nargs='?', help='optional finish date (if start also given)')
-    calculate.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
+    calculate.add_argument(mm(KARG), m(K.upper()), action='append', default=[], metavar='NAME=VALUE',
                            help='keyword argument to be passed to the pipelines (can be repeated)')
     calculate.add_argument(mm(WORKER), metavar='ID', type=int,
                            help='internal use only (identifies sub-process workers)')

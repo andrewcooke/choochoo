@@ -6,7 +6,7 @@ from sqlalchemy.sql.functions import count
 
 from .utils import AbortImportButMarkScanned, MultiProcFitReader
 from ... import FatalException
-from ...commands.args import mm, FORCE, DEFAULT, no, FILENAME_KIT, READ
+from ...commands.args import mm, FORCE, DEFAULT, no, READ
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
@@ -56,11 +56,10 @@ class ActivityReader(MultiProcFitReader):
         _, kit = split_fit_path(path)
         if kit:
             if ActivityReader.KIT in define and define[ActivityReader.KIT] != kit:
-                log.warning(f'Changing {ActivityReader.KIT} from {define[ActivityReader.KIT]} '
-                            f'(given on command line) to {kit} (inferred from file name.  '
-                            f'Use {mm(no(FILENAME_KIT))} to discard filename value.')
-            log.debug(f'Adding {ActivityReader.KIT}={kit} to definitions')
-            define[ActivityReader.KIT] = kit
+                log.warning(f'Ignoring {kit} from filename since value given '
+                            f'({define[ActivityReader.KIT]}) on command line')
+            else:
+                define[ActivityReader.KIT] = kit
         else:
             log.debug(f'No {ActivityReader.KIT} in {path}')
         return define

@@ -1,9 +1,9 @@
 from io import StringIO
 from tempfile import TemporaryDirectory
 
-from ch2.commands.read import read
-from ch2.commands.args import bootstrap_dir, m, V, mm, DEV, D, BASE, no, KIT, FILENAME_KIT
+from ch2.commands.args import bootstrap_dir, m, V, mm, DEV, K, READ
 from ch2.commands.kit import start, change, finish, show, undo, statistics
+from ch2.commands.read import read
 from ch2.config.profile.default import default
 from ch2.diary.model import TYPE
 from ch2.lib import now, local_date_to_time
@@ -175,15 +175,6 @@ class TestKit(LogTestCase):
         with TemporaryDirectory() as f:
 
             args, data = bootstrap_dir(f, m(V), '5', configurator=default)
-            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
-                                           'data/test/source/personal/2018-08-03-rec.fit',
-                                           m(D.upper())+'kit=cotic', mm(no(FILENAME_KIT)))
-            read(args, data)
-            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
-                                           'data/test/source/personal/2018-08-27-rec.fit',
-                                           m(D.upper())+'kit=cotic', mm(no(FILENAME_KIT)))
-            read(args, data)
-            run_pipeline(data, PipelineType.CALCULATE, like=['%Activity%'], n_cpu=1)
 
             with data.db.session_context() as s:
                 start(s, 'bike', 'cotic', '2018-01-01', True)
@@ -195,6 +186,16 @@ class TestKit(LogTestCase):
                 change(s, 'cotic', 'chain', 'sram', '2018-04-01', False, False)
                 start(s, 'bike', 'bowman', '2018-01-01', False)
                 change(s, 'bowman', 'chain', 'sram', None, False, True)
+
+            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), READ,
+                                       'data/test/source/personal/2018-08-03-rec.fit',
+                                       m(K), 'cotic')
+            read(args, data)
+            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), READ,
+                                       'data/test/source/personal/2018-08-27-rec.fit',
+                                       m(K), 'cotic')
+            read(args, data)
+            run_pipeline(data, PipelineType.CALCULATE, like=['%Activity%'], n_cpu=1)
 
             run_pipeline(data, PipelineType.CALCULATE, like=['%Kit%'], n_cpu=1)
 

@@ -2,15 +2,15 @@ from logging import getLogger
 from sys import stdout
 
 from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, CALCULATE, NAME, SHOW, CSV, \
-    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT, CMD, VALUE, BASE
-from ..names import Units, Names
+    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT, CMD, VALUE, STATISTICS
 from ..diary.model import TYPE, UNITS
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_km, \
     is_local_time
 from ..lib.date import format_minutes
 from ..lib.tree import to_tree, to_csv
-from ..pipeline.pipeline import run_pipeline
+from ..names import Units, Names
 from ..pipeline.calculate.kit import KitCalculator
+from ..pipeline.pipeline import run_pipeline
 from ..sql import PipelineType
 from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name, ADDED, EXPIRED, N, INDIVIDUAL
 from ..sql.tables.source import Composite
@@ -87,7 +87,7 @@ but in general must be unique.  They can contain spaces if quoted.
                 undo(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[ALL])
             elif cmd == SHOW:
                 show(s, args[NAME], args[DATE], csv=args[CSV], output=output)
-            elif cmd == CALCULATE:
+            elif cmd == STATISTICS:
                 statistics(s, args[NAME], csv=args[CSV], output=output)
             elif cmd == DUMP:
                 dump(s, args[CMD])
@@ -231,9 +231,9 @@ def stats_children(model):
 def to_stats(model):
     if TYPE in model:
         label = f'{model[TYPE]}: {model[NAME]}'
-        if CALCULATE in model:
+        if STATISTICS in model:
             log.debug(f'Extracting statistics from {model[TYPE]}')
-            return label, model[CALCULATE]
+            return label, model[STATISTICS]
         else:
             log.debug('No statistics in model')
             return label, None
