@@ -59,30 +59,7 @@ def missing_dates(s, force=False):
         log.warning('No dates to download')
 
 
-class SqliteMonitorLoader(SqliteLoader):
-
-    def _preload(self):
-        dummy = super()._preload()
-        try:
-            for name in self._s.query(StatisticName). \
-                    filter(StatisticName.name == N.CUMULATIVE_STEPS,
-                           StatisticName.owner == self._owner).all():
-                n = self._s.query(count(StatisticJournal.id)). \
-                    filter(StatisticJournal.statistic_name == name,
-                           StatisticJournal.time >= self._start,
-                           StatisticJournal.time <= self._finish).scalar()
-                if n and self._start and self._finish:
-                    log.debug(f'Deleting {n} overlapping {N.CUMULATIVE_STEPS}')
-                    self._s.query(StatisticJournal). \
-                        filter(StatisticJournal.statistic_name == name,
-                               StatisticJournal.time >= self._start,
-                               StatisticJournal.time <= self._finish).delete()
-        except:
-            log.warning('Failed to clean database')
-            log_current_exception()
-            self._s.rollback()
-            raise
-        return dummy
+class MonitorLoaderMixin:
 
     def _resolve_duplicate(self, name, instance, prev):
         log.warning(f'Using max of duplicate values at {instance.time} for {name} '
@@ -90,12 +67,10 @@ class SqliteMonitorLoader(SqliteLoader):
         prev.value = max(prev.value, instance.value)
 
 
-class PostgresqlMonitorLoader(PostgresqlLoader):
+class SqliteMonitorLoader(MonitorLoaderMixin, SqliteLoader): pass
 
-    def _resolve_duplicate(self, name, instance, prev):
-        log.warning(f'Using max of duplicate values at {instance.time} for {name} '
-                    f'({instance.value}/{prev.value})')
-        prev.value = max(prev.value, instance.value)
+
+class PostgresqlMonitorLoader(MonitorLoaderMixin, PostgresqlLoader): pass
 
 
 

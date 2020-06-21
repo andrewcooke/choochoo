@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 import sqlalchemy.sql.functions as func
 
 from ch2.commands.read import read
-from ch2.commands.args import bootstrap_dir, m, V, DEV, mm, BASE
+from ch2.commands.args import bootstrap_dir, m, V, DEV, mm, BASE, MONITOR
 from ch2.config.profile.default import default
 from ch2.lib.date import to_time, local_date_to_time
 from ch2.sql.tables.monitor import MonitorJournal
@@ -44,10 +44,12 @@ class TestMonitor(LogTestCase):
             bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
             for file in ('24696157869', '24696160481', '24696163486'):
                 args, data = bootstrap_dir(f, m(V), '5', mm(DEV),
-                                          'read', 'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
+                                           'read', mm(MONITOR),
+                                           'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                 read(args, data)
-            # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(data, PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
+            # path = args.system_path(subdir='data', file='activity.db')
+            # run(f'sqlite3 {path} ".dump"', shell=True)
+            run_pipeline(data, PipelineType.CALCULATE, force=True, like=('%Monitor%',), start='2018-01-01', n_cpu=1)
             with data.db.session_context() as s:
                 mjournals = s.query(MonitorJournal).order_by(MonitorJournal.start).all()
                 assert mjournals[2].start == to_time('2018-09-06 15:06:00'), mjournals[2].start
