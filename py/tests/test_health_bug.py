@@ -13,5 +13,4 @@ class TestHealthBug(LogTestCase):
         s = session('-v2')
         df = std_health_statistics(s)
         print(df.describe())
-        print(df.columns)
-        print(df[N.REST_HR].describe())
+        print(df[N.REST_HR_BPM].describe())
