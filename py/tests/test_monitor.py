@@ -34,7 +34,7 @@ class TestMonitor(LogTestCase):
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with data.db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 133)
+                self.assertEqual(n, 137)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)
 
@@ -112,6 +112,6 @@ class TestMonitor(LogTestCase):
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with data.db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 43)
+                self.assertEqual(n, 44)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)
