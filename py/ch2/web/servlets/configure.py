@@ -114,7 +114,9 @@ class Configure:
         data = request.json
         log.debug(data)
         constant = Constant.from_name(s, data[NAME])
-        value = dumps(data[VALUES][0][VALUE])
+        value = data[VALUES][0][VALUE]
+        if constant.validate_cls:
+            value = dumps(value)
         time = data[VALUES][0][TIME]
         statistic_journal_id = data[VALUES][0][STATISTIC]
         if statistic_journal_id:
@@ -129,3 +131,8 @@ class Configure:
                 log.warning(f'Ignoring time for {constant.name}')
                 time = 0.0
             constant.add_value(s, value, time=time)
+
+    def delete_constant(self, request, s):
+        data = request.json
+        log.debug(data)
+        s.delete(Constant.from_name(s, data))

@@ -101,6 +101,9 @@ class Constant(Source):
     def __str__(self):
         return 'Constant "%s"' % self.name
 
+    def time_range(self, s):
+        return None, None
+
 
 class Validate(ABC):
 

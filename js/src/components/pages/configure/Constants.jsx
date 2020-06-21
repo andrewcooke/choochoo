@@ -12,6 +12,9 @@ const useStyles = makeStyles(theme => ({
     paper: {
         padding: theme.spacing(1),
     },
+    delete: {
+        marginBottom: theme.spacing(1),
+    },
 }));
 
 
@@ -31,7 +34,7 @@ function isComposite(value) {
 
 
 const EDIT_WIDTH = 10;
-const SAVE_WIDTH = 2;
+const BTN_WIDTH = 2;
 
 
 function Field(props) {
@@ -135,18 +138,37 @@ function DatedConstant(props) {
         <Description constant={constant}/>
         {newConstant.values.map((entry, i) =>
             <DatedValue index={i} constantState={constantState} key={i}/>)}
-        <ConfirmedWriteButton xs={SAVE_WIDTH} label='Save' disabled={newConstant === constant}
-                              href='/api/configure/constant' setData={reload}
-                              json={convertTypes(newConstant)}>
-            Modifying the constant will change how data are processed.
-        </ConfirmedWriteButton>
+        <Grid item xs={BTN_WIDTH}>
+            <Delete disabled={newConstant !== constant} href='/api/configure/delete-constant'
+                    reload={reload} json={constant.name}/>
+            <Save disabled={newConstant === constant} href='/api/configure/constant'
+                  reload={reload} json={convertTypes(newConstant)}/>
+        </Grid>
         <DatedValue constantState={extraState}/>
-        <ConfirmedWriteButton xs={SAVE_WIDTH} label='Add' disabled={extra.values[0].value === ''}
+        <ConfirmedWriteButton xs={BTN_WIDTH} label='Add' disabled={extra.values[0].value === ''}
                               href='/api/configure/constant' setData={reload}
                               json={convertTypes(extra)}>
             Adding a new value for the constant will change how data are processed.
         </ConfirmedWriteButton>
     </ColumnCard>);
+}
+
+
+function Save(props) {
+    const {xs=12, disabled=false, href, reload, json} = props;
+    return (<ConfirmedWriteButton xs={xs} label='Save' disabled={disabled}
+                                  href={href} setData={reload} json={json}>
+        Modifying the constant will change how data are processed.
+    </ConfirmedWriteButton>);
+}
+
+function Delete(props) {
+    const {xs=12, href, reload, json} = props;
+    const classes = useStyles();
+    return (<ConfirmedWriteButton className={classes.delete} xs={xs} label='Delete'
+                                  href={href} setData={reload} json={json}>
+        Deleting the constant will change how data are processed.
+    </ConfirmedWriteButton>);
 }
 
 
@@ -162,11 +184,12 @@ function UndatedConstant(props) {
     return (<ColumnCard header={constant.name}>
         <Description constant={constant}/>
         <UndatedValue constantState={constantState}/>
-        <ConfirmedWriteButton xs={SAVE_WIDTH} label='Save' disabled={newConstant === constant}
-                              href='/api/configure/constant' setData={reload}
-                              json={convertTypes(newConstant)}>
-            Modifying the constant will change how data are processed.
-        </ConfirmedWriteButton>
+        <Grid item xs={BTN_WIDTH}>
+            <Delete disabled={newConstant !== constant} href='/api/configure/delete-constant'
+                    reload={reload} json={constant.name}/>
+            <Save disabled={newConstant === constant} href='/api/configure/constant'
+                  reload={reload} json={convertTypes(newConstant)}/>
+        </Grid>
     </ColumnCard>);
 }
 
