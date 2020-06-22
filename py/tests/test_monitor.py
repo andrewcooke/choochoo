@@ -72,16 +72,19 @@ class TestMonitor(LogTestCase):
 
     FILES = ('25505915679', '25519562859', '25519565531', '25532154264', '25539076032', '25542112328')
 
-    def generic_bug(self, files):
+    def generic_bug(self, files, join=False):
         with TemporaryDirectory() as f:
             args, data = bootstrap_dir(f, m(V), '5')
             bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            for file in files:
-                args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
-                                           'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
+            if join:
+                files = ['data/test/source/personal/andrew@acooke.org_%s.fit' % file for file in files]
+                args, data = bootstrap_dir(f, mm(DEV), 'read', *files)
                 read(args, data)
-            # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(data, PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
+            else:
+                for file in files:
+                    args, data = bootstrap_dir(f, mm(DEV), 'read',
+                                               'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
+                    read(args, data)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with data.db.session_context() as s:
                 # steps
@@ -98,6 +101,12 @@ class TestMonitor(LogTestCase):
 
     def test_bug_reversed(self):
         self.generic_bug(sorted(self.FILES, reverse=True))
+
+    def test_bug_join(self):
+        self.generic_bug(sorted(self.FILES), join=True)
+
+    def test_bug_reversed_join(self):
+        self.generic_bug(sorted(self.FILES, reverse=True), join=True)
 
     # issue 6
     def test_empty_data(self):

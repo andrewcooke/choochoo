@@ -28,21 +28,21 @@ class MonitorCalculator(OwnerInMixin, LoaderMixin, MultiProcCalculator):
 
     def _missing(self, s):
         # any day that has an unused monitor journal is a missing day
+        start, finish = self._start_finish(local_date_to_time)
         Composite.clean(s)
         used_sources = s.query(CompositeComponent.input_source_id). \
             join(StatisticJournal, CompositeComponent.output_source_id == StatisticJournal.source_id). \
             join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
             filter(StatisticName.owner == self.owner_out)
-        sources = s.query(MonitorJournal).filter(~MonitorJournal.id.in_(used_sources))
-        start, finish = self._start_finish(local_date_to_time)
+        unused_sources = s.query(MonitorJournal).filter(~MonitorJournal.id.in_(used_sources))
         if start:
-            sources = sources.filter(MonitorJournal.finish >= start)
+            unused_sources = unused_sources.filter(MonitorJournal.finish >= start)
         if finish:
             # don't extend finish - it's 'one past the end'
-            sources = sources.filter(MonitorJournal.start <= finish)
+            unused_sources = unused_sources.filter(MonitorJournal.start < finish)
         dates = set()
         start, finish = self._start_finish(lambda x: to_date(x, none=True))
-        for source in sources.all():
+        for source in unused_sources.all():
             for date in self._dates_for_source(source):
                 if (start is None or start <= date) and (finish is None or date <= finish):
                     dates.add(date)
@@ -54,7 +54,7 @@ class MonitorCalculator(OwnerInMixin, LoaderMixin, MultiProcCalculator):
     @staticmethod
     def _dates_for_source(mjournal):
         start = time_to_local_date(mjournal.start)
-        finish = time_to_local_date(mjournal.finish)
+        finish = time_to_local_date(mjournal.finish) + dt.timedelta(days=1)
         while start <= finish:
             yield start
             start += dt.timedelta(days=1)

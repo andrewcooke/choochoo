@@ -186,14 +186,15 @@ class MonitorReader(MultiProcFitReader, LoaderMixin):
             # otherwise, shorten a so it finishes where b starts
             q = s.query(StatisticJournal). \
                 filter(StatisticJournal.source == a,
-                       StatisticJournal.time > b.start)
+                       StatisticJournal.time >= b.start)
             count = q.count()
             if count:
                 # not really a warning because we expect this
-                log.debug(f'Shifting edge of overlapping monitor journals ({count} entries)')
+                log.debug(f'Shifting edge of overlapping monitor journals ({count} statistic values)')
                 log.debug(f'{a.start} - {a.finish} ({a.id}) overlaps {b.start} - {b.finish} ({b.id})')
                 q.delete()
             # update monitor whether statistics were changed or not
+            log.debug(f'Shift monitor finish back from {a.finish} to {b.start}')
             a.finish = b.start
             s.flush()  # not sure this is needed
 
