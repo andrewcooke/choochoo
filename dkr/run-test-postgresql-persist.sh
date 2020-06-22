@@ -1,21 +1,21 @@
 #!/bin/bash
 
 CMD=$0
-DEV=
 BIG=
+DEV=
 SLOW=
 RESET=0
 
 help () {
-    echo -e "\n  Run Choochoo + postgres with named volumes"
+    echo -e "\n  Run choochoo + postgres with named volumes"
     echo -e "\n  Usage:"
-    echo -e "\n   $CMD [--big] [--slow] [--dev] [--reset] [-h] [FILE]"
-    echo -e "\n    FILE:      destination file name (default Dockerfile)"
-    echo -e "  --big:       use larger base distro"
+    echo -e "\n   $CMD [--big] [--slow] [--dev] [--reset] [-h]"
+    echo -e "\n  --big:       use larger base distro"
     echo -e "  --slow:      do not mount pip cache (buildkit)"
     echo -e "  --dev:       dev work (assumes node pre-built)"
     echo -e "  --reset:     re-create the disks"
-    echo -e "   -h:         show this message\n"
+    echo -e "   -h:         show this message"
+    echo -e "\n  --big, --slow and --dev are only used if --reset is specified\n"
     exit 1
 }
 
@@ -42,7 +42,7 @@ done
 if (( RESET )); then
     ./create-postgresql-data-volume.sh
     ./create-choochoo-data-volume.sh
-    ./create-choochoo-image.sh $DEV $BIG $SLOW
+    ./create-choochoo-image.sh $BIG $SLOW $DEV
 fi
 
 rm docker-compose.yml

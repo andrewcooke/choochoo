@@ -132,7 +132,7 @@ def exists(pid, time, delta_seconds=3, zombie_seconds=10):
         if creation_ok:
             log.debug(f'Process {pid} still exists')
         else:
-            log.debug(f'Creation time for process {pid} incorrect')
+            log.debug(f'Creation time for process {pid} incorrect ({process.create_time()} / {time.timestamp()})')
         return creation_ok
     else:
         log.debug(f'Assuming process {pid} is same as expected')

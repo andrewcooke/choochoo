@@ -163,10 +163,11 @@ class MonitorReader(MultiProcFitReader, LoaderMixin):
     def _shutdown(self, s):
         super()._shutdown(s)
         if not self.worker:
-            self._fix_overlaps(s)
-            self._calculate_increments(s)
+            log.info('Calculating differential in main thread')
+            self._fix_overlapping_monitors(s)
+            self._update_differential(s)
 
-    def _fix_overlaps(self, s):
+    def _fix_overlapping_monitors(self, s):
         pair = self._next_overlap(s)
         while pair:
             self._fix_pair(s, *pair)
@@ -175,21 +176,26 @@ class MonitorReader(MultiProcFitReader, LoaderMixin):
 
     def _fix_pair(self, s, a, b):
         # a starts before b (from query)
-        # b completely enclosed in a
         if b.finish <= a.finish:
+            # b completely enclosed in a
             log.warning(f'Deleting monitor journal entry that completely overlaps another')
             log.debug(f'{a.start} - {a.finish} ({a.id}) encloses {b.start} - {b.finish} ({b.id})')
-            s.delete(b)
-        # otherwise, shorten a so it finishes where b starts
+            # be careful to delete superclass...
+            s.query(Source).filter(Source.id == b.id).delete()
         else:
+            # otherwise, shorten a so it finishes where b starts
             q = s.query(StatisticJournal). \
                 filter(StatisticJournal.source == a,
-                       StatisticJournal.time >= b.start)
-            # not really a warning because we expect this
-            log.debug(f'Deleting {q.count()} entries from overlapping monitor journals')
-            log.debug(f'{a.start} - {a.finish} ({a.id}) overlaps {b.start} - {b.finish} ({b.id})')
-            q.delete()
+                       StatisticJournal.time > b.start)
+            count = q.count()
+            if count:
+                # not really a warning because we expect this
+                log.debug(f'Shifting edge of overlapping monitor journals ({count} entries)')
+                log.debug(f'{a.start} - {a.finish} ({a.id}) overlaps {b.start} - {b.finish} ({b.id})')
+                q.delete()
+            # update monitor whether statistics were changed or not
             a.finish = b.start
+            s.flush()  # not sure this is needed
 
     def _next_overlap(self, s):
         MonitorJournal2 = aliased(MonitorJournal)
@@ -204,7 +210,7 @@ class MonitorReader(MultiProcFitReader, LoaderMixin):
                   order_by(MonitorJournal.start).first()
         return row
 
-    def _calculate_increments(self, s):
+    def _update_differential(self, s):
         # this reads CUMULATIVE_STEPS (which is what was in the files) and any existing STEPS
         # then calculates what STEPS should be and fixes up any incorrect or missing data
         # (i guess maybe slightly faster when running incrementally)
