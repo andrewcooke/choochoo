@@ -36,6 +36,9 @@ popd
 
 dev/build-cmds.sh
 dev/build-docs.sh
+pushd dkr > /dev/null
+./create-dockerfile.sh
+popd > /dev/null
 
 git commit -am "version $VERSION"
 git push
