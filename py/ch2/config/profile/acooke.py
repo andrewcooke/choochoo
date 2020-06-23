@@ -5,7 +5,6 @@ from ..power import add_simple_power_estimate, add_kit_power_estimate, add_kit_p
 from ...commands.args import DEFAULT, base_system_path, PERMANENT
 from ...diary.model import TYPE, EDIT
 from ...lib import to_time, time_to_local_date
-from ...msil2a.download import MSIL2A_DIR_CNAME
 from ...names import Sports
 from ...pipeline.read.activity import ActivityReader
 from ...sql import StatisticJournalType, StatisticName, DiaryTopic, DiaryTopicJournal
@@ -89,18 +88,6 @@ class ACooke(Config):
             for kit, activity_group, cda, crr, bike_weight in (('cotic', MTB, 0.42, 0.0055, 12),
                                                                ('bowman', ROAD, 0.42, 0.0055, 8)):
                 add_kit_power_model(s, kit, self._activity_groups[activity_group], cda, crr, bike_weight)
-
-    def _load_constants(self, s):
-        super()._load_constants(s)
-        add_constant(s, MSIL2A_DIR_CNAME,
-                     base_system_path(self._base, version=PERMANENT, subdir='msil2a', create=False),
-                     description='''
-Directory containing Sentinel 2A imaging data (see https://scihub.copernicus.eu/dhus/#/home)
-
-This can be used to generate background images for plots.
-I used the data in an experiment to generate 3D plots, but it wasn't very successful.
-''',
-                     single=True, statistic_journal_type=StatisticJournalType.TEXT)
 
     def _post(self, s):
         super()._post(s)
