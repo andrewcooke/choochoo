@@ -12,9 +12,10 @@ def unlock(args, data):
 
     > ch2 unlock
 
-Remove the "dummy" entry from the database that is used to coordinate locking across processes.
+Remove the "dummy" entry from the SQLite database that is used to coordinate locking across processes.
 
 This should not be needed in normal use.  DO NOT use when worker processes are still running.
+Has no effect when used with PostgreSQL.
     '''
     # todo - sqlite only
     with data.db.session_context() as s:

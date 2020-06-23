@@ -1,6 +1,10 @@
 
 ## Latest Changes
 
+### v0.34.0
+
+Docker and PostgreSQL!  Plus bugfixes and web UI improvements.
+
 ### v0.33.0
 
 Big effort to simplify and clean (10% reduction in LOC).  Activity

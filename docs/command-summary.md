@@ -3,23 +3,21 @@
 
 * [help](#help)
 * [web](#web)
-* [upload](#upload)
+* [read](#read)
 * [search](#search)
 * [constants](#constants)
-* [check](#check)
+* [validate](#validate)
 * [jupyter](#jupyter)
 * [kit](#kit)
-* [configure](#configure)
+* [database](#database)
 * [import](#import)
-* [activities](#activities)
 * [garmin](#garmin)
-* [monitor](#monitor)
-* [statistics](#statistics)
+* [calculate](#calculate)
 * [fit](#fit)
 * [fix-fit](#fix-fit)
 * [thumbnail](#thumbnail)
 * [package-fit-profile](#package-fit-profile)
-* [test-schedule](#test-schedule)
+* [show-schedule](#show-schedule)
 * [unlock](#unlock)
 
 
@@ -57,39 +55,39 @@ Stop the server.
 
 
 
-## upload
+## read
 
-    > ch2 upload --kit ITEM [ITEM...] -- PATH [PATH ...]
+    > ch2 read --kit ITEM [ITEM...] -- PATH [PATH ...]
 
-Upload FIT files, storing the data in the permanent store on the file system. 
-Optionally (if not --fast), scan the files and appropriate entries to the 
-database. Both monitor and activity files are accepted.
+Read FIT files, storing the data in the permanent store on the file system, 
+then scan their contents, adding entries to the database, and finally 
+calculating associated statistics. Both monitor and activity files are 
+accepted.
 
-Files are checked for duplication on uploading (before being scanned).
-
-If the uploaded file is mapped to a file path that already exists then we 
-check the following cases:
-* If the hash matches then the new data are discarded (duplicate).
-* If the hash is different, it is an error (to avoid losing activity diary 
-  entries which are keyed by hash).
-
-If the uploaded file has a hash that matches a file already read into the 
-database, but the file path does not match, then it is an error (internal 
-error with inconsistent naming or duplicate data).
-
-If --unsafe is given then files whose hashes match existing files are simply 
-ignored. This allows data downloaded en massed from Garmin to be uploaded 
-ignoring already-uploaded data (with kit).
-
-In short, hashes should map 1-to-1 to file names and to activities, and it is 
-an error if they do not.
+Scanning and calculation of activities can be disabled with --disable, and 
+individual steps can be enabled / disabled by name.
 
 ### Examples
 
-    > ch2 upload --kit cotic -- ~/fit/2018-01-01.fit
+    > ch2 read --kit cotic -- ~/fit/2018-01-01.fit
 
 will store the given file, add activity data to the database (associated with 
 the kit 'cotic'), check for new monitor data, and update statistics.
+
+    > ch2 read --calculate
+
+is equivalent to `ch2 calculate` (so will not store and files, will not read 
+data, but wil calculate statistics).
+
+    > ch2 read --disable --calculate [PATH ...]
+
+will read files and add their contents to the database, but not calculate 
+statistics.
+
+    > ch2 read --disable [PATH ...]
+
+will read files (ie copy them to the permanent store), but do no other 
+processing.
 
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
 
@@ -209,9 +207,9 @@ refer to multiple entries.
 
 
 
-## check
+## validate
 
-    > ch2 check
+    > ch2 validate
 
 This is still in development.
 
@@ -293,18 +291,23 @@ if quoted.
 
 
 
-## configure
+## database
 
-    > ch2 configure load default
+    > ch2 database load (--sqlite|--pgsql|--uri URI) [--delete] PROFILE
 
-Generate a simple initial configuration.
+Load the initial database schema.
 
-Please see the documentation at http://andrewcooke.github.io/choochoo - you 
-have a lot more options!
+    > ch2 database list
 
-    > ch2 configure check --no-config --no-data
+List the available profiles.
 
-Check that the current database is empty.
+    > ch2 database show
+
+Show the current database state.
+
+    > ch2 database delete
+
+Delete the current database.
 
 
 
@@ -315,37 +318,18 @@ Check that the current database is empty.
 Import data from a previous version (after starting a new version). Data must 
 be imported before any other changes are made to the database.
 
+By default all types of data (diary, activities, kit, constants and segments) 
+are imported. Additional flags can enable or disable specific data types.
+
 ### Examples
-
-    > ch2 import --enable --diary 0-30
-
-Import only diary entries.
 
     > ch2 import --diary 0-30
 
+Import only diary entries.
+
+    > ch2 import --disable --diary 0-30
+
 Import everything but diary entries.
-
-
-
-## activities
-
-    > ch2 activities [--kit ITEM [ITEM ...] --] [PATH [PATH ...]]
-
-Read activities data from FIT files.
-
-### Examples
-
-    > ch2 activities -D kit=cotic ~/fit/2018-01-01.fit
-
-will load the given file and associated the activity with the kit 'cotic'.
-
-    > ch2 activities --kit
-
-will load all unread files from the standard location (constant Data.Dir, 
-where they are stored by the upload command) reading the kit from the file 
-name (as encoded by the upload command).
-
-Note: When using bash use `shopt -s globstar` to enable ** globbing.
 
 
 
@@ -364,26 +348,21 @@ downloads use https://www.garmin.com/en-US/account/datamanagement/
 
 
 
-## monitor
+## calculate
 
-    > ch2 monitor PATH [PATH ...]
+    > ch2 calculate
 
-Read monitor data from FIT files.
+Calculate any missing statistics.
 
-Note: When using bash use `shopt -s globstar` to enable ** globbing.
+    > ch2 calculate --force [START [FINISH]]
 
+Delete statistics in the date range (or all, if omitted) and then calculate 
+new values.
 
+    > ch2 --dev calculate --like '%Activity%' --force 2020-01-01 -Kn_cpu=1
 
-## statistics
-
-    > ch2 statistics
-
-Generate any missing statistics.
-
-    > ch2 statistics --force [DATE]
-
-Delete statistics after the date (or all, if omitted) and then generate new 
-values.
+Calculate activity statistics from 2020 onwards in a single process for 
+debugging.
 
 
 
@@ -477,15 +456,15 @@ This command is intended for internal use only.
 
 
 
-## test-schedule
+## show-schedule
 
-    > ch2 test-schedule SCHEDULE
+    > ch2 show-schedule SCHEDULE
 
 Print a calendar showing how the given schedule is interpreted.
 
 ### Example
 
-    > ch2 test-schedule 2w[1mon,2sun]
+    > ch2 show-schedule 2w[1mon,2sun]
 
 (Try it and see)
 
@@ -495,9 +474,9 @@ Print a calendar showing how the given schedule is interpreted.
 
     > ch2 unlock
 
-Remove the "dummy" entry from the database that is used to coordinate locking 
-across processes.
+Remove the "dummy" entry from the SQLite database that is used to coordinate 
+locking across processes.
 
 This should not be needed in normal use. DO NOT use when worker processes are 
-still running.
+still running. Has no effect when used with PostgreSQL.
 
