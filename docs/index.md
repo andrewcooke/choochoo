@@ -28,9 +28,8 @@ your own (hint: look in the dev directory).
 
 ## Initial Configuration
 
-Within the web site (which should have opened in your brower), select
-`Configure/Initial` in the left-hand menu.  Read the page and then,
-hopefully, click `CONFIGURE`.
+Within the web site select `Configure/Initial` in the left-hand menu.
+Read the page and then, hopefully, click `CONFIGURE`.
 
 ## Upgrade User Data
 
