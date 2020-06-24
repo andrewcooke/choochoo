@@ -112,6 +112,6 @@ class TestSources(LogTestCase):
                     print(source)
                 for journal in s.query(StatisticJournal).all():
                     print(journal)
-                self.assertEqual(s.query(count(Source.id)).scalar(), 38, list(map(str, s.query(Source).all())))  # constants
-                self.assertEqual(s.query(count(StatisticJournalText.id)).scalar(), 14, s.query(count(StatisticJournalText.id)).scalar())
-                self.assertEqual(s.query(count(StatisticJournal.id)).scalar(), 23, s.query(count(StatisticJournal.id)).scalar())
+                self.assertEqual(s.query(count(Source.id)).scalar(), 37, list(map(str, s.query(Source).all())))  # constants
+                self.assertEqual(s.query(count(StatisticJournalText.id)).scalar(), 13, s.query(count(StatisticJournalText.id)).scalar())
+                self.assertEqual(s.query(count(StatisticJournal.id)).scalar(), 22, s.query(count(StatisticJournal.id)).scalar())

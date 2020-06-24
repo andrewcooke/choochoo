@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(name='choochoo',
                  packages=setuptools.find_packages(),
-                 version='0.34.0',
+                 version='0.34.2',
                  author='andrew cooke',
                  author_email='andrew@acooke.org',
                  description='Data Science for Training',
@@ -38,9 +38,6 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'rasterio',
                      'requests',
                      'scipy',
-                     'scikit-image',
-                     'sentinelsat',
-                     'shapely',
                      'sklearn',
                      'sqlalchemy',
                      'sqlalchemy-utils',
