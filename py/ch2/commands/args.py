@@ -645,7 +645,7 @@ def make_parser(with_noop=False):
     show_schedule.add_argument(mm(START), metavar='DATE', help='date to start displaying data')
     show_schedule.add_argument(mm(MONTHS), metavar='N', type=int, help='number of months to display')
 
-    unlock = subparsers.add_parser(UNLOCK, help='remove database locking')
+    unlock = subparsers.add_parser(UNLOCK, help='remove database locking (sqlite)')
 
     return parser
 
@@ -663,7 +663,7 @@ def bootstrap_dir(base, *args, configurator=None, post_config=None):
         data = set_global_state(ns)
         data.set_constant(SystemConstant.DB_URI, sqlite_uri(data.base), force=True)
         with data.db.session_context() as s:
-            configurator(s, data.base)
+            configurator(s, data)
     args += post_config if post_config else []
     ns = NamespaceWithVariables(parser.parse_args(args=args))
     data = set_global_state(ns)

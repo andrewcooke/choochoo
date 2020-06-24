@@ -6,10 +6,10 @@ from ..config import Config
 log = getLogger(__name__)
 
 
-def default(s, base):
+def default(s, data):
     '''
 ## default
 
 The default configuration with basic activity groups, diary topics and FF parameters.
     '''
-    Config(base).load(s)
+    Config(data).load(s)

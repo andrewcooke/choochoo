@@ -121,18 +121,18 @@ class Data:
         self.__db = None
 
     def get_constant(self, name, none=False):
-        with self.__sys.session_context() as s:
+        with self.sys.session_context() as s:
             value = SystemConstant.from_name(s, name, none=none)
             return value
 
     def set_constant(self, name, value, force=False):
         log.debug(f'Setting {name}={value}')
-        with self.__sys.session_context() as s:
+        with self.sys.session_context() as s:
             return SystemConstant.set(s, name, value, force=force)
 
     def delete_constant(self, name):
         log.debug(f'Deleting {name}')
-        with self.__sys.session_context() as s:
+        with self.sys.session_context() as s:
             SystemConstant.delete(s, name)
 
     def get_database(self, uri=None):
