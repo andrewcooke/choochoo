@@ -36,5 +36,5 @@ def set_global_state(args):
     make_log_from_args(args)
     data = Data(args[BASE])
     set_global_data(data)
-    set_log_color(args, data.sys)
+    set_log_color(args, data)
     return data

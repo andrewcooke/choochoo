@@ -67,11 +67,11 @@ class JupyterController(BaseController):
         return cmd, log_name
 
     def _cleanup(self):
-        self._data.sys.delete_constant(SystemConstant.JUPYTER_URL)
+        self._data.delete_constant(SystemConstant.JUPYTER_URL)
 
     def connection_url(self):
         self.start()
-        return self._data.sys.get_constant(SystemConstant.JUPYTER_URL)
+        return self._data.get_constant(SystemConstant.JUPYTER_URL)
 
     def base_dir(self):
         return self._data.base
@@ -106,7 +106,7 @@ class JupyterController(BaseController):
         old_url = JupyterServer._instance.connection_url
         new_url = uriunsplit(urisplit(old_url)._replace(authority=f'{self._proxy_bind}:{self._proxy_port}'))
         log.debug(f'Rewrote {old_url} -> {new_url}')
-        self._data.sys.set_constant(SystemConstant.JUPYTER_URL, new_url, force=True)
+        self._data.set_constant(SystemConstant.JUPYTER_URL, new_url, force=True)
 
         log.info('Jupyter server started')
         while True:

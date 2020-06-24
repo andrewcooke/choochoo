@@ -39,11 +39,11 @@ Delete the current database.
     '''
     action = args[SUB_COMMAND]
     if action == SHOW:
-        show(data.sys)
+        show(data)
     elif action == LIST:
         list()
     elif action == DELETE:
-        uri = args[URI] or sys.get_constant(SystemConstant.DB_URI, none=True)
+        uri = args[URI] or data.get_constant(SystemConstant.DB_URI, none=True)
         if not uri: raise Exception('No current database is defined')
         delete(uri, data.sys)
     else:
@@ -58,9 +58,9 @@ def database_really_exists(uri):
         return False
 
 
-def show(sys):
-    uri = sys.get_constant(SystemConstant.DB_URI, none=True)
-    version = sys.get_constant(SystemConstant.DB_VERSION, none=True)
+def show(data):
+    uri = data.get_constant(SystemConstant.DB_URI, none=True)
+    version = data.get_constant(SystemConstant.DB_VERSION, none=True)
     if uri:
         print(f'{URI}:     {uri}')
         print(f'version: {version}')
@@ -80,11 +80,11 @@ def list():
             print(f' ## {name} - lacks docstring\n')
 
 
-def delete_current(sys):
-    delete(sys.get_constant(SystemConstant.DB_URI), sys)
+def delete_current(data):
+    delete(data.get_constant(SystemConstant.DB_URI), data)
 
 
-def delete(uri, sys):
+def delete(uri, data):
     try:
         if database_exists(uri):
             log.debug(f'Deleting database at {uri}')
@@ -100,25 +100,25 @@ def delete(uri, sys):
         else:
             log.warning(f'No database at {uri} (so not deleting)')
     finally:
-        sys.delete_constant(SystemConstant.DB_URI)
-        sys.delete_constant(SystemConstant.DB_VERSION)
+        data.delete_constant(SystemConstant.DB_URI)
+        data.delete_constant(SystemConstant.DB_VERSION)
 
 
-def delete_and_check(uri, force, sys):
-    if force: delete(uri, sys)
+def delete_and_check(uri, force, data):
+    if force: delete(uri, data)
     if database_exists(uri):
         raise Exception(f'A schema exists at {uri} (use {mm(FORCE)}?)')
 
 
-def write(uri, profile, sys, base):
+def write(uri, profile, data):
     fn, spec = get_profile(profile)
     log.info(f'Loading profile {profile}')
-    db = sys.get_database(uri)  # writes schema automatically
+    db = data.get_database(uri)  # writes schema automatically
     with db.session_context() as s:
-        fn(s, base)
+        fn(s, data)
     log.info(f'Profile {profile} loaded successfully')
-    sys.set_constant(SystemConstant.DB_URI, uri, force=True)
-    sys.set_constant(SystemConstant.DB_VERSION, DB_VERSION, force=True)
+    data.set_constant(SystemConstant.DB_URI, uri, force=True)
+    data.set_constant(SystemConstant.DB_VERSION, DB_VERSION, force=True)
 
 
 def make_uri(base, scheme_or_uri):
@@ -137,8 +137,8 @@ def create(uri):
     create_database(uri)
 
 
-def load(sys, base, profile, scheme_or_uri, force=False):
-    uri = make_uri(base, scheme_or_uri)
-    delete_and_check(uri, force, sys)
+def load(data, profile, scheme_or_uri, force=False):
+    uri = make_uri(data.base, scheme_or_uri)
+    delete_and_check(uri, force, data)
     create(uri)
-    write(uri, profile, sys, base)
+    write(uri, profile, data)

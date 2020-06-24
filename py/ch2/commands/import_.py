@@ -45,14 +45,14 @@ Import everything but diary entries.
     import_source(data, Record(log), args[SOURCE], args[ENGINE], flags=flags)
 
 
-def infer_uri(base, source, engine, sys):
+def infer_uri(base, source, engine, data):
     if ':' in source:
         if engine:
             raise Exception(f'Do not specify engine with (what looks like) a URI')
         uri = source
     elif len(source) < 8:
         if not engine:
-            current = sys.get_constant(SystemConstant.DB_URI, none=True)
+            current = data.get_constant(SystemConstant.DB_URI, none=True)
             if not current:
                 raise Exception(f'Specify {mm(SQLITE)} or {mm(POSTGRESQL)}')
             engine = scheme(current)
@@ -73,7 +73,7 @@ def infer_uri(base, source, engine, sys):
 def import_source(data, record, source, engine=None, flags=None):
     # engine needed if source is not a URI
     with record.record_exceptions():
-        uri = infer_uri(data.base, source, engine, data.sys)
+        uri = infer_uri(data.base, source, engine, data)
         if flags is None: flags = defaultdict(lambda: True)
         old = ReflectedDatabase(uri)
         if not old.meta.tables:

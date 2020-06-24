@@ -63,7 +63,7 @@ class WebController(BaseController):
         return cmd, log_name
 
     def _run(self):
-        self._data.sys.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self._bind, self._port), force=True)
+        self._data.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self._bind, self._port), force=True)
         log.debug(f'Binding to {self._bind}:{self._port} with URI {self.__uri}')
         run_simple(self._bind, self._port,
                    WebServer(self._data, self.__jupyter, self.__uri,
@@ -71,7 +71,7 @@ class WebController(BaseController):
                    use_debugger=self._dev, use_reloader=self._dev)
 
     def _cleanup(self):
-        self._data.sys.delete_constant(SystemConstant.WEB_URL)
+        self._data.delete_constant(SystemConstant.WEB_URL)
 
     def _status(self, running):
         if running:
@@ -79,7 +79,7 @@ class WebController(BaseController):
         print()
 
     def connection_url(self):
-        return self._data.sys.get_constant(SystemConstant.WEB_URL, none=True)
+        return self._data.get_constant(SystemConstant.WEB_URL, none=True)
 
 
 def error(exception):

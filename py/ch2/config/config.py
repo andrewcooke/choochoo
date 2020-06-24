@@ -54,8 +54,8 @@ class Config:
     A class-based approach so that we can easily modify the config for different profiles.
     '''
 
-    def __init__(self, base):
-        self._base = base
+    def __init__(self, data):
+        self._data = data
         self._activity_groups = {}
 
     def load(self, s):
@@ -80,7 +80,7 @@ class Config:
         pass
 
     def _post(self, s):
-        pass
+        self._load_sys(s)
 
     def _load_specific_activity_groups(self, s):
         # statistic rankings (best of month etc) are calculated per group
@@ -193,7 +193,7 @@ your FF-model parameters (fitness and fatigue).
 
     def _load_constants(self, s):
         add_constant(s, SRTM1_DIR_CNAME,
-                     base_system_path(self._base, version=PERMANENT, subdir='srtm1', create=False),
+                     base_system_path(self._data.base, version=PERMANENT, subdir='srtm1', create=False),
                      description='''
 Directory containing SRTM1 hgt files for elevations.
 
@@ -257,7 +257,7 @@ so do not use an important password that applies to many accounts.
                                      activity_group, model={TYPE: EDIT},
                                      description='Activity notes recorded by user in diary.')
 
-    def _load_sys(self, sys, s):
+    def _load_sys(self, s):
         # finally, update the timezone
-        DiaryTopicJournal.check_tz(sys, s)
+        DiaryTopicJournal.check_tz(self._data, s)
 

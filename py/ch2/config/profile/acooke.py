@@ -13,7 +13,7 @@ from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ...sql.utils import add
 
 
-def acooke(s, base):
+def acooke(s, data):
     '''
 ## acooke
 
@@ -25,7 +25,7 @@ This extends the default configuration with:
 
 Unlikely to be useful to others, but works as an example of how you can extend the code yourself.
     '''
-    ACooke(base).load(s)
+    ACooke(data).load(s)
 
 
 ROAD = 'Road'
@@ -93,7 +93,7 @@ class ACooke(Config):
     def _load_constants(self, s):
         super()._load_constants(s)
         add_constant(s, MSIL2A_DIR_CNAME,
-                     base_system_path(self._base, version=PERMANENT, subdir='msil2a', create=False),
+                     base_system_path(self._data.base, version=PERMANENT, subdir='msil2a', create=False),
                      description='''
 Directory containing Sentinel 2A imaging data (see https://scihub.copernicus.eu/dhus/#/home)
 

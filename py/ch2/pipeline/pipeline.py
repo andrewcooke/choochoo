@@ -225,7 +225,7 @@ class LoaderMixin:
             raise Exception('Select serial use')
         else:
             kargs['add_serial'] = add_serial
-        scheme_ = scheme(self._data.sys.get_constant(SystemConstant.DB_URI))
+        scheme_ = scheme(self._data.get_constant(SystemConstant.DB_URI))
         if scheme_ == POSTGRESQL and 'batch' not in kargs:
             kargs['batch'] = self.__batch
             self.__batch = False  # only set once or we get multiple callbacks

@@ -83,17 +83,17 @@ def make_log(path, verbosity=4):
             xlog.addHandler(STDERR_HANDLER)
 
 
-def set_log_color(args, sys):
+def set_log_color(args, data):
 
     from ..sql import SystemConstant
     from ..commands.args import COLOR, LIGHT, DARK
 
     color = args[COLOR]
     if color and color == color.upper():
-        sys.set_constant(SystemConstant.LOG_COLOR, color.lower(), force=True)
+        data.set_constant(SystemConstant.LOG_COLOR, color.lower(), force=True)
         color = None
     if color is None:
-        color = sys.get_constant(SystemConstant.LOG_COLOR, none=True)
+        color = data.get_constant(SystemConstant.LOG_COLOR, none=True)
     if STDERR_HANDLER and color:
         if color.lower() == LIGHT:
             STDERR_HANDLER.setFormatter(

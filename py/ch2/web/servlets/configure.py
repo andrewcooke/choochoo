@@ -50,7 +50,7 @@ class Configure:
         self.__html = HTML(delta=1, parser=filter(parse, yes=(P, LI, PRE)))
 
     def is_configured(self):
-        return bool(self.__data.sys.get_constant(SystemConstant.DB_VERSION, none=True))
+        return bool(self.__data.get_constant(SystemConstant.DB_VERSION, none=True))
 
     def is_empty(self, s):
         return not s.query(exists().where(ActivityJournal.id > 0)).scalar()
@@ -60,7 +60,7 @@ class Configure:
 
     def read_profiles(self, request, s):
         fn_argspec_by_name = profiles()
-        version = self.__data.sys.get_constant(SystemConstant.DB_VERSION, none=True)
+        version = self.__data.get_constant(SystemConstant.DB_VERSION, none=True)
         data = {PROFILES: {name: self.html(fn_argspec_by_name[name][0].__doc__) for name in fn_argspec_by_name},
                 CONFIGURED: bool(version),
                 DIRECTORY: self.__data.base}
@@ -76,7 +76,7 @@ class Configure:
         self.__data.reset()
 
     def delete(self, request, s):
-        delete_current(self.__data.sys)
+        delete_current(self.__data)
         self.__data.reset()
 
     def read_import(self, request, s):

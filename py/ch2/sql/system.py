@@ -1,44 +1,31 @@
 from logging import getLogger
 
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql.functions import count
 
-from .database import SystemConstant, Process, MappedDatabase, sqlite_uri, Database, Interval
+from .database import SystemConstant, Process, MappedDatabase, sqlite_uri, Database
 from .support import SystemBase
 from .tables.system import Progress, DirtyInterval
-from ..commands.args import SYSTEM, DB_EXTN, DATA
+from ..commands.args import SYSTEM
 from ..lib.utils import grouper
 
 log = getLogger(__name__)
+
+'''
+ - system constants (could be moved to main database?)
+ - process management (could be moved to main database?)
+ - progress (part of process management?  main database?)
+ - access to main database (could be environment template?)
+ - dirty intervals (could be something in session management?) 
+'''
 
 
 class System(MappedDatabase):
 
     def __init__(self, base):
         super().__init__(sqlite_uri(base, name=SYSTEM), SystemConstant, SystemBase)
-        version = self.get_constant(SystemConstant.DB_VERSION, none=True)
-        if version:
-            log.info(f'Database version {version}')
-        else:
-            log.warning('Database unconfigured')
 
     def _sessionmaker(self):
         return sessionmaker(bind=self.engine, expire_on_commit=False)
-
-    def get_constant(self, name, none=False):
-        with self.session_context() as s:
-            value = SystemConstant.from_name(s, name, none=none)
-            return value
-
-    def set_constant(self, name, value, force=False):
-        log.debug(f'Setting {name}={value}')
-        with self.session_context() as s:
-            return SystemConstant.set(s, name, value, force=force)
-
-    def delete_constant(self, name):
-        log.debug(f'Deleting {name}')
-        with self.session_context() as s:
-            SystemConstant.delete(s, name)
 
     def get_process(self, owner, pid):
         with self.session_context() as s:
@@ -81,14 +68,6 @@ class System(MappedDatabase):
     def wait_for_progress(self, name, timeout=60):
         with self.session_context() as s:
             return Progress.wait_for_progress(s, name, timeout=timeout)
-
-    def get_database(self, uri=None):
-        if not uri: uri = self.get_constant(SystemConstant.DB_URI, none=True)
-        if uri:
-            return Database(uri)
-        else:
-            log.warning('No database URI configured')
-            return None
 
     def record_dirty_intervals(self, ids):
         if ids:
@@ -134,9 +113,33 @@ class Data:
     @property
     def db(self):
         if not self.__db:
-            self.__db = self.sys.get_database()
+            self.__db = self.get_database()
         return self.__db
 
     def reset(self):
         self.__sys = None
         self.__db = None
+
+    def get_constant(self, name, none=False):
+        with self.__sys.session_context() as s:
+            value = SystemConstant.from_name(s, name, none=none)
+            return value
+
+    def set_constant(self, name, value, force=False):
+        log.debug(f'Setting {name}={value}')
+        with self.__sys.session_context() as s:
+            return SystemConstant.set(s, name, value, force=force)
+
+    def delete_constant(self, name):
+        log.debug(f'Deleting {name}')
+        with self.__sys.session_context() as s:
+            SystemConstant.delete(s, name)
+
+    def get_database(self, uri=None):
+        if not uri: uri = self.get_constant(SystemConstant.DB_URI, none=True)
+        if uri:
+            return Database(uri)
+        else:
+            log.warning('No database URI configured')
+            return None
+

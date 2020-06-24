@@ -1,7 +1,6 @@
 
 from contextlib import contextmanager
 from logging import getLogger
-from re import sub
 from sqlite3 import OperationalError, Connection
 
 from sqlalchemy import create_engine, event, MetaData
@@ -14,7 +13,6 @@ from . import *
 from .support import Base
 from ..commands.args import NamespaceWithVariables, NO_OP, make_parser, DB_EXTN, base_system_path, DATA, ACTIVITY, BASE, \
     DB_VERSION, POSTGRESQL, SQLITE
-from ..lib.io import data_hash
 from ..lib.log import make_log_from_args
 
 # mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
@@ -135,7 +133,7 @@ class MappedDatabase(DatabaseBase):
 
 class Database(MappedDatabase):
 
-    # please create via sys.get_database !!
+    # please create via data.get_database !!
 
     def __init__(self, uri):
         super().__init__(uri, Source, Base)
@@ -152,7 +150,7 @@ def connect(args):
     '''
     Bootstrap from commandline-like args.
     '''
-    from .system import System
+    from .system import Data
     if len(args) == 1 and isinstance(args[0], str):
         args = args[0].split()
     elif args:
@@ -162,9 +160,8 @@ def connect(args):
     args.append(NO_OP)
     ns = NamespaceWithVariables(make_parser(with_noop=True).parse_args(args))
     make_log_from_args(ns)
-    sys = System(ns[BASE])
-    db = sys.get_database()
-    return ns, db
+    data = Data(ns[BASE])
+    return ns, data.db
 
 
 class ReflectedDatabase(DatabaseBase):

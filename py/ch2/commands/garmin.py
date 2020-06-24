@@ -38,11 +38,11 @@ https://www.garmin.com/en-US/account/datamanagement/
     dates = [args[DATE]] if args[DATE] else []
     dir = clean_path(DIR) if args[DIR] else None
     with data.db.session_context() as s:
-        run_garmin(data.sys, s, dir=dir, base=args[BASE],
+        run_garmin(data, s, dir=dir, base=args[BASE],
                    user=args[USER], password=args[PASS], dates=dates, force=args[FORCE])
 
 
-def run_garmin(sys, s, dir=None, base=None, user=None, password=None, dates=None, force=False, progress=None):
+def run_garmin(data, s, dir=None, base=None, user=None, password=None, dates=None, force=False, progress=None):
 
     if not dates: dates = list(missing_dates(s, force=force))
     local_progress = ProgressTree(len(dates), parent=progress)
@@ -59,7 +59,7 @@ def run_garmin(sys, s, dir=None, base=None, user=None, password=None, dates=None
         user = user or Constant.get_single(s, GARMIN_USER)
         password = password or Constant.get_single(s, GARMIN_PASSWORD)
 
-        last = sys.get_constant(SystemConstant.LAST_GARMIN, none=True)
+        last = data.get_constant(SystemConstant.LAST_GARMIN, none=True)
         if last and (now() - local_time_to_time(last)).total_seconds() < 12 * 60 * 60:
             log.info(f'Too soon since previous call ({last}; 12 hours minimum)')
             return
@@ -82,7 +82,7 @@ def run_garmin(sys, s, dir=None, base=None, user=None, password=None, dates=None
                     log.info('End of data')
                     break
 
-        sys.set_constant(SystemConstant.LAST_GARMIN, time_to_local_time(now()), True)
+        data.set_constant(SystemConstant.LAST_GARMIN, time_to_local_time(now()), True)
         return
 
     finally:
