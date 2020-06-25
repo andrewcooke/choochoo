@@ -1,6 +1,6 @@
-from os.path import exists
 from contextlib import contextmanager
 from logging import getLogger
+from os.path import exists
 from sqlite3 import OperationalError, Connection
 
 from sqlalchemy import create_engine, event, MetaData
@@ -11,7 +11,7 @@ from uritools import urisplit
 
 from . import *
 from .support import Base
-from ..commands.args import NamespaceWithVariables, NO_OP, make_parser, DB_EXTN, base_system_path, DATA, ACTIVITY, BASE, \
+from ..commands.args import NamespaceWithVariables, NO_OP, make_parser, DB_EXTN, base_system_path, DATA, ACTIVITY, \
     DB_VERSION, POSTGRESQL, SQLITE
 from ..lib.io import touch
 from ..lib.log import make_log_from_args
@@ -27,7 +27,7 @@ Pipeline
 MonitorJournal
 Constant, SystemConstant, Process
 ActivitySimilarity, ActivityNearby
-Timestamp
+Timestamp, Process, SystemConstant
 
 
 log = getLogger(__name__)

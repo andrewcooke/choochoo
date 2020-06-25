@@ -28,28 +28,6 @@ class System(MappedDatabase):
     def _sessionmaker(self):
         return sessionmaker(bind=self.engine, expire_on_commit=False)
 
-    def get_process(self, owner, pid):
-        with self.session_context() as s:
-            return s.query(Process). \
-                filter(Process.owner == owner,
-                       Process.pid == pid).one()
-
-    def run_process(self, owner, cmd, log_name):
-        with self.session_context() as s:
-            return Process.run(s, owner, cmd, log_name)  # todo change order
-
-    def delete_process(self, owner, pid, delta_seconds=3):
-        with self.session_context() as s:
-            Process.delete(s, owner, pid, delta_seconds=delta_seconds)
-
-    def delete_all_processes(self, owner, delta_seconds=3):
-        with self.session_context() as s:
-            Process.delete_all(s, owner, delta_seconds=delta_seconds)
-
-    def exists_any_process(self, owner):
-        with self.session_context() as s:
-            return Process.exists_any(s, owner)
-
     def create_progress(self, name, delta_seconds=3):
         with self.session_context() as s:
             Progress.create(s, name, delta_seconds=delta_seconds)
@@ -169,3 +147,24 @@ class Data:
         uri = self.get_uri(uri=uri)
         return Database(uri)
 
+    def get_process(self, owner, pid):
+        with self.db.session_context() as s:
+            process = s.query(Process).filter(Process.owner == owner, Process.pid == pid).one()
+            s.expunge(process)
+            return process
+
+    def run_process(self, owner, cmd, log_name):
+        with self.db.session_context() as s:
+            return Process.run(s, owner, cmd, log_name)  # todo change order
+
+    def delete_process(self, owner, pid, delta_seconds=3):
+        with self.db.session_context() as s:
+            Process.delete(s, owner, pid, delta_seconds=delta_seconds)
+
+    def delete_all_processes(self, owner, delta_seconds=3):
+        with self.db.session_context() as s:
+            Process.delete_all(s, owner, delta_seconds=delta_seconds)
+
+    def exists_any_process(self, owner):
+        with self.db.session_context() as s:
+            return Process.exists_any(s, owner)

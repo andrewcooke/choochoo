@@ -56,7 +56,7 @@ class SystemConstant(Base):
     LOG_COLOR = 'log-color'
 
 
-class Process(SystemBase):
+class Process(Base):
 
     __tablename__ = 'process'
 

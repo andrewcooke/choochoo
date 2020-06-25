@@ -22,7 +22,7 @@ class BaseController(ABC):
         self.__retry_secs = retry_secs
 
     def status(self):
-        if self._data.sys.exists_any_process(self.__server_cls):
+        if self._data.exists_any_process(self.__server_cls):
             print('\n  Service running')
             self._status(True)
         else:
@@ -33,7 +33,7 @@ class BaseController(ABC):
         print()
 
     def start(self, restart=False):
-        if self._data.sys.exists_any_process(self.__server_cls):
+        if self._data.exists_any_process(self.__server_cls):
             log.debug('Service already running')
             if restart:
                 self.stop()
@@ -42,9 +42,9 @@ class BaseController(ABC):
         log.debug('Starting remote service')
         ch2 = command_root()
         cmd, log_name = self._build_cmd_and_log(ch2)
-        self._data.sys.run_process(self.__server_cls, cmd, log_name)
+        self._data.run_process(self.__server_cls, cmd, log_name)
         retries = 0
-        while not self._data.sys.exists_any_process(self.__server_cls):
+        while not self._data.exists_any_process(self.__server_cls):
             retries += 1
             if retries > self.__max_retries:
                 raise Exception('Server did not start')
@@ -58,7 +58,7 @@ class BaseController(ABC):
 
     def stop(self):
         log.info('Stopping any running service')
-        self._data.sys.delete_all_processes(self.__server_cls)
+        self._data.delete_all_processes(self.__server_cls)
         self._cleanup()
 
     def _cleanup(self):

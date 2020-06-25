@@ -33,15 +33,15 @@ class Workers:
     def clear_all(self):
         for worker in self.__workers_to_logs:
             log.warning(f'Killing PID {worker.pid} ({worker.args})')
-            self.__data.sys.delete_process(self.owner, worker.pid)
-        self.__data.sys.delete_all_processes(self.owner)
+            self.__data.delete_process(self.owner, worker.pid)
+        self.__data.delete_all_processes(self.owner)
 
     def run(self, id, args):
         self.wait(self.n_parallel - 1)
         log_index = self._free_log_index()
         log_name = f'{short_cls(self.owner)}.{log_index}.{LOG}'
         cmd = self.ch2 + f' {mm(LOG)} {log_name} {self.cmd} {mm(WORKER)} {id} {args}'
-        worker = self.__data.sys.run_process(self.owner, cmd, log_name)
+        worker = self.__data.run_process(self.owner, cmd, log_name)
         self.__workers_to_logs[worker] = log_index
 
     def wait(self, n_workers=0):
@@ -52,7 +52,7 @@ class Workers:
                 last_report = time()
             for worker in list(self.__workers_to_logs.keys()):
                 worker.poll()
-                process = self.__data.sys.get_process(self.owner, worker.pid)
+                process = self.__data.get_process(self.owner, worker.pid)
                 if worker.returncode is not None:
                     if worker.returncode:
                         msg = f'Command "{process.command}" exited with return code {worker.returncode} ' + \
@@ -63,7 +63,7 @@ class Workers:
                     else:
                         log.debug(f'Command "{process.command}" finished successfully')
                         del self.__workers_to_logs[worker]
-                        self.__data.sys.delete_process(self.owner, worker.pid)
+                        self.__data.delete_process(self.owner, worker.pid)
             sleep(SLEEP_TIME)
         if last_report:
             log.debug(f'Now have {len(self.__workers_to_logs)} workers')
