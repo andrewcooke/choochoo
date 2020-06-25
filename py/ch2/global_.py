@@ -34,7 +34,7 @@ def set_global_state(args):
     from .commands.args import DEV, BASE
     set_global_dev(args[DEV])
     make_log_from_args(args)
-    data = Data(args[BASE])
+    data = Data(args)
     set_global_data(data)
     set_log_color(args, data)
     return data

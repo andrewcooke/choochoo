@@ -1,4 +1,4 @@
-
+from os.path import exists
 from contextlib import contextmanager
 from logging import getLogger
 from sqlite3 import OperationalError, Connection
@@ -13,6 +13,7 @@ from . import *
 from .support import Base
 from ..commands.args import NamespaceWithVariables, NO_OP, make_parser, DB_EXTN, base_system_path, DATA, ACTIVITY, BASE, \
     DB_VERSION, POSTGRESQL, SQLITE
+from ..lib.io import touch
 from ..lib.log import make_log_from_args
 
 # mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
@@ -94,7 +95,9 @@ class DatabaseBase:
         self.uri = uri
         log.info('Using database at %s' % self.uri)
         options = {'echo': False}
-        if POSTGRESQL == scheme(uri): options.update(executemany_mode="values")
+        uri_parts = urisplit(uri)
+        if POSTGRESQL == uri_parts.scheme: options.update(executemany_mode="values")
+        if SQLITE == uri_parts.scheme and not exists(uri_parts.path): touch(uri_parts.path, with_dirs=True)
         log.debug(f'Creating engine for {uri} with options {options}')
         self.engine = create_engine(uri, **options)
         self.session = self._sessionmaker()
@@ -102,7 +105,7 @@ class DatabaseBase:
     def _sessionmaker(self):
         return sessionmaker(bind=self.engine)
 
-    def _no_schema(self, table):
+    def no_schema(self, table):
         # https://stackoverflow.com/questions/33053241/sqlalchemy-if-table-does-not-exist
         return not self.engine.dialect.has_table(self.engine, table.__tablename__)
 
@@ -126,7 +129,7 @@ class MappedDatabase(DatabaseBase):
 
     def __init__(self, uri, table, base):
         super().__init__(uri)
-        if self._no_schema(table):
+        if self.no_schema(table):
             log.info('Creating tables')
             base.metadata.create_all(self.engine)
 
@@ -145,6 +148,9 @@ class Database(MappedDatabase):
             n_statistics = s.query(count(StatisticName.id)).scalar()
             return not (n_topics + n_activities + n_statistics)
 
+    def no_schema(self, table=Constant):
+        return super().no_schema(table=table)
+
 
 def connect(args):
     '''
@@ -160,7 +166,7 @@ def connect(args):
     args.append(NO_OP)
     ns = NamespaceWithVariables(make_parser(with_noop=True).parse_args(args))
     make_log_from_args(ns)
-    data = Data(ns[BASE])
+    data = Data(ns)
     return ns, data.db
 
 

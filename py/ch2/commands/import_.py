@@ -42,38 +42,24 @@ Import only diary entries.
 Import everything but diary entries.
     '''
     flags = infer_flags(args, DIARY, ACTIVITIES, KIT, CONSTANTS, SEGMENTS)
-    import_source(data, Record(log), args[SOURCE], args[ENGINE], flags=flags)
+    import_source(data, Record(log), args[SOURCE], flags=flags)
 
 
-def infer_uri(base, source, engine, data):
+def infer_uri(data, source):
     if ':' in source:
-        if engine:
-            raise Exception(f'Do not specify engine with (what looks like) a URI')
-        uri = source
-    elif len(source) < 8:
-        if not engine:
-            current = data.get_constant(SystemConstant.DB_URI, none=True)
-            if not current:
-                raise Exception(f'Specify {mm(SQLITE)} or {mm(POSTGRESQL)}')
-            engine = scheme(current)
-        if engine == SQLITE:
-            uri = sqlite_uri(base, version=source)
-        elif engine == POSTGRESQL:
-            uri = postgresql_uri(version=source)
-        else:
-            raise Exception(f'Unknown engine {engine}')
+        log.info(f'Using {source} directly as database URI for import')
+        return source
     else:
-        raise Exception(f'Unexpected version or URI {source}')
-    if database_exists(uri):
-        return uri
-    else:
-        raise Exception(f'No database at {uri}')
+        uri = data.get_uri(version=source, password='xxxxxx')
+        log.info(f'Using {source} as a version number to get URI {uri}')
+        return data.get_uri(version=source)
+
 
 
 def import_source(data, record, source, engine=None, flags=None):
     # engine needed if source is not a URI
     with record.record_exceptions():
-        uri = infer_uri(data.base, source, engine, data)
+        uri = infer_uri(data, source)
         if flags is None: flags = defaultdict(lambda: True)
         old = ReflectedDatabase(uri)
         if not old.meta.tables:

@@ -43,11 +43,11 @@ Delete the current database.
     elif action == LIST:
         list()
     elif action == DELETE:
-        uri = args[URI] or data.get_constant(SystemConstant.DB_URI, none=True)
+        uri = args[URI] or data.get_uri()
         if not uri: raise Exception('No current database is defined')
-        delete(uri, data.sys)
+        delete(data)
     else:
-        load(data.sys, args[BASE], args[PROFILE], args[URI], args[FORCE])
+        load(data, args[PROFILE], args[FORCE])
 
 
 def database_really_exists(uri):
@@ -59,11 +59,10 @@ def database_really_exists(uri):
 
 
 def show(data):
-    uri = data.get_constant(SystemConstant.DB_URI, none=True)
-    version = data.get_constant(SystemConstant.DB_VERSION, none=True)
+    uri = data.get_uri()
     if uri:
         print(f'{URI}:     {uri}')
-        print(f'version: {version}')
+        print(f'version: {DB_VERSION}')
         print(f'exists:  {database_really_exists(uri)}')
     else:
         print('no database configured')
@@ -80,33 +79,28 @@ def list():
             print(f' ## {name} - lacks docstring\n')
 
 
-def delete_current(data):
-    delete(data.get_constant(SystemConstant.DB_URI), data)
-
-
-def delete(uri, data):
-    try:
-        if database_exists(uri):
-            log.debug(f'Deleting database at {uri}')
-            uri_parts = urisplit(uri)
-            if uri_parts.scheme == SQLITE:
-                path = clean_path(uri_parts.path)
-                log.warning(f'Deleting {path}')
-                unlink(path)
-            elif uri_parts.scheme == POSTGRESQL:
-                drop_database(uri)
-            else:
-                raise Exception(f'Unsupported URI {uri}')
-        else:
-            log.warning(f'No database at {uri} (so not deleting)')
-    finally:
-        data.delete_constant(SystemConstant.DB_URI)
-        data.delete_constant(SystemConstant.DB_VERSION)
-
-
-def delete_and_check(uri, force, data):
-    if force: delete(uri, data)
+def delete(data):
+    uri = data.get_uri()
     if database_exists(uri):
+        log.debug(f'Deleting database at {uri}')
+        uri_parts = urisplit(uri)
+        if uri_parts.scheme == SQLITE:
+            path = clean_path(uri_parts.path)
+            log.warning(f'Deleting {path}')
+            unlink(path)
+        elif uri_parts.scheme == POSTGRESQL:
+            drop_database(uri)
+        else:
+            raise Exception(f'Unsupported URI {uri}')
+    else:
+        log.warning(f'No database at {uri} (so not deleting)')
+
+
+def delete_and_check(data, force=False):
+    if force: delete(data)
+    uri = data.get_uri()
+    data.reset()
+    if database_exists(uri) and not data.db.no_data():
         raise Exception(f'A schema exists at {uri} (use {mm(FORCE)}?)')
 
 
@@ -117,8 +111,6 @@ def write(uri, profile, data):
     with db.session_context() as s:
         fn(s, data)
     log.info(f'Profile {profile} loaded successfully')
-    data.set_constant(SystemConstant.DB_URI, uri, force=True)
-    data.set_constant(SystemConstant.DB_VERSION, DB_VERSION, force=True)
 
 
 def make_uri(base, scheme_or_uri):
@@ -137,8 +129,8 @@ def create(uri):
     create_database(uri)
 
 
-def load(data, profile, scheme_or_uri, force=False):
-    uri = make_uri(data.base, scheme_or_uri)
-    delete_and_check(uri, force, data)
+def load(data, profile, force=False):
+    uri = data.get_uri()
+    delete_and_check(data, force=force)
     create(uri)
     write(uri, profile, data)

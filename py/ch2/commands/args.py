@@ -14,7 +14,7 @@ from ..names import UNDEF
 log = getLogger(__name__)
 
 # this can be modified during development.  it will be reset from setup.py on release.
-CH2_VERSION = '0.34.2'
+CH2_VERSION = '0.35.0'
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 DB_EXTN = '.db'   # used to use .sql but auto-complete for sqlite3 didn't work
@@ -150,9 +150,9 @@ NOTEBOOKS = 'notebooks'
 O, OUTPUT = 'o', 'output'
 OFF = 'off'
 OWNER = 'owner'
-PASS = 'pass'
+P, PASS = 'p', 'pass'
 PATH = 'path'
-P, PATTERN = 'p', 'pattern'
+PATTERN = 'pattern'
 PERMANENT = 'permanent'
 POSTGRESQL = 'postgresql'
 PLAN = 'plan'
@@ -202,7 +202,7 @@ UNLIKE = 'unlike'
 UNSAFE = 'unsafe'
 UNSET = 'unset'
 URI = 'uri'
-USER = 'user'
+U, USER = 'u', 'user'
 V, VERBOSITY = 'v', 'verbosity'
 VALUE = 'value'
 VERSION = 'version'
@@ -270,8 +270,8 @@ def make_parser(with_noop=False):
 
     parser.add_argument(mm(BASE), default='~/.ch2', type=clean_path, metavar='DIR',
                         help='the base directory for data (default ~/.ch2)')
-    parser.add_argument(mm(READ_ONLY), action='store_true',
-                        help='read-only database (so errors on write)')
+    parser.add_argument(mm(USER), m(U), default='default', metavar='USER', help='the current user')
+    parser.add_argument(mm(PASS), m(P), default='', metavar='PASS', help='user password')
     parser.add_argument(mm(LOG), metavar='FILE',
                         help='the file name for the log (command name by default)')
     parser.add_argument(mm(COLOR), type=color,
@@ -283,6 +283,16 @@ def make_parser(with_noop=False):
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
                         help='display version and exit')
 
+    database_uri = parser.add_mutually_exclusive_group()
+    database_uri.add_argument(mm(URI), default='sqlite:///{base}/{version}/data/activity.db',
+                              help='use the given database URI')
+    database_uri.add_argument(mm(SQLITE), dest=URI, action='store_const',
+                              const='sqlite:///{base}/{user}/{version}/data/activity.db',
+                              help='use an sqlite database with standard parameters')
+    database_uri.add_argument(mm(POSTGRESQL), dest=URI, action='store_const',
+                              const='postgresql://postgres:{pass}@localhost/activity-{version}',
+                              help='use a postgresql database with standard parameters')
+
     subparsers = parser.add_subparsers(title='commands', dest=COMMAND)
 
     # high-level commands used daily
@@ -290,14 +300,6 @@ def make_parser(with_noop=False):
     help = subparsers.add_parser(HELP, help='display help',
                                  description='display additional help (beyond -h) for any command')
     help.add_argument(TOPIC, nargs='?', metavar=TOPIC, help='the subject for help')
-
-    def add_uri_options(parser, required):
-        database_uri = parser.add_mutually_exclusive_group(required=required)
-        database_uri.add_argument(mm(SQLITE), dest=URI, action='store_const', const=SQLITE,
-                                  help='use an sqlite database with standard parameters')
-        database_uri.add_argument(mm(POSTGRESQL), dest=URI, action='store_const', const=POSTGRESQL,
-                                  help='use a postgresql database with standard parameters')
-        database_uri.add_argument(mm(URI), help='use the given database URI')
 
     web = subparsers.add_parser(WEB, help='the web interface (probably all you need)',
                                 description='start, stop and manage the web interface')
@@ -328,7 +330,6 @@ def make_parser(with_noop=False):
     add_web_server_args(web_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
     add_web_server_args(web_service, prefix=PROXY, default_port=None, default_address=None)
     add_warning_args(web_service)
-    add_uri_options(web_service, False)
 
     read = subparsers.add_parser(READ, help='read data (also calls calculate)',
                                  description='read data (copy it to the permanent store) and '
@@ -475,7 +476,6 @@ def make_parser(with_noop=False):
     database_list = database_cmds.add_parser(LIST, help='list available profiles')
     database_load = database_cmds.add_parser(LOAD, help='configure using the given profile')
     database_load.add_argument(mm(FORCE), action='store_true', help='overwrite existing database')
-    add_uri_options(database_load, True)
     database_profiles = database_load.add_subparsers(title='profile', dest=PROFILE, required=True)
     from ..config.utils import profiles
     for name in profiles():
@@ -490,12 +490,8 @@ def make_parser(with_noop=False):
     database_engines.add_argument(mm(URI), help='use the given database URI')
 
     import_ = subparsers.add_parser(IMPORT, help='import data from a previous version')
-    import_.add_argument(SOURCE, help='version or uri to import')
-    import_engines = import_.add_mutually_exclusive_group(required=False)
-    import_engines.add_argument(mm(SQLITE), dest=ENGINE, action='store_const', const=SQLITE,
-                                help='version is an sqlite database (default as current)')
-    import_engines.add_argument(mm(POSTGRESQL), dest=ENGINE, action='store_const', const=POSTGRESQL,
-                                help='version is a postgresql database (default as current)')
+    import_.add_argument(SOURCE,
+                         help='version or uri to import from (version assumes same URI structure as current database)')
     import_.add_argument(mm(DISABLE), action='store_true', help='disable following options (they enable by default)')
     import_.add_argument(mm(DIARY), action='store_true', help='enable (or disable) import of diary data')
     import_.add_argument(mm(ACTIVITIES), action='store_true', help='enable (or disable) import of activity data')
@@ -553,7 +549,7 @@ def make_parser(with_noop=False):
         cmd.add_argument(mm(MATCH), type=int, default=-1, help='max number of matches (default -1 for all)')
         cmd.add_argument(mm(COMPACT), action='store_true', help='no space between records')
         cmd.add_argument(mm(CONTEXT), action='store_true', help='display entire record')
-        cmd.add_argument(m(P), mm(PATTERN), nargs='+', metavar='MSG:FLD[=VAL]', required=True,
+        cmd.add_argument(mm(PATTERN), nargs='+', metavar='MSG:FLD[=VAL]', required=True,
                          help='pattern to match (separate from PATH with --)')
 
     def add_fit_high_level(cmd):
@@ -661,13 +657,11 @@ def bootstrap_dir(base, *args, configurator=None, post_config=None):
     ns = NamespaceWithVariables(parser.parse_args(args=args))
     if configurator:
         data = set_global_state(ns)
-        data.set_constant(SystemConstant.DB_URI, sqlite_uri(data.base), force=True)
         with data.db.session_context() as s:
             configurator(s, data)
     args += post_config if post_config else []
     ns = NamespaceWithVariables(parser.parse_args(args=args))
     data = set_global_state(ns)
-    data.set_constant(SystemConstant.DB_URI, sqlite_uri(data.base), force=True)
     return ns, data
 
 

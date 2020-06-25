@@ -1,11 +1,12 @@
 from logging import getLogger
+from os import environ
 
 from sqlalchemy.orm import sessionmaker
 
 from .database import SystemConstant, Process, MappedDatabase, sqlite_uri, Database
 from .support import SystemBase
 from .tables.system import Progress, DirtyInterval
-from ..commands.args import SYSTEM
+from ..commands.args import SYSTEM, BASE, URI, USER, PASS, CH2_VERSION, VERSION, DB_VERSION
 from ..lib.utils import grouper
 
 log = getLogger(__name__)
@@ -95,10 +96,26 @@ class System(MappedDatabase):
 
 class Data:
 
-    def __init__(self, base):
-        self.__base = base
+    def __init__(self, args):
+        self.__fmt_keys = {BASE: self.__read(args, BASE),
+                           USER: self.__read(args, USER),
+                           PASS: self.__read(args, PASS),
+                           VERSION: DB_VERSION}
+        self.__base = self.__fmt_keys[BASE]  # todo - still needed?
+        self.__uri = self.__read(args, URI)
         self.__sys = None
         self.__db = None
+
+    def __read(self, args, name):
+        '''Environment overrides command line so that system config overrides user preferences.'''
+        env_name = 'CH2_' + name.upper()
+        if env_name in environ:
+            value = environ[env_name]
+            log.debug(f'{name}={value} (from {env_name})')
+        else:
+            value = args[name]
+            log.debug(f'{name}={value} (from args)')
+        return value
 
     @property
     def base(self):
@@ -121,25 +138,29 @@ class Data:
         self.__db = None
 
     def get_constant(self, name, none=False):
-        with self.sys.session_context() as s:
+        with self.db.session_context() as s:
             value = SystemConstant.from_name(s, name, none=none)
             return value
 
     def set_constant(self, name, value, force=False):
         log.debug(f'Setting {name}={value}')
-        with self.sys.session_context() as s:
+        with self.db.session_context() as s:
             return SystemConstant.set(s, name, value, force=force)
 
     def delete_constant(self, name):
         log.debug(f'Deleting {name}')
-        with self.sys.session_context() as s:
+        with self.db.session_context() as s:
             SystemConstant.delete(s, name)
 
+    def get_uri(self, uri=None, **kwargs):
+        if not uri: uri = self.__uri
+        keys = dict(self.__fmt_keys)
+        keys.update(**kwargs)
+        return uri.format(**keys)
+
     def get_database(self, uri=None):
-        if not uri: uri = self.get_constant(SystemConstant.DB_URI, none=True)
-        if uri:
-            return Database(uri)
-        else:
-            log.warning('No database URI configured')
-            return None
+        uri = self.get_uri(uri=uri)
+        # todo - can log password
+        log.debug(f'Connecting to {uri}')
+        return Database(uri)
 

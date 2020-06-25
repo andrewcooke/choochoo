@@ -3,8 +3,8 @@ from logging import getLogger
 
 from sqlalchemy import exists
 
-from ...commands.args import SERVICE, WEB, mm, SQLITE, POSTGRESQL, URI
-from ...commands.database import load, delete_current
+from ...commands.args import SERVICE, WEB, mm, SQLITE, POSTGRESQL, URI, DB_VERSION
+from ...commands.database import load, delete
 from ...commands.help import HTML, filter, parse, P, LI, PRE
 from ...commands.import_ import import_source
 from ...config.utils import profiles
@@ -50,7 +50,7 @@ class Configure:
         self.__html = HTML(delta=1, parser=filter(parse, yes=(P, LI, PRE)))
 
     def is_configured(self):
-        return bool(self.__data.get_constant(SystemConstant.DB_VERSION, none=True))
+        return bool(self.__data.db.has_data())
 
     def is_empty(self, s):
         return not s.query(exists().where(ActivityJournal.id > 0)).scalar()
@@ -60,11 +60,10 @@ class Configure:
 
     def read_profiles(self, request, s):
         fn_argspec_by_name = profiles()
-        version = self.__data.get_constant(SystemConstant.DB_VERSION, none=True)
         data = {PROFILES: {name: self.html(fn_argspec_by_name[name][0].__doc__) for name in fn_argspec_by_name},
-                CONFIGURED: bool(version),
+                CONFIGURED: bool(self.__data.db.has_data()),
+                VERSION: DB_VERSION,
                 DIRECTORY: self.__data.base}
-        if data[CONFIGURED]: data[VERSION] = version
         return data
 
     def write_profile(self, request, s):
@@ -76,7 +75,7 @@ class Configure:
         self.__data.reset()
 
     def delete(self, request, s):
-        delete_current(self.__data)
+        delete(self.__data)
         self.__data.reset()
 
     def read_import(self, request, s):

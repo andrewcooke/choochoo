@@ -6,7 +6,7 @@ from time import time, sleep
 import psutil as ps
 from sqlalchemy import Column, Text, Integer
 
-from ..support import SystemBase
+from ..support import SystemBase, Base
 from ..types import Time, ShortCls, Name
 from ..utils import add
 from ...lib import now
@@ -14,7 +14,7 @@ from ...lib import now
 log = getLogger(__name__)
 
 
-class SystemConstant(SystemBase):
+class SystemConstant(Base):
 
     __tablename__ = 'system_constant'
 
@@ -54,7 +54,6 @@ class SystemConstant(SystemBase):
     LAST_GARMIN = 'last-garmin'
     DB_VERSION = 'db-version'
     LOG_COLOR = 'log-color'
-    DB_URI = 'db-uri'
 
 
 class Process(SystemBase):

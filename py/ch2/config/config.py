@@ -259,5 +259,6 @@ so do not use an important password that applies to many accounts.
 
     def _load_sys(self, s):
         # finally, update the timezone
+        s.commit()  # needed to avoid sqlite locking up
         DiaryTopicJournal.check_tz(self._data, s)
 
