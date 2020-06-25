@@ -173,17 +173,17 @@ class ProgressTree:
 
 class SystemProgressTree(ProgressTree):
 
-    def __init__(self, system, name, size_or_weights):
+    def __init__(self, data, name, size_or_weights):
         super().__init__(size_or_weights)
-        self.system = system
+        self.__data = data
         self.name = name
-        system.create_progress(name)
+        data.create_progress(name)
 
     def progress(self):
         progress = super().progress()
-        self.system.update_progress(self.name, percent=floor(100 * progress))
+        self.__data.update_progress(self.name, percent=floor(100 * progress))
         return progress
 
     def complete(self):
         super().complete()
-        self.system.remove_progress(self.name)
+        self.__data.remove_progress(self.name)

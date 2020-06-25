@@ -177,7 +177,7 @@ class WebServer:
         return self.wsgi_app(environ, start_response)
 
     def get_busy(self):
-        percent = self.__data.sys.get_percent(READ)
+        percent = self.__data.get_percent(READ)
         if percent is None: percent = 100
         # the client uses the complete message when the problem has passed
         return {MESSAGE: 'Loading data and recalculating statistics.',

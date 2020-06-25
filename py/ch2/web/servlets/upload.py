@@ -32,4 +32,4 @@ class Upload:
         log.info(f'Starting {cmd}')
         ps.Popen(args=cmd, shell=True)
         # wait so that the progress has time to kick in
-        self.__data.sys.wait_for_progress(READ)
+        self.__data.wait_for_progress(READ)

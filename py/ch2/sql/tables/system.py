@@ -138,7 +138,7 @@ def exists(pid, time, delta_seconds=3, zombie_seconds=10):
         return True   # if delta_seconds = 0 don't check, just assume same
 
 
-class Progress(SystemBase):
+class Progress(Base):
 
     __tablename__ = 'progress'
 

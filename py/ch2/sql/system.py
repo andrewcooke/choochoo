@@ -28,26 +28,6 @@ class System(MappedDatabase):
     def _sessionmaker(self):
         return sessionmaker(bind=self.engine, expire_on_commit=False)
 
-    def create_progress(self, name, delta_seconds=3):
-        with self.session_context() as s:
-            Progress.create(s, name, delta_seconds=delta_seconds)
-
-    def update_progress(self, name, **kargs):
-        with self.session_context() as s:
-            Progress.update(s, name, **kargs)
-
-    def remove_progress(self, name):
-        with self.session_context() as s:
-            Progress.remove(s, name)
-
-    def get_percent(self, name):
-        with self.session_context() as s:
-            return Progress.get_percent(s, name)
-
-    def wait_for_progress(self, name, timeout=60):
-        with self.session_context() as s:
-            return Progress.wait_for_progress(s, name, timeout=timeout)
-
     def record_dirty_intervals(self, ids):
         if ids:
             with self.session_context() as s:
@@ -168,3 +148,24 @@ class Data:
     def exists_any_process(self, owner):
         with self.db.session_context() as s:
             return Process.exists_any(s, owner)
+
+    def create_progress(self, name, delta_seconds=3):
+        with self.db.session_context() as s:
+            Progress.create(s, name, delta_seconds=delta_seconds)
+
+    def update_progress(self, name, **kargs):
+        with self.db.session_context() as s:
+            Progress.update(s, name, **kargs)
+
+    def remove_progress(self, name):
+        with self.db.session_context() as s:
+            Progress.remove(s, name)
+
+    def get_percent(self, name):
+        with self.db.session_context() as s:
+            return Progress.get_percent(s, name)
+
+    def wait_for_progress(self, name, timeout=60):
+        with self.db.session_context() as s:
+            return Progress.wait_for_progress(s, name, timeout=timeout)
+

@@ -233,7 +233,7 @@ def upload_files_and_update(record, data, files=tuple(), nfiles=1, force=False, 
         flags = defaultdict(lambda: True)
     n_options = sum(1 if flags[name] else 0 for name in FLAGS)
     if flags[MONITOR]: n_options += 2
-    progress = SystemProgressTree(data.sys, READ, [1] * (n_options + 1))
+    progress = SystemProgressTree(data, READ, [1] * (n_options + 1))
     log.info(f'Uploading files')
     try:
         upload_files(record, data, files=files, nfiles=nfiles, items=items, progress=progress)
