@@ -164,8 +164,8 @@ class Data:
         return uri.format(**keys)
 
     def get_database(self, uri=None):
-        uri = self.get_safe_uri(uri=uri)
-        log.debug(f'Connecting to {uri}')
+        safe_uri = self.get_safe_uri(uri=uri)
+        log.debug(f'Connecting to {safe_uri}')
         uri = self.get_uri(uri=uri)
         return Database(uri)
 
