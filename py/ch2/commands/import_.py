@@ -50,10 +50,9 @@ def infer_uri(data, source):
         log.info(f'Using {source} directly as database URI for import')
         return source
     else:
-        uri = data.get_uri(version=source, password='xxxxxx')
+        uri = data.get_safe_uri(version=source)
         log.info(f'Using {source} as a version number to get URI {uri}')
         return data.get_uri(version=source)
-
 
 
 def import_source(data, record, source, engine=None, flags=None):

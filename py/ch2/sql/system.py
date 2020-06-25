@@ -152,6 +152,11 @@ class Data:
         with self.db.session_context() as s:
             SystemConstant.delete(s, name)
 
+    def get_safe_uri(self, uri=None, **kwargs):
+        keys = dict(kwargs)
+        keys[PASS] = 'xxxxxx'
+        return self.get_uri(uri=uri, **keys)
+
     def get_uri(self, uri=None, **kwargs):
         if not uri: uri = self.__uri
         keys = dict(self.__fmt_keys)
@@ -159,8 +164,8 @@ class Data:
         return uri.format(**keys)
 
     def get_database(self, uri=None):
-        uri = self.get_uri(uri=uri)
-        # todo - can log password
+        uri = self.get_safe_uri(uri=uri)
         log.debug(f'Connecting to {uri}')
+        uri = self.get_uri(uri=uri)
         return Database(uri)
 
