@@ -229,7 +229,7 @@ class Interval(Source):
     @classmethod
     def clean(cls, s):
         q = s.query(Interval).filter(Interval.dirty == True)
-        count = q.scalar()
+        count = q.count()
         if count:
             log.debug(f'Cleaning {count} dirty intervals')
             q.delete()

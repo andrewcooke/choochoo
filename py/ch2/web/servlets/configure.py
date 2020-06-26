@@ -50,7 +50,7 @@ class Configure:
         self.__html = HTML(delta=1, parser=filter(parse, yes=(P, LI, PRE)))
 
     def is_configured(self):
-        return bool(self.__data.db.has_data())
+        return not bool(self.__data.db.no_data())
 
     def is_empty(self, s):
         return not s.query(exists().where(ActivityJournal.id > 0)).scalar()
@@ -61,7 +61,7 @@ class Configure:
     def read_profiles(self, request, s):
         fn_argspec_by_name = profiles()
         data = {PROFILES: {name: self.html(fn_argspec_by_name[name][0].__doc__) for name in fn_argspec_by_name},
-                CONFIGURED: bool(self.__data.db.has_data()),
+                CONFIGURED: not bool(self.__data.db.no_data()),
                 VERSION: DB_VERSION,
                 DIRECTORY: self.__data.base}
         return data

@@ -105,7 +105,8 @@ class DirtySession(Session):
         if self.__dirty_ids:
             log.debug(f'Marking {len(self.__dirty_ids)} as dirty')
             for ids in grouper(self.__dirty_ids, 900):
-                self.query(Interval).filter(Interval.id.in_(ids)).update(dirty=True)
+                self.query(Interval).filter(Interval.id.in_(ids)). \
+                    update({Interval.dirty: True}, synchronize_session=False)
             super().commit()
             self.__dirty_ids = set()
 
@@ -129,10 +130,7 @@ class DatabaseBase:
         if SQLITE == uri_parts.scheme and not exists(uri_parts.path): touch(uri_parts.path, with_dirs=True)
         log.debug(f'Creating engine for {uri} with options {options}')
         self.engine = create_engine(uri, **options)
-        self.session = self._sessionmaker()
-
-    def _sessionmaker(self):
-        return sessionmaker(bind=self.engine, class_=DirtySession)
+        self.session = sessionmaker(bind=self.engine, class_=DirtySession)
 
     def no_schema(self, table):
         # https://stackoverflow.com/questions/33053241/sqlalchemy-if-table-does-not-exist
@@ -154,23 +152,15 @@ class DatabaseBase:
         return f'{self.__class__.__name__} at {self.uri}'
 
 
-class MappedDatabase(DatabaseBase):
-
-    def __init__(self, uri, table, base):
-        super().__init__(uri)
-        if self.no_schema(table):
-            log.info('Creating tables')
-            base.metadata.create_all(self.engine)
-
-
-class Database(MappedDatabase):
-
-    # please create via data.get_database !!
+class Database(DatabaseBase):
 
     def __init__(self, uri):
-        super().__init__(uri, Source, Base)
+        super().__init__(uri)
+        if self.no_schema(Source):
+            log.info('Creating tables')
+            Base.metadata.create_all(self.engine)
 
-    def no_data(self,):
+    def no_data(self):
         with self.session_context() as s:
             n_topics = s.query(count(DiaryTopic.id)).scalar()
             n_activities = s.query(count(ActivityGroup.id)).scalar()

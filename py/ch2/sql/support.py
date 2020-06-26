@@ -5,7 +5,6 @@ from sqlalchemy.sql import expression, case
 from sqlalchemy.types import Numeric
 
 Base = declarative_base()
-SystemBase = declarative_base()
 
 
 # https://docs.sqlalchemy.org/en/13/core/compiler.html

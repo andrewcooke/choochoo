@@ -6,7 +6,7 @@ from time import time, sleep
 import psutil as ps
 from sqlalchemy import Column, Text, Integer
 
-from ..support import SystemBase, Base
+from ..support import Base
 from ..types import Time, ShortCls, Name
 from ..utils import add
 from ...lib import now
@@ -218,11 +218,3 @@ class Progress(Base):
                 return
             elif (now() - start).total_seconds() >= timeout:
                 raise Exception(f'Did not find progress {name} before {timeout}s')
-
-
-class DirtyInterval(SystemBase):
-
-    __tablename__ = 'dirty_interval'
-
-    id = Column(Integer, primary_key=True)
-    interval_id = Column(Integer, nullable=False)   # not unique!  allows for easy inserts
