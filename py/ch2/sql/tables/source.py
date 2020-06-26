@@ -4,7 +4,7 @@ from enum import IntEnum
 from logging import getLogger
 from operator import or_
 
-from sqlalchemy import ForeignKey, Column, Integer, func, UniqueConstraint
+from sqlalchemy import ForeignKey, Column, Integer, func, UniqueConstraint, Boolean
 from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy.sql.functions import count
@@ -158,6 +158,7 @@ class Interval(Source):
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     schedule = Column(OpenSched, nullable=False, index=True)
     owner = Column(ShortCls, nullable=False)
+    dirty = Column(Boolean, default=False, nullable=False)
     # these are for the schedule - finish is redundant (start is not because of timezone issues)
     start = Column(Date, nullable=False, index=True)
     finish = Column(Date, nullable=False, index=True)
@@ -212,34 +213,27 @@ class Interval(Source):
     @classmethod
     def dirty_all(cls, s):
         log.warning('Dirtying all Intervals')
-        global_data().sys.record_dirty_intervals(interval.id for interval in s.query(Interval).all())
+        s.record_dirty_intervals(interval.id for interval in s.query(Interval).all())
 
     @classmethod
-    def record_dirty_times(cls, s, start, finish, owner=None):
+    def record_dirty_times(cls, s, start, finish):
         '''
         Record dirty intervals that include data in the given TIME range,
         '''
         start, finish = time_to_local_date(start), time_to_local_date(finish)
         q = s.query(Interval.id).filter(Interval.start <= finish, Interval.finish > start)
-        if owner:
-            q = q.filter(Interval.owner == owner)
         # do not mark in-place because we can get deadlock transactions.
-        # instead, save in sys and update later
-        global_data().sys.record_dirty_intervals(row[0] for row in q.all())
+        # instead, save in session and update at end of transaction
+        s.record_dirty_intervals(row[0] for row in q.all())
 
     @classmethod
     def clean(cls, s):
-        data = global_data()
-        dirty_intervals = data.sys.get_dirty_intervals()
-        if dirty_intervals:
-            log.debug('Cleaning dirty intervals')
-            dirty_ids = set(d.interval_id for d in dirty_intervals)
-            log.warning(f'Up to {len(dirty_ids)} intervals to delete')
-            for ids in grouper(dirty_ids, 900):  # avoid sqlite limit
-                s.query(Source).filter(Source.id.in_(ids)).delete(synchronize_session=False)
-            s.commit()
-            data.sys.delete_dirty_intervals(dirty_intervals)
-            log.debug('Intervals clean')
+        q = s.query(Interval).filter(Interval.dirty == True)
+        count = q.scalar()
+        if count:
+            log.debug(f'Cleaning {count} dirty intervals')
+            q.delete()
+        log.debug('Intervals clean')
 
 
 class Dummy(UngroupedSource):

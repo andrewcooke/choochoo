@@ -15,12 +15,9 @@ class DatabaseDisplayer(Displayer):
 
     @optional_text('Database')
     def _read_date(self, s, date):
-        ids = set(d.interval_id for d in global_data().sys.get_dirty_intervals())
-        total = s.query(count(Interval.id)).filter(Interval.id.in_(ids)).count()
-        today = s.query(count(Interval.id)). \
-            filter(Interval.id.in_(ids),
-                   Interval.start <= date,
-                   Interval.finish > date).scalar()
+        q = s.query(Interval.id).filter(Interval.dirty == True)
+        total = q.count()
+        today = q.filter(Interval.start <= date, Interval.finish > date).count()
         if not total:
             yield text('No dirty statistics')
         else:

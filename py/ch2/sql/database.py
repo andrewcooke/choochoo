@@ -5,7 +5,7 @@ from sqlite3 import OperationalError, Connection
 
 from sqlalchemy import create_engine, event, MetaData
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.sql.functions import count
 from uritools import urisplit
 
@@ -17,6 +17,8 @@ from ..lib.io import touch
 from ..lib.log import make_log_from_args
 
 # mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
+from ..lib.utils import grouper
+
 Source,  Interval, Dummy, Composite, CompositeComponent
 ActivityGroup, ActivityJournal, ActivityTimespan, ActivityBookmark
 DiaryTopic, DiaryTopicJournal, DiaryTopicField,
@@ -89,6 +91,33 @@ def postgresql_uri(read_only=False, version=DB_VERSION):
     return f'{POSTGRESQL}://postgres@localhost/{name}'
 
 
+class DirtySession(Session):
+    '''Extend Session to record dirty intervals and then mark those intervals when the current transaction ends.'''
+
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
+        self.__dirty_ids = set()
+
+    def record_dirty_intervals(self, ids):
+        self.__dirty_ids.update(ids)
+
+    def __mark_dirty_intervals(self):
+        if self.__dirty_ids:
+            log.debug(f'Marking {len(self.__dirty_ids)} as dirty')
+            for ids in grouper(self.__dirty_ids, 900):
+                self.query(Interval).filter(Interval.id.in_(ids)).update(dirty=True)
+            super().commit()
+            self.__dirty_ids = set()
+
+    def commit(self):
+        super().commit()
+        self.__mark_dirty_intervals()
+
+    def rollback(self):
+        super().rollback()
+        self.__dirty_ids = set()
+
+
 class DatabaseBase:
 
     def __init__(self, uri):
@@ -103,7 +132,7 @@ class DatabaseBase:
         self.session = self._sessionmaker()
 
     def _sessionmaker(self):
-        return sessionmaker(bind=self.engine)
+        return sessionmaker(bind=self.engine, class_=DirtySession)
 
     def no_schema(self, table):
         # https://stackoverflow.com/questions/33053241/sqlalchemy-if-table-does-not-exist

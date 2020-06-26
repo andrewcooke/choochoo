@@ -40,7 +40,6 @@ from .commands.read import read
 from .commands.web import web
 from .lib.log import make_log_from_args, set_log_color
 from .sql.database import SystemConstant
-from .sql.system import System, Data
 
 log = getLogger(__name__)
 

@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from .database import SystemConstant, Process, MappedDatabase, sqlite_uri, Database
 from .support import SystemBase
 from .tables.system import Progress, DirtyInterval
-from ..commands.args import SYSTEM, BASE, URI, USER, PASS, CH2_VERSION, VERSION, DB_VERSION
+from ..commands.args import SYSTEM, BASE, URI, USER, PASS, VERSION, DB_VERSION
 from ..lib.utils import grouper
 
 log = getLogger(__name__)
@@ -20,38 +20,6 @@ log = getLogger(__name__)
 '''
 
 
-class System(MappedDatabase):
-
-    def __init__(self, base):
-        super().__init__(sqlite_uri(base, name=SYSTEM), SystemConstant, SystemBase)
-
-    def _sessionmaker(self):
-        return sessionmaker(bind=self.engine, expire_on_commit=False)
-
-    def record_dirty_intervals(self, ids):
-        if ids:
-            with self.session_context() as s:
-                # this doesn't have to be exact or thread safe
-                known = set(s.query(DirtyInterval.interval_id).all())
-                count = 0
-                for id in ids:
-                    if id not in known:
-                        s.add(DirtyInterval(interval_id=id))
-                        known.add(id)
-                        count += 1
-            if count: log.warning(f'Marked {count} intervals as dirty')
-
-    def get_dirty_intervals(self):
-        with self.session_context() as s:
-            return s.query(DirtyInterval).all()
-
-    def delete_dirty_intervals(self, intervals):
-        dirty_ids = set(d.id for d in intervals)
-        with self.session_context() as s:
-            for ids in grouper(dirty_ids, 900):  # avoid limit in sqlite older versions
-                s.query(DirtyInterval).filter(DirtyInterval.id.in_(ids)).delete(synchronize_session=False)
-
-
 class Data:
 
     def __init__(self, args):
@@ -61,7 +29,6 @@ class Data:
                            VERSION: DB_VERSION}
         self.__base = self.__fmt_keys[BASE]  # todo - still needed?
         self.__uri = self.__read(args, URI)
-        self.__sys = None
         self.__db = None
 
     def __read(self, args, name):
@@ -78,12 +45,6 @@ class Data:
     @property
     def base(self):
         return self.__base
-
-    @property
-    def sys(self):
-        if not self.__sys:
-            self.__sys = System(self.__base)
-        return self.__sys
 
     @property
     def db(self):
