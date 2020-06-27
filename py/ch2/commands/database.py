@@ -5,14 +5,12 @@ from os import unlink
 from sqlalchemy_utils import create_database, drop_database, database_exists
 from uritools import urisplit
 
-from .args import mm, SUB_COMMAND, LIST, PROFILE, BASE, SHOW, DB_VERSION, URI, SQLITE, POSTGRESQL, \
+from .args import mm, SUB_COMMAND, LIST, PROFILE, SHOW, DB_VERSION, URI, SQLITE, POSTGRESQL, \
     FORCE, DELETE
 from .help import Markdown
 from ..config.utils import profiles, get_profile
 from ..lib import log_current_exception
 from ..lib.utils import clean_path
-from ..sql import SystemConstant
-from ..sql.database import sqlite_uri, postgresql_uri
 
 log = getLogger(__name__)
 
@@ -111,17 +109,6 @@ def write(uri, profile, data):
     with db.session_context() as s:
         fn(s, data)
     log.info(f'Profile {profile} loaded successfully')
-
-
-def make_uri(base, scheme_or_uri):
-    if scheme_or_uri == SQLITE:
-        uri = sqlite_uri(base)
-    elif scheme_or_uri == POSTGRESQL:
-        uri = postgresql_uri()
-    else:
-        uri = scheme_or_uri
-    log.debug(f'Using URI {uri}')
-    return uri
 
 
 def create(uri):

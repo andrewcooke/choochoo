@@ -19,6 +19,10 @@ CH2_VERSION = '0.35.0'
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 DB_EXTN = '.db'   # used to use .sql but auto-complete for sqlite3 didn't work
 
+URI_DEFAULT = 'sqlite:///{base}/{version}/data/activity.db'
+URI_SQLITE = 'sqlite:///{base}/{user}/{version}/data/activity.db'
+URI_POSTGRESQL = 'postgresql://postgres:{pass}@localhost/activity-{version}'
+
 PROGNAME = 'ch2'
 COMMAND = 'command'
 
@@ -284,13 +288,10 @@ def make_parser(with_noop=False):
                         help='display version and exit')
 
     database_uri = parser.add_mutually_exclusive_group()
-    database_uri.add_argument(mm(URI), default='sqlite:///{base}/{version}/data/activity.db',
-                              help='use the given database URI')
-    database_uri.add_argument(mm(SQLITE), dest=URI, action='store_const',
-                              const='sqlite:///{base}/{user}/{version}/data/activity.db',
+    database_uri.add_argument(mm(URI), default=URI_DEFAULT, help='use the given database URI')
+    database_uri.add_argument(mm(SQLITE), dest=URI, action='store_const', const=URI_SQLITE,
                               help='use an sqlite database with standard parameters')
-    database_uri.add_argument(mm(POSTGRESQL), dest=URI, action='store_const',
-                              const='postgresql://postgres:{pass}@localhost/activity-{version}',
+    database_uri.add_argument(mm(POSTGRESQL), dest=URI, action='store_const', const=URI_POSTGRESQL,
                               help='use a postgresql database with standard parameters')
 
     subparsers = parser.add_subparsers(title='commands', dest=COMMAND)

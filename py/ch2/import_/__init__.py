@@ -3,7 +3,7 @@ from logging import getLogger
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from ..commands.args import DB_VERSION
+from ..commands.args import DB_VERSION, URI_DEFAULT, URI_SQLITE, URI_POSTGRESQL
 from ..commands.database import database_really_exists
 from ..lib import format_date, time_to_local_date, to_time
 from ..sql import StatisticJournal, StatisticName, StatisticJournalType
@@ -93,8 +93,12 @@ def available_versions(data, max_depth=3):
 
 def find_versions(data, max_depth=3):
     current_version = [int(version) for version in DB_VERSION.split('-')]
-    yield from find_sqlite_from_base_and_version(data.base, current_version, max_depth=max_depth)
-    yield from find_postgresql_from_version(current_version, max_depth=max_depth)
+    for major, minor in count_down_version(current_version, max_depth=max_depth):
+        version = f'{major}-{minor}'
+        for uri_template in [URI_DEFAULT, URI_SQLITE, URI_POSTGRESQL]:
+            uri = data.get_uri(uri_template)
+            if database_really_exists(uri):
+                yield version, uri
 
 
 def count_down_version(current_version, restart_minor=0, max_depth=3):
@@ -107,19 +111,3 @@ def count_down_version(current_version, restart_minor=0, max_depth=3):
             max_depth -= 1
         minor = restart_minor
         major -= 1
-
-
-def find_sqlite_from_base_and_version(base, current_version, max_depth=3):
-    for major, minor in count_down_version(current_version, max_depth=max_depth):
-        version = f'{major}-{minor}'
-        uri = sqlite_uri(base, version=version)
-        if database_really_exists(uri):
-            yield version, uri
-
-
-def find_postgresql_from_version(current_version, max_depth=3):
-    for major, minor in count_down_version(current_version, max_depth=max_depth):
-        version = f'{major}-{minor}'
-        uri = postgresql_uri(version=version)
-        if database_really_exists(uri):
-            yield version, uri

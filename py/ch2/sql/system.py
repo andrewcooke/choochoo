@@ -7,14 +7,6 @@ from ..commands.args import BASE, URI, USER, PASS, VERSION, DB_VERSION
 
 log = getLogger(__name__)
 
-'''
- - system constants (could be moved to main database?)
- - process management (could be moved to main database?)
- - progress (part of process management?  main database?)
- - access to main database (could be environment template?)
- - dirty intervals (could be something in session management?) 
-'''
-
 
 class Data:
 

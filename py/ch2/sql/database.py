@@ -15,9 +15,9 @@ from ..commands.args import NamespaceWithVariables, NO_OP, make_parser, DB_EXTN,
     DB_VERSION, POSTGRESQL, SQLITE
 from ..lib.io import touch
 from ..lib.log import make_log_from_args
+from ..lib.utils import grouper
 
 # mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
-from ..lib.utils import grouper
 
 Source,  Interval, Dummy, Composite, CompositeComponent
 ActivityGroup, ActivityJournal, ActivityTimespan, ActivityBookmark
@@ -37,7 +37,7 @@ log = getLogger(__name__)
 # https://stackoverflow.com/questions/13712381/how-to-turn-on-pragma-foreign-keys-on-in-sqlalchemy-migration-script-or-conf
 @event.listens_for(Engine, "connect")
 def fk_pragma_on_connect(dbapi_con, _con_record):
-    if isinstance(dbapi_con, Connection):
+    if isinstance(dbapi_con, Connection):  # sqlite
         cursor = dbapi_con.cursor()
 
         def pragma(cmd):
@@ -56,7 +56,7 @@ def fk_pragma_on_connect(dbapi_con, _con_record):
 
 @event.listens_for(Engine, 'close')
 def analyze_pragma_on_close(dbapi_con, _con_record):
-    if isinstance(dbapi_con, Connection):
+    if isinstance(dbapi_con, Connection):  # sqlite
         cursor = dbapi_con.cursor()
         try:
             # this can fail if another process is using the database
