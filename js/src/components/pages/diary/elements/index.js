@@ -8,6 +8,7 @@ export {default as JupyterAllActivities} from './JupyterAllActivites';
 export {default as JupyterGroupActivities} from './JupyterGroupActivities';
 export {default as JupyterMenu} from './JupyterMenu';
 export {default as Measures} from './Measures';
+export {default as mkEditableField} from './mkEditableField';
 export {default as NearbyMenu} from './NearbyMenu';
 export {default as Schedule} from './Schedule';
 export {default as ScoreField} from './ScoreField';

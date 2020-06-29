@@ -1,7 +1,7 @@
 import React from 'react';
 import {makeStyles, useTheme} from '@material-ui/core/styles';
-import {drawerWidth} from '../../constants'
-import ListItemLink from "./ListItemLink";
+import {drawerWidth} from '../constants'
+import {ListItemLink} from ".";
 import {ListItemText, ListItemIcon, ListItem, List, Divider, Drawer, Hidden} from "@material-ui/core";
 import {HomeOutlined, Home} from "@material-ui/icons";
 

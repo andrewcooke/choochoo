@@ -1,8 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {ColumnCard, ColumnList, Layout, Loading, Text, SearchResults} from "../elements";
+import {SearchResults} from "../elements";
+import {ColumnCard, ColumnList, Loading, Text} from "../../common/elements";
 import {Button, Checkbox, Collapse, FormControlLabel, Grid, IconButton, TextField, Typography} from "@material-ui/core";
 import {makeStyles} from "@material-ui/styles";
 import {ExpandLess, ExpandMore} from "@material-ui/icons";
+import {Layout} from "../elements";
 
 
 const useStyles = makeStyles(theme => ({

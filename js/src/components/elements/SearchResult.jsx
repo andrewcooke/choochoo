@@ -1,9 +1,8 @@
 import React from 'react';
 import Thumbnail from "./Thumbnail";
-import ColumnCard from "./ColumnCard";
+import {ColumnCard, Text} from "../../common/elements";
 import {Grid, Link, Tooltip} from "@material-ui/core";
 import FormatValueUnits from "./FormatValueUnits";
-import Text from "./Text";
 import {format} from 'date-fns'
 import {FMT_DAY} from "../../constants";
 import {makeStyles} from "@material-ui/styles";

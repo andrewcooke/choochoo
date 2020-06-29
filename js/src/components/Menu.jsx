@@ -2,11 +2,12 @@ import React, {useState} from 'react';
 import {List} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {KeyboardArrowRight} from "@material-ui/icons";
-import {ListItemButton, ListItemLink} from "./elements";
+import {ListItemButton, ListItemLink} from "./../common/elements";
 import {format} from 'date-fns';
 import {FMT_DAY, FMT_MONTH} from "../constants";
 import {useHistory, useLocation} from 'react-router-dom';
-import {DiaryMenu, ListItemExpand} from "./menu";
+import {DiaryMenu} from "./menu";
+import {ListItemExpand} from "../common/elements";
 
 
 const useStyles = makeStyles(theme => ({

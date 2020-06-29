@@ -1,8 +1,8 @@
 import React from 'react';
 import {Grid, InputLabel} from "@material-ui/core";
-import {Text, PercentBar} from '../../../elements';
+import {Text, PercentBar} from '../../../../common/elements';
 import {makeStyles} from "@material-ui/core/styles";
-import barWidth from "../../../functions/barWidth";
+import {barWidth} from "../../../../common/functions";
 
 
 const useStyles = makeStyles(theme => ({

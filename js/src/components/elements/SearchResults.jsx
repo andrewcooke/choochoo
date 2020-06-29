@@ -2,8 +2,7 @@ import React, {useEffect, useState} from 'react';
 import SearchResult from "./SearchResult";
 import {FMT_DAY_TIME} from "../../constants";
 import {parse} from 'date-fns';
-import Loading from "./Loading";
-import TextCard from "./TextCard";
+import {Loading, TextCard} from "../../common/elements";
 
 
 function SearchError(props) {

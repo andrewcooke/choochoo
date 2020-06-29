@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ColumnCard, ColumnList, Layout, Loading} from "../elements";
+import {ColumnCard, ColumnList, Loading} from "../../common/elements";
 import {
     ActivityDetails,
     AllActivities,
@@ -12,6 +12,7 @@ import {
     SomeActivities
 } from "./analysis";
 import {handleJson} from "../functions";
+import {Layout} from "../elements";
 
 
 function Columns(props) {
@@ -20,7 +21,7 @@ function Columns(props) {
 
     if (params === null) {
         return <Loading/>;
-    }else if (params.activities_start === null) {
+    } else if (params.activities_start === null) {
         return (<ColumnList>
             <ColumnCard header='No Data'/>
         </ColumnList>);

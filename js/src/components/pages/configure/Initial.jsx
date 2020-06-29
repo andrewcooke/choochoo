@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Dialog, DialogContent, DialogContentText, DialogTitle, Grid, TextField} from "@material-ui/core";
-import {ColumnCard, ColumnList, ConfirmedWriteButton, Layout, Loading, P, Text, TextCard} from "../../elements";
+import {ConfirmedWriteButton, Layout} from "../../elements";
+import {ColumnCard, ColumnList, Loading, P, Text, TextCard} from "../../../common/elements";
 import {handleJson} from "../../functions";
 import {Autocomplete} from "@material-ui/lab";
 import log from "loglevel";

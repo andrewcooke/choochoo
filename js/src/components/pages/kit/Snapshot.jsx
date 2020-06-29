@@ -1,11 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {ColumnCard, ColumnList, DateButtons, Layout, Loading, Picker} from "../../elements";
+import {DateButtons, Picker, Layout} from "../../elements";
+import {ColumnCard, ColumnList, Loading} from "../../../common/elements";
 import {Grid, List, ListItem, Typography} from "@material-ui/core";
 import {FMT_DAY} from "../../../constants";
 import {format} from 'date-fns';
 import {makeStyles} from "@material-ui/core/styles";
 import {handleJson} from "../../functions";
-import StatisticsValues from "./elements/StatisticsValues";
+import {StatisticsValues} from "./elements";
 
 
 const useStyles = makeStyles(theme => ({

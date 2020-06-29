@@ -1,14 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {
-    Break,
-    ColumnCard,
-    ColumnCardBase,
-    ColumnList,
-    ConfirmedWriteButton,
-    Layout,
-    Loading,
-    Text
-} from "../../elements";
+import {ConfirmedWriteButton, Layout} from "../../elements";
+import {Break, ColumnCard, ColumnCardBase, ColumnList, Loading, Text} from "../../../common/elements";
 import {Box, Button, Collapse, Grid, TextField, Typography} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {Autocomplete} from "@material-ui/lab";

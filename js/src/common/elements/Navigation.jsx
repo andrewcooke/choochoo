@@ -1,12 +1,9 @@
 import React from 'react';
-import {AppBar, Toolbar, IconButton, Typography} from '@material-ui/core';
+import {AppBar, IconButton, Toolbar, Typography} from '@material-ui/core';
 import MenuIcon from '@material-ui/icons/Menu';
-import SideDrawer from './SideDrawer'
+import {SideDrawer} from '.'
 import {makeStyles} from '@material-ui/core/styles';
-import {drawerWidth} from '../../constants'
-import LatestIcon from "./LatestIcon";
-import Menu from "../Menu";
-import UploadIcon from "./UploadIcon";
+import {drawerWidth} from '../constants'
 
 
 const useStyles = makeStyles(theme => ({
@@ -30,7 +27,7 @@ const useStyles = makeStyles(theme => ({
 
 export default function Navigation(props) {
 
-    const {title} = props;
+    const {menu, title, icons} = props;
     const classes = useStyles();
     const [mobileOpen, setMobileOpen] = React.useState(false);
 
@@ -50,12 +47,11 @@ export default function Navigation(props) {
                         {title}
                     </Typography>
                     <span>
-                        <UploadIcon/>
-                        <LatestIcon/>
+                        {icons}
                     </span>
                 </Toolbar>
             </AppBar>
-            <SideDrawer mobileOpen={mobileOpen} handleDrawerToggle={handleDrawerToggle} content={<Menu/>}/>
+            <SideDrawer mobileOpen={mobileOpen} handleDrawerToggle={handleDrawerToggle} content={menu}/>
         </>
     )
 }

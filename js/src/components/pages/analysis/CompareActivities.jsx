@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
-import {Text, Empty} from "../../elements";
+import {Text, Empty} from "../../../common/elements";
 import {Grid, InputLabel, MenuItem, Select} from "@material-ui/core";
-import ActivityCard from "./ActivityCard";
-import {fmtHref, last} from '../../functions';
+import {ActivityCard} from ".";
+import {fmtHref, last} from '../../../common/functions';
 
 
 export default function CompareActivities(props) {

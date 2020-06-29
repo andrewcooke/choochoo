@@ -1,4 +1,4 @@
-import {barFraction, barEnd} from "../../constants";
+import {barFraction, barEnd} from "../constants";
 
 
 export default function barWidth(array) {

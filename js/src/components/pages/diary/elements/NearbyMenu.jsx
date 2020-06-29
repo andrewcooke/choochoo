@@ -1,6 +1,6 @@
 import React from "react";
 import {MenuItem, Grid} from "@material-ui/core";
-import {MenuButton} from "../../../elements";
+import {MenuButton} from "../../../../common/elements";
 import {makeStyles} from "@material-ui/core/styles";
 
 

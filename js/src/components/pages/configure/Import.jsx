@@ -1,14 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {
-    ColumnCard,
-    ColumnList,
-    ConfirmedWriteButton,
-    Layout,
-    Loading,
-    ScrollableListCard,
-    Text,
-    TextCard
-} from "../../elements";
+import {ConfirmedWriteButton, Layout} from "../../elements";
+import {ColumnCard, ColumnList, Loading, ScrollableListCard, Text, TextCard} from "../../../common/elements";
 import {handleJson} from "../../functions";
 import {Autocomplete} from "@material-ui/lab";
 import {Grid, TextField} from "@material-ui/core";

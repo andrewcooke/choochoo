@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Grid, Link} from "@material-ui/core";
-import {ColumnCard, ColumnList, Layout, P} from "../elements";
+import {ColumnCard, ColumnList, P} from "../../common/elements";
+import {Layout} from "../elements";
 import handleJson from "../functions/handleJson";
 import {useHistory} from "react-router-dom";
 import {makeStyles} from "@material-ui/styles";

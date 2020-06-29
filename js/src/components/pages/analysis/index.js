@@ -1,3 +1,4 @@
+export {default as ActivityCard} from './ActivityCard';
 export {default as ActivityDetails} from './ActivityDetails';
 export {default as AllActivities} from './AllActivities';
 export {default as Calendar} from './Calendar';

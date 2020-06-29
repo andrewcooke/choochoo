@@ -1,7 +1,7 @@
 import React from 'react';
-import {Text} from "../../elements";
+import {Text} from "../../../common/elements";
 import {Grid} from "@material-ui/core";
-import ActivityCard from "./ActivityCard";
+import {ActivityCard} from ".";
 
 
 export default function Calendar(props) {

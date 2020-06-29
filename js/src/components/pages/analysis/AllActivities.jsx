@@ -1,11 +1,12 @@
 import React, {useState} from 'react';
-import {Text} from "../../elements";
+import {Text} from "../../../common/elements";
 import {Grid} from "@material-ui/core";
 import {FMT_DAY} from "../../../constants";
 import {format, parse} from 'date-fns';
 import {DatePicker} from "@material-ui/pickers";
-import ActivityCard from "./ActivityCard";
-import {addDay, fmtHref, last} from "../../functions";
+import {ActivityCard} from ".";
+import {addDay} from "../../functions";
+import {fmtHref, last} from "../../../common/functions";
 
 
 export default function AllActivities(props) {

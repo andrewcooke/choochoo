@@ -1,7 +1,7 @@
 import React from "react";
 import {MenuItem, Grid} from "@material-ui/core";
-import {MenuButton} from "../../../elements";
-import {zip} from "../../../functions";
+import {MenuButton} from "../../../../common/elements";
+import {zip} from "../../../../common/functions";
 import {makeStyles} from "@material-ui/core/styles";
 
 

@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
-import {Text} from "../../elements";
+import {Text} from "../../../common/elements";
 import {Grid, TextField} from "@material-ui/core";
-import ActivityCard from "./ActivityCard";
-import {fmtHref} from "../../functions";
+import {ActivityCard} from ".";
+import {fmtHref} from "../../../common/functions";
 
 
 export default function SomeActivities(props) {

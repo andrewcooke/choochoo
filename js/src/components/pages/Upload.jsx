@@ -1,11 +1,13 @@
 import React, {useEffect, useState} from 'react';
-import {ColumnCard, ColumnList, ConfirmedWriteButton, Layout, Loading, Text} from "../elements";
+import {ConfirmedWriteButton} from "../elements";
+import {ColumnCard, ColumnList, Loading, Text} from "../../common/elements";
 import {Button, Grid, IconButton, TextField, FormControlLabel, Checkbox, Link} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {Autocomplete} from "@material-ui/lab";
 import {Clear} from '@material-ui/icons';
 import {handleJson} from "../functions";
 import {Link as RouterLink} from "react-router-dom";
+import {Layout} from "../elements";
 
 
 const useStyles = makeStyles(theme => ({

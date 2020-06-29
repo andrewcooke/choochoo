@@ -14,7 +14,8 @@ import {
     ValueField
 } from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
-import {ColumnCard, ColumnList, Layout, LinkButton, Loading, Text, Thumbnail} from "../../elements";
+import {Thumbnail, Layout} from "../../elements";
+import {ColumnCard, ColumnList, LinkButton, Loading, Text} from "../../../common/elements";
 import {handleJson} from "../../functions";
 import {parse} from "date-fns";
 import {FMT_DAY} from "../../../constants";

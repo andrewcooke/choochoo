@@ -1,6 +1,6 @@
 import React from 'react';
 import {Grid} from "@material-ui/core";
-import {Text, PercentBar} from '../../../elements';
+import {Text, PercentBar} from '../../../../common/elements';
 
 
 export default function HRZoneField(prop) {

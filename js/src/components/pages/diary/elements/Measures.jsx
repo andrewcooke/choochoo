@@ -1,6 +1,6 @@
 import React from 'react';
-import {PercentBar} from '../../../elements';
-import {barWidth} from "../../../functions";
+import {PercentBar} from '../../../../common/elements';
+import {barWidth} from "../../../../common/functions";
 
 
 export default function Measures(props) {

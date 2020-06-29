@@ -1,9 +1,8 @@
 import React from "react";
 import {Grid} from "@material-ui/core";
-import {LinkButton, Text} from '../../../elements';
+import {LinkButton, Text} from '../../../../common/elements';
 import JupyterMenu from './JupyterMenu'
-import {sprintf} from "sprintf-js";
-import {fmtHref} from "../../../functions";
+import {fmtHref} from "../../../../common/functions";
 import {makeStyles} from "@material-ui/core/styles";
 
 

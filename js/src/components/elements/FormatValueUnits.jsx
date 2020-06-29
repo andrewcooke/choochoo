@@ -1,6 +1,6 @@
 import React from "react";
 import {sprintf} from "sprintf-js";
-import Text from "./Text";
+import {Text} from "../../common/elements";
 import {FMT_DAY_TIME} from "../../constants";
 import {format} from 'date-fns';
 

@@ -1,8 +1,8 @@
 import React from 'react';
 import {makeStyles} from '@material-ui/core/styles';
-import Navigation from "./Navigation";
-import BusyDialog from "./BusyDialog";
-import ErrorDialog from "./ErrorDialog";
+import {Navigation, BusyDialog, ErrorDialog} from "../../common/elements";
+import {Menu} from "..";
+import {UploadIcon, LatestIcon} from ".";
 
 
 const useStyles = makeStyles(theme => ({
@@ -25,7 +25,7 @@ export default function Layout(props) {
 
     return (
         <div className={classes.root}>
-            <Navigation title={title}/>
+            <Navigation menu={<Menu/>} title={title} icons={<><UploadIcon/><LatestIcon/></>}/>
             <main className={classes.content}>
                 <div className={classes.toolbar}/>
                 {busyState !== undefined && reload !== undefined ?

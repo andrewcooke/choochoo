@@ -1,7 +1,6 @@
 import React from 'react';
 import {Grid} from "@material-ui/core";
-import ColumnCard from "./ColumnCard";
-import Text from "./Text";
+import {ColumnCard, Text} from ".";
 
 
 export default function TextCard(props) {

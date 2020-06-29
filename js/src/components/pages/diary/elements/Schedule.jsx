@@ -2,7 +2,8 @@ import React from 'react';
 import {Grid, Typography} from "@material-ui/core";
 import {JupyterGroupActivities, ShrimpField, SummaryField} from "./index";
 import {makeStyles} from "@material-ui/core/styles";
-import {Break, ColumnCard, ColumnList, LinkButton, Loading, SearchResults, Text} from "../../../elements";
+import {SearchResults} from "../../../elements";
+import {Break, ColumnCard, ColumnList, LinkButton, Loading, Text} from "../../../../common/elements";
 import {addMonths, addYears, format} from 'date-fns';
 import {FMT_DAY} from "../../../../constants";
 

@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import {Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@material-ui/core";
-import {P, PercentBar} from "./index";
+import {P, PercentBar} from ".";
 
 
 export default function BusyDialog(props) {

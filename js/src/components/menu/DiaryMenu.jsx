@@ -1,11 +1,11 @@
 import React, {useEffect, useState} from "react";
 import {format, parse} from "date-fns";
-import {List, ListItem, Grid, Typography, ListItemIcon} from "@material-ui/core";
-import {ActivityButtons, DateButtons, Picker, ListItemLink} from "../elements";
+import {List, ListItem} from "@material-ui/core";
+import {ActivityButtons, DateButtons, Picker} from "../elements";
+import {ListItemLink} from "../../common/elements";
 import {FMT_DAY, FMT_MONTH, FMT_YEAR} from "../../constants";
 import {makeStyles} from "@material-ui/styles";
-import Calendar from "./Calendar";
-import Months from "./Months";
+import {Calendar, Months} from ".";
 import ListItemText from "@material-ui/core/ListItemText";
 import {KeyboardArrowLeft} from "@material-ui/icons";
 import {useHistory, useLocation} from 'react-router-dom';

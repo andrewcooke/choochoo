@@ -1,5 +1,5 @@
 import React from 'react';
-import {ColumnCard, LinkButton} from "../../elements";
+import {ColumnCard, LinkButton} from "../../../common/elements";
 import {Grid} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 
