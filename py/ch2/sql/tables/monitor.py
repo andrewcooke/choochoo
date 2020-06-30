@@ -1,9 +1,9 @@
 
-from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
-from .source import Source, SourceType, UngroupedSource
-from ..types import Time
+from .source import SourceType, UngroupedSource
+from ...common.sql import Time
 from ...lib.date import format_time
 
 

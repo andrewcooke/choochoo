@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 
 from .source import SourceType, Source, GroupedSource
 from ..support import Base
-from ..types import Time
+from ...common.sql import Time
 from ...lib.date import format_time
 
 

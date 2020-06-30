@@ -5,12 +5,12 @@ from logging import getLogger
 from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint, desc
 from sqlalchemy.orm import relationship, backref
 
-from .source import Source, SourceType, GroupedSource
+from .source import SourceType, GroupedSource
 from ..support import Base
-from ..types import Time, Sort, ShortCls, NullText, Name, name_and_title
+from ..types import Sort, ShortCls, NullText, Name, name_and_title
+from ...common.sql import Time
 from ...lib.date import format_time, local_date_to_time, local_time_to_time
 from ...lib.utils import timing
-from ...names import Titles, UNDEF, simple_name
 
 log = getLogger(__name__)
 

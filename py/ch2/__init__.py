@@ -2,6 +2,9 @@ from logging import getLogger, NullHandler
 
 from sys import version_info
 
+from .global_ import set_global_dev
+from .sql.system import Data
+
 getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())
 
@@ -20,7 +23,6 @@ from .commands.args import COMMAND, make_parser, PROGNAME, HELP, DEV, DIARY, FIT
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DATABASE, CONSTANTS, CALCULATE, SHOW_SCHEDULE, MONITOR, GARMIN, \
     UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, BASE
 from .common.args import NamespaceWithVariables
-from .global_ import set_global_dev, set_global_data, set_global_state
 from .commands.constants import constants
 from .commands.validate import validate
 from .commands.database import database
@@ -96,7 +98,10 @@ def versions():
 def main():
     versions()
     args, command, command_name = args_and_command()
-    data = set_global_state(args)
+    set_global_dev(args[DEV])
+    make_log_from_args(args)
+    data = Data(args)
+    set_log_color(args, data)
     try:
         if not command:
             log.debug('If you are seeing the "No command given" error during development ' +

@@ -3,16 +3,14 @@ from logging import getLogger
 from random import choice
 
 from sqlalchemy import func, inspect, and_, select
-from sqlalchemy.sql.functions import coalesce
 
 from .utils import MultiProcCalculator, IntervalCalculatorMixin
 from ...data.frame import _tables
-from ...global_ import global_data
-from ...names import Summaries as S
 from ...lib.date import local_date_to_time
+from ...names import Summaries as S
 from ...sql.tables.source import Interval, Source
 from ...sql.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, StatisticJournalInteger, \
-    StatisticJournalFloat, StatisticJournalText, TYPE_TO_JOURNAL_CLASS, STATISTIC_JOURNAL_CLASSES
+    StatisticJournalFloat, TYPE_TO_JOURNAL_CLASS, STATISTIC_JOURNAL_CLASSES
 
 log = getLogger(__name__)
 

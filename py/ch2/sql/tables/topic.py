@@ -11,8 +11,9 @@ from .source import SourceType, Interval, UngroupedSource, GroupedSource
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from .system import SystemConstant
 from ..support import Base
-from ..types import Date, Json, Sched, Sort
+from ..types import Json, Sched, Sort
 from ..utils import add
+from ...common.sql import Date
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 

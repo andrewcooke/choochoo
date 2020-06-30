@@ -3,8 +3,9 @@ from sqlalchemy import Column, Text, Integer, ForeignKey, Index
 from sqlalchemy.orm import relationship, backref
 
 from ..support import Base
-from ..types import Time, ShortCls
+from ..types import ShortCls
 from ..utils import add
+from ...common.sql import Time
 from ...lib import to_time
 
 

@@ -1,11 +1,8 @@
 
 from logging import getLogger
 
-from sqlalchemy.sql.functions import count
-
 from .utils import Displayer
 from ...diary.model import value, optional_text, text
-from ...global_ import global_data
 from ...sql import Interval
 
 log = getLogger(__name__)

@@ -7,8 +7,9 @@ import psutil as ps
 from sqlalchemy import Column, Text, Integer
 
 from ..support import Base
-from ..types import Time, ShortCls, Name
+from ..types import ShortCls, Name
 from ..utils import add
+from ...common.sql import Time
 from ...lib import now
 
 log = getLogger(__name__)

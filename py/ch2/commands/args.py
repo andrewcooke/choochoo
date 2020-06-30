@@ -5,10 +5,8 @@ from logging import getLogger
 from os import makedirs
 from os.path import join
 
-from .. import NamespaceWithVariables
-from ..common.args import mm, m, no, add_web_server_args
+from ..common.args import mm, m, no, add_web_server_args, NamespaceWithVariables
 from ..common.names import *
-from ..global_ import set_global_state
 from ..lib.utils import clean_path, parse_bool
 from ..names import UNDEF
 
@@ -611,18 +609,20 @@ def make_parser(with_noop=False):
 
 
 def bootstrap_dir(base, *args, configurator=None, post_config=None):
+
+    from ..sql.system import Data
     # used in tests, given a base directory
 
     args = [mm(BASE), base] + list(args)
     parser = make_parser()
     ns = NamespaceWithVariables(parser.parse_args(args=args))
     if configurator:
-        data = set_global_state(ns)
+        data = Data(ns)
         with data.db.session_context() as s:
             configurator(s, data)
     args += post_config if post_config else []
     ns = NamespaceWithVariables(parser.parse_args(args=args))
-    data = set_global_state(ns)
+    data = Data(ns)
     return ns, data
 
 

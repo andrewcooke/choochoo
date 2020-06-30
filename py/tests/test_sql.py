@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 from ch2.names import SPACE, simple_name
 from ch2.sql.support import Base
-from ch2.sql.types import Date
+from ch2.common.sql import Date
 from tests import LogTestCase
 
 log = getLogger(__name__)

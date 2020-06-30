@@ -11,7 +11,6 @@ from uritools import urisplit, uriunsplit
 
 from ..commands.args import NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, LOG, BASE, base_system_path, BIND, PORT, PROXY
 from ..common.args import mm
-from ..global_ import global_dev
 from ..lib.server import BaseController
 from ..sql import SystemConstant
 
@@ -88,7 +87,7 @@ class JupyterController(BaseController):
             options = ['--notebook-dir', notebook_dir]
             if self._bind is not None: options += ['--ip', self._bind]
             if self._port is not None: options += ['--port', str(self._port)]
-            if global_dev(): options += ['--debug', '--log-level=DEBUG']
+            if self._dev: options += ['--debug', '--log-level=DEBUG']
             if not geteuid(): options += ['--allow-root', '--no-browser']
             # https://github.com/jupyter/notebook/issues/2254
             options += ['--NotebookApp.token=""']

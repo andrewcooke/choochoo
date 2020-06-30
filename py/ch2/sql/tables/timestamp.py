@@ -8,7 +8,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import count
 
 from ..support import Base
-from ..types import Time, ShortCls, short_cls, NullText
+from ..types import ShortCls, short_cls, NullText
+from ...common.sql import Time
 
 log = getLogger(__name__)
 
