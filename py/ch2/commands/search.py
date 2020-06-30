@@ -1,6 +1,7 @@
 from logging import getLogger
 
-from .args import QUERY, SUB_COMMAND, ACTIVITIES, SHOW, SET, mm
+from .args import QUERY, SUB_COMMAND, ACTIVITIES, SHOW, SET
+from ..common.args import mm
 from ..data.constraint import activity_conversion, constrained_sources, sort_groups, \
     group_by_type
 from ..diary.model import TEXT

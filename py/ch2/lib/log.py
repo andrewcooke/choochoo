@@ -6,6 +6,7 @@ from traceback import format_tb
 
 from colorlog import ColoredFormatter
 
+from ..commands.args import base_system_path, BASE
 from ..names import UNDEF
 
 log = getLogger(__name__)
@@ -17,7 +18,7 @@ def make_log_from_args(args):
     from ..commands.args import LOG, COMMAND, VERBOSITY, PROGNAME, LOGS, DEV
     name = args[LOG] if LOG in args and args[LOG] else (
             (args[COMMAND] if COMMAND in args and args[COMMAND] else PROGNAME) + f'.{LOG}')
-    path = args.system_path(LOGS, name)
+    path = base_system_path(args[BASE], subdir=LOGS, file=name)
     if args[VERBOSITY] is UNDEF:
         verbosity = 5 if args[DEV] else 2
     else:

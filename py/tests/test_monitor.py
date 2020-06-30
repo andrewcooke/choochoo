@@ -6,7 +6,8 @@ from tempfile import TemporaryDirectory
 import sqlalchemy.sql.functions as func
 
 from ch2.commands.read import read
-from ch2.commands.args import bootstrap_dir, m, V, DEV, mm, BASE, MONITOR
+from ch2.commands.args import bootstrap_dir, V, DEV, BASE, MONITOR, base_system_path
+from ch2.common.args import mm, m
 from ch2.config.profile.default import default
 from ch2.lib.date import to_time, local_date_to_time
 from ch2.sql.tables.monitor import MonitorJournal
@@ -60,7 +61,7 @@ class TestMonitor(LogTestCase):
                            StatisticName.owner == MonitorCalculator,
                            StatisticName.name == N.DAILY_STEPS).one()
                 if summary.value != 12757:
-                    path = args.system_path(subdir='data', file='activity.db')
+                    path = base_system_path(args[BASE], subdir='data', file='activity.db')
                     run('sqlite3 %s "select * from statistic_journal as j, statistic_journal_integer as i, '
                         'statistic_name as n where j.id = i.id and j.statistic_name_id = n.id and '
                         'n.name = \'steps\' order by j.time"' % path, shell=True)

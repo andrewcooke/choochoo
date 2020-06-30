@@ -1,7 +1,8 @@
 from io import StringIO
 from tempfile import TemporaryDirectory
 
-from ch2.commands.args import bootstrap_dir, m, V, mm, DEV, K, READ
+from ch2.commands.args import bootstrap_dir, V, DEV, K, READ
+from ch2.common.args import mm, m
 from ch2.commands.kit import start, change, finish, show, undo, statistics
 from ch2.commands.read import read
 from ch2.config.profile.default import default

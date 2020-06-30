@@ -4,7 +4,8 @@ from tempfile import TemporaryDirectory
 
 from sqlalchemy.sql.functions import count
 
-from ch2.commands.args import bootstrap_dir, m, V, DEV, mm, FORCE
+from ch2.commands.args import bootstrap_dir, V, DEV, FORCE
+from ch2.common.args import mm, m
 from ch2.commands.constants import constants
 from ch2.config.profile.default import default
 from ch2.sql.tables.constant import Constant

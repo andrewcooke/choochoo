@@ -11,8 +11,9 @@ from uritools import urisplit
 
 from . import *
 from .support import Base
-from ..commands.args import NamespaceWithVariables, NO_OP, make_parser, DB_EXTN, base_system_path, DATA, ACTIVITY, \
+from ..commands.args import NO_OP, make_parser, DB_EXTN, base_system_path, DATA, ACTIVITY, \
     DB_VERSION, POSTGRESQL, SQLITE
+from .. import NamespaceWithVariables
 from ..lib.io import touch
 from ..lib.log import make_log_from_args
 from ..lib.utils import grouper

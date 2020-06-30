@@ -7,6 +7,7 @@ import numpy as _np
 import scipy as _sp
 from math import pi
 
+import ch2.common.args
 from .frame import median_dt
 from .lib import fit, inplace_decay
 from ..lib.data import tmp_name, safe_first
@@ -136,9 +137,9 @@ PowerModel = namedtuple('PowerModel', 'cda, crr, slope, window, delay, m,  wind_
 
 def evaluate(df, model, quiet=True):
     if not quiet: log.debug(f'Evaluating {model}')
-    df = add_energy_budget(df, model.m)
+    df = add_energy_budget(df, ch2.common.args.m)
     df = add_air_speed(df, model.wind_speed, model.wind_heading)
-    df = add_loss_estimate(df, model.m, cda=model.cda, crr=model.crr)
+    df = add_loss_estimate(df, ch2.common.args.m, cda=model.cda, crr=model.crr)
     df = add_power_estimate(df)
     return df
 

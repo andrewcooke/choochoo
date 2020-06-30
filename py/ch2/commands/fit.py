@@ -2,8 +2,9 @@
 from logging import getLogger
 
 from .args import PATH, SUB_COMMAND, AFTER_BYTES, LIMIT_BYTES, AFTER_RECORDS, LIMIT_RECORDS, NAME, WIDTH, GREP, \
-    RECORDS, ALL_FIELDS, INTERNAL, ALL_MESSAGES, MESSAGE, FIELD, VALIDATE, MAX_DELTA_T, no, WARN, TABLES, PATTERN, \
+    RECORDS, ALL_FIELDS, INTERNAL, ALL_MESSAGES, MESSAGE, FIELD, VALIDATE, MAX_DELTA_T, WARN, TABLES, PATTERN, \
     COMPACT, CONTEXT, NOT, MATCH, CSV, TOKENS, FIELDS
+from ..common.args import no
 from ..fit.profile.profile import read_fit
 from ..fit.summary import summarize_records, summarize_tables, summarize_grep, summarize_csv, summarize_tokens, \
     summarize_fields

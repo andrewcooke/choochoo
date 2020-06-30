@@ -4,7 +4,8 @@ from time import sleep
 
 from requests import HTTPError
 
-from .args import DIR, USER, PASS, DATE, FORCE, base_system_path, PERMANENT, BASE, mm
+from .args import DIR, USER, PASS, DATE, FORCE, base_system_path, PERMANENT, BASE
+from ..common.args import mm
 from ..fit.download.connect import GarminConnect
 from ..lib import now, local_time_to_time, time_to_local_time
 from ..lib.log import log_current_exception

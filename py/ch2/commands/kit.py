@@ -2,7 +2,8 @@ from logging import getLogger
 from sys import stdout
 
 from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, CALCULATE, NAME, SHOW, CSV, \
-    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT, CMD, VALUE, STATISTICS
+    START, CHANGE, FINISH, DELETE, UNDO, ALL, REBUILD, DUMP, KIT, CMD, VALUE, STATISTICS
+from ..common.args import mm
 from ..diary.model import TYPE, UNITS
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_km, \
     is_local_time

@@ -8,7 +8,8 @@ from sqlalchemy import text
 from sqlalchemy.sql.functions import count
 
 from .loader import SqliteLoader, PostgresqlLoader
-from ..commands.args import SQLITE, POSTGRESQL, BATCH, mm, KARG
+from ..commands.args import SQLITE, POSTGRESQL, BATCH, KARG
+from ..common.args import mm
 from ..lib.utils import timing
 from ..lib.workers import ProgressTree, Workers
 from ..sql import Pipeline, SystemConstant, Interval, PipelineType, StatisticJournal

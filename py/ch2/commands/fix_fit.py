@@ -4,7 +4,8 @@ from sys import stdout, stderr
 
 from .args import PATH, DROP, OUTPUT, SLICES, RAW, WARN, MIN_SYNC_CNT, MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, \
     MAX_FWD_LEN, DISCARD, FORCE, VALIDATE, ADD_HEADER, HEADER_SIZE, PROTOCOL_VERSION, PROFILE_VERSION, MAX_DELTA_T, \
-    NAME, FIX_HEADER, FIX_CHECKSUM, NAME_BAD, NAME_GOOD, mm, no, START
+    NAME, FIX_HEADER, FIX_CHECKSUM, NAME_BAD, NAME_GOOD, START
+from ..common.args import mm, no
 from ..fit.fix import fix
 from ..fit.profile.profile import read_fit
 

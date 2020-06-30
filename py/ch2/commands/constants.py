@@ -2,8 +2,9 @@
 from logging import getLogger
 
 from .help import Markdown
-from ..commands.args import DATE, NAME, VALUE, FORCE, mm, COMMAND, CONSTANTS, SET, SUB_COMMAND, ADD, \
+from ..commands.args import DATE, NAME, VALUE, FORCE, COMMAND, CONSTANTS, SET, SUB_COMMAND, ADD, \
     SHOW, REMOVE, DESCRIPTION, SINGLE, VALIDATE, UNSET, LIST
+from ..common.args import mm
 from ..sql import ActivityGroup
 from ..sql.tables.constant import Constant, ValidateNamedTuple
 from ..sql.tables.statistic import StatisticJournal, StatisticName, StatisticJournalType

@@ -7,7 +7,8 @@ from sqlalchemy.sql.functions import count
 
 from tests import LogTestCase
 from ch2.config.profile.default import default
-from ch2.commands.args import bootstrap_dir, m, V, mm, DEV
+from ch2.commands.args import bootstrap_dir, V, DEV
+from ch2.common.args import mm, m
 from ch2.sql import Source
 from ch2.sql.tables.timestamp import Timestamp
 from ch2.sql.utils import add

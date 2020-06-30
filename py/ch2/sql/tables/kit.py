@@ -11,7 +11,8 @@ from .statistic import StatisticJournal, StatisticName, StatisticJournalTimestam
 from ..support import Base
 from ..types import Name
 from ..utils import add
-from ...commands.args import FORCE, mm
+from ...commands.args import FORCE
+from ...common.args import mm
 from ...diary.model import TYPE, DB, UNITS
 from ...lib import now, time_to_local_time
 from ...lib.date import YMD

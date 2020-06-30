@@ -4,7 +4,8 @@ from tempfile import TemporaryDirectory
 from sqlalchemy.sql.functions import count
 
 from ch2.commands.read import read
-from ch2.commands.args import m, V, DEV, mm, BASE, bootstrap_dir, FORCE
+from ch2.commands.args import V, DEV, BASE, bootstrap_dir, FORCE
+from ch2.common.args import mm, m
 from ch2.commands.constants import constants
 from ch2.config.profile.default import default
 from ch2.sql.tables.activity import ActivityJournal

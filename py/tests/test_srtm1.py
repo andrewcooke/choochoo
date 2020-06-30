@@ -4,7 +4,8 @@ from logging import getLogger
 from tempfile import TemporaryDirectory
 
 from ch2 import constants
-from ch2.commands.args import bootstrap_dir, V, m, DEV, mm, FORCE
+from ch2.commands.args import bootstrap_dir, V, DEV, FORCE
+from ch2.common.args import mm, m
 from ch2.config.profile.default import default
 from ch2.srtm.bilinear import bilinear_elevation_from_constant
 from ch2.srtm.file import SRTM1_DIR_CNAME

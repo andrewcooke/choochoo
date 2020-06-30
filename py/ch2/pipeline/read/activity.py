@@ -6,7 +6,8 @@ from sqlalchemy.sql.functions import count
 
 from .utils import AbortImportButMarkScanned, MultiProcFitReader
 from ... import FatalException
-from ...commands.args import mm, FORCE, DEFAULT, no, READ
+from ...commands.args import FORCE, DEFAULT, READ
+from ...common.args import mm, no
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit

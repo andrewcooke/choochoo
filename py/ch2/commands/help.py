@@ -4,7 +4,8 @@ from logging import getLogger
 from sys import stdout
 import re
 
-from .args import TOPIC, HELP, PROGNAME, m, BASE
+from .args import TOPIC, HELP, PROGNAME, BASE
+from ..common.args import m
 from ..lib.io import terminal_width
 
 log = getLogger(__name__)

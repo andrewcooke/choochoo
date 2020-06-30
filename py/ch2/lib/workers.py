@@ -7,7 +7,8 @@ from time import sleep, time
 from math import floor
 
 from ..commands import args
-from ..commands.args import mm, BASE, VERBOSITY, WORKER, LOG, DEV
+from ..commands.args import BASE, VERBOSITY, WORKER, LOG, DEV
+from ..common.args import mm
 from ..global_ import global_dev
 from ..sql.types import short_cls
 

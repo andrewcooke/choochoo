@@ -16,9 +16,10 @@ class FatalException(Exception):
     pass
 
 
-from .commands.args import COMMAND, make_parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
+from .commands.args import COMMAND, make_parser, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DATABASE, CONSTANTS, CALCULATE, SHOW_SCHEDULE, MONITOR, GARMIN, \
     UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, BASE
+from .common.args import NamespaceWithVariables
 from .global_ import set_global_dev, set_global_data, set_global_state
 from .commands.constants import constants
 from .commands.validate import validate

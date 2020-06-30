@@ -11,7 +11,8 @@ from sqlalchemy.sql.functions import count
 from .utils import AbortImport, AbortImportButMarkScanned, MultiProcFitReader
 from ..loader import SqliteLoader, PostgresqlLoader
 from ..pipeline import LoaderMixin
-from ...commands.args import mm, FORCE, READ, SQLITE, POSTGRESQL
+from ...commands.args import FORCE, READ, SQLITE, POSTGRESQL
+from ...common.args import mm
 from ...data.frame import read_query
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...fit.profile.profile import read_fit

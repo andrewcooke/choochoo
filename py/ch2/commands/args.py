@@ -4,9 +4,10 @@ from genericpath import exists
 from logging import getLogger
 from os import makedirs
 from os.path import join
-from re import sub
-from typing import Mapping
 
+from .. import NamespaceWithVariables
+from ..common.args import mm, m, no, add_web_server_args
+from ..common.names import *
 from ..global_ import set_global_state
 from ..lib.utils import clean_path, parse_bool
 from ..names import UNDEF
@@ -24,7 +25,6 @@ URI_SQLITE = 'sqlite:///{base}/{user}/{version}/data/activity.db'
 URI_POSTGRESQL = 'postgresql://postgres:{pass}@localhost/activity-{version}'
 
 PROGNAME = 'ch2'
-COMMAND = 'command'
 
 WEB_PORT = 8000
 JUPYTER_PORT = 8001
@@ -51,7 +51,6 @@ TEXT = 'text'
 THUMBNAIL = 'thumbnail'
 UNLOCK = 'unlock'
 VALIDATE = 'validate'
-WEB = 'web'
 
 A = 'a'
 ACTIVITY = 'activity'
@@ -72,7 +71,6 @@ ALL_FIELDS = 'all-fields'
 ARG = 'arg'
 BASE = 'base'
 BATCH = 'batch'
-BIND = 'bind'
 BORDER = 'border'
 CHANGE = 'change'
 CHECK = 'check'
@@ -160,7 +158,6 @@ PATTERN = 'pattern'
 PERMANENT = 'permanent'
 POSTGRESQL = 'postgresql'
 PLAN = 'plan'
-PORT = 'port'
 PRINT = 'print'
 PROFILE = 'profile'
 PROFILE_VERSION = 'profile-version'
@@ -216,33 +213,6 @@ WIDTH = 'width'
 WORKER = 'worker'
 YEAR = 'year'
 Y = 'y'
-
-
-def mm(name): return '--' + name
-def m(name): return '-' + name
-def no(name): return 'no-%s' % name
-
-
-class NamespaceWithVariables(Mapping):
-
-    def __init__(self, ns):
-        self._dict = vars(ns)
-
-    def __getitem__(self, name):
-        try:
-            value = self._dict[name]
-        except KeyError:
-            value = self._dict[sub('-', '_', name)]
-        return value
-
-    def system_path(self, subdir=None, file=None, version=DB_VERSION, create=True):
-        return base_system_path(self[BASE], subdir=subdir, file=file, version=version, create=create)
-
-    def __iter__(self):
-        return iter(self._dict)
-
-    def __len__(self):
-        return len(self.__dict__)
 
 
 def base_system_path(base, subdir=None, file=None, version=DB_VERSION, create=True):
@@ -306,20 +276,13 @@ def make_parser(with_noop=False):
                                 description='start, stop and manage the web interface')
     web_cmds = web.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
 
-    def add_web_server_args(cmd, prefix='', default_address='localhost', default_port=WEB_PORT):
-        if prefix: prefix += '-'
-        cmd.add_argument(mm(prefix + BIND), default='localhost', metavar='ADDRESS',
-                         help='bind address' + f' (default {default_address})' if default_address else '')
-        cmd.add_argument(mm(prefix + PORT), default=default_port, type=int, metavar='PORT',
-                         help=f'port' + f' (default {default_port})' if default_port else '')
-
     def add_warning_args(cmd):
         prefix = WARN + '-'
         cmd.add_argument(mm(prefix + DATA), action='store_true', help='warn user that data may be lost')
         cmd.add_argument(mm(prefix + SECURE), action='store_true', help='warn user that the system is insecure')
 
     web_start = web_cmds.add_parser(START, help='start the web server', description='start the web server')
-    add_web_server_args(web_start, prefix=WEB)
+    add_web_server_args(web_start, prefix=WEB, default_port=WEB_PORT)
     add_web_server_args(web_start, prefix=JUPYTER, default_port=JUPYTER_PORT)
     add_web_server_args(web_start, prefix=PROXY, default_port=None, default_address=None)
     add_warning_args(web_start)
@@ -327,7 +290,7 @@ def make_parser(with_noop=False):
     web_cmds.add_parser(STATUS, help='display status of web server', description='display status of web server')
     web_service = web_cmds.add_parser(SERVICE, help='internal use only - use start/stop',
                                       description='internal use only - use start/stop')
-    add_web_server_args(web_service, prefix=WEB)
+    add_web_server_args(web_service, prefix=WEB, default_port=WEB_PORT)
     add_web_server_args(web_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
     add_web_server_args(web_service, prefix=PROXY, default_port=None, default_address=None)
     add_warning_args(web_service)
@@ -649,9 +612,6 @@ def make_parser(with_noop=False):
 
 def bootstrap_dir(base, *args, configurator=None, post_config=None):
     # used in tests, given a base directory
-
-    from ..sql.database import sqlite_uri
-    from ..sql.system import SystemConstant
 
     args = [mm(BASE), base] + list(args)
     parser = make_parser()
