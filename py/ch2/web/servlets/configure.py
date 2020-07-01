@@ -3,7 +3,8 @@ from logging import getLogger
 
 from sqlalchemy import exists
 
-from ...commands.args import SERVICE, WEB, SQLITE, POSTGRESQL, URI, DB_VERSION
+from ...commands.args import SERVICE, WEB, DB_VERSION
+from ...common.names import POSTGRESQL, SQLITE, URI
 from ...common.args import mm
 from ...commands.database import load, delete
 from ...commands.help import HTML, filter, parse, P, LI, PRE

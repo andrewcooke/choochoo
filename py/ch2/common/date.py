@@ -37,7 +37,7 @@ def to_date(value, none=False):
     elif isinstance(value, int):
         return dt.date.fromordinal(value)
     else:
-        for format in (YMD, '%Y-%m', '%Y'):
+        for format in (YMD, YM, Y):
             try:
                 return dt.date(*t.strptime(value, format)[:3])
             except ValueError:

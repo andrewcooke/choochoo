@@ -6,7 +6,7 @@ from sqlalchemy import func, inspect, and_, select
 
 from .utils import MultiProcCalculator, IntervalCalculatorMixin
 from ...data.frame import _tables
-from ...lib.date import local_date_to_time
+from ...common.date import local_date_to_time
 from ...names import Summaries as S
 from ...sql.tables.source import Interval, Source
 from ...sql.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, StatisticJournalInteger, \

@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy_batch_inserts import enable_batch_inserting
 
 from ..commands.args import UNLOCK
-from ..lib.date import min_time, max_time
+from ..common.date import min_time, max_time
 from ..sql import StatisticJournal, StatisticName, Dummy, Interval, Source
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
 from ..sql.types import short_cls

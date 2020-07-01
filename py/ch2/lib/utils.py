@@ -4,15 +4,16 @@ from contextlib import contextmanager
 from itertools import zip_longest, groupby
 from logging import getLogger
 from os import getpid, close, execl
-from os.path import split, normpath, expanduser
+from os.path import split
 from pprint import PrettyPrinter
 from sys import executable, argv
 from time import sleep
 
 from psutil import Process
 
-from .date import now
-from ..names import Units, UNDEF
+from ..common.date import now
+from ..common.names import UNDEF
+from ..names import Units
 
 log = getLogger(__name__)
 
@@ -204,11 +205,6 @@ def restart_self():
     log.info(f'Restarting {python} {args}')
     execl(python, python, *args)
     # no need to exit as we do not return
-
-
-def clean_path(path):
-    # don't use realpath here since it messes up inside docker
-    return normpath(expanduser(path))
 
 
 def slow_warning(msg, n=3, pause=1):

@@ -1,8 +1,6 @@
 import re
 from re import sub
 
-UNDEF = object()
-
 SPACE = '-'  # we don't use _ because sqlite uses that as a wildcard in 'like'
 POW_M1 = '\u207b\u00b9'
 POW_2 = '\u00b2'

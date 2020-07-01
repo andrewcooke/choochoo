@@ -4,24 +4,22 @@ from collections import defaultdict
 from logging import getLogger
 
 import numpy as np
-from sqlalchemy import desc, and_, or_, func
+from sqlalchemy import desc, and_, func
 from sqlalchemy.orm import aliased
-from sqlalchemy.sql.functions import count
 
-from .utils import AbortImport, AbortImportButMarkScanned, MultiProcFitReader
+from .utils import AbortImportButMarkScanned, MultiProcFitReader
 from ..loader import SqliteLoader, PostgresqlLoader
 from ..pipeline import LoaderMixin
-from ...commands.args import FORCE, READ, SQLITE, POSTGRESQL
+from ...commands.args import FORCE, READ
 from ...common.args import mm
+from ...common.date import time_to_local_date, format_time
+from ...common.names import POSTGRESQL, SQLITE
 from ...data.frame import read_query
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...fit.profile.profile import read_fit
-from ...lib import log_current_exception
-from ...lib.date import time_to_local_date, format_time
 from ...names import N, T, Units
 from ...sql.database import StatisticJournalType, Source
-from ...sql.tables.monitor import MonitorJournal
-from ...sql.tables.statistic import StatisticJournalInteger, StatisticName, StatisticJournal
+from ...sql import MonitorJournal, StatisticJournalInteger, StatisticName, StatisticJournal
 from ...sql.utils import add
 
 log = getLogger(__name__)

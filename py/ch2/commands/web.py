@@ -2,7 +2,8 @@
 import webbrowser
 from logging import getLogger
 
-from .args import SUB_COMMAND, SERVICE, STOP, START, STATUS, URI
+from .args import SUB_COMMAND, SERVICE, STOP, START, STATUS
+from ..common.names import URI
 from ..web.server import WebController
 
 

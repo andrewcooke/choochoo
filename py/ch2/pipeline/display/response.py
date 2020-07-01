@@ -6,7 +6,7 @@ from sqlalchemy import asc, desc
 from .utils import Displayer
 from ..pipeline import OwnerInMixin
 from ...diary.model import text, optional_text, value, link
-from ...lib.date import local_date_to_time, to_time, format_date
+from ...common.date import local_date_to_time, to_time, format_date
 from ...lib.schedule import Schedule
 from ...sql.tables.statistic import StatisticJournal, StatisticName, TYPE_TO_JOURNAL_CLASS
 

@@ -3,8 +3,8 @@ from sqlalchemy import or_, desc
 from sqlalchemy.orm import aliased
 
 from ..utils import ActivityJournalDelegate
+from ....common.date import to_time, time_to_local_time
 from ....diary.model import text, link, optional_text
-from ....lib.date import to_time, time_to_local_time
 from ....sql import ActivityJournal, ActivitySimilarity
 from ....sql.support import greatest
 

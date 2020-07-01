@@ -12,8 +12,9 @@ from uritools import urisplit
 from . import *
 from .support import Base
 from ..commands.args import NO_OP, make_parser, DB_EXTN, base_system_path, DATA, ACTIVITY, \
-    DB_VERSION, POSTGRESQL, SQLITE, NamespaceWithVariables
-from ..lib.io import touch
+    DB_VERSION, NamespaceWithVariables
+from ..common.names import POSTGRESQL, SQLITE
+from ..common.io import touch
 from ..lib.log import make_log_from_args
 from ..lib.utils import grouper
 
@@ -80,15 +81,13 @@ def sqlite_uri(base, read_only=False, name=ACTIVITY, version=DB_VERSION):
 
 def postgresql_uri(read_only=False, version=DB_VERSION):
     '''
-    We no longer use base here.  It was a confused mess.  You can still have a database that depends on base
-    because the system database still switches, so you can explicitly configure a different database uri.
+    We no longer use base here.  It was a confused mess.
 
     We use the default postgres schema because they cannot be managed within the URI.
     See also https://docs.sqlalchemy.org/en/13/dialects/postgresql.html#remote-schema-table-introspection-and-postgresql-search-path
     '''
     if read_only: log.warning('Read-only not supported yet for Postgres')
-    name = f'{ACTIVITY}-{version}'
-    return f'{POSTGRESQL}://postgres@localhost/{name}'
+    return f'{POSTGRESQL}://postgres@localhost/{ACTIVITY}-{version}'
 
 
 class DirtySession(Session):

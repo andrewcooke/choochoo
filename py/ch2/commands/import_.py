@@ -5,11 +5,12 @@ from os.path import sep, exists, join, isfile
 from sqlalchemy_utils import database_exists
 
 from .args import SOURCE, ACTIVITY, DB_EXTN, base_system_path, SEGMENTS, CONSTANTS, KIT, ACTIVITIES, DIARY, \
-    infer_flags, ENGINE, SQLITE, POSTGRESQL
+    infer_flags, ENGINE
+from ..common.names import POSTGRESQL, SQLITE
 from ..common.args import mm
 from .read import DATA
 from ..lib.log import Record
-from ..lib.utils import clean_path
+from ..common.io import clean_path
 from ..import_.activity import import_activity
 from ..import_.constant import import_constant
 from ..import_.diary import import_diary

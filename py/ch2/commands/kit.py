@@ -7,7 +7,7 @@ from ..common.args import mm
 from ..diary.model import TYPE, UNITS
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_km, \
     is_local_time
-from ..lib.date import format_minutes
+from ..common.date import format_minutes
 from ..lib.tree import to_tree, to_csv
 from ..names import Units, Names
 from ..pipeline.calculate.kit import KitCalculator

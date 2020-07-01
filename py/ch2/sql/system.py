@@ -3,7 +3,8 @@ from os import environ
 
 from .database import SystemConstant, Process, Database
 from .tables.system import Progress
-from ..commands.args import BASE, URI, USER, PASS, VERSION, DB_VERSION
+from ..commands.args import BASE, USER, PASS, VERSION, DB_VERSION
+from ..common.names import URI
 
 log = getLogger(__name__)
 

@@ -10,7 +10,7 @@ from sqlalchemy.orm import aliased
 from ..lib import local_time_to_time, to_time
 from ..lib.peg import transform, choice, pattern, sequence, Recursive, drop, exhaustive, single
 from ..lib.utils import timing
-from ..names import UNDEF
+from ..common.names import UNDEF
 from ..sql import ActivityJournal, StatisticName, StatisticJournalType, ActivityGroup, ActivityTopicJournal, Source, \
     FileHash, StatisticJournal
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES

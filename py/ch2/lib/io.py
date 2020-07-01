@@ -2,15 +2,12 @@
 import re
 from hashlib import md5
 from logging import getLogger
-from os import stat, makedirs
-from os.path import dirname
-from pathlib import Path
+from os import stat
 from shutil import get_terminal_size
 
 from sqlalchemy import desc
 
-from .date import to_time
-from .utils import clean_path
+from ..common.date import to_time
 from ..sql.tables.file import FileScan, FileHash
 
 
@@ -97,9 +94,3 @@ def split_fit_path(path):
         return path[:-4] + '*' + path[-4:], None
 
 
-def touch(path, with_dirs=False):
-    path = clean_path(path)
-    if with_dirs:
-        dirs = dirname(path)
-        makedirs(dirs, exist_ok=True)
-    Path(path).touch()

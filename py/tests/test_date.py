@@ -6,7 +6,7 @@ from tests import LogTestCase
 
 from ch2.fit.format.read import filtered_records
 from ch2.fit.profile.profile import read_fit
-from ch2.lib.date import to_time, format_time, local_time_to_time, time_to_local_time
+from ch2.common.date import to_time, format_time, local_time_to_time, time_to_local_time
 
 
 class TestDate(LogTestCase):

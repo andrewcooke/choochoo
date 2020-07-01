@@ -8,7 +8,7 @@ from sqlalchemy.sql.functions import count
 from ch2.commands.args import V, bootstrap_dir
 from ch2.common.args import m
 from ch2.config.profile.acooke import acooke
-from ch2.lib.date import to_date
+from ch2.common.date import to_date
 from ch2.sql.tables.source import Source, Interval
 from ch2.sql.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, StatisticName, \
     StatisticJournalInteger, StatisticJournalType

@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from ..lib.date import to_time
+from ..common.date import to_time
 from ..sql import ActivityBookmark, ActivityGroup, StatisticName
 from ..sql.database import connect
 

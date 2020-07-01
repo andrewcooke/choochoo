@@ -3,7 +3,7 @@ from .nearby import fmt_nearby, nearby_any_time
 from ..utils import ActivityJournalDelegate
 from ....diary.model import text, link, optional_text, COMPARE_LINKS
 from ....lib import time_to_local_time
-from ....lib.date import format_date, local_date_to_time
+from ....common.date import format_date, local_date_to_time
 from ....sql import ActivityJournal
 
 

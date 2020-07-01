@@ -5,13 +5,13 @@ from os import unlink
 from sqlalchemy_utils import create_database, drop_database, database_exists
 from uritools import urisplit
 
-from .args import SUB_COMMAND, LIST, PROFILE, SHOW, DB_VERSION, URI, SQLITE, POSTGRESQL, \
-    FORCE, DELETE
+from .args import SUB_COMMAND, LIST, PROFILE, SHOW, DB_VERSION, FORCE, DELETE
+from ..common.names import POSTGRESQL, SQLITE, URI
 from ..common.args import mm
 from .help import Markdown
 from ..config.utils import profiles, get_profile
 from ..lib import log_current_exception
-from ..lib.utils import clean_path
+from ..common.io import clean_path
 
 log = getLogger(__name__)
 

@@ -7,11 +7,11 @@ from sqlalchemy.sql.functions import count
 from .utils import AbortImportButMarkScanned, MultiProcFitReader
 from ... import FatalException
 from ...commands.args import FORCE, DEFAULT, READ
-from ...common.args import mm, no
+from ...common.args import mm
+from ...common.date import to_time, time_to_local_time
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
-from ...lib.date import to_time, time_to_local_time
 from ...lib.io import split_fit_path
 from ...names import N, T, Units, Sports, Summaries as S
 from ...sql.database import Timestamp, StatisticJournalText

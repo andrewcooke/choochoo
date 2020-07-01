@@ -12,10 +12,10 @@ from sqlalchemy.sql.functions import count
 from ..support import Base
 from ..types import OpenSched, ShortCls, short_cls
 from ..utils import add
+from ...common.date import to_time, time_to_local_date, max_time, min_time, extend_range
+from ...common.names import UNDEF
 from ...common.sql import Date
-from ...lib.date import to_time, time_to_local_date, max_time, min_time, extend_range
 from ...lib.utils import timing
-from ...names import UNDEF
 
 log = getLogger(__name__)
 

@@ -13,7 +13,7 @@ from math import pi
 from .utils import tooltip, evenly_spaced_hues
 from ...names import Names as N, like
 from ...lib.data import linscale
-from ...lib.date import time_to_local_time, YMD
+from ...common.date import time_to_local_time, YMD
 
 log = getLogger(__name__)
 

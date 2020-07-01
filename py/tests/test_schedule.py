@@ -2,7 +2,7 @@
 import datetime as dt
 from tests import LogTestCase
 
-from ch2.lib.date import to_date
+from ch2.common.date import to_date
 from ch2.lib.schedule import Schedule, DateOrdinals, POS_INFINITY
 
 

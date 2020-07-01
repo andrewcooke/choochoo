@@ -8,7 +8,7 @@ class Date(TypeDecorator):
     impl = Integer
 
     def process_literal_param(self, date, dialect):
-        from ..lib.date import to_date
+        from .date import to_date
         if date is None:
             return date
         return to_date(date).toordinal()
@@ -29,7 +29,7 @@ class Time(TypeDecorator):
     impl = Float
 
     def process_literal_param(self, time, dialect):
-        from ..lib.date import to_time
+        from .date import to_time
         if time is None:
             return time
         else:

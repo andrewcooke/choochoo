@@ -4,8 +4,8 @@ from sqlalchemy.orm import relationship
 
 from .source import SourceType, Source, GroupedSource
 from ..support import Base
+from ...common.date import format_time
 from ...common.sql import Time
-from ...lib.date import format_time
 
 
 class SegmentJournal(GroupedSource):

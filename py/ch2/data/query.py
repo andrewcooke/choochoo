@@ -7,9 +7,9 @@ from sqlalchemy import asc, desc, distinct
 from sqlalchemy.orm import aliased
 
 from ch2.data import read_query
+from ..common.date import YMD, format_seconds
 from ..data import session, present
 from ..lib import local_date_to_time, to_date, time_to_local_time
-from ..lib.date import YMD, format_seconds
 from ..lib.log import log_current_exception
 from ..lib.utils import timing
 from ..names import Names as N, like, MED_WINDOW, SPACE

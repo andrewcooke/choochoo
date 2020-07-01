@@ -6,7 +6,7 @@ from math import sqrt, ceil
 from pygeotile.point import Point
 
 from .activity import ActivityReader
-from ...lib.date import to_time, format_time
+from ...common.date import to_time, format_time
 from ...lib.utils import sign
 from ...names import N
 from ...rtree import MatchType

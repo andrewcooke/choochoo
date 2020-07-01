@@ -7,7 +7,7 @@ from .profile.profile import read_profile
 from ..commands.args import ADD_HEADER, HEADER_SIZE, PROFILE_VERSION, PROTOCOL_VERSION, MIN_SYNC_CNT, \
     MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, MAX_FWD_LEN, MAX_DELTA_T
 from ..common.args import mm
-from ..lib.date import format_time, format_seconds
+from ..common.date import format_time, format_seconds
 
 log = getLogger(__name__)
 

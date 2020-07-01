@@ -6,7 +6,7 @@ from ..json import JsonResponse
 from ...diary.database import read_date, read_schedule
 from ...diary.views.web import rewrite_db
 from ...lib import time_to_local_time
-from ...lib.date import now_local, time_to_local_date, format_date
+from ...common.date import now_local, time_to_local_date, format_date
 from ...lib.schedule import Schedule
 from ...sql import ActivityJournal, StatisticJournal
 from ...pipeline.display.activity.utils import active_days, active_months

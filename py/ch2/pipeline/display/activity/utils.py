@@ -2,19 +2,18 @@ import datetime as dt
 from logging import getLogger
 from re import search
 
-from sqlalchemy import or_, distinct, asc, desc
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy import or_, distinct, desc
 
 from ..utils import Displayer, ActivityJournalDelegate
 from ...calculate import SummaryCalculator
 from ...calculate.activity import ActivityCalculator
 from ...calculate.power import PowerCalculator
+from ....common.date import YMD_HM, HM, format_minutes, add_date, MONTH, YMD, YEAR, YM
 from ....data.climb import climbs_for_activity
-from ....diary.database import summary_column, interval_column
+from ....diary.database import interval_column
 from ....diary.model import optional_text, text, from_field, value
 from ....lib import local_date_to_time, time_to_local_time, to_time, to_date, time_to_local_date, \
     log_current_exception
-from ....lib.date import YMD_HM, HM, format_minutes, add_date, MONTH, YMD, YEAR, YM, DAY
 from ....names import Names as N
 from ....sql import ActivityGroup, ActivityJournal, ActivityTopicJournal, ActivityTopicField, StatisticName, \
     ActivityTopic, StatisticJournal, Pipeline, PipelineType, Interval

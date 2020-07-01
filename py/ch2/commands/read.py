@@ -4,22 +4,20 @@ from logging import getLogger
 from os import makedirs
 from os.path import basename, join, exists, dirname
 
-from math import sqrt
-
 from .calculate import run_statistic_pipelines
 from .garmin import run_garmin
-from ..commands.args import KIT, READ, BASE, FORCE, PATH, base_system_path, PERMANENT, WORKER, parse_pairs, \
+from ..commands.args import KIT, READ, FORCE, PATH, base_system_path, PERMANENT, WORKER, parse_pairs, \
     KARG, infer_flags, ACTIVITIES, CALCULATE
-from ..lib.date import time_to_local_time, Y, YMDTHMS
-from ..lib.io import data_hash, split_fit_path, touch
+from ..common.date import time_to_local_time, Y, YMDTHMS
+from ..common.io import touch, clean_path
+from ..lib.io import data_hash, split_fit_path
 from ..lib.log import log_current_exception, Record
-from ..lib.utils import clean_path
 from ..lib.workers import ProgressTree, SystemProgressTree
 from ..pipeline.pipeline import run_pipeline
 from ..pipeline.read.activity import ActivityReader
 from ..pipeline.read.monitor import MonitorReader
 from ..pipeline.read.utils import AbortImportButMarkScanned
-from ..sql import KitItem, FileHash, ActivityJournal, PipelineType
+from ..sql import KitItem, FileHash, PipelineType
 
 log = getLogger(__name__)
 

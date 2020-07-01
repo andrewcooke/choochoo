@@ -2,7 +2,7 @@
 import datetime as dt
 from logging import getLogger
 
-from ...lib.date import to_date, format_date
+from ...common.date import to_date, format_date
 from ...lib.schedule import DOW, Schedule
 from ...sql.tables.topic import DiaryTopic
 from .lib import ORMUtils

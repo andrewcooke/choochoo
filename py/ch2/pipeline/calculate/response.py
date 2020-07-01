@@ -13,7 +13,7 @@ from ..pipeline import LoaderMixin, OwnerInMixin
 from ..read.segment import SegmentReader
 from ...data import Statistics, present
 from ...data.response import sum_to_hour, calc_response
-from ...lib.date import round_hour, to_time, local_date_to_time, now
+from ...common.date import round_hour, to_time, local_date_to_time, now
 from ...names import Names as N, SPACE
 from ...sql import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
     StatisticJournalFloat

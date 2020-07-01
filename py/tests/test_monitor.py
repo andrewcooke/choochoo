@@ -9,7 +9,7 @@ from ch2.commands.read import read
 from ch2.commands.args import bootstrap_dir, V, DEV, BASE, MONITOR, base_system_path
 from ch2.common.args import mm, m
 from ch2.config.profile.default import default
-from ch2.lib.date import to_time, local_date_to_time
+from ch2.common.date import to_time, local_date_to_time
 from ch2.sql.tables.monitor import MonitorJournal
 from ch2.sql.tables.pipeline import PipelineType
 from ch2.sql.tables.statistic import StatisticJournal, StatisticName

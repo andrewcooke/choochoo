@@ -3,8 +3,8 @@ from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
 from .source import SourceType, UngroupedSource
+from ...common.date import format_time
 from ...common.sql import Time
-from ...lib.date import format_time
 
 
 class MonitorJournal(UngroupedSource):

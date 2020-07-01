@@ -5,10 +5,11 @@ from logging import getLogger
 from os import makedirs
 from os.path import join
 
-from ..common.args import mm, m, no, add_web_server_args, NamespaceWithVariables
+from ..common.args import mm, m, no, add_web_server_args, NamespaceWithVariables, color
 from ..common.names import *
-from ..lib.utils import clean_path, parse_bool
-from ..names import UNDEF
+from ..lib.utils import parse_bool
+from ..common.io import clean_path
+from ..common.names import UNDEF, COLOR, OFF, POSTGRESQL, SQLITE, URI
 
 log = getLogger(__name__)
 
@@ -73,7 +74,6 @@ BORDER = 'border'
 CHANGE = 'change'
 CHECK = 'check'
 CMD = 'cmd'
-COLOR = 'color'
 COMPACT = 'compact'
 COMPONENT = 'component'
 CONSTRAINT = 'constraint'
@@ -148,13 +148,11 @@ NEW = 'new'
 NOT = 'not'
 NOTEBOOKS = 'notebooks'
 O, OUTPUT = 'o', 'output'
-OFF = 'off'
 OWNER = 'owner'
 P, PASS = 'p', 'pass'
 PATH = 'path'
 PATTERN = 'pattern'
 PERMANENT = 'permanent'
-POSTGRESQL = 'postgresql'
 PLAN = 'plan'
 PRINT = 'print'
 PROFILE = 'profile'
@@ -183,7 +181,6 @@ SLICES = 'slices'
 SOURCE = 'source'
 SOURCES = 'sources'
 SOURCE_ID = 'source-id'
-SQLITE = 'sqlite'
 START = 'start'
 STATISTICS = 'statistics'
 STATISTIC_NAMES = 'statistic-names'
@@ -200,9 +197,7 @@ UNDO = 'undo'
 UNLIKE = 'unlike'
 UNSAFE = 'unsafe'
 UNSET = 'unset'
-URI = 'uri'
 U, USER = 'u', 'user'
-V, VERBOSITY = 'v', 'verbosity'
 VALUE = 'value'
 VERSION = 'version'
 W, WARN = 'w', 'warn'
@@ -215,7 +210,7 @@ Y = 'y'
 
 def base_system_path(base, subdir=None, file=None, version=DB_VERSION, create=True):
 
-    from ..lib.utils import clean_path
+    from ..common.io import clean_path
 
     dir = base
     if version: dir = join(dir, version)
@@ -228,12 +223,6 @@ def base_system_path(base, subdir=None, file=None, version=DB_VERSION, create=Tr
         return dir
 
 
-def color(color):
-    if color.lower() not in (LIGHT, DARK, OFF):
-        raise Exception(f'Bad color: {color} ({LIGHT}|{DARK}|{OFF})')
-    return color
-
-
 def make_parser(with_noop=False):
 
     from ..lib import to_date, to_time
@@ -242,6 +231,8 @@ def make_parser(with_noop=False):
 
     parser.add_argument(mm(BASE), default='~/.ch2', type=clean_path, metavar='DIR',
                         help='the base directory for data (default ~/.ch2)')
+    parser.add_argument(mm(DEV), action='store_true',
+                        help='verbose log and stack trace on error')
     parser.add_argument(mm(USER), m(U), default='default', metavar='USER', help='the current user')
     parser.add_argument(mm(PASS), m(P), default='', metavar='PASS', help='user password')
     parser.add_argument(mm(LOG), metavar='FILE',
@@ -250,8 +241,6 @@ def make_parser(with_noop=False):
                         help=f'pretty stdout log - {LIGHT}|{DARK}|{OFF} (CAPS to save)')
     parser.add_argument(m(V), mm(VERBOSITY), default=UNDEF, type=int, metavar='N',
                         help='output level for stderr (0: silent; 5:noisy)')
-    parser.add_argument(mm(DEV), action='store_true',
-                        help='verbose log and stack trace on error')
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
                         help='display version and exit')
 

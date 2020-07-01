@@ -22,6 +22,7 @@ class FatalException(Exception):
 from .commands.args import COMMAND, make_parser, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DATABASE, CONSTANTS, CALCULATE, SHOW_SCHEDULE, MONITOR, GARMIN, \
     UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, BASE
+from .common.names import COLOR
 from .common.args import NamespaceWithVariables
 from .commands.constants import constants
 from .commands.validate import validate
@@ -41,7 +42,8 @@ from .commands.thumbnail import thumbnail
 from .commands.unlock import unlock
 from .commands.read import read
 from .commands.web import web
-from .lib.log import make_log_from_args, set_log_color
+from .lib.log import make_log_from_args, update_log_color
+from .common.log import set_log_color
 from .sql.database import SystemConstant
 
 log = getLogger(__name__)
@@ -101,7 +103,8 @@ def main():
     set_global_dev(args[DEV])
     make_log_from_args(args)
     data = Data(args)
-    set_log_color(args, data)
+    update_log_color(args, data)
+    set_log_color(args[COLOR])
     try:
         if not command:
             log.debug('If you are seeing the "No command given" error during development ' +

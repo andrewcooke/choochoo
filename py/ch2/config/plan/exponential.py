@@ -2,7 +2,7 @@
 from abc import abstractmethod
 from re import compile
 
-from ...lib.date import format_seconds, to_date, add_date
+from ...common.date import format_seconds, to_date, add_date
 from ...lib.schedule import Schedule
 from ...sql.tables.topic import DiaryTopic
 from .lib import ORMUtils

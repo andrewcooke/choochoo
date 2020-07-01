@@ -3,9 +3,9 @@ import numpy as np
 import pandas as pd
 
 from .heart_rate import BC_ZONES
+from ..common.date import to_time
 from ..lib.data import interpolate_freq, safe_none, safe_return
-from ..lib.date import to_time
-from ..names import Names, Titles
+from ..names import Names
 
 
 @safe_none

@@ -3,7 +3,7 @@ from logging import getLogger
 
 from .args import PATH, WARN
 from ..fit.profile.profile import pickle_profile
-from ..lib.utils import clean_path
+from ..common.io import clean_path
 
 log = getLogger(__name__)
 

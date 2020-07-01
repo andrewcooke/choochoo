@@ -9,7 +9,7 @@ from ..common.args import mm
 from ..fit.download.connect import GarminConnect
 from ..lib import now, local_time_to_time, time_to_local_time
 from ..lib.log import log_current_exception
-from ..lib.utils import clean_path
+from ..common.io import clean_path
 from ..lib.workers import ProgressTree
 from ..sql import Constant, SystemConstant
 from ..pipeline.read.monitor import missing_dates
