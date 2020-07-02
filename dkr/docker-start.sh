@@ -17,7 +17,7 @@ else
     URI="--uri $CH2_DKR_URI"
 fi
 
-CMD="ch2 --dev --base /data web service $URI --web-bind 0.0.0.0 --jupyter-bind 0.0.0.0 --proxy-bind 'localhost' --warn-data --warn-secure"
+CMD="ch2 --dev --base /data $URI web service --web-bind 0.0.0.0 --jupyter-bind 0.0.0.0 --proxy-bind 'localhost' --warn-data --warn-secure"
 echo -e "\nrunning $CMD\n"
 
 eval $CMD

@@ -20,8 +20,12 @@ services:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
     volumes:
       - 'postgresql-data:/var/lib/postgresql/data'
+      - 'postgresql-log:/var/log'
+      - './postgres.conf:/etc/postgresql/postgresql.conf'
 volumes:
   choochoo-data:
     external: true
   postgresql-data:
+    external: true
+  postgresql-log:
     external: true

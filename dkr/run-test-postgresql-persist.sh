@@ -5,6 +5,7 @@ BIG=
 DEV=
 SLOW=
 RESET=0
+PGCONF=postgres-default.conf
 
 help () {
     echo -e "\n  Run choochoo + postgres with named volumes"
@@ -14,6 +15,7 @@ help () {
     echo -e "  --slow:      do not mount pip cache (buildkit)"
     echo -e "  --dev:       dev work (assumes node pre-built)"
     echo -e "  --reset:     re-create the disks"
+    echo -e "  --prof:      use the pgbadger conf"
     echo -e "   -h:         show this message"
     echo -e "\n  --big, --slow and --dev are only used if --reset is specified\n"
     exit 1
@@ -30,6 +32,8 @@ while [ $# -gt 0 ]; do
         DEV=$1
     elif [ $1 == "--reset" ]; then
         RESET=1
+    elif [ $1 == "--prof" ]; then
+	PGCONF=postgres-pgbadger.conf
     else
         echo -e "\nERROR: do not understand $1\n"
         help
@@ -39,8 +43,12 @@ done
 
 ./prune.sh
 
+rm -f postgres.conf
+ln -s $PGCONF postgres.conf
+
 if (( RESET )); then
     ./create-postgresql-data-volume.sh
+    ./create-postgresql-log-volume.sh
     ./create-choochoo-data-volume.sh
     ./create-choochoo-image.sh $BIG $SLOW $DEV
 fi
