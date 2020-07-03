@@ -28,7 +28,10 @@ class Data:
             log.debug(f'{name}={value} (from {env_name})')
         else:
             value = args[name]
-            log.debug(f'{name}={value} (from args)')
+            if name == PASS:
+                log.debug(f'{name}=xxxxxx (from args)')
+            else:
+                log.debug(f'{name}={value} (from args)')
         return value
 
     @property

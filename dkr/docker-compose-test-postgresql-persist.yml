@@ -16,6 +16,7 @@ services:
     image: 'postgres:11.8-alpine'
     container_name: 'postgresql'
     shm_size: '1g'
+    command: '-c config_file=/etc/postgresql/postgresql.conf'
     environment:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
     volumes:

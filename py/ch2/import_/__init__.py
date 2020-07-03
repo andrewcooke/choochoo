@@ -4,10 +4,9 @@ from logging import getLogger
 from sqlalchemy.orm.exc import NoResultFound
 
 from ..commands.args import DB_VERSION, URI_DEFAULT, URI_SQLITE, URI_POSTGRESQL
-from ..commands.database import database_really_exists
 from ..lib import format_date, time_to_local_date, to_time
 from ..sql import StatisticJournal, StatisticName, StatisticJournalType
-from ..sql.database import sqlite_uri, postgresql_uri
+from ..sql.database import sqlite_uri, postgresql_uri, database_really_exists
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ..sql.types import short_cls
 from ..sql.utils import add
@@ -96,8 +95,10 @@ def find_versions(data, max_depth=3):
     for major, minor in count_down_version(current_version, max_depth=max_depth):
         version = f'{major}-{minor}'
         for uri_template in [URI_DEFAULT, URI_SQLITE, URI_POSTGRESQL]:
-            uri = data.get_uri(uri_template)
+            uri = data.get_uri(uri_template, version=version)
+            log.debug(f'Trying uri {uri} for version {version}')
             if database_really_exists(uri):
+                log.info(f'Found {uri}')
                 yield version, uri
 
 

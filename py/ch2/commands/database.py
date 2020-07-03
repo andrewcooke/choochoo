@@ -10,8 +10,8 @@ from ..common.names import POSTGRESQL, SQLITE, URI
 from ..common.args import mm
 from .help import Markdown
 from ..config.utils import profiles, get_profile
-from ..lib import log_current_exception
 from ..common.io import clean_path
+from ..sql.database import database_really_exists
 
 log = getLogger(__name__)
 
@@ -47,14 +47,6 @@ Delete the current database.
         delete(data)
     else:
         load(data, args[PROFILE], args[FORCE])
-
-
-def database_really_exists(uri):
-    try:
-        return database_exists(uri)
-    except Exception:
-        log_current_exception(traceback=False)
-        return False
 
 
 def show(data):

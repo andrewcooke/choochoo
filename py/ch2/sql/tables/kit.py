@@ -106,17 +106,21 @@ class StatisticsMixin:
     '''
 
     def _base_statistic_query(self, s, statistic, *sources, owner=None):
+
+        # find a composite source that joins all the input sources
         sources = (self,) + sources
         subq = s.query(Composite.id.label('composite_id'))
         for source in sources:
             cc = aliased(CompositeComponent)
             subq = subq.join(cc, Composite.id == cc.output_source_id).filter(cc.input_source == source)
         subq = subq.subquery()
+
+        # all journal entries with the given source (either directly, if we are the only source, or via composite)
         q = s.query(StatisticJournal). \
             join(StatisticName). \
             outerjoin(subq, subq.c.composite_id == StatisticJournal.source_id). \
             filter(StatisticName.name == statistic)
-        if len(sources) == 1:
+        if len(sources) == 1:  # we are the only source
             q = q.filter(or_(StatisticJournal.source == self, subq.c.composite_id != None))
         else:
             q = q.filter(subq.c.composite_id != None)

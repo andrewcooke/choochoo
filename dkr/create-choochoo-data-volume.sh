@@ -28,6 +28,11 @@ docker run --rm \
        -v choochoo-data:/data \
        -v ~/.ch2:/ch2 \
        opensuse/leap \
+       cp -rv /ch2/0-34 /data/
+docker run --rm \
+       -v choochoo-data:/data \
+       -v ~/.ch2:/ch2 \
+       opensuse/leap \
        cp -rv /ch2/0-33 /data/
 docker volume ls
 

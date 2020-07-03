@@ -2,7 +2,7 @@ from logging import getLogger
 
 import psutil as ps
 
-from ...commands.args import WEB, READ, LOG, BASE, VERBOSITY, FORCE, DEV
+from ...commands.args import WEB, READ, LOG, BASE, VERBOSITY, FORCE, DEV, URI
 from ...common.args import mm
 from ...commands.read import STREAM, NAME, upload_files
 from ...global_ import global_dev
@@ -26,7 +26,8 @@ class Upload:
         # first, immediate saving of files while web browser waiting for response
         upload_files(Record(log), self.__data, files=files, nfiles=len(files), items=items)
         # second, start rest of ingest process in background
-        cmd = f'{command_root()} {mm(VERBOSITY)} 0 {mm(BASE)} {self.__data.base} {mm(LOG)} {WEB}-{READ}.log'
+        cmd = f'{command_root()} {mm(VERBOSITY)} 0 {mm(BASE)} {self.__data.base} {mm(LOG)} {WEB}-{READ}.log ' \
+              f'{mm(URI)} {self.__data.get_uri()}'
         if global_dev(): cmd += f' {mm(DEV)}'
         cmd += f' {READ}'
         if force: cmd += f' {mm(FORCE)}'

@@ -73,7 +73,7 @@ class Configure:
         if not self.__uri:
             raise Exception(f'Bootstrap via web requires '
                             f'`{WEB} {SERVICE} ({mm(SQLITE)} | {mm(POSTGRESQL)} | {mm(URI)})`')
-        load(self.__data.sys, self.__data.base, data[PROFILE], self.__uri)
+        load(self.__data, data[PROFILE], self.__uri)
         self.__data.reset()
 
     def delete(self, request, s):

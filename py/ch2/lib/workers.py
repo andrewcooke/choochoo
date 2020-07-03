@@ -6,7 +6,7 @@ from time import sleep, time
 
 from math import floor
 
-from ..commands.args import BASE, VERBOSITY, WORKER, LOG, DEV
+from ..commands.args import BASE, VERBOSITY, WORKER, LOG, DEV, URI
 from ..common.args import mm
 from ..global_ import global_dev
 from ..sql.types import short_cls
@@ -40,7 +40,8 @@ class Workers:
         self.wait(self.n_parallel - 1)
         log_index = self._free_log_index()
         log_name = f'{short_cls(self.owner)}.{log_index}.{LOG}'
-        cmd = self.ch2 + f' {mm(LOG)} {log_name} {self.cmd} {mm(WORKER)} {id} {args}'
+        cmd = self.ch2 + f' {mm(LOG)} {log_name} {mm(URI)} {self.__data.get_uri()} ' \
+                         f'{self.cmd} {mm(WORKER)} {id} {args}'
         worker = self.__data.run_process(self.owner, cmd, log_name)
         self.__workers_to_logs[worker] = log_index
 
@@ -91,6 +92,7 @@ def command_root():
                         word = bytearray()
 
             words = list(parse())
+            log.debug(f'Parsed /proc/{getpid()}/cmdline as {" ".join(words)}')
             if len(argv) > 1:
                 i = words.index(argv[1])
                 words = words[:i]

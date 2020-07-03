@@ -1,20 +1,22 @@
 from contextlib import contextmanager
 from logging import getLogger
 from os.path import exists
-from sqlite3 import OperationalError, Connection
+from sqlite3 import Connection
 
 from sqlalchemy import create_engine, event, MetaData
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.sql.functions import count
+from sqlalchemy_utils import create_database, database_exists
 from uritools import urisplit
 
 from . import *
 from .support import Base
 from ..commands.args import NO_OP, make_parser, DB_EXTN, base_system_path, DATA, ACTIVITY, \
     DB_VERSION, NamespaceWithVariables
-from ..common.names import POSTGRESQL, SQLITE
 from ..common.io import touch
+from ..common.names import POSTGRESQL, SQLITE
+from ..lib import log_current_exception
 from ..lib.log import make_log_from_args
 from ..lib.utils import grouper
 
@@ -58,6 +60,7 @@ def fk_pragma_on_connect(dbapi_con, _con_record):
 @event.listens_for(Engine, 'close')
 def analyze_pragma_on_close(dbapi_con, _con_record):
     if isinstance(dbapi_con, Connection):  # sqlite
+        from sqlite3 import OperationalError
         cursor = dbapi_con.cursor()
         try:
             # this can fail if another process is using the database
@@ -127,6 +130,9 @@ class DatabaseBase:
         uri_parts = urisplit(uri)
         if POSTGRESQL == uri_parts.scheme: options.update(executemany_mode="values")
         if SQLITE == uri_parts.scheme and not exists(uri_parts.path): touch(uri_parts.path, with_dirs=True)
+        if not database_really_exists(uri):
+            log.warning(f'Creating database at {uri}')
+            create_database(uri)
         log.debug(f'Creating engine for {uri} with options {options}')
         self.engine = create_engine(uri, **options)
         self.session = sessionmaker(bind=self.engine, class_=DirtySession)
@@ -194,3 +200,11 @@ class ReflectedDatabase(DatabaseBase):
         super().__init__(*args, **kargs)
         self.meta = MetaData()
         self.meta.reflect(bind=self.engine)
+
+
+def database_really_exists(uri):
+    try:
+        return database_exists(uri)
+    except Exception:
+        log_current_exception(traceback=False)
+        return False

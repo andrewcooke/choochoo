@@ -246,7 +246,7 @@ def upload_files_and_update(record, data, files=tuple(), nfiles=1, force=False, 
             with data.db.session_context() as s:
                 try:
                     log.info('Running Garmin download')
-                    run_garmin(data.sys, s, base=data.base, progress=progress)
+                    run_garmin(data, s, base=data.base, progress=progress)
                 except Exception as e:
                     log.warning(f'Could not get data from Garmin: {e}')
             log.info('Running monitor pipelines (again)')
