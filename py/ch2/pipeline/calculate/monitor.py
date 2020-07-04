@@ -2,6 +2,7 @@
 import datetime as dt
 from logging import getLogger
 
+from sqlalchemy import exists
 from sqlalchemy.sql import func
 from sqlalchemy.sql.functions import count
 
@@ -28,18 +29,20 @@ class MonitorCalculator(OwnerInMixin, LoaderMixin, MultiProcCalculator):
 
     def _missing(self, s):
         # any day that has an unused monitor journal is a missing day
-        start, finish = self._start_finish(local_date_to_time)
         Composite.clean(s)
-        used_sources = s.query(CompositeComponent.input_source_id). \
-            join(StatisticJournal, CompositeComponent.output_source_id == StatisticJournal.source_id). \
-            join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
-            filter(StatisticName.owner == self.owner_out)
-        unused_sources = s.query(MonitorJournal).filter(~MonitorJournal.id.in_(used_sources))
+        start, finish = self._start_finish(local_date_to_time)
+        unused_sources = s.query(MonitorJournal)
         if start:
             unused_sources = unused_sources.filter(MonitorJournal.finish >= start)
         if finish:
             # don't extend finish - it's 'one past the end'
             unused_sources = unused_sources.filter(MonitorJournal.start < finish)
+        monitor_stats = s.query(StatisticJournal.id). \
+            join(CompositeComponent, CompositeComponent.output_source_id == StatisticJournal.source_id). \
+            join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
+            filter(StatisticName.owner == self.owner_out,
+                   CompositeComponent.input_source_id == MonitorJournal.id)
+        unused_sources = unused_sources.filter(~exists(monitor_stats))
         dates = set()
         start, finish = self._start_finish(lambda x: to_date(x, none=True))
         for source in unused_sources.all():
