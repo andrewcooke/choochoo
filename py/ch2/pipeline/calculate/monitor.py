@@ -42,7 +42,7 @@ class MonitorCalculator(OwnerInMixin, LoaderMixin, MultiProcCalculator):
             join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
             filter(StatisticName.owner == self.owner_out,
                    CompositeComponent.input_source_id == MonitorJournal.id)
-        unused_sources = unused_sources.filter(~exists(monitor_stats))
+        unused_sources = unused_sources.filter(~monitor_stats.exists())
         dates = set()
         start, finish = self._start_finish(lambda x: to_date(x, none=True))
         for source in unused_sources.all():

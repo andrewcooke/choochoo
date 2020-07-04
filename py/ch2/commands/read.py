@@ -12,6 +12,7 @@ from ..common.date import time_to_local_time, Y, YMDTHMS
 from ..common.io import touch, clean_path
 from ..lib.io import data_hash, split_fit_path
 from ..lib.log import log_current_exception, Record
+from ..lib.utils import timing
 from ..lib.workers import ProgressTree, SystemProgressTree
 from ..pipeline.pipeline import run_pipeline
 from ..pipeline.read.activity import ActivityReader
@@ -81,8 +82,9 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
         record = Record(log)
         flags = infer_flags(args, *FLAGS)
         nfiles, files = open_files(args[PATH])
-        upload_files_and_update(record, data, files=files, nfiles=nfiles, force=args[FORCE],
-                                items=args[KIT], flags=flags, **parse_pairs(args[KARG]))
+        with timing(READ):
+            upload_files_and_update(record, data, files=files, nfiles=nfiles, force=args[FORCE],
+                                    items=args[KIT], flags=flags, **parse_pairs(args[KARG]))
 
 
 class SkipFile(Exception):
