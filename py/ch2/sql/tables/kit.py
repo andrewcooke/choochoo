@@ -105,25 +105,17 @@ class StatisticsMixin:
     support for reading and writing statistics related to a kit class.
     '''
 
-    def _base_statistic_query(self, s, statistic, *sources, owner=None):
-
-        # find a composite source that joins all the input sources
-        sources = (self,) + sources
-        subq = s.query(Composite.id.label('composite_id'))
-        for source in sources:
-            cc = aliased(CompositeComponent)
-            subq = subq.join(cc, Composite.id == cc.output_source_id).filter(cc.input_source == source)
-        subq = subq.subquery()
-
-        # all journal entries with the given source (either directly, if we are the only source, or via composite)
-        q = s.query(StatisticJournal). \
-            join(StatisticName). \
-            outerjoin(subq, subq.c.composite_id == StatisticJournal.source_id). \
-            filter(StatisticName.name == statistic)
-        if len(sources) == 1:  # we are the only source
-            q = q.filter(or_(StatisticJournal.source == self, subq.c.composite_id != None))
+    def _base_statistic_query(self, s, statistic, owner=None, direct=False):
+        # direct should only be true for statistics we know are set directly (added, removed, etc, NOT used)
+        q = s.query(StatisticJournal).join(StatisticName).filter(StatisticName.name == statistic)
+        if direct:
+            q = q.filter(StatisticJournal.source == self)
         else:
-            q = q.filter(subq.c.composite_id != None)
+            via_composite = s.query(Composite.id). \
+                join(CompositeComponent, CompositeComponent.output_source_id == Composite.id). \
+                filter(CompositeComponent.input_source == self)
+            q = q.filter(or_(StatisticJournal.source == self,
+                             StatisticJournal.source_id.in_(via_composite)))
         if owner:
             q = q.filter(StatisticName.owner == owner)
         return q
@@ -140,11 +132,11 @@ class StatisticsMixin:
             filter(StatisticName.name == statistic,
                    StatisticJournal.source_id.in_(sourceq))
 
-    def _get_statistic(self, s, statistic, *sources, owner=None):
-        return self._base_statistic_query(s, statistic, *sources, owner=owner).one()
+    def _get_statistic(self, s, statistic, owner=None, direct=False):
+        return self._base_statistic_query(s, statistic, owner=owner, direct=direct).one()
 
-    def _get_statistics(self, s, statistic, *sources, owner=None):
-        return self._base_statistic_query(s, statistic, *sources, owner=owner).all()
+    def _get_statistics(self, s, statistic, owner=None, direct=False):
+        return self._base_statistic_query(s, statistic, owner=owner, direct=direct).all()
 
     def _remove_statistic(self, s, statistic, *sources, owner=None):
         # cannot delete directly with join
@@ -164,11 +156,11 @@ class StatisticsMixin:
                                              description='A timestamp for tracking kit use.')
 
     def time_added(self, s):
-        return self._get_statistic(s, Names.KIT_ADDED).time
+        return self._get_statistic(s, Names.KIT_ADDED, direct=True).time
 
     def time_expired(self, s):
         try:
-            return self._get_statistic(s, Names.KIT_RETIRED).time
+            return self._get_statistic(s, Names.KIT_RETIRED, direct=True).time
         except NoResultFound:
             return None
 

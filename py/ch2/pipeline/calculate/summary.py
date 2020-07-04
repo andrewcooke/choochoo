@@ -37,11 +37,12 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
     def _read_data(self, s, interval):
         # here, data is only statistics names, because calculation also involves loading data
         start, finish = local_date_to_time(interval.start), local_date_to_time(interval.finish)
+        # significantly faster with the summary before the join
         statistics_with_data_and_summary = s.query(StatisticName.id). \
+            filter(StatisticName.summary != None). \
             join(StatisticJournal). \
             filter(StatisticJournal.time >= start,
-                   StatisticJournal.time < finish,
-                   StatisticName.summary != None)
+                   StatisticJournal.time < finish)
         # avoid duplicates
         return s.query(StatisticName). \
             filter(StatisticName.id.in_(statistics_with_data_and_summary)).all()

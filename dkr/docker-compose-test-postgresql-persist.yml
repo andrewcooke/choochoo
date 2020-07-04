@@ -7,7 +7,7 @@ services:
       - '127.0.0.1:8000:8000'
       - '127.0.0.1:8001:8001'
     environment:
-      - 'CH2_DKR_URI=postgresql://postgres@postgresql/activity-0-34'
+      - 'CH2_DKR_URI=postgresql://postgres@postgresql/activity-{version}'
     volumes:
       - 'choochoo-data:/data'
     depends_on:

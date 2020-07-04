@@ -145,20 +145,19 @@ class StatisticJournal(Base):
 
     id = Column(Integer, primary_key=True)
     type = Column(Integer, nullable=False, index=True)  # index needed for fast delete of subtypes
-    statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'),
-                               nullable=False, index=True)
+    statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'), nullable=False)
     statistic_name = relationship('StatisticName')
-    source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'),
-                       nullable=False, index=True)
+    source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
     source = relationship('Source')
-    time = Column(Time, nullable=False)
+    time = Column(Time, nullable=False, index=True)
     # serial "counts" along values in the timeseries.  it's optional.  for garmin, all values appear each
     # record, so all imported values share the same serial.  but that's not true for the corrected elevation,
     # for example.
     serial = Column(Integer)
 
-    UniqueConstraint(statistic_name_id, time, source_id)
-    UniqueConstraint(serial, source_id, statistic_name_id)
+    # together these index the three main columns separately
+    UniqueConstraint(time, statistic_name_id, source_id)
+    UniqueConstraint(statistic_name_id, source_id, serial)
     Index('from_activity_timespan', source_id, statistic_name_id, time)  # time last since inequality
 
     __mapper_args__ = {
