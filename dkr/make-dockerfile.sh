@@ -15,13 +15,13 @@ HAVE_JS=0
 FILE="Dockerfile"
 
 help () {
-    echo -e "\n  Create the dev image used to run Choochoo in Docker"
+    echo -e "\n  Create the file used to install Choochoo in Docker"
     echo -e "\n  Usage:"
-    echo -e "\n   $CMD [--big] [--slow] [--dev] [-h] [FILE]"
+    echo -e "\n   $CMD [--big] [--slow] [--js] [-h] [FILE]"
     echo -e "\n    FILE:      destination file name (default Dockerfile)"
     echo -e "  --big:       use larger base distro"
     echo -e "  --slow:      do not mount pip cache (buildkit)"
-    echo -e "  --dev:       dev work (assumes node pre-built)"
+    echo -e "  --js:        assumes node pre-built"
     echo -e "   -h:         show this message\n"
     exit 1
 }
@@ -34,7 +34,7 @@ while [ $# -gt 0 ]; do
     elif [ $1 == "--slow" ]; then
 	COMMENT="# pip cache disabled with --slow"
 	MOUNT=
-    elif [ $1 == "--dev" ]; then
+    elif [ $1 == "--js" ]; then
 	HAVE_JS=1
 	JS_PKG=
     else

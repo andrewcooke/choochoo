@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CMD=$0
-DEV=
+JS=
 BIG=
 SLOW=
 BUILDKIT=1
@@ -9,13 +9,13 @@ PRUNE=1
 FILE=`pwd`/Dockerfile.local
 
 help () {
-    echo -e "\n  Create the dev image used to run Choochoo in Docker"
+    echo -e "\n  Create the image used to run Choochoo in Docker"
     echo -e "\n  Usage:"
-    echo -e "\n   $CMD [--big] [--slow] [--dev] [--keep] [-h] [FILE]"
+    echo -e "\n   $CMD [--big] [--slow] [--js] [--keep] [-h] [FILE]"
     echo -e "\n    FILE:      destination file name (default Dockerfile)"
     echo -e "  --big:       use larger base distro"
     echo -e "  --slow:      do not mount pip cache (buildkit)"
-    echo -e "  --dev:       dev work (assumes node pre-built)"
+    echo -e "  --js:        assumes node pre-built"
     echo -e "  --keep:      don't wipe the old data"
     echo -e "   -h:         show this message\n"
     exit 1
@@ -29,8 +29,8 @@ while [ $# -gt 0 ]; do
     elif [ $1 == "--slow" ]; then
 	SLOW=$1
 	BUILDKIT=0
-    elif [ $1 == "--dev" ]; then
-	DEV=$1
+    elif [ $1 == "--js" ]; then
+	JS=$1
     elif [ $1 == "--keep" ]; then
         PRUNE=0
     else
@@ -42,7 +42,7 @@ done
 
 if (( PRUNE )); then ./prune.sh; fi
 
-CMD="./create-dockerfile.sh $BIG $SLOW $DEV $FILE"
+CMD="./make-dockerfile.sh $BIG $SLOW $JS $FILE"
 echo -e "\n> $CMD\n"
 eval $CMD
 
@@ -50,7 +50,7 @@ echo
 cat $FILE
 echo
 
-if [ "$DEV" == "" ]; then
+if [ "$JS" == "" ]; then
     pushd .. > /dev/null
     dev/package-bundle.sh
     popd > /dev/null

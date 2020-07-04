@@ -4,10 +4,10 @@ CMD=$0
 DEV=
 
 help () {
-    echo -e "\n  Run the postgres image (only)"
+    echo -e "\n  Create a data volume for postgres ligs"
     echo -e "\n  Usage:"
     echo -e "\n   $CMD [--dev] [-h]"
-    echo -e "\n  --dev:       use dev-specific disks"
+    echo -e "\n  --dev:       dev-specific"
     echo -e "   -h:         show this message\n"
     exit 1
 }
@@ -24,10 +24,11 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-docker run --rm -p 127.0.0.1:5432:5432 \
-       -e POSTGRES_HOST_AUTH_METHOD=trust \
-       -v "postgresql-data$DEV":/var/lib/postgresql/data \
-       -v "postgresql-log$DEF":/var/logs \
-       --shm-size=1g \
-       --name=postgresql \
-       postgres:11.8-alpine
+./prune.sh
+docker volume rm -f "postgresql-log$DEV"
+docker volume create "postgresql-log$DEV"
+docker volume ls
+docker run --rm -i -v "postgresql-log$DEV":/var/log postgres:11.8-alpine /bin/bash <<EOF
+mkdir /var/log/postgresql
+chown postgres /var/log/postgresql
+EOF
