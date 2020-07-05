@@ -18,8 +18,8 @@ from ...data.frame import read_query
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...fit.profile.profile import read_fit
 from ...names import N, T, Units
-from ...sql.database import StatisticJournalType, Source
 from ...sql import MonitorJournal, StatisticJournalInteger, StatisticName, StatisticJournal
+from ...sql.database import StatisticJournalType, Source
 from ...sql.utils import add
 
 log = getLogger(__name__)

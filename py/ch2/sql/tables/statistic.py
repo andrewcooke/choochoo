@@ -155,8 +155,7 @@ class StatisticJournal(Base):
     # for example.
     serial = Column(Integer)
 
-    # together these index the three main columns separately
-    UniqueConstraint(time, statistic_name_id, source_id)
+    UniqueConstraint(statistic_name_id, time, source_id)  # helps with latest value for name
     UniqueConstraint(statistic_name_id, source_id, serial)
     Index('from_activity_timespan', source_id, statistic_name_id, time)  # time last since inequality
 
