@@ -2,14 +2,13 @@
 import datetime as dt
 from logging import getLogger
 
-from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint, desc
+from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint, desc, DateTime
 from sqlalchemy.orm import relationship, backref
 
 from .source import SourceType, GroupedSource
 from ..support import Base
 from ..types import Sort, ShortCls, NullText, Name, name_and_title
 from ...common.date import format_time, local_date_to_time, local_time_to_time
-from ...common.sql import Time
 from ...lib.utils import timing
 
 log = getLogger(__name__)
@@ -51,8 +50,8 @@ class ActivityJournal(GroupedSource):
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False, index=True, unique=True)
     file_hash = relationship('FileHash', backref=backref('activity_journal', uselist=False))
-    start = Column(Time, nullable=False, index=True, unique=True)
-    finish = Column(Time, nullable=False)
+    start = Column(DateTime(timezone=True), nullable=False, index=True, unique=True)
+    finish = Column(DateTime(timezone=True), nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ACTIVITY
@@ -154,8 +153,8 @@ class ActivityTimespan(Base):
                                     backref=backref('timespans', cascade='all, delete-orphan',
                                                     passive_deletes=True,
                                                     order_by='ActivityTimespan.start'))
-    start = Column(Time, nullable=False)
-    finish = Column(Time, nullable=False)
+    start = Column(DateTime(timezone=True), nullable=False)
+    finish = Column(DateTime(timezone=True), nullable=False)
     UniqueConstraint(activity_journal_id, start)
 
     def __str__(self):
@@ -169,8 +168,8 @@ class ActivityBookmark(Base):
     id = Column(Integer, primary_key=True)
     activity_journal_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
     activity_journal = relationship('ActivityJournal')
-    start = Column(Time, nullable=False)
-    finish = Column(Time, nullable=False)
+    start = Column(DateTime(timezone=True), nullable=False)
+    finish = Column(DateTime(timezone=True), nullable=False)
     owner = Column(ShortCls, nullable=False, index=True)  # index for deletion
     constraint = Column(NullText, index=True)
     UniqueConstraint(activity_journal_id, start, finish, owner, constraint)

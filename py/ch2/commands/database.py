@@ -20,7 +20,7 @@ def database(args, data):
     '''
 ## database
 
-    > ch2 database load (--sqlite|--pgsql|--uri URI) [--delete] PROFILE
+    > ch2 database load --uri URI [--delete] PROFILE
 
 Load the initial database schema.
 

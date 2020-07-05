@@ -38,7 +38,7 @@ def m(name): return '-' + name
 def no(name): return 'no-%s' % name
 
 
-def add_web_server_args(cmd, prefix='', default_address='localhost', default_port=80):
+def add_server_args(cmd, prefix='', default_address='localhost', default_port=80):
     if prefix: prefix += '-'
     cmd.add_argument(mm(prefix + BIND), default='localhost', metavar='ADDRESS',
                      help='bind address' + f' (default {default_address})' if default_address else '')

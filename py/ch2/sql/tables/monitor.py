@@ -4,7 +4,6 @@ from sqlalchemy.orm import relationship, backref
 
 from .source import SourceType, UngroupedSource
 from ...common.date import format_time
-from ...common.sql import Time
 
 
 class MonitorJournal(UngroupedSource):
@@ -14,8 +13,8 @@ class MonitorJournal(UngroupedSource):
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False, unique=True)
     file_hash = relationship('FileHash', backref=backref('monitor_journal', uselist=False))
-    start = Column(Time, nullable=False, index=True)
-    finish = Column(Time, nullable=False, index=True)
+    start = Column(DateTime(timezone=True), nullable=False, index=True)
+    finish = Column(DateTime(timezone=True), nullable=False, index=True)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.MONITOR

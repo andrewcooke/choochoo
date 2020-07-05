@@ -1,11 +1,10 @@
 
-from sqlalchemy import Column, Text, Integer, ForeignKey, Index
+from sqlalchemy import Column, Text, Integer, ForeignKey, Index, DateTime
 from sqlalchemy.orm import relationship, backref
 
 from ..support import Base
 from ..types import ShortCls
 from ..utils import add
-from ...common.sql import Time
 from ...lib import to_time
 
 
@@ -35,7 +34,7 @@ class FileScan(Base):
     id = Column(Integer, primary_key=True)
     path = Column(Text, nullable=False)
     owner = Column(ShortCls, nullable=False)
-    last_scan = Column(Time, nullable=False)
+    last_scan = Column(DateTime(timezone=True), nullable=False)
     file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False)
     file_hash = relationship('FileHash', backref=backref('file_scan', cascade='all, delete-orphan',
                                                          passive_deletes=True, uselist=False))

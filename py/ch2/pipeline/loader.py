@@ -1,25 +1,25 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections import defaultdict, namedtuple
 from logging import getLogger
-from time import sleep
 
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy_batch_inserts import enable_batch_inserting
 
-from ..commands.args import UNLOCK
 from ..common.date import min_time, max_time
-from ..sql import StatisticJournal, StatisticName, Dummy, Interval, Source
+from ..sql import StatisticName, Interval, Source
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
-from ..sql.types import short_cls
 
 log = getLogger(__name__)
 
 
-class BaseLoader(ABC):
+class Loader(ABC):
 
-    def __init__(self, s, owner, add_serial=True, clear_timestamp=True):
+    def __init__(self, s, owner, add_serial=True, clear_timestamp=True, batch=True):
         self._s = s
         self._owner = owner
+        self.__serial = 0 if add_serial else None
+        self.__clear_timestamp = clear_timestamp
+        self.__batch = batch
+
         self.__statistic_name_cache = dict()
         self.__source_cache = dict()
         self._staging = defaultdict(list)
@@ -28,17 +28,26 @@ class BaseLoader(ABC):
         self._start = None
         self._finish = None
         self.__last_time = None
-        self.__serial = 0 if add_serial else None
-        self.__clear_timestamp = clear_timestamp
         self.__counts = defaultdict(lambda: 0)
+
+    def load(self):
+        if self:
+            if self.__batch:
+                log.debug('Enabling batch load')
+                enable_batch_inserting(self._s)
+            else:
+                log.debug('Leaving batch mode unchanged')
+            for type in self._staging:
+                log.debug(f'Adding {len(self._staging[type])} instances of {type}')
+                for instance in self._staging[type]:
+                    self._s.add(instance)
+                self._s.commit()
+            self._postload()
+        else:
+            log.warning('No data to load')
 
     def __bool__(self):
         return bool(self._staging)
-
-    @abstractmethod
-    def load(self):
-        # should call postload on success
-        raise NotImplementedError(f'{self.__class__.__name__}.load')
 
     def _postload(self):
         # manually clean out intervals because we're doing a fast load
@@ -124,93 +133,6 @@ class BaseLoader(ABC):
             yield name, 100 * count / total
 
 
-class SqliteLoader(BaseLoader):
-
-    # we want to load multiple tables (because we're using inheritance) quickly and safely.
-    # to do this, we need to generate IDs ourselves (to avoid reading the ID for the base class)
-    # on sqlite we can do this by:
-    # - using a single transaction
-    # - starting to write (a dummy StatisticJournal, which also gets us the last ID)
-    # - calculating IDs from the dummy ID
-    # - writing the data (still in the same transaction)
-    # - removing the dummy
-    # - committing
-    # afaict that would work on any SQL database with a reasonable level of isolation.
-    # what is special to sqlite is that the final commit will not fail, because there is only ever one
-    # process writing (this is true even when using multiple processes)
-
-    # well the above worked for a while. then started throwing exceptions, so i needed to add
-    # the while loop below.
-
-    def __init__(self, s, owner, add_serial=True, clear_timestamp=True, abort_after=100):
-        super().__init__(s, owner, add_serial=add_serial, clear_timestamp=clear_timestamp)
-        self.__abort_after = abort_after
-
-    def load(self):
-        if not self:
-            log.warning('No data to load')
-            return
-        self._s.commit()
-        dummy = self._preload()
-        try:
-            self._load_ids(dummy)
-        except Exception:
-            self._s.rollback()
-            # dummy may have been deleted in the rollback - it depends if there were any intermediate commits
-            # (which is a whole other problem), so to be sure...
-            self.unlock(self._s)
-            raise
-        self._postload()
-
-    def _preload(self):
-        dummy_source, dummy_name = Dummy.singletons(self._s)
-        dummy, count = None, 0
-        while not dummy:
-            try:
-                log.debug(f'Trying to acquire database ({count})')
-                dummy = StatisticJournal(source=dummy_source, statistic_name=dummy_name, time=0.0)
-                self._s.add(dummy)
-                self._s.flush()
-                log.debug('Acquired database')
-            except IntegrityError:
-                log.debug('Failed to acquire database')
-                self._s.rollback()
-                dummy, count = None, count+1
-                if count > self.__abort_after:
-                    raise Exception(f'Could not acquire database after {count} attempts '
-                                    f'(you may need to use `ch2 {UNLOCK}` once all workers have stopped)')
-                sleep(0.1)
-        log.debug(f'Dummy ID {dummy.id}')
-        return dummy
-
-    def _load_ids(self, dummy):
-        rowid, count = dummy.id + 1, 0
-        for type in self._staging:
-            log.debug('Loading %d values for type %s' % (len(self._staging[type]), short_cls(type)))
-            for i in range(min(5, len(self._staging[type]))):
-                sjournal = self._staging[type][i]
-                log.debug(f'Example: {sjournal.value} at {sjournal.time}')
-            for sjournal in self._staging[type]:
-                sjournal.id = rowid
-                rowid += 1
-            self._s.bulk_save_objects(self._staging[type])
-            count += len(self._staging[type])
-        self._s.commit()
-        log.info(f'Loaded {count} statistics')
-        log.debug('Removing Dummy')
-        self._s.delete(dummy)
-        self._s.commit()
-        log.debug('Dummy removed')
-
-    @classmethod
-    def unlock(cls, s):
-        dummy_source, dummy_name = Dummy.singletons(s)
-        s.query(StatisticJournal). \
-            filter(StatisticJournal.source == dummy_source,
-                   StatisticJournal.statistic_name == dummy_name).delete()
-        s.commit()
-
-
 def make_waypoint(names, extra=None):
     names = list(names)
     if extra:
@@ -218,27 +140,3 @@ def make_waypoint(names, extra=None):
     names = ['time'] + names
     defaults = [None] * len(names)
     return namedtuple('Waypoint', names, defaults=defaults)
-
-
-class PostgresqlLoader(BaseLoader):
-
-    def __init__(self, s, owner, add_serial=True, clear_timestamp=True, batch=True, **kargs):
-        super().__init__(s, owner, add_serial=add_serial, clear_timestamp=clear_timestamp)
-        self.__batch = batch
-        if kargs: log.debug(f'Ignoring {kargs}')
-
-    def load(self):
-        if self:
-            if self.__batch:
-                log.debug('Enabling batch load')
-                enable_batch_inserting(self._s)
-            else:
-                log.debug('Leaving batch mode unchanged')
-            for type in self._staging:
-                log.debug(f'Adding {len(self._staging[type])} instances of {type}')
-                for instance in self._staging[type]:
-                    self._s.add(instance)
-                self._s.commit()
-            self._postload()
-        else:
-            log.warning('No data to load')

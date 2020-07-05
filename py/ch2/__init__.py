@@ -39,7 +39,6 @@ from .commands.search import search
 from .commands.calculate import calculate
 from .commands.show_schedule import show_schedule
 from .commands.thumbnail import thumbnail
-from .commands.unlock import unlock
 from .commands.read import read
 from .commands.web import web
 from .lib.log import make_log_from_args, update_log_color

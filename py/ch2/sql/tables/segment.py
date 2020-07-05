@@ -1,11 +1,10 @@
 
-from sqlalchemy import Column, Integer, ForeignKey, Float, Text, UniqueConstraint, or_
+from sqlalchemy import Column, Integer, ForeignKey, Float, Text, UniqueConstraint, or_, DateTime
 from sqlalchemy.orm import relationship
 
 from .source import SourceType, Source, GroupedSource
 from ..support import Base
 from ...common.date import format_time
-from ...common.sql import Time
 
 
 class SegmentJournal(GroupedSource):
@@ -22,8 +21,8 @@ class SegmentJournal(GroupedSource):
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='set null'),
                                  index=True)
     activity_journal = relationship('ActivityJournal', foreign_keys=[activity_journal_id])
-    start = Column(Time, nullable=False)
-    finish = Column(Time, nullable=False)
+    start = Column(DateTime(timezone=True), nullable=False)
+    finish = Column(DateTime(timezone=True), nullable=False)
     UniqueConstraint(segment_id, activity_journal_id, start, finish)
 
     __mapper_args__ = {

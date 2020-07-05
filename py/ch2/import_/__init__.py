@@ -3,10 +3,10 @@ from logging import getLogger
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from ..commands.args import DB_VERSION, URI_DEFAULT, URI_SQLITE, URI_POSTGRESQL
+from ..commands.args import DB_VERSION, URI_DEFAULT
 from ..lib import format_date, time_to_local_date, to_time
 from ..sql import StatisticJournal, StatisticName, StatisticJournalType
-from ..sql.database import sqlite_uri, postgresql_uri, database_really_exists
+from ..sql.database import database_really_exists
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ..sql.types import short_cls
 from ..sql.utils import add

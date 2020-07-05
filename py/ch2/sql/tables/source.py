@@ -4,7 +4,7 @@ from enum import IntEnum
 from logging import getLogger
 from operator import or_
 
-from sqlalchemy import ForeignKey, Column, Integer, func, UniqueConstraint, Boolean
+from sqlalchemy import ForeignKey, Column, Integer, func, UniqueConstraint, Boolean, Date
 from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy.sql.functions import count
@@ -14,7 +14,6 @@ from ..types import OpenSched, ShortCls, short_cls
 from ..utils import add
 from ...common.date import to_time, time_to_local_date, max_time, min_time, extend_range
 from ...common.names import UNDEF
-from ...common.sql import Date
 from ...lib.utils import timing
 
 log = getLogger(__name__)
@@ -30,10 +29,9 @@ class SourceType(IntEnum):
     MONITOR = 5
     SEGMENT = 6
     COMPOSITE = 7
-    DUMMY = 8
-    ITEM = 9
-    MODEL = 10
-    ACTIVITY_TOPIC = 11
+    ITEM = 8
+    MODEL = 9
+    ACTIVITY_TOPIC = 10
 
 
 class Source(Base):
@@ -84,8 +82,7 @@ class Source(Base):
             # ignore constants as time 0
             # ignore textual values
             if isinstance(instance, StatisticJournal):
-                if not isinstance(instance.source, Interval) and not isinstance(instance.source, Dummy) \
-                        and not isinstance(instance.source, StatisticJournalText):
+                if not isinstance(instance.source, Interval) and not isinstance(instance.source, StatisticJournalText):
                     start, finish = extend_range(start, finish, instance.time)
                 elif instance.statistic_name is None or instance.source is None:
                     log.warning(f'Loading with incomplete name/source data (bad dirty logic) '
@@ -234,29 +231,6 @@ class Interval(Source):
             log.debug(f'Cleaning {count} dirty intervals')
             q.delete()
         log.debug('Intervals clean')
-
-
-class Dummy(UngroupedSource):
-
-    __tablename__ = 'dummy_source'
-
-    DUMMY = 'Dummy'
-
-    id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-
-    __mapper_args__ = {
-        'polymorphic_identity': SourceType.DUMMY
-    }
-
-    def time_range(self, s):
-        return None, None
-
-    @classmethod
-    def singletons(cls, s):
-        from .. import StatisticName
-        source = s.query(Dummy).one()
-        name = s.query(StatisticName).filter(StatisticName.owner == source).one()
-        return source, name
 
 
 class CompositeComponent(Base):

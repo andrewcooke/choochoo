@@ -3,7 +3,7 @@ from logging import getLogger
 
 from ..names import simple_name
 from ..sql import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
-    DiaryTopic, DiaryTopicField, Dummy, ActivityTopic, ActivityTopicField
+    DiaryTopic, DiaryTopicField, ActivityTopic, ActivityTopicField
 from ..sql.tables.constant import ValidateNamedTuple
 from ..sql.types import long_cls
 
@@ -280,12 +280,3 @@ def add_activity_topic_field(s, activity_topic, title, sort, type, activity_grou
     return add(s, ActivityTopicField(activity_topic=activity_topic, sort=sort, model=model,
                                      statistic_name=statistic_name))
 
-
-def add_loader_support(s):
-    '''
-    Add 'dummy' value used by loader.
-    '''
-    log.debug('Adding dummy source')
-    dummy_source = add(s, Dummy())
-    dummy_name = add(s, StatisticName(name=Dummy.DUMMY, owner=dummy_source,
-                                      statistic_journal_type=StatisticJournalType.STATISTIC))

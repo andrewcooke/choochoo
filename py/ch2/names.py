@@ -288,7 +288,7 @@ T, N = Titles, Names
 
 
 def simple_name(name, none=True, strip=True):
-    # allows % and ? for LIKE and templates (although sqlite uses _ instead of ?)
+    # allows % and ? for LIKE and templates
     # also allows ':' so that we don't mess up composites
     from ch2.names import POW_2, POW_M1, SPACE
     if name is None and none:

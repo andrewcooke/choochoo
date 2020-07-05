@@ -4,12 +4,11 @@ from os import getpid
 from time import time, sleep
 
 import psutil as ps
-from sqlalchemy import Column, Text, Integer
+from sqlalchemy import Column, Text, Integer, DateTime
 
 from ..support import Base
 from ..types import ShortCls, Name
 from ..utils import add
-from ...common.sql import Time
 from ...lib import now
 
 log = getLogger(__name__)
@@ -64,7 +63,7 @@ class Process(Base):
     id = Column(Integer, primary_key=True)
     owner = Column(ShortCls, nullable=False, index=True)
     pid = Column(Integer, nullable=False, index=True)
-    start = Column(Time, nullable=False, default=time)
+    start = Column(DateTime(timezone=True), nullable=False, default=time)
     command = Column(Text, nullable=True)
     log = Column(Text, nullable=True)
 
@@ -146,7 +145,7 @@ class Progress(Base):
     id = Column(Integer, primary_key=True)
     name = Column(Name, nullable=False, unique=True)
     pid = Column(Integer, nullable=False, index=True)
-    start = Column(Time, nullable=False)
+    start = Column(DateTime(timezone=True), nullable=False)
     percent = Column(Integer, nullable=False, default=0)
     error = Column(Text, nullable=True)
 

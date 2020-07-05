@@ -1,10 +1,8 @@
 from contextlib import contextmanager
 from logging import getLogger
 from os.path import exists
-from sqlite3 import Connection
 
-from sqlalchemy import create_engine, event, MetaData
-from sqlalchemy.engine import Engine
+from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.sql.functions import count
 from sqlalchemy_utils import create_database, database_exists
@@ -12,7 +10,7 @@ from uritools import urisplit
 
 from . import *
 from .support import Base
-from ..commands.args import NO_OP, make_parser, DB_EXTN, base_system_path, DATA, ACTIVITY, \
+from ..commands.args import NO_OP, make_parser, ACTIVITY, \
     DB_VERSION, NamespaceWithVariables
 from ..common.io import touch
 from ..common.names import POSTGRESQL, SQLITE
@@ -22,7 +20,7 @@ from ..lib.utils import grouper
 
 # mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
 
-Source,  Interval, Dummy, Composite, CompositeComponent
+Source,  Interval, Composite, CompositeComponent
 ActivityGroup, ActivityJournal, ActivityTimespan, ActivityBookmark
 DiaryTopic, DiaryTopicJournal, DiaryTopicField,
 ActivityTopic, ActivityTopicJournal, ActivityTopicField,
@@ -37,49 +35,9 @@ Timestamp, Process, SystemConstant
 
 log = getLogger(__name__)
 
-# https://stackoverflow.com/questions/13712381/how-to-turn-on-pragma-foreign-keys-on-in-sqlalchemy-migration-script-or-conf
-@event.listens_for(Engine, "connect")
-def fk_pragma_on_connect(dbapi_con, _con_record):
-    if isinstance(dbapi_con, Connection):  # sqlite
-        cursor = dbapi_con.cursor()
-
-        def pragma(cmd):
-            full_cmd = f'PRAGMA {cmd}'
-            cursor.execute(full_cmd)
-
-        pragma('foreign_keys=ON;')  # https://www.sqlite.org/pragma.html#pragma_foreign_keys
-        pragma('temp_store=MEMORY;')  # https://www.sqlite.org/pragma.html#pragma_temp_store
-        pragma('threads=4;')  # https://www.sqlite.org/pragma.html#pragma_threads
-        pragma('cache_size=-1000000;')  # 1GB  https://www.sqlite.org/pragma.html#pragma_cache_size
-        pragma('secure_delete=OFF;')  # https://www.sqlite.org/pragma.html#pragma_secure_delete
-        pragma('journal_mode=WAL;')  # https://www.sqlite.org/wal.html
-        pragma(f'busy_timeout={5 * 60 * 1000};')  # https://www.sqlite.org/pragma.html#pragma_busy_timeout
-        cursor.close()
-
-
-@event.listens_for(Engine, 'close')
-def analyze_pragma_on_close(dbapi_con, _con_record):
-    if isinstance(dbapi_con, Connection):  # sqlite
-        from sqlite3 import OperationalError
-        cursor = dbapi_con.cursor()
-        try:
-            # this can fail if another process is using the database
-            cursor.execute("PRAGMA optimize;")  # https://www.sqlite.org/pragma.html#pragma_optimize
-        except OperationalError as e:
-            log.debug("Optimize DB aborted (DB likely still in use)")
-        finally:
-            cursor.close()
-
 
 def scheme(uri):
     return urisplit(uri).scheme
-
-
-def sqlite_uri(base, read_only=False, name=ACTIVITY, version=DB_VERSION):
-    path = base_system_path(base, subdir=DATA, file=name + DB_EXTN, version=version)
-    uri = f'{SQLITE}:///{path}'
-    if read_only: uri += '?mode=ro'
-    return uri
 
 
 def postgresql_uri(read_only=False, version=DB_VERSION):

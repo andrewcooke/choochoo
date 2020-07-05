@@ -2,6 +2,7 @@
 
 BIND = 'bind'
 COLOR = 'color'
+COLOUR = 'colour'
 COMMAND = 'command'
 DARK = 'dark'
 DB = 'db'
@@ -13,6 +14,4 @@ WEB = 'web'
 
 
 UNDEF = object()
-POSTGRESQL = 'postgresql'
-SQLITE = 'sqlite'
 URI = 'uri'

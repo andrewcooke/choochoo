@@ -3,7 +3,7 @@ import datetime as dt
 from enum import IntEnum
 from logging import getLogger
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, Index
+from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, Index, DateTime
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship, backref, synonym
 from sqlalchemy.orm.exc import NoResultFound
@@ -13,7 +13,6 @@ from ..support import Base
 from ..types import ShortCls, Name, name_and_title
 from ..utils import add
 from ...common.date import format_seconds, local_date_to_time, time_to_local_time
-from ...common.sql import Time
 from ...diary.model import TYPE, MEASURES, SCHEDULES
 from ...lib.utils import sigfig
 from ...names import Units, simple_name
@@ -149,7 +148,7 @@ class StatisticJournal(Base):
     statistic_name = relationship('StatisticName')
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
     source = relationship('Source')
-    time = Column(Time, nullable=False, index=True)
+    time = Column(DateTime(timezone=True), nullable=False, index=True)
     # serial "counts" along values in the timeseries.  it's optional.  for garmin, all values appear each
     # record, so all imported values share the same serial.  but that's not true for the corrected elevation,
     # for example.

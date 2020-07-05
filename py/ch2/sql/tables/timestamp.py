@@ -3,13 +3,12 @@ from contextlib import contextmanager
 from logging import getLogger
 from time import time
 
-from sqlalchemy import Column, Integer, UniqueConstraint, ForeignKey
+from sqlalchemy import Column, Integer, UniqueConstraint, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import count
 
 from ..support import Base
 from ..types import ShortCls, short_cls, NullText
-from ...common.sql import Time
 
 log = getLogger(__name__)
 
@@ -35,7 +34,7 @@ class Timestamp(Base):
     __tablename__ = 'timestamp'
 
     id = Column(Integer, primary_key=True)
-    time = Column(Time, nullable=False, default=time)
+    time = Column(DateTime(timezone=True), nullable=False, default=time)
     owner = Column(ShortCls, nullable=False)  # index via unique
     constraint = Column(NullText)
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'))

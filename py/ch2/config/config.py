@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from .climb import add_climb, CLIMB_CNAME
-from .database import add_loader_support, add_activity_group, add_activities, Counter, add_statistics, add_displayer, \
+from .database import add_activity_group, add_activities, Counter, add_statistics, add_displayer, \
     add_monitor, add_constant, add_diary_topic, add_diary_topic_field, \
     add_activity_topic_field, add_activity_displayer_delegate, add_activity_topic
 from .impulse import add_responses, add_impulse
@@ -61,7 +61,6 @@ class Config:
     def load(self, s):
         # hopefully you won't need to over-ride this, but instead one of the more specific methods
         self._pre(s)
-        add_loader_support(s)  # required by standard statistics calculations
         self._load_specific_activity_groups(s)
         self._load_activities_pipeline(s, Counter())
         self._load_statistics_pipeline(s, Counter())
@@ -259,6 +258,5 @@ so do not use an important password that applies to many accounts.
 
     def _load_sys(self, s):
         # finally, update the timezone
-        s.commit()  # needed to avoid sqlite locking up
         DiaryTopicJournal.check_tz(self._data, s)
 

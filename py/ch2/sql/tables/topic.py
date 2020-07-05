@@ -3,7 +3,7 @@ from json import dumps
 from logging import getLogger
 
 from pendulum.tz import get_local_timezone
-from sqlalchemy import Column, Integer, Text, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, Text, ForeignKey, UniqueConstraint, Date
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 
@@ -14,7 +14,6 @@ from ..support import Base
 from ..types import Json, Sched, Sort
 from ..utils import add
 from ...common.date import local_date_to_time
-from ...common.sql import Date
 from ...lib.schedule import Schedule
 
 log = getLogger(__name__)

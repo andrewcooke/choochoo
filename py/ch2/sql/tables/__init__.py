@@ -8,7 +8,7 @@ from .monitor import MonitorJournal
 from .nearby import ActivitySimilarity, ActivityNearby
 from .pipeline import Pipeline, PipelineType
 from .segment import Segment, SegmentJournal
-from .source import Source, Interval, NoStatistics, Dummy, Composite, CompositeComponent
+from .source import Source, Interval, NoStatistics, Composite, CompositeComponent
 from .statistic import StatisticName, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \
     StatisticJournalTimestamp, StatisticJournal, StatisticMeasure, StatisticJournalType
 from .system import SystemConstant, Process

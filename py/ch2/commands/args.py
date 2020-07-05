@@ -5,11 +5,11 @@ from logging import getLogger
 from os import makedirs
 from os.path import join
 
-from ..common.args import mm, m, no, add_web_server_args, NamespaceWithVariables, color
-from ..common.names import *
-from ..lib.utils import parse_bool
+from ..common.args import mm, m, no, add_server_args, NamespaceWithVariables, color
 from ..common.io import clean_path
-from ..common.names import UNDEF, COLOR, OFF, POSTGRESQL, SQLITE, URI
+from ..common.names import *
+from ..common.names import UNDEF, COLOR, OFF, URI
+from ..lib.utils import parse_bool
 
 log = getLogger(__name__)
 
@@ -17,11 +17,8 @@ log = getLogger(__name__)
 CH2_VERSION = '0.35.0'
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
-DB_EXTN = '.db'   # used to use .sql but auto-complete for sqlite3 didn't work
 
-URI_DEFAULT = 'sqlite:///{base}/{version}/data/activity.db'
-URI_SQLITE = 'sqlite:///{base}/{user}/{version}/data/activity.db'
-URI_POSTGRESQL = 'postgresql://postgres:{pass}@localhost/activity-{version}'
+URI_DEFAULT = 'postgresql://postgres:{pass}@localhost/activity-{version}'
 
 PROGNAME = 'ch2'
 
@@ -237,19 +234,13 @@ def make_parser(with_noop=False):
     parser.add_argument(mm(PASS), m(P), default='', metavar='PASS', help='user password')
     parser.add_argument(mm(LOG), metavar='FILE',
                         help='the file name for the log (command name by default)')
-    parser.add_argument(mm(COLOR), type=color,
+    parser.add_argument(mm(COLOR), mm(COLOUR), type=color, dest=COLOR,
                         help=f'pretty stdout log - {LIGHT}|{DARK}|{OFF} (CAPS to save)')
     parser.add_argument(m(V), mm(VERBOSITY), default=UNDEF, type=int, metavar='N',
                         help='output level for stderr (0: silent; 5:noisy)')
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
                         help='display version and exit')
-
-    database_uri = parser.add_mutually_exclusive_group()
-    database_uri.add_argument(mm(URI), default=URI_DEFAULT, help='use the given database URI')
-    database_uri.add_argument(mm(SQLITE), dest=URI, action='store_const', const=URI_SQLITE,
-                              help='use an sqlite database with standard parameters')
-    database_uri.add_argument(mm(POSTGRESQL), dest=URI, action='store_const', const=URI_POSTGRESQL,
-                              help='use a postgresql database with standard parameters')
+    parser.add_argument(mm(URI), default=URI_DEFAULT, help='use the given database URI')
 
     subparsers = parser.add_subparsers(title='commands', dest=COMMAND)
 
@@ -269,17 +260,17 @@ def make_parser(with_noop=False):
         cmd.add_argument(mm(prefix + SECURE), action='store_true', help='warn user that the system is insecure')
 
     web_start = web_cmds.add_parser(START, help='start the web server', description='start the web server')
-    add_web_server_args(web_start, prefix=WEB, default_port=WEB_PORT)
-    add_web_server_args(web_start, prefix=JUPYTER, default_port=JUPYTER_PORT)
-    add_web_server_args(web_start, prefix=PROXY, default_port=None, default_address=None)
+    add_server_args(web_start, prefix=WEB, default_port=WEB_PORT)
+    add_server_args(web_start, prefix=JUPYTER, default_port=JUPYTER_PORT)
+    add_server_args(web_start, prefix=PROXY, default_port=None, default_address=None)
     add_warning_args(web_start)
     web_cmds.add_parser(STOP, help='stop the web server', description='stop the web server')
     web_cmds.add_parser(STATUS, help='display status of web server', description='display status of web server')
     web_service = web_cmds.add_parser(SERVICE, help='internal use only - use start/stop',
                                       description='internal use only - use start/stop')
-    add_web_server_args(web_service, prefix=WEB, default_port=WEB_PORT)
-    add_web_server_args(web_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
-    add_web_server_args(web_service, prefix=PROXY, default_port=None, default_address=None)
+    add_server_args(web_service, prefix=WEB, default_port=WEB_PORT)
+    add_server_args(web_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
+    add_server_args(web_service, prefix=PROXY, default_port=None, default_address=None)
     add_warning_args(web_service)
 
     read = subparsers.add_parser(READ, help='read data (also calls calculate)',
@@ -362,19 +353,19 @@ def make_parser(with_noop=False):
                                            description='display a template in jupyter (starting server if needed)')
     jupyter_show.add_argument(NAME, metavar='NAME', help='the template name')
     jupyter_show.add_argument(ARG, nargs='*', metavar='PARAM', help='template arguments')
-    add_web_server_args(jupyter_show, prefix=JUPYTER, default_port=JUPYTER_PORT)
-    add_web_server_args(jupyter_show, prefix=PROXY, default_port=None, default_address=None)
+    add_server_args(jupyter_show, prefix=JUPYTER, default_port=JUPYTER_PORT)
+    add_server_args(jupyter_show, prefix=PROXY, default_port=None, default_address=None)
     jupyter_start = jupyter_cmds.add_parser(START, help='start a background service',
                                             description='start jupyter as a background service')
-    add_web_server_args(jupyter_start, prefix=JUPYTER, default_port=JUPYTER_PORT)
-    add_web_server_args(jupyter_start, prefix=PROXY, default_port=None, default_address=None)
+    add_server_args(jupyter_start, prefix=JUPYTER, default_port=JUPYTER_PORT)
+    add_server_args(jupyter_start, prefix=PROXY, default_port=None, default_address=None)
     jupyter_cmds.add_parser(STOP, help='stop the background service',
                             description='stop the jupyter background service')
     jupyter_cmds.add_parser(STATUS, help='display status of background service')
     jupyter_service = jupyter_cmds.add_parser(SERVICE, help='internal use only - use start/stop',
                                               description='internal use only - use start/stop')
-    add_web_server_args(jupyter_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
-    add_web_server_args(jupyter_service, prefix=PROXY, default_port=None, default_address=None)
+    add_server_args(jupyter_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
+    add_server_args(jupyter_service, prefix=PROXY, default_port=None, default_address=None)
 
     kit = subparsers.add_parser(KIT, help='manage kit',
                                 description='add, remove, modify and display kit details')
@@ -433,12 +424,7 @@ def make_parser(with_noop=False):
         database_profile = database_profiles.add_parser(name)
         database_profile.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
     database_delete = database_cmds.add_parser(DELETE, help='delete the current database (or one at a given URI)')
-    database_engines = database_delete.add_mutually_exclusive_group(required=False)
-    database_engines.add_argument(mm(SQLITE), dest=URI, action='store_const', const=SQLITE,
-                                  help='use an sqlite database with standard parameters')
-    database_engines.add_argument(mm(POSTGRESQL), dest=URI, action='store_const', const=POSTGRESQL,
-                                  help='use a postgresql database with standard parameters')
-    database_engines.add_argument(mm(URI), help='use the given database URI')
+    database_delete.add_argument(mm(URI), help='use the given database URI')
 
     import_ = subparsers.add_parser(IMPORT, help='import data from a previous version')
     import_.add_argument(SOURCE,
@@ -591,8 +577,6 @@ def make_parser(with_noop=False):
     show_schedule.add_argument(SCHEDULE, metavar='SCHEDULE', help='schedule to test')
     show_schedule.add_argument(mm(START), metavar='DATE', help='date to start displaying data')
     show_schedule.add_argument(mm(MONTHS), metavar='N', type=int, help='number of months to display')
-
-    unlock = subparsers.add_parser(UNLOCK, help='remove database locking (sqlite)')
 
     return parser
 
