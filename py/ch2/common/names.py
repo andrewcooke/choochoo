@@ -1,3 +1,4 @@
+from ch2.common.date import to_time
 
 BASE = 'base'
 BIND = 'bind'
@@ -22,3 +23,4 @@ VERSION = 'version'
 WEB = 'web'
 
 UNDEF = object()
+TIME_ZERO = to_time(0.0)

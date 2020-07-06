@@ -15,6 +15,7 @@ from ...common.date import round_hour, to_time, local_date_to_time, now
 from ...data import Statistics, present
 from ...data.response import sum_to_hour, calc_response
 from ...names import Names as N, SPACE
+from ...common.names import TIME_ZERO
 from ...sql import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
     StatisticJournalFloat
 from ...sql.tables.source import SourceType
@@ -129,7 +130,7 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
     def __start(self, s):
         # avoid constants defined at time 0
         return s.query(StatisticJournal.time). \
-            filter(StatisticJournal.time > 1.0). \
+            filter(StatisticJournal.time > TIME_ZERO). \
             order_by(StatisticJournal.time.asc()). \
             limit(1).one()[0]  # scalar can return None
 

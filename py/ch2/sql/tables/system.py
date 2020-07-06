@@ -1,4 +1,4 @@
-
+import datetime as dt
 from logging import getLogger
 from os import getpid
 from time import time, sleep
@@ -9,6 +9,7 @@ from sqlalchemy import Column, Text, Integer, DateTime
 from ..support import Base
 from ..types import ShortCls, Name
 from ..utils import add
+from ...common.date import to_time
 from ...lib import now
 
 log = getLogger(__name__)
@@ -63,7 +64,7 @@ class Process(Base):
     id = Column(Integer, primary_key=True)
     owner = Column(ShortCls, nullable=False, index=True)
     pid = Column(Integer, nullable=False, index=True)
-    start = Column(DateTime(timezone=True), nullable=False, default=time)
+    start = Column(DateTime(timezone=True), nullable=False, default=now)
     command = Column(Text, nullable=True)
     log = Column(Text, nullable=True)
 
@@ -163,7 +164,7 @@ class Progress(Base):
                 s.delete(progress)
                 s.commit()
         us = ps.Process(getpid())
-        add(s, Progress(name=name, pid=us.pid, start=us.create_time()))
+        add(s, Progress(name=name, pid=us.pid, start=to_time(us.create_time())))
 
     @classmethod
     def update(cls, s, name, **kargs):

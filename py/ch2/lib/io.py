@@ -9,6 +9,7 @@ from sqlalchemy import desc
 import ch2.common.io
 from ..common.date import to_time
 from ..common.io import file_hash
+from ..common.names import TIME_ZERO
 from ..sql.tables.file import FileScan, FileHash
 
 log = getLogger(__name__)
@@ -38,10 +39,10 @@ def modified_file_scans(s, paths, owner, force=False):
 
         # get last scan and make sure it's up-to-date
         if file_scan_from_path:
-            if hash != ch2.common.io.file_hash.hash:
+            if hash != file_scan_from_path.file_hash.hash:
                 log.warning('File at %s appears to have changed since last read on %s')
                 ch2.common.io.file_hash = FileHash.get_or_add(s, hash)
-                file_scan_from_path.last_scan = 0.0
+                file_scan_from_path.last_scan = TIME_ZERO
         else:
             file_scan_from_path = FileScan.add(s, path, owner, hash)
             s.flush()  # want this to appear in queries below

@@ -12,6 +12,7 @@ from .statistic import STATISTIC_JOURNAL_CLASSES, StatisticJournal
 from ..types import Cls, Json, lookup_cls, QualifiedName
 from ...common.date import local_date_to_time, format_time, to_time
 from ...common.log import log_current_exception
+from ...common.names import TIME_ZERO
 
 log = getLogger(__name__)
 
@@ -44,10 +45,10 @@ class Constant(Source):
         if time and date:
             raise Exception('Specify one or none of time and date for %s' % self)
         if not time and not date:
-            time = 0.0  # important this is a float and not an int (or it would be an erroneous date)
+            time = TIME_ZERO
         if date:
             time = local_date_to_time(date)
-        if time and self.single:
+        if time != TIME_ZERO and self.single:
             raise Exception('%s was given time %s but is not time-variable' % (self, format_time(to_time(time))))
         sjournal = STATISTIC_JOURNAL_CLASSES[self.statistic_name.statistic_journal_type](
             statistic_name=self.statistic_name, source=self, value=value, time=time)

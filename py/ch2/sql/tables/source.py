@@ -13,7 +13,7 @@ from ..support import Base
 from ..types import OpenSched, ShortCls, short_cls
 from ..utils import add
 from ...common.date import to_time, time_to_local_date, max_time, min_time, extend_range
-from ...common.names import UNDEF
+from ...common.names import UNDEF, TIME_ZERO
 from ...lib.utils import timing
 
 log = getLogger(__name__)
@@ -177,7 +177,7 @@ class Interval(Source):
         '''
         from .statistic import StatisticJournal, StatisticName
         q = s.query(func.min(StatisticJournal.time), func.max(StatisticJournal.time)). \
-            filter(StatisticJournal.time > to_time(2 * 24 * 60 * 60.0))
+            filter(StatisticJournal.time > TIME_ZERO)
         if statistics_owner:
             q = q.join(StatisticName).filter(StatisticName.owner == statistics_owner)
         start, finish = q.one()   # skip entire first day because tz

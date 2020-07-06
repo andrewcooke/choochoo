@@ -13,6 +13,7 @@ from ..lib import local_date_to_time, to_date, time_to_local_time
 from ch2.common.log import log_current_exception
 from ..lib.utils import timing
 from ..names import Names as N, like, MED_WINDOW, SPACE
+from ch2.common.names import TIME_ZERO
 from ..sql import StatisticName, ActivityGroup, StatisticJournal, ActivityTimespan, ActivityJournal, Source, \
     ActivityTopic
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
@@ -297,7 +298,7 @@ def std_health_statistics(s, freq='1h'):
     from ..pipeline.owners import RestHRCalculator, ResponseCalculator, ActivityCalculator, MonitorCalculator
 
     start = s.query(StatisticJournal.time). \
-        filter(StatisticJournal.time > local_date_to_time(to_date('1970-01-03'))). \
+        filter(StatisticJournal.time > TIME_ZERO). \
         order_by(asc(StatisticJournal.time)).limit(1).scalar()
     finish = s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
 

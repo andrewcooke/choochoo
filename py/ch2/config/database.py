@@ -2,6 +2,7 @@ from json import dumps
 from logging import getLogger
 
 from ..names import simple_name
+from ..common.names import TIME_ZERO
 from ..sql import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
     DiaryTopic, DiaryTopicField, ActivityTopic, ActivityTopicField
 from ..sql.tables.constant import ValidateNamedTuple
@@ -142,7 +143,7 @@ def add_activities(s, cls, sort, **kargs):
 
 def add_constant(s, title, value, description=None, units=None, name=None,
                  statistic_journal_type=StatisticJournalType.INTEGER, activity_group=None,
-                 time=0.0, single=False, validate_cls=None, validate_args=None, validate_kargs=None):
+                 time=TIME_ZERO, single=False, validate_cls=None, validate_args=None, validate_kargs=None):
     '''
     Add a constant.
 

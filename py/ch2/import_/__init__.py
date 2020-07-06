@@ -8,6 +8,7 @@ from ..lib import format_date, time_to_local_date, to_time
 from ..sql import StatisticJournal, StatisticName, StatisticJournalType
 from ..common.sql import database_really_exists
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
+from ..common.names import TIME_ZERO
 from ..sql.types import short_cls
 from ..sql.utils import add
 
@@ -21,7 +22,7 @@ def journal_imported(record, new, cls, name, allow_time_zero=False):
             join(cls). \
             filter(StatisticJournal.source_id == cls.id)
         if allow_time_zero:
-            q = q.filter(StatisticJournal.time > 0.0)
+            q = q.filter(StatisticJournal.time > TIME_ZERO)
         if q.count():
             record.warning(f'{name} topic entries already exist - old data must be imported first')
             return True

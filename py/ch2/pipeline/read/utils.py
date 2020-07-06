@@ -6,6 +6,7 @@ from time import time
 
 from ... import FatalException
 from ...commands.args import base_system_path, PERMANENT
+from ...common.date import now
 from ...fit.format.read import filtered_records
 from ...lib import to_time
 from ...common.log import log_current_exception
@@ -51,11 +52,11 @@ class FitReaderMixin(LoaderMixin):
     def _run_one(self, s, file_scan):
         try:
             self._read(s, file_scan)
-            file_scan.last_scan = time()
+            file_scan.last_scan = now()
         except AbortImportButMarkScanned as e:
             log.warning(f'Could not process {file_scan} (scanned)')
             # log_current_exception()
-            file_scan.last_scan = time()
+            file_scan.last_scan = now()
         except FatalException:
             raise
         except Exception as e:
