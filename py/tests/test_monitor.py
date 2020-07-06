@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 import sqlalchemy.sql.functions as func
 
 from ch2.commands.read import read
-from ch2.commands.args import bootstrap_dir, V, DEV, MONITOR, base_system_path
+from ch2.commands.args import bootstrap_dir, V, DEV, MONITOR, base_system_path, bootstrap_db, READ
 from ch2 import BASE
 from ch2.common.args import mm, m
 from ch2.config.profile.default import default
@@ -17,7 +17,7 @@ from ch2.sql.tables.statistic import StatisticJournal, StatisticName
 from ch2.pipeline.calculate.monitor import MonitorCalculator
 from ch2.pipeline.pipeline import run_pipeline
 from ch2.data import Names as N
-from tests import LogTestCase
+from tests import LogTestCase, random_test_user
 
 log = getLogger(__name__)
 
@@ -25,11 +25,12 @@ log = getLogger(__name__)
 class TestMonitor(LogTestCase):
 
     def test_monitor(self):
+        user = random_test_user()
+        bootstrap_db(user, m(V), '5')
         with TemporaryDirectory() as f:
-            args, data = bootstrap_dir(f, m(V), '5')
-            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, data = bootstrap_dir(f, m(V), '5', mm(DEV),
-                                       'read', 'data/test/source/personal/25822184777.fit')
+            bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
+            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
+                                      READ, 'data/test/source/personal/25822184777.fit')
             read(args, data)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             run_pipeline(data, PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
@@ -41,11 +42,12 @@ class TestMonitor(LogTestCase):
                 self.assertNotEqual(mjournal.start, mjournal.finish)
 
     def test_values(self):
+        user = random_test_user()
         with TemporaryDirectory() as f:
-            bootstrap_dir(f, m(V), '5')
-            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+            bootstrap_db(user, m(V), '5')
+            bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
             for file in ('24696157869', '24696160481', '24696163486'):
-                args, data = bootstrap_dir(f, m(V), '5', mm(DEV),
+                args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
                                            'read', mm(MONITOR),
                                            'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                 read(args, data)
@@ -75,16 +77,17 @@ class TestMonitor(LogTestCase):
     FILES = ('25505915679', '25519562859', '25519565531', '25532154264', '25539076032', '25542112328')
 
     def generic_bug(self, files, join=False):
+        user = random_test_user()
         with TemporaryDirectory() as f:
-            args, data = bootstrap_dir(f, m(V), '5')
-            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+            args, data = bootstrap_db(user, m(V), '5')
+            bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
             if join:
                 files = ['data/test/source/personal/andrew@acooke.org_%s.fit' % file for file in files]
                 args, data = bootstrap_dir(f, mm(DEV), 'read', *files)
                 read(args, data)
             else:
                 for file in files:
-                    args, data = bootstrap_dir(f, mm(DEV), 'read',
+                    args, data = bootstrap_db(user, mm(BASE), f, mm(DEV), 'read',
                                                'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                     read(args, data)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)

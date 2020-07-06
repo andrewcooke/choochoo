@@ -3,6 +3,7 @@ from ..config import Config, WALK, SWIM, RUN, BIKE
 from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_constant
 from ..power import add_simple_power_estimate, add_kit_power_estimate, add_kit_power_model
 from ...commands.args import DEFAULT, base_system_path, PERMANENT
+from ...common.names import TIME_ZERO
 from ...diary.model import TYPE, EDIT
 from ...lib import to_time, time_to_local_date
 from ...names import Sports
@@ -94,5 +95,5 @@ class ACooke(Config):
         weight = s.query(StatisticName).filter(StatisticName.name == 'Weight', StatisticName.owner == DiaryTopic).one()
         diary = add(s, DiaryTopicJournal(date=time_to_local_date(to_time(0.0))))
         add(s, STATISTIC_JOURNAL_CLASSES[weight.statistic_journal_type](
-            value=65.0, time=0.0, statistic_name=weight, source=diary))
+            value=65.0, time=TIME_ZERO, statistic_name=weight, source=diary))
         super()._post(s)

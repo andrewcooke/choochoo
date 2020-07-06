@@ -4,13 +4,13 @@ from logging import getLogger
 from tempfile import TemporaryDirectory
 
 from ch2 import constants
-from ch2.commands.args import bootstrap_dir, V, DEV, FORCE
+from ch2.commands.args import bootstrap_dir, V, DEV, FORCE, bootstrap_db
 from ch2.common.args import mm, m
 from ch2.config.profile.default import default
 from ch2.srtm.bilinear import bilinear_elevation_from_constant
 from ch2.srtm.file import SRTM1_DIR_CNAME
 from ch2.srtm.spline import spline_elevation_from_constant
-from tests import LogTestCase
+from tests import LogTestCase, random_test_user
 
 log = getLogger(__name__)
 ARCSEC = 1/3600
@@ -20,23 +20,23 @@ class TestSortem(LogTestCase):
 
     @contextmanager
     def bilinear(self):
-        with TemporaryDirectory() as f:
-            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, data = bootstrap_dir(f, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
-                                       mm(FORCE))
-            constants(args, data)
-            with data.db.session_context() as s:
-                yield bilinear_elevation_from_constant(s)
+        user = random_test_user()
+        bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
+        args, data = bootstrap_db(user, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
+                                   mm(FORCE))
+        constants(args, data)
+        with data.db.session_context() as s:
+            yield bilinear_elevation_from_constant(s)
 
     @contextmanager
     def spline(self, smooth=0):
-        with TemporaryDirectory() as f:
-            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, data = bootstrap_dir(f, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
-                                       mm(FORCE))
-            constants(args, data)
-            with data.db.session_context() as s:
-                yield spline_elevation_from_constant(s, smooth=smooth)
+        user = random_test_user()
+        bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
+        args, data = bootstrap_db(user, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
+                                   mm(FORCE))
+        constants(args, data)
+        with data.db.session_context() as s:
+            yield spline_elevation_from_constant(s, smooth=smooth)
 
     def test_read(self):
         with self.bilinear() as oracle:

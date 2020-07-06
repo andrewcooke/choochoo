@@ -41,7 +41,7 @@ def modified_file_scans(s, paths, owner, force=False):
         if file_scan_from_path:
             if hash != file_scan_from_path.file_hash.hash:
                 log.warning('File at %s appears to have changed since last read on %s')
-                ch2.common.io.file_hash = FileHash.get_or_add(s, hash)
+                file_scan_from_path.file_hash = FileHash.get_or_add(s, hash)
                 file_scan_from_path.last_scan = TIME_ZERO
         else:
             file_scan_from_path = FileScan.add(s, path, owner, hash)

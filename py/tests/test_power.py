@@ -4,12 +4,12 @@ from tempfile import TemporaryDirectory
 import pandas as pd
 
 from ch2.commands.read import read
-from ch2.commands.args import bootstrap_dir, DEV, V
+from ch2.commands.args import bootstrap_dir, DEV, V, bootstrap_db, BASE
 from ch2.common.args import mm, m
 from ch2.config.profile.default import default
 from ch2.data import Names as N, Statistics
 from ch2.pipeline.read import SegmentReader
-from tests import LogTestCase
+from tests import LogTestCase, random_test_user
 
 log = getLogger(__name__)
 
@@ -18,11 +18,12 @@ class TestPower(LogTestCase):
 
     def test_constant(self):
 
+        user = random_test_user()
         with TemporaryDirectory() as f:
 
-            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+            bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
 
-            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
+            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
                                        'data/test/source/personal/2018-03-04-qdp.fit')
             read(args, data)
 

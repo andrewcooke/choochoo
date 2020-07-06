@@ -116,14 +116,14 @@ class MonitorReader(MultiProcFitReader, LoaderMixin):
                  f'for {format_time(first_timestamp)} - {format_time(last_timestamp)}')
         if self.force:
             log.debug(f'Deleting previous entry')
-            s.query(MonitorJournal).filter(MonitorJournal.file_hash == ch2.common.io.file_hash).delete()
+            s.query(MonitorJournal).filter(MonitorJournal.file_hash == file_scan.file_hash).delete()
         else:
-            if s.query(MonitorJournal).filter(MonitorJournal.file_hash == ch2.common.io.file_hash).count():
+            if s.query(MonitorJournal).filter(MonitorJournal.file_hash == file_scan.file_hash).count():
                 raise Exception(f'Duplicate for {file_scan.path}')  # should never happen
         # adding 0.1s to the end time makes the intervals semi-open which simplifies cleanup later
         mjournal = add(s, MonitorJournal(start=first_timestamp,
                                          finish=last_timestamp + dt.timedelta(seconds=0.1),
-                                         file_hash_id=ch2.common.io.file_hash.id))
+                                         file_hash_id=file_scan.file_hash.id))
         return mjournal, (first_timestamp, last_timestamp, mjournal, records)
 
     def _load_data(self, s, loader, data):

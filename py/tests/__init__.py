@@ -1,4 +1,5 @@
 import datetime as dt
+from logging import getLogger
 from unittest import TestCase
 
 from ch2 import PROGNAME
@@ -9,6 +10,8 @@ from ch2.commands.args import make_parser, NamespaceWithVariables
 from ch2.common.names import USER
 from ch2.common.user import make_user_database
 from ch2.sql.system import Data
+
+log = getLogger(__name__)
 
 
 class LogTestCase(TestCase):
@@ -22,5 +25,6 @@ def random_test_user(args=(mm(USER), 'postgres')):
     ns = NamespaceWithVariables(parser.parse_args(args=args))
     data = Data(ns)
     user = data_hash(str(dt.datetime.now()))[:6]
+    log.info(f'USer/database {user}')
     db = make_user_database(data, user, '')
     return user

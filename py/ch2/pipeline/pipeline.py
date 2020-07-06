@@ -97,21 +97,12 @@ class MultiProcPipeline(BasePipeline):
                     log.info(f'No missing data for {short_cls(self)}')
                     local_progress.complete()
                 else:
-                    self.__flush_wal(s)
                     n_total, n_parallel = self.__cost_benefit(missing, self.n_cpu)
                     if n_parallel < 2 or len(missing) == 1:
                         self._run_all(s, missing, local_progress)
                     else:
                         self.__spawn(s, missing, n_total, n_parallel, local_progress)
             self._shutdown(s)
-
-    def __flush_wal(self, s):
-        s.commit()
-        if str(s.get_bind().url).startswith(SQLITE):
-            log.debug('Clearing WAL')
-            s.execute(text('pragma wal_checkpoint(RESTART);'))
-            s.commit()
-            log.debug('Cleared WAL')
 
     def _run_all(self, s, missing, progress=None):
         local_progress = progress.increment_or_complete if progress else nullcontext

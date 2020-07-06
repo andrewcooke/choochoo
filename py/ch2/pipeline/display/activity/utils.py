@@ -94,7 +94,7 @@ class ActivityDelegate(ActivityJournalDelegate):
         yield from self.__read_activity_topics(s, ajournal, date)
 
     def __read_activity_topics(self, s, ajournal, date):
-        tjournal = ActivityTopicJournal.get_or_add(s, ch2.common.io.file_hash, ajournal.activity_group)
+        tjournal = ActivityTopicJournal.get_or_add(s, ajournal.file_hash, ajournal.activity_group)
         cache = tjournal.cache(s)
         # special case root
         for field in s.query(ActivityTopicField). \

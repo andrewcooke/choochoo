@@ -9,6 +9,7 @@ from sqlalchemy.sql.functions import count
 
 from ..support import Base
 from ..types import ShortCls, short_cls, NullText
+from ...common.date import now
 
 log = getLogger(__name__)
 
@@ -34,7 +35,7 @@ class Timestamp(Base):
     __tablename__ = 'timestamp'
 
     id = Column(Integer, primary_key=True)
-    time = Column(DateTime(timezone=True), nullable=False, default=time)
+    time = Column(DateTime(timezone=True), nullable=False, default=now)
     owner = Column(ShortCls, nullable=False)  # index via unique
     constraint = Column(NullText)
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'))

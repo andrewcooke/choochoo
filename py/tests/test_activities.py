@@ -3,7 +3,7 @@ from tempfile import TemporaryDirectory
 
 from sqlalchemy.sql.functions import count
 
-from ch2.commands.args import V, DEV, bootstrap_dir, FORCE, bootstrap_db
+from ch2.commands.args import V, DEV, bootstrap_dir, FORCE, bootstrap_db, BASE
 from ch2.commands.constants import constants
 from ch2.commands.read import read
 from ch2.common.args import mm, m
@@ -24,8 +24,12 @@ class TestActivities(LogTestCase):
         bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
         args, data = bootstrap_db(user, m(V), '5', 'constants', 'set', 'SRTM1.dir', '/home/andrew/archive/srtm1', mm(FORCE))
         constants(args, data)
-        args, data = bootstrap_db(user, m(V), '5', mm(DEV), 'read', 'data/test/source/personal/2018-08-27-rec.fit')
-        read(args, data)
+
+        with TemporaryDirectory() as f:
+            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
+                                      'data/test/source/personal/2018-08-27-rec.fit')
+            read(args, data)
+
         run_pipeline(data, PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
 
         with data.db.session_context() as s:
@@ -46,8 +50,9 @@ class TestActivities(LogTestCase):
             self.assertNotEqual(journal.start, journal.finish)
 
     def test_segment_bug(self):
+        user = random_test_user()
         with TemporaryDirectory() as f:
-            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
             paths = ['/home/andrew/archive/fit/bike/cotic/2016-07-27-pm-z4.fit']
             run_pipeline(data, PipelineType.READ_ACTIVITY, paths=paths, force=True)
 
@@ -63,10 +68,11 @@ class TestActivities(LogTestCase):
             self.assertTrue(count > 0)
 
     def test_florian(self):
+        user = random_test_user()
         with TemporaryDirectory() as f:
-            bootstrap_dir(f, m(V), '5')
-            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
+            bootstrap_db(user, mm(BASE), f, m(V), '5')
+            bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
+            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
                                           'data/test/source/private/florian.fit')
             read(args, data)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
@@ -76,10 +82,11 @@ class TestActivities(LogTestCase):
                 self.__assert_basic_stats(s)
 
     def test_michael(self):
+        user = random_test_user()
         with TemporaryDirectory() as f:
-            bootstrap_dir(f, m(V), '5')
-            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
+            bootstrap_db(user, mm(BASE), f, m(V), '5')
+            bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
+            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
                                       'data/test/source/other/2019-05-09-051352-Running-iWatchSeries3.fit')
             read(args, data)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
@@ -89,10 +96,11 @@ class TestActivities(LogTestCase):
                 self.__assert_basic_stats(s)
 
     def test_heart_alarms(self):
+        user = random_test_user()
         with TemporaryDirectory() as f:
-            bootstrap_dir(f, m(V), '5')
-            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
+            bootstrap_db(user, mm(BASE), f, m(V), '5')
+            bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
+            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
                                       'data/test/source/personal/2016-07-19-mpu-s-z2.fit')
             read(args, data)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
@@ -106,10 +114,11 @@ class TestActivities(LogTestCase):
 
     def test_920(self):
         for src in '920xt-2019-05-16_19-42-54.fit', '920xt-2019-05-16_19-42-54.fit':
+            user = random_test_user()
             with TemporaryDirectory() as f:
-                bootstrap_dir(f, m(V), '5')
-                bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-                args, data = bootstrap_dir(f, m(V), '5', mm(DEV), 'read',
+                bootstrap_db(user, mm(BASE), f, m(V), '5')
+                bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
+                args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
                                                f'data/test/source/other/{src}')
                 read(args, data)
                 # run('sqlite3 %s ".dump"' % f.name, shell=True)

@@ -148,7 +148,7 @@ class ActivityReader(MultiProcFitReader):
 
     def _file_hash_journals(self, s, what, file_scan):
         return s.query(what). \
-                filter(ActivityJournal.file_hash == ch2.common.io.file_hash)
+                filter(ActivityJournal.file_hash == file_scan.file_hash)
 
     def _delete_query(self, s, query):
         for journal in query.all():
@@ -229,7 +229,7 @@ class ActivityReader(MultiProcFitReader):
                    ActivityJournal.id != ajournal.id).first()
         if overlap:
             def fmt(ajournal):
-                return f'{ajournal} {ch2.common.io.file_hash.file_scan.path}'
+                return f'{ajournal} {ajournal.file_hash.file_scan.path}'
             log.error(f'Overlapping activities: {fmt(ajournal)} / {fmt(overlap)}')
             raise Exception(f'Overlapping activities: '
                             f'{time_to_local_time(ajournal.start)} / {time_to_local_time(overlap.start)}')

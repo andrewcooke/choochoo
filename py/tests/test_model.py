@@ -2,13 +2,13 @@ from logging import getLogger
 from tempfile import TemporaryDirectory
 
 from ch2.commands.read import read
-from ch2.commands.args import bootstrap_dir, DEV, V
+from ch2.commands.args import bootstrap_dir, DEV, V, BASE, bootstrap_db
 from ch2.common.args import mm, m
 from ch2.config.profile.default import default
 from ch2.diary.database import read_date
 from ch2.diary.model import LABEL, VALUE
 from ch2.lib import to_date
-from tests import LogTestCase
+from tests import LogTestCase, random_test_user
 
 log = getLogger(__name__)
 
@@ -16,9 +16,10 @@ log = getLogger(__name__)
 class TestModel(LogTestCase):
 
     def test_constant(self):
+        user = random_test_user()
         with TemporaryDirectory() as f:
-            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, data = bootstrap_dir(f, m(V), '5', mm(DEV),
+            bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
+            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
                                        'read', 'data/test/source/personal/2018-03-04-qdp.fit',
                                        '-Kn_cpu=1')
             read(args, data)
