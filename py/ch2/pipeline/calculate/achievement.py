@@ -7,7 +7,7 @@ from sqlalchemy import desc, asc
 from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin
 from ..pipeline import OwnerInMixin
 from ...lib import local_time_to_time
-from ...lib.log import log_current_exception
+from ...common.log import log_current_exception
 from ...names import N
 from ...sql import ActivityJournal, Timestamp, StatisticName, StatisticJournal, Achievement, ActivityGroup, Source
 from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, StatisticJournalFloat

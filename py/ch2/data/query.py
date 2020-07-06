@@ -10,7 +10,7 @@ from ch2.data import read_query
 from ..common.date import YMD, format_seconds
 from ..data import session, present
 from ..lib import local_date_to_time, to_date, time_to_local_time
-from ..lib.log import log_current_exception
+from ch2.common.log import log_current_exception
 from ..lib.utils import timing
 from ..names import Names as N, like, MED_WINDOW, SPACE
 from ..sql import StatisticName, ActivityGroup, StatisticJournal, ActivityTimespan, ActivityJournal, Source, \

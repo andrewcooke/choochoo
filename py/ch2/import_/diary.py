@@ -4,7 +4,7 @@ from logging import getLogger
 from sqlalchemy.orm.exc import MultipleResultsFound
 
 from . import journal_imported, match_statistic_name, copy_statistic_journal, clone_with
-from ..lib.log import log_current_exception
+from ..common.log import log_current_exception
 from ..sql import DiaryTopic, DiaryTopicJournal
 
 log = getLogger(__name__)

@@ -6,7 +6,8 @@ from tempfile import TemporaryDirectory
 import sqlalchemy.sql.functions as func
 
 from ch2.commands.read import read
-from ch2.commands.args import bootstrap_dir, V, DEV, BASE, MONITOR, base_system_path
+from ch2.commands.args import bootstrap_dir, V, DEV, MONITOR, base_system_path
+from ch2 import BASE
 from ch2.common.args import mm, m
 from ch2.config.profile.default import default
 from ch2.common.date import to_time, local_date_to_time

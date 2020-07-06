@@ -1,5 +1,5 @@
 
-from sqlalchemy import Column, Integer, ForeignKey
+from sqlalchemy import Column, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, backref
 
 from .source import SourceType, UngroupedSource

@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from . import journal_imported, match_statistic_name, copy_statistic_journal, any_attr
-from ..lib.log import log_current_exception
+from ..common.log import log_current_exception
 from ..sql import ActivityTopicJournal, FileHash, ActivityTopic, ActivityGroup
 from ..names import simple_name
 

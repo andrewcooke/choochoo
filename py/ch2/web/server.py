@@ -16,11 +16,12 @@ from .servlets.kit import Kit
 from .servlets.search import Search
 from .servlets.upload import Upload
 from .static import Static
-from ..commands.args import BASE, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, READ, JUPYTER, WARN, SECURE
+from ..commands.args import LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, READ, JUPYTER, WARN, SECURE
+from .. import BASE
 from ..common.names import URI
 from ..common.args import mm
 from ..jupyter.server import JupyterController
-from ..lib.log import log_current_exception
+from ..common.log import log_current_exception
 from ..lib.server import BaseController
 from ..sql import SystemConstant
 

@@ -11,7 +11,7 @@ from .source import Source, SourceType
 from .statistic import STATISTIC_JOURNAL_CLASSES, StatisticJournal
 from ..types import Cls, Json, lookup_cls, QualifiedName
 from ...common.date import local_date_to_time, format_time, to_time
-from ...lib.log import log_current_exception
+from ...common.log import log_current_exception
 
 log = getLogger(__name__)
 

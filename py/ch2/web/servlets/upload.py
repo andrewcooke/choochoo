@@ -2,10 +2,11 @@ from logging import getLogger
 
 import psutil as ps
 
-from ...commands.args import WEB, READ, LOG, BASE, VERBOSITY, FORCE, DEV, URI
+from ...commands.args import WEB, READ, LOG, VERBOSITY, FORCE, DEV, URI
+from ... import BASE
 from ...common.args import mm
 from ...commands.read import STREAM, NAME, upload_files
-from ...global_ import global_dev
+from ...common.global_ import global_dev
 from ...lib.log import Record
 from ...lib.utils import parse_bool
 from ...lib.workers import command_root

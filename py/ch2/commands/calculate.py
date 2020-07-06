@@ -1,7 +1,8 @@
 
 from logging import getLogger
 
-from .args import FORCE, LIKE, FINISH, START, WORKER, parse_pairs, KARG, UNLIKE, BASE
+from .args import FORCE, LIKE, FINISH, START, WORKER, parse_pairs, KARG, UNLIKE
+from .. import BASE
 from ..sql.tables.pipeline import PipelineType
 from ..pipeline.pipeline import run_pipeline
 

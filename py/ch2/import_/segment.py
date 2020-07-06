@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from ..lib import log_current_exception
+from ..common.log import log_current_exception
 from ..config.database import add
 from ..sql import Segment
 

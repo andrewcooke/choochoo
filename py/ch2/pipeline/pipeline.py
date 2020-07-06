@@ -7,7 +7,7 @@ from psutil import cpu_count
 from sqlalchemy import text
 from sqlalchemy.sql.functions import count
 
-from .loader import SqliteLoader, PostgresqlLoader
+from .loader import Loader
 from ..commands.args import BATCH, KARG
 from ..common.names import POSTGRESQL, SQLITE
 from ..common.args import mm
@@ -209,8 +209,6 @@ class UniProcPipeline(MultiProcPipeline):
 
 class LoaderMixin:
 
-    loaders = {SQLITE: SqliteLoader, POSTGRESQL: PostgresqlLoader}
-
     def __init__(self, *args, batch=True, **kargs):
         super().__init__(*args, **kargs)
         self.__batch = batch
@@ -231,11 +229,7 @@ class LoaderMixin:
         if scheme_ == POSTGRESQL and 'batch' not in kargs:
             kargs['batch'] = self.__batch
             self.__batch = False  # only set once or we get multiple callbacks
-        if scheme_ in self.loaders:
-            log.debug(f'Using loader for {scheme_}')
-            return self.loaders[scheme_](s, **kargs)
-        else:
-            raise Exception(f'Unknown scheme: {scheme_}')
+        return Loader(s, **kargs)
 
 
 class OwnerInMixin:

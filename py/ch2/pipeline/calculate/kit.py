@@ -4,7 +4,7 @@ from logging import getLogger
 from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin
 from ..pipeline import OwnerInMixin
 from ..read.activity import ActivityReader
-from ...lib.log import log_current_exception
+from ...common.log import log_current_exception
 from ...sql import StatisticJournal, Timestamp
 from ...sql.tables.kit import expand_item
 

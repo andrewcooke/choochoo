@@ -10,7 +10,7 @@ from sqlalchemy.sql.functions import count
 
 from .utils import UniProcCalculator
 from ..pipeline import OwnerInMixin
-from ...lib import log_current_exception
+from ...common.log import log_current_exception
 from ...lib.dbscan import DBSCAN
 from ...lib.optimizn import expand_max
 from ...names import Names

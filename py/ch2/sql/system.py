@@ -1,52 +1,17 @@
 from logging import getLogger
-from os import environ
 
 from .database import SystemConstant, Process, Database
 from .tables.system import Progress
-from ..commands.args import BASE, USER, PASS, VERSION, DB_VERSION
-from ..common.names import URI
+from ..commands.args import DB_VERSION
+from ..common.sql import DataSource
 
 log = getLogger(__name__)
 
 
-class Data:
+class Data(DataSource):
 
     def __init__(self, args):
-        self.__fmt_keys = {BASE: self.__read(args, BASE),
-                           USER: self.__read(args, USER),
-                           PASS: self.__read(args, PASS),
-                           VERSION: DB_VERSION}
-        self.__base = self.__fmt_keys[BASE]  # todo - still needed?
-        self.__uri = self.__read(args, URI)
-        self.__db = None
-
-    def __read(self, args, name):
-        '''Environment overrides command line so that system config overrides user preferences.'''
-        env_name = 'CH2_' + name.upper()
-        if env_name in environ:
-            value = environ[env_name]
-            log.debug(f'{name}={value} (from {env_name})')
-        else:
-            value = args[name]
-            if name == PASS:
-                log.debug(f'{name}=xxxxxx (from args)')
-            else:
-                log.debug(f'{name}={value} (from args)')
-        return value
-
-    @property
-    def base(self):
-        return self.__base
-
-    @property
-    def db(self):
-        if not self.__db:
-            self.__db = self.get_database()
-        return self.__db
-
-    def reset(self):
-        self.__sys = None
-        self.__db = None
+        super().__init__(args, Database, DB_VERSION, 'CH2_')
 
     def get_constant(self, name, none=False):
         with self.db.session_context() as s:
@@ -62,23 +27,6 @@ class Data:
         log.debug(f'Deleting {name}')
         with self.db.session_context() as s:
             SystemConstant.delete(s, name)
-
-    def get_safe_uri(self, uri=None, **kwargs):
-        keys = dict(kwargs)
-        keys[PASS] = 'xxxxxx'
-        return self.get_uri(uri=uri, **keys)
-
-    def get_uri(self, uri=None, **kwargs):
-        if not uri: uri = self.__uri
-        keys = dict(self.__fmt_keys)
-        keys.update(**kwargs)
-        return uri.format(**keys)
-
-    def get_database(self, uri=None):
-        safe_uri = self.get_safe_uri(uri=uri)
-        log.debug(f'Connecting to {safe_uri}')
-        uri = self.get_uri(uri=uri)
-        return Database(uri)
 
     def get_process(self, owner, pid):
         with self.db.session_context() as s:
@@ -121,4 +69,3 @@ class Data:
     def wait_for_progress(self, name, timeout=60):
         with self.db.session_context() as s:
             return Progress.wait_for_progress(s, name, timeout=timeout)
-

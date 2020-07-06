@@ -2,7 +2,7 @@ from logging import getLogger, NullHandler
 
 from sys import version_info
 
-from .global_ import set_global_dev
+from .common.global_ import set_global_dev
 from .sql.system import Data
 
 getLogger('bokeh').addHandler(NullHandler())
@@ -21,8 +21,8 @@ class FatalException(Exception):
 
 from .commands.args import COMMAND, make_parser, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DATABASE, CONSTANTS, CALCULATE, SHOW_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, BASE
-from .common.names import COLOR
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE
+from .common.names import COLOR, BASE
 from .common.args import NamespaceWithVariables
 from .commands.constants import constants
 from .commands.validate import validate
@@ -74,7 +74,6 @@ COMMANDS = {CONSTANTS: constants,
             SEARCH: search,
             SHOW_SCHEDULE: show_schedule,
             THUMBNAIL: thumbnail,
-            UNLOCK: unlock,
             VALIDATE: validate,
             WEB: web
             }

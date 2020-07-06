@@ -1,5 +1,6 @@
 from logging import getLogger
 
+import ch2.common.io
 from .args import FIX
 from ..lib.log import Record
 from ..sql import ActivityTopicJournal, FileHash, FileScan, StatisticJournal, ActivityJournal
@@ -36,7 +37,7 @@ def check_activity_diary_missing_files(record, db, fix=False):
                     filter(FileScan.path == None).all():
                 bad = True
                 record.warning(f'{ActivityTopicJournal.__table__} with file hash '
-                               f'{topic_journal.file_hash.hash[:6]} has associated entries but no activity')
+                               f'{ch2.common.io.file_hash.hash[:6]} has associated entries but no activity')
                 if fix:
                     record.warning('Deleting entry')
                     s.delete(topic_journal)

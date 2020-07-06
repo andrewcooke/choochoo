@@ -14,4 +14,3 @@ def set_global_dev(dev):
 def global_dev():
     global __GLOBAL_DEV
     return __GLOBAL_DEV
-

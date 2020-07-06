@@ -9,9 +9,10 @@ from .garmin import run_garmin
 from ..commands.args import KIT, READ, FORCE, PATH, base_system_path, PERMANENT, WORKER, parse_pairs, \
     KARG, infer_flags, ACTIVITIES, CALCULATE
 from ..common.date import time_to_local_time, Y, YMDTHMS
-from ..common.io import touch, clean_path
-from ..lib.io import data_hash, split_fit_path
-from ..lib.log import log_current_exception, Record
+from ..common.io import touch, clean_path, data_hash
+from ..lib.io import split_fit_path
+from ..lib.log import Record
+from ..common.log import log_current_exception
 from ..lib.utils import timing
 from ..lib.workers import ProgressTree, SystemProgressTree
 from ..pipeline.pipeline import run_pipeline

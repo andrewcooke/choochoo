@@ -5,7 +5,8 @@ from os.path import exists
 from matplotlib import use
 from matplotlib.pyplot import show, figure
 
-from .args import ACTIVITY, base_system_path, THUMBNAIL, BASE
+from .args import ACTIVITY, base_system_path, THUMBNAIL
+from .. import BASE
 from ..data.query import Statistics
 from ..names import Names
 from ..pipeline.read.segment import SegmentReader

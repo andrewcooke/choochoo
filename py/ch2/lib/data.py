@@ -10,7 +10,7 @@ from string import ascii_letters
 import pandas as pd
 from binascii import hexlify
 
-from .log import log_current_exception
+from ..common.log import log_current_exception
 from ..names import Titles
 
 log = getLogger(__name__)

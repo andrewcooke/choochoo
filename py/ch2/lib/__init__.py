@@ -5,5 +5,5 @@ from ..common.date import local_date_to_time, to_date, time_to_local_time, forma
     is_local_time
 from .utils import short_str, sign, format_metres, format_percent, format_watts, groupby_tuple, drop_trailing_slash, \
     format_km
-from .log import log_current_exception
+from ..common.log import log_current_exception
 

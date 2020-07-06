@@ -7,7 +7,8 @@ from time import time
 from ... import FatalException
 from ...commands.args import base_system_path, PERMANENT
 from ...fit.format.read import filtered_records
-from ...lib import to_time, log_current_exception
+from ...lib import to_time
+from ...common.log import log_current_exception
 from ...lib.io import modified_file_scans
 from ..pipeline import LoaderMixin, MultiProcPipeline
 from ...sql import Timestamp

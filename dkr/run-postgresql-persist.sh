@@ -7,7 +7,7 @@ PGCONF=postgres-default.conf
 help () {
     echo -e "\n  Run the postgres image (only)"
     echo -e "\n  Usage:"
-    echo -e "\n   $CMD [--dev] [-h]"
+    echo -e "\n   $CMD [--dev] [--prof] [-h]"
     echo -e "\n  --dev:       use dev-specific disks"
     echo -e "  --prof:      use the pgbadger conf for postgres (profiling)"
     echo -e "   -h:         show this message\n"

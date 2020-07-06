@@ -1,5 +1,5 @@
 
-
+BASE = 'base'
 BIND = 'bind'
 COLOR = 'color'
 COLOUR = 'colour'
@@ -8,10 +8,17 @@ DARK = 'dark'
 DB = 'db'
 LIGHT = 'light'
 OFF = 'off'
+P = 'p'
+PASSWD = 'passwd'
 PORT = 'port'
-V, VERBOSITY = 'v', 'verbosity'
+POSTGRESQL = 'postgresql'
+SQLITE = 'sqlite'
+U = 'u'
+URI = 'uri'
+USER = 'user'
+V = 'v'
+VERBOSITY = 'verbosity'
+VERSION = 'version'
 WEB = 'web'
 
-
 UNDEF = object()
-URI = 'uri'

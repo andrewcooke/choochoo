@@ -20,7 +20,7 @@ from ...data.frame import present
 from ...data.response import response_stats
 from ...lib import time_to_local_time
 from ...lib.data import safe_dict
-from ...lib.log import log_current_exception
+from ...common.log import log_current_exception
 from ...names import N, T, Summaries as S, Units, titles_for_names, SPACE, simple_name
 from ...sql import StatisticJournalFloat, Constant, StatisticJournalText, StatisticJournalTimestamp, \
     ActivityJournal, StatisticJournal

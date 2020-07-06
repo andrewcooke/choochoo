@@ -4,6 +4,7 @@ from re import search
 
 from sqlalchemy import or_, distinct, desc
 
+import ch2.common.io
 from ..utils import Displayer, ActivityJournalDelegate
 from ...calculate import SummaryCalculator
 from ...calculate.activity import ActivityCalculator
@@ -12,8 +13,8 @@ from ....common.date import YMD_HM, HM, format_minutes, add_date, MONTH, YMD, YE
 from ....data.climb import climbs_for_activity
 from ....diary.database import interval_column
 from ....diary.model import optional_text, text, from_field, value
-from ....lib import local_date_to_time, time_to_local_time, to_time, to_date, time_to_local_date, \
-    log_current_exception
+from ....lib import local_date_to_time, time_to_local_time, to_time, to_date, time_to_local_date
+from ....common.log import log_current_exception
 from ....names import Names as N
 from ....sql import ActivityGroup, ActivityJournal, ActivityTopicJournal, ActivityTopicField, StatisticName, \
     ActivityTopic, StatisticJournal, Pipeline, PipelineType, Interval
@@ -93,7 +94,7 @@ class ActivityDelegate(ActivityJournalDelegate):
         yield from self.__read_activity_topics(s, ajournal, date)
 
     def __read_activity_topics(self, s, ajournal, date):
-        tjournal = ActivityTopicJournal.get_or_add(s, ajournal.file_hash, ajournal.activity_group)
+        tjournal = ActivityTopicJournal.get_or_add(s, ch2.common.io.file_hash, ajournal.activity_group)
         cache = tjournal.cache(s)
         # special case root
         for field in s.query(ActivityTopicField). \

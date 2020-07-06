@@ -1,50 +1,75 @@
-import datetime as dt
+from logging import getLogger
+from os import environ
 
-from sqlalchemy import TypeDecorator, Integer, Float
+from sqlalchemy_utils import database_exists
+
+from .log import log_current_exception
+from .names import BASE, USER, PASSWD, VERSION, URI
+
+log = getLogger(__name__)
 
 
-class Date(TypeDecorator):
+def database_really_exists(uri):
+    try:
+        return database_exists(uri)
+    except Exception:
+        log_current_exception(traceback=False)
+        return False
 
-    impl = Integer
 
-    def process_literal_param(self, date, dialect):
-        from .date import to_date
-        if date is None:
-            return date
-        return to_date(date).toordinal()
+class DataSource:
 
-    process_bind_param = process_literal_param
+    def __init__(self, args, factory, db_version, env_prefix):
+        self.__env_prefix = env_prefix
+        self.__fmt_keys = {BASE: self.__read(args, BASE),
+                           USER: self.__read(args, USER),
+                           PASSWD: self.__read(args, PASSWD),
+                           VERSION: db_version}
+        self.__base = self.__fmt_keys[BASE]  # still needed to import from sqlite
+        self.__uri = self.__read(args, URI)
+        self.__factory = factory
+        self.__db = None
 
-    def process_result_value(self, value, dialect):
-        if value is None:
-            return value
-        if value < 1:  # bootstrap TopicJournal.date where we set values to 0
-            return None
+    def __read(self, args, name):
+        '''Environment overrides command line so that system config overrides user preferences.'''
+        env_name = self.__env_prefix + name.upper()
+        if env_name in environ:
+            value = environ[env_name]
+            log.debug(f'{name}={value} (from {env_name})')
         else:
-            return dt.date.fromordinal(value)
+            value = args[name]
+            if name == PASSWD:
+                log.debug(f'{name}=xxxxxx (from args)')
+            else:
+                log.debug(f'{name}={value} (from args)')
+        return value
 
+    @property
+    def base(self):
+        return self.__base
 
-class Time(TypeDecorator):
+    @property
+    def db(self):
+        if not self.__db:
+            self.__db = self.get_database()
+        return self.__db
 
-    impl = Float
+    def reset(self):
+        self.__db = None
 
-    def process_literal_param(self, time, dialect):
-        from .date import to_time
-        if time is None:
-            return time
-        else:
-            # only store 2dp (1/100 second).  trying to get something that matches on equality for float
-            # since we retrieve on equality and sqlite doesn't have decimal types
-            converted = int(100 * to_time(time).timestamp()) / 100
-            # log.debug(f'Time (writing): converted {time} to {converted}')
-            return converted
+    def get_safe_uri(self, uri=None, **kwargs):
+        keys = dict(kwargs)
+        keys[PASSWD] = 'xxxxxx'
+        return self.get_uri(uri=uri, **keys)
 
-    process_bind_param = process_literal_param
+    def get_uri(self, uri=None, **kwargs):
+        if not uri: uri = self.__uri
+        keys = dict(self.__fmt_keys)
+        keys.update(**kwargs)
+        return uri.format(**keys)
 
-    def process_result_value(self, value, dialect):
-        if value is None:
-            return value
-        else:
-            converted = dt.datetime.fromtimestamp(value, dt.timezone.utc)
-            # log.debug(f'Time (reading): converted {value} to {converted}')
-            return converted
+    def get_database(self, uri=None, **kwargs):
+        safe_uri = self.get_safe_uri(uri=uri, **kwargs)
+        log.debug(f'Connecting to {safe_uri}')
+        uri = self.get_uri(uri=uri, **kwargs)
+        return self.__factory(uri)

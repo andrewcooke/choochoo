@@ -3,59 +3,47 @@ from tempfile import TemporaryDirectory
 
 from sqlalchemy.sql.functions import count
 
-from ch2.commands.read import read
-from ch2.commands.args import V, DEV, BASE, bootstrap_dir, FORCE
-from ch2.common.args import mm, m
+from ch2.commands.args import V, DEV, bootstrap_dir, FORCE, bootstrap_db
 from ch2.commands.constants import constants
+from ch2.commands.read import read
+from ch2.common.args import mm, m
 from ch2.config.profile.default import default
+from ch2.data import Names as N
+from ch2.pipeline.pipeline import run_pipeline
 from ch2.sql.tables.activity import ActivityJournal
 from ch2.sql.tables.pipeline import PipelineType
 from ch2.sql.tables.statistic import StatisticJournal, StatisticJournalFloat, StatisticName
-from ch2.data import Names as N
-from ch2.pipeline.pipeline import run_pipeline
-from tests import LogTestCase
+from tests import LogTestCase, random_test_user
 
 
 class TestActivities(LogTestCase):
 
     def test_activities(self):
 
-        with TemporaryDirectory() as base:
+        user = random_test_user()
+        bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
+        args, data = bootstrap_db(user, m(V), '5', 'constants', 'set', 'SRTM1.dir', '/home/andrew/archive/srtm1', mm(FORCE))
+        constants(args, data)
+        args, data = bootstrap_db(user, m(V), '5', mm(DEV), 'read', 'data/test/source/personal/2018-08-27-rec.fit')
+        read(args, data)
+        run_pipeline(data, PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
 
-            bootstrap_dir(base, m(V), '5')
-
-            bootstrap_dir(base, m(V), '5', mm(DEV), configurator=default)
-
-            args, data = bootstrap_dir(base, m(V), '5', 'constants', 'set', 'SRTM1.dir',
-                                          '/home/andrew/archive/srtm1', mm(FORCE))
-            constants(args, data)
-
-            args, data = bootstrap_dir(base, m(V), '5', mm(DEV), 'read',
-                                          'data/test/source/personal/2018-08-27-rec.fit')
-            read(args, data)
-
-            # run('sqlite3 %s ".dump"' % f.name, shell=True)
-
-            run_pipeline(data, PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
-
-            # run('sqlite3 %s ".dump"' % f.name, shell=True)
-
-            with data.db.session_context() as s:
-                n_raw = s.query(count(StatisticJournalFloat.id)). \
-                    join(StatisticName). \
-                    filter(StatisticName.name == N.RAW_ELEVATION).scalar()
-                self.assertEqual(2099, n_raw)
-                n_fix = s.query(count(StatisticJournalFloat.id)). \
-                    join(StatisticName). \
-                    filter(StatisticName.name == N.ELEVATION).scalar()
-                self.assertEqual(2099, n_fix)
-                # WHY does this jump around?
-                n = s.query(count(StatisticJournal.id)).scalar()
-                # self.assertEqual(50403, n)
-                self.assertTrue(n > 30000)
-                self.assertTrue(n < 100000)
-                journal = s.query(ActivityJournal).one()
-                self.assertNotEqual(journal.start, journal.finish)
+        with data.db.session_context() as s:
+            n_raw = s.query(count(StatisticJournalFloat.id)). \
+                join(StatisticName). \
+                filter(StatisticName.name == N.RAW_ELEVATION).scalar()
+            self.assertEqual(2099, n_raw)
+            n_fix = s.query(count(StatisticJournalFloat.id)). \
+                join(StatisticName). \
+                filter(StatisticName.name == N.ELEVATION).scalar()
+            self.assertEqual(2099, n_fix)
+            # WHY does this jump around?
+            n = s.query(count(StatisticJournal.id)).scalar()
+            # self.assertEqual(50403, n)
+            self.assertTrue(n > 30000)
+            self.assertTrue(n < 100000)
+            journal = s.query(ActivityJournal).one()
+            self.assertNotEqual(journal.start, journal.finish)
 
     def test_segment_bug(self):
         with TemporaryDirectory() as f:

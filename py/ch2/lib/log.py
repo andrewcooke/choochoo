@@ -1,11 +1,9 @@
 from contextlib import contextmanager
 from logging import getLogger, DEBUG, INFO, WARNING
-from sys import exc_info
-from traceback import format_tb
 
-from ..commands.args import base_system_path, BASE
-from ..common.log import configure_log
-from ..common.names import UNDEF, COLOR
+from ..commands.args import base_system_path
+from ..common.log import configure_log, log_current_exception
+from ..common.names import UNDEF, COLOR, BASE
 
 log = getLogger(__name__)
 
@@ -40,22 +38,6 @@ def update_log_color(args, data):
     if color is None:
         color = data.get_constant(SystemConstant.LOG_COLOR, none=True)
     args[COLOR] = color
-
-
-def log_current_exception(traceback=UNDEF, warning=True):
-    from ..global_ import global_dev
-    if traceback is UNDEF: traceback = global_dev()
-    t, e, tb = exc_info()
-    try:
-        log.debug(f'Exception: {e}')
-    except:
-        pass
-    log.debug(f'Type: {t}')
-    if traceback:
-        if warning:
-            log.warning('Traceback:\n' + ''.join(format_tb(tb)))
-        else:
-            log.debug('Traceback:\n' + ''.join(format_tb(tb)))
 
 
 class Record:

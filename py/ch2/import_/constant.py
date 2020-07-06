@@ -1,7 +1,7 @@
 from logging import getLogger
 
 from . import copy_statistic_journal
-from ..lib.log import log_current_exception
+from ..common.log import log_current_exception
 from ..sql import StatisticName, Constant, StatisticJournal
 
 log = getLogger(__name__)

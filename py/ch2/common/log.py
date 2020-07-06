@@ -1,10 +1,13 @@
 from logging import getLogger, Formatter, DEBUG, StreamHandler
 from logging.handlers import RotatingFileHandler
+from sys import exc_info
+from traceback import format_tb
 
 from colorlog import ColoredFormatter
 
-from .names import DARK, LIGHT
+from .names import DARK, LIGHT, UNDEF
 
+log = getLogger(__name__)
 STDERR_HANDLER = None
 
 
@@ -64,3 +67,19 @@ def set_log_color(color):
                                                             'WARNING': 'cyan',
                                                             'ERROR': 'bold_red',
                                                             'CRITICAL': 'bold_red'}}))
+
+
+def log_current_exception(traceback=UNDEF, warning=True):
+    from .global_ import global_dev
+    if traceback is UNDEF: traceback = global_dev()
+    t, e, tb = exc_info()
+    try:
+        log.debug(f'Exception: {e}')
+    except:
+        pass
+    log.debug(f'Type: {t}')
+    if traceback:
+        if warning:
+            log.warning('Traceback:\n' + ''.join(format_tb(tb)))
+        else:
+            log.debug('Traceback:\n' + ''.join(format_tb(tb)))

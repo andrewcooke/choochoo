@@ -5,10 +5,9 @@ from logging import getLogger
 from os import makedirs
 from os.path import join
 
-from ..common.args import mm, m, no, add_server_args, NamespaceWithVariables, color
-from ..common.io import clean_path
+from ..common.args import mm, m, no, add_server_args, NamespaceWithVariables, color, add_data_source_args
 from ..common.names import *
-from ..common.names import UNDEF, COLOR, OFF, URI
+from ..common.names import UNDEF, COLOR, OFF, URI, VERSION, USER, PASSWD
 from ..lib.utils import parse_bool
 
 log = getLogger(__name__)
@@ -18,7 +17,7 @@ CH2_VERSION = '0.35.0'
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 
-URI_DEFAULT = 'postgresql://postgres:{pass}@localhost/activity-{version}'
+URI_DEFAULT = 'postgresql://{user}:{passwd}@localhost/activity-{version}'
 
 PROGNAME = 'ch2'
 
@@ -65,7 +64,6 @@ ALL = 'all'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
 ARG = 'arg'
-BASE = 'base'
 BATCH = 'batch'
 BORDER = 'border'
 CHANGE = 'change'
@@ -146,7 +144,6 @@ NOT = 'not'
 NOTEBOOKS = 'notebooks'
 O, OUTPUT = 'o', 'output'
 OWNER = 'owner'
-P, PASS = 'p', 'pass'
 PATH = 'path'
 PATTERN = 'pattern'
 PERMANENT = 'permanent'
@@ -194,9 +191,7 @@ UNDO = 'undo'
 UNLIKE = 'unlike'
 UNSAFE = 'unsafe'
 UNSET = 'unset'
-U, USER = 'u', 'user'
 VALUE = 'value'
-VERSION = 'version'
 W, WARN = 'w', 'warn'
 WAYPOINTS = 'waypoints'
 WIDTH = 'width'
@@ -226,12 +221,8 @@ def make_parser(with_noop=False):
 
     parser = ArgumentParser(prog=PROGNAME)
 
-    parser.add_argument(mm(BASE), default='~/.ch2', type=clean_path, metavar='DIR',
-                        help='the base directory for data (default ~/.ch2)')
     parser.add_argument(mm(DEV), action='store_true',
                         help='verbose log and stack trace on error')
-    parser.add_argument(mm(USER), m(U), default='default', metavar='USER', help='the current user')
-    parser.add_argument(mm(PASS), m(P), default='', metavar='PASS', help='user password')
     parser.add_argument(mm(LOG), metavar='FILE',
                         help='the file name for the log (command name by default)')
     parser.add_argument(mm(COLOR), mm(COLOUR), type=color, dest=COLOR,
@@ -240,7 +231,7 @@ def make_parser(with_noop=False):
                         help='output level for stderr (0: silent; 5:noisy)')
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
                         help='display version and exit')
-    parser.add_argument(mm(URI), default=URI_DEFAULT, help='use the given database URI')
+    add_data_source_args(parser, URI_DEFAULT)
 
     subparsers = parser.add_subparsers(title='commands', dest=COMMAND)
 
@@ -439,7 +430,7 @@ def make_parser(with_noop=False):
     garmin = subparsers.add_parser(GARMIN, help='download monitor data from garmin connect')
     garmin.add_argument(DIR, metavar='DIR', nargs='?', help='the directory where FIT files are stored')
     garmin.add_argument(mm(USER), metavar='USER', help='garmin connect username')
-    garmin.add_argument(mm(PASS), metavar='PASSWORD', help='garmin connect password')
+    garmin.add_argument(mm(PASSWD), metavar='PASSWORD', help='garmin connect password')
     garmin.add_argument(mm(DATE), metavar='DATE', type=to_date, help='date to download')
     garmin.add_argument(mm(FORCE), action='store_true', help='allow longer date range')
 
@@ -587,6 +578,24 @@ def bootstrap_dir(base, *args, configurator=None, post_config=None):
     # used in tests, given a base directory
 
     args = [mm(BASE), base] + list(args)
+    parser = make_parser()
+    ns = NamespaceWithVariables(parser.parse_args(args=args))
+    if configurator:
+        data = Data(ns)
+        with data.db.session_context() as s:
+            configurator(s, data)
+    args += post_config if post_config else []
+    ns = NamespaceWithVariables(parser.parse_args(args=args))
+    data = Data(ns)
+    return ns, data
+
+
+def bootstrap_db(user, *args, configurator=None, post_config=None):
+
+    from ..sql.system import Data
+    # used in tests, given a base directory
+
+    args = [mm(USER), user] + list(args)
     parser = make_parser()
     ns = NamespaceWithVariables(parser.parse_args(args=args))
     if configurator:

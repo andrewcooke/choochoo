@@ -12,7 +12,7 @@ from ...data.frame import median_dt
 from ...data.lib import interpolate_to_index
 from ...data.power import add_differentials, add_energy_budget, add_loss_estimate, add_power_estimate, PowerException, \
     add_air_speed
-from ...lib import log_current_exception
+from ...common.log import log_current_exception
 from ...lib.data import reftuple, MissingReference
 from ...names import N, Units, Summaries, T, simple_name
 from ...sql import StatisticJournalFloat, Constant

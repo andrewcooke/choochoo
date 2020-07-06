@@ -1,20 +1,17 @@
 from contextlib import contextmanager
 from logging import getLogger
-from os.path import exists
 
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.sql.functions import count
-from sqlalchemy_utils import create_database, database_exists
+from sqlalchemy_utils import create_database
 from uritools import urisplit
 
 from . import *
 from .support import Base
-from ..commands.args import NO_OP, make_parser, ACTIVITY, \
-    DB_VERSION, NamespaceWithVariables
-from ..common.io import touch
-from ..common.names import POSTGRESQL, SQLITE
-from ..lib import log_current_exception
+from ..commands.args import NO_OP, make_parser, NamespaceWithVariables
+from ..common.names import POSTGRESQL
+from ..common.sql import database_really_exists
 from ..lib.log import make_log_from_args
 from ..lib.utils import grouper
 
@@ -38,17 +35,6 @@ log = getLogger(__name__)
 
 def scheme(uri):
     return urisplit(uri).scheme
-
-
-def postgresql_uri(read_only=False, version=DB_VERSION):
-    '''
-    We no longer use base here.  It was a confused mess.
-
-    We use the default postgres schema because they cannot be managed within the URI.
-    See also https://docs.sqlalchemy.org/en/13/dialects/postgresql.html#remote-schema-table-introspection-and-postgresql-search-path
-    '''
-    if read_only: log.warning('Read-only not supported yet for Postgres')
-    return f'{POSTGRESQL}://postgres@localhost/{ACTIVITY}-{version}'
 
 
 class DirtySession(Session):
@@ -86,8 +72,8 @@ class DatabaseBase:
         log.info('Using database at %s' % self.uri)
         options = {'echo': False}
         uri_parts = urisplit(uri)
+        # todo - could be part of uri?
         if POSTGRESQL == uri_parts.scheme: options.update(executemany_mode="values")
-        if SQLITE == uri_parts.scheme and not exists(uri_parts.path): touch(uri_parts.path, with_dirs=True)
         if not database_really_exists(uri):
             log.warning(f'Creating database at {uri}')
             create_database(uri)
@@ -160,9 +146,3 @@ class ReflectedDatabase(DatabaseBase):
         self.meta.reflect(bind=self.engine)
 
 
-def database_really_exists(uri):
-    try:
-        return database_exists(uri)
-    except Exception:
-        log_current_exception(traceback=False)
-        return False

@@ -8,7 +8,8 @@ from sqlalchemy.sql.functions import count
 
 from .utils import MultiProcCalculator
 from ..pipeline import LoaderMixin, OwnerInMixin
-from ...lib import local_date_to_time, time_to_local_date, to_date, format_date, log_current_exception
+from ...lib import local_date_to_time, time_to_local_date, to_date, format_date
+from ...common.log import log_current_exception
 from ...names import Titles, Names, Summaries as S, Units
 from ...sql import MonitorJournal, StatisticJournalInteger, StatisticName, StatisticJournal, Composite, \
     CompositeComponent, Source

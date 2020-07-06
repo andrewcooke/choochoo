@@ -9,7 +9,7 @@ from zipfile import ZipFile
 
 import numpy as np
 
-from ..lib.log import log_current_exception
+from ..common.log import log_current_exception
 from ..sql import Constant
 
 log = getLogger(__name__)

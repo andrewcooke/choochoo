@@ -3,7 +3,8 @@ from abc import abstractmethod
 from logging import getLogger
 
 from ..pipeline import BasePipeline
-from ...lib import local_date_to_time, log_current_exception
+from ...lib import local_date_to_time
+from ...common.log import log_current_exception
 from ...sql import ActivityGroup, ActivityJournal
 
 log = getLogger(__name__)

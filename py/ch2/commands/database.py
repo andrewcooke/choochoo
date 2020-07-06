@@ -11,7 +11,7 @@ from ..common.args import mm
 from .help import Markdown
 from ..config.utils import profiles, get_profile
 from ..common.io import clean_path
-from ..sql.database import database_really_exists
+from ..common.sql import database_really_exists
 
 log = getLogger(__name__)
 

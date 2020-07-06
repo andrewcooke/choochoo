@@ -4,11 +4,13 @@ from time import sleep
 
 from requests import HTTPError
 
-from .args import DIR, USER, PASS, DATE, FORCE, base_system_path, PERMANENT, BASE
+from .args import DIR, DATE, FORCE, base_system_path, PERMANENT
+from ..common.names import USER, PASSWD
+from .. import BASE
 from ..common.args import mm
 from ..fit.download.connect import GarminConnect
 from ..lib import now, local_time_to_time, time_to_local_time
-from ..lib.log import log_current_exception
+from ..common.log import log_current_exception
 from ..common.io import clean_path
 from ..lib.workers import ProgressTree
 from ..sql import Constant, SystemConstant
@@ -40,7 +42,7 @@ https://www.garmin.com/en-US/account/datamanagement/
     dir = clean_path(DIR) if args[DIR] else None
     with data.db.session_context() as s:
         run_garmin(data, s, dir=dir, base=args[BASE],
-                   user=args[USER], password=args[PASS], dates=dates, force=args[FORCE])
+                   user=args[USER], password=args[PASSWD], dates=dates, force=args[FORCE])
 
 
 def run_garmin(data, s, dir=None, base=None, user=None, password=None, dates=None, force=False, progress=None):

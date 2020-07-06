@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from ..lib import format_date, time_to_local_date, to_time
-from ..lib.log import log_current_exception
+from ..common.log import log_current_exception
 from ..names import Titles, simple_name
 from ..sql import KitGroup, KitComponent, KitItem, KitModel, StatisticJournalTimestamp, StatisticName, \
     StatisticJournalType
