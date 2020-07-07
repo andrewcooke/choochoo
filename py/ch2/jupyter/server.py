@@ -44,8 +44,9 @@ class JupyterController(BaseController):
 
     def __init__(self, args, data, max_retries=5, retry_secs=3):
         super().__init__(JUPYTER, args, data, JupyterServer, max_retries=max_retries, retry_secs=retry_secs)
-        self._proxy_bind = self.__proxy_args(args, BIND, self._bind)
-        self._proxy_port = self.__proxy_args(args, PORT, self._port)
+        self.__proxy_bind = self.__proxy_args(args, BIND, self._bind)
+        self.__proxy_port = self.__proxy_args(args, PORT, self._port)
+        self.__notebook_dir = args[NOTEBOOK_DIR]
 
     @staticmethod
     def __proxy_args(args, name, default):
@@ -63,9 +64,10 @@ class JupyterController(BaseController):
     def _build_cmd_and_log(self, ch2):
         log_name = 'jupyter-service.log'
         cmd = f'{ch2} {mm(VERBOSITY)} 5 {mm(LOG)} {log_name} {mm(BASE)} {self._data.base} ' \
-              f'{JUPYTER} {SERVICE} {mm(JUPYTER + "-" + BIND)} {self._bind} {mm(JUPYTER + "-" + PORT)} {self._port}'
-        if self._proxy_bind: cmd += f' {mm(PROXY + "-" + BIND)} {self._proxy_bind}'
-        if self._proxy_port: cmd += f' {mm(PROXY + "-" + PORT)} {self._proxy_port}'
+              f'{JUPYTER} {SERVICE} {mm(JUPYTER + "-" + BIND)} {self._bind} {mm(JUPYTER + "-" + PORT)} {self._port} ' \
+              f'{mm(NOTEBOOK_DIR)} {self.__notebook_dir}'
+        if self.__proxy_bind: cmd += f' {mm(PROXY + "-" + BIND)} {self.__proxy_bind}'
+        if self.__proxy_port: cmd += f' {mm(PROXY + "-" + PORT)} {self.__proxy_port}'
         return cmd, log_name
 
     def _cleanup(self):
@@ -106,7 +108,7 @@ class JupyterController(BaseController):
             log.debug('Waiting for connection URL')
             sleep(1)
         old_url = JupyterServer._instance.connection_url
-        new_url = uriunsplit(urisplit(old_url)._replace(authority=f'{self._proxy_bind}:{self._proxy_port}'))
+        new_url = uriunsplit(urisplit(old_url)._replace(authority=f'{self.__proxy_bind}:{self.__proxy_port}'))
         log.debug(f'Rewrote {old_url} -> {new_url}')
         self._data.set_constant(SystemConstant.JUPYTER_URL, new_url, force=True)
 

@@ -16,7 +16,8 @@ from .servlets.kit import Kit
 from .servlets.search import Search
 from .servlets.upload import Upload
 from .static import Static
-from ..commands.args import LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, READ, JUPYTER, WARN, SECURE
+from ..commands.args import LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, READ, JUPYTER, WARN, SECURE, THUMBNAIL_DIR, \
+    NOTEBOOK_DIR
 from .. import BASE
 from ..common.names import URI
 from ..common.args import mm
@@ -54,12 +55,15 @@ class WebController(BaseController):
         self.__warn_data = args[WARN + '-' + DATA]
         self.__warn_secure = args[WARN + '-' + SECURE]
         self.__jupyter = JupyterController(args, data)
+        self.__notebook_dir = args[NOTEBOOK_DIR]
+        self.__thumbnail_dir = args[THUMBNAIL_DIR]
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'web-service.log'
         cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._data.base} ' \
-              f'{WEB} {SERVICE} {mm(WEB + "-" + BIND)} {self._bind} {mm(WEB + "-" + PORT)} {self._port}' \
-              f'{mm(JUPYTER + "-" + BIND)} {self.__jupyter._bind} {mm(JUPYTER + "-" + PORT)} {self.__jupyter._port}'
+              f'{WEB} {SERVICE} {mm(WEB + "-" + BIND)} {self._bind} {mm(WEB + "-" + PORT)} {self._port} ' \
+              f'{mm(JUPYTER + "-" + BIND)} {self.__jupyter._bind} {mm(JUPYTER + "-" + PORT)} {self.__jupyter._port} ' \
+              f'{mm(THUMBNAIL_DIR)} {self.__thumbnail_dir} {mm(NOTEBOOK_DIR)} {self.__notebook_dir}'
         if self.__warn_data: cmd += f' {mm(WARN + "-" + DATA)}'
         if self.__warn_secure: cmd += f' {mm(WARN + "-" + SECURE)}'
         return cmd, log_name
