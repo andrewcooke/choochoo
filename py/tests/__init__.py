@@ -22,7 +22,7 @@ class LogTestCase(TestCase):
 
 def random_test_user(args=(mm(USER), 'postgres')):
     parser = make_parser()
-    ns = NamespaceWithVariables(parser.parse_args(args=args))
+    ns = NamespaceWithVariables(parser.parse_args(args=args), PROGNAME)
     data = Data(ns)
     user = data_hash(str(dt.datetime.now()))[:6]
     log.info(f'USer/database {user}')

@@ -46,9 +46,8 @@ VERSIONS = 'versions'
 
 class Configure:
 
-    def __init__(self, data, uri):
+    def __init__(self, data):
         self.__data = data
-        self.__uri = uri
         self.__html = HTML(delta=1, parser=filter(parse, yes=(P, LI, PRE)))
 
     def is_configured(self):
@@ -70,10 +69,10 @@ class Configure:
 
     def write_profile(self, request, s):
         data = request.json
-        if not self.__uri:
+        if not self.__data.get_uri():
             raise Exception(f'Bootstrap via web requires '
                             f'`{WEB} {SERVICE} ({mm(SQLITE)} | {mm(POSTGRESQL)} | {mm(URI)})`')
-        load(self.__data, data[PROFILE], self.__uri)
+        load(self.__data, data[PROFILE])
         self.__data.reset()
 
     def delete(self, request, s):

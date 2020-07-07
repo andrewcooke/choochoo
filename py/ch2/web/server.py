@@ -51,7 +51,6 @@ class WebController(BaseController):
 
     def __init__(self, args, data, max_retries=1, retry_secs=1):
         super().__init__(WEB, args, data, WebServer, max_retries=max_retries, retry_secs=retry_secs)
-        self.__uri = args[URI]
         self.__warn_data = args[WARN + '-' + DATA]
         self.__warn_secure = args[WARN + '-' + SECURE]
         self.__jupyter = JupyterController(args, data)
@@ -67,10 +66,9 @@ class WebController(BaseController):
 
     def _run(self):
         self._data.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self._bind, self._port), force=True)
-        log.debug(f'Binding to {self._bind}:{self._port} with URI {self.__uri}')
+        log.debug(f'Binding to {self._bind}:{self._port}')
         run_simple(self._bind, self._port,
-                   WebServer(self._data, self.__jupyter, self.__uri,
-                             warn_data=self.__warn_data, warn_secure=self.__warn_secure),
+                   WebServer(self._data, self.__jupyter, warn_data=self.__warn_data, warn_secure=self.__warn_secure),
                    use_debugger=self._dev, use_reloader=self._dev)
 
     def _cleanup(self):
@@ -93,13 +91,13 @@ def error(exception):
 
 class WebServer:
 
-    def __init__(self, data, jcontrol, uri, warn_data=False, warn_secure=False):
+    def __init__(self, data, jcontrol, warn_data=False, warn_secure=False):
         self.__data = data
         self.__warn_data = warn_data
         self.__warn_secure = warn_secure
 
         analysis = Analysis()
-        configure = Configure(data, uri)
+        configure = Configure(data)
         diary = Diary()
         jupyter = Jupyter(jcontrol)
         kit = Kit()

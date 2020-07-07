@@ -85,7 +85,7 @@ def args_and_command():
     command_name = ns.command if hasattr(ns, COMMAND) else None
     command = COMMANDS[command_name] if command_name in COMMANDS else None
     if command_name == NO_OP: ns.verbose = 0
-    args = NamespaceWithVariables(ns)
+    args = NamespaceWithVariables(ns, PROGNAME)
     return args, command, command_name
 
 

@@ -9,7 +9,7 @@ from uritools import urisplit
 
 from . import *
 from .support import Base
-from ..commands.args import NO_OP, make_parser, NamespaceWithVariables
+from ..commands.args import NO_OP, make_parser, NamespaceWithVariables, PROGNAME
 from ..common.names import POSTGRESQL
 from ..common.sql import database_really_exists
 from ..lib.log import make_log_from_args
@@ -69,7 +69,6 @@ class DatabaseBase:
 
     def __init__(self, uri):
         self.uri = uri
-        log.info('Using database at %s' % self.uri)
         options = {'echo': False}
         uri_parts = urisplit(uri)
         # todo - could be part of uri?
@@ -77,7 +76,7 @@ class DatabaseBase:
         if not database_really_exists(uri):
             log.warning(f'Creating database at {uri}')
             create_database(uri)
-        log.debug(f'Creating engine for {uri} with options {options}')
+        log.debug(f'Creating engine with options {options}')
         self.engine = create_engine(uri, **options)
         self.session = sessionmaker(bind=self.engine, class_=DirtySession)
 
@@ -132,7 +131,7 @@ def connect(args):
     else:
         args = []
     args.append(NO_OP)
-    ns = NamespaceWithVariables(make_parser(with_noop=True).parse_args(args))
+    ns = NamespaceWithVariables(make_parser(with_noop=True).parse_args(args), PROGNAME)
     make_log_from_args(ns)
     data = Data(ns)
     return ns, data.db

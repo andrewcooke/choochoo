@@ -11,7 +11,7 @@ log = getLogger(__name__)
 class Data(DataSource):
 
     def __init__(self, args):
-        super().__init__(args, Database, DB_VERSION, 'CH2_')
+        super().__init__(args, Database, DB_VERSION)
 
     def get_constant(self, name, none=False):
         with self.db.session_context() as s:
