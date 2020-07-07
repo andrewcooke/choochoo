@@ -1,22 +1,21 @@
-
 from logging import getLogger
 from subprocess import run
 from tempfile import TemporaryDirectory
 
 import sqlalchemy.sql.functions as func
 
-from ch2.commands.read import read
-from ch2.commands.args import bootstrap_dir, V, DEV, MONITOR, base_system_path, bootstrap_db, READ
 from ch2 import BASE
+from ch2.commands.args import V, DEV, MONITOR, base_system_path, bootstrap_db, READ
+from ch2.commands.read import read
 from ch2.common.args import mm, m
-from ch2.config.profile.default import default
 from ch2.common.date import to_time, local_date_to_time
+from ch2.config.profile.default import default
+from ch2.data import Names as N
+from ch2.pipeline.calculate.monitor import MonitorCalculator
+from ch2.pipeline.pipeline import run_pipeline
 from ch2.sql.tables.monitor import MonitorJournal
 from ch2.sql.tables.pipeline import PipelineType
 from ch2.sql.tables.statistic import StatisticJournal, StatisticName
-from ch2.pipeline.calculate.monitor import MonitorCalculator
-from ch2.pipeline.pipeline import run_pipeline
-from ch2.data import Names as N
 from tests import LogTestCase, random_test_user
 
 log = getLogger(__name__)
@@ -83,7 +82,7 @@ class TestMonitor(LogTestCase):
             bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
             if join:
                 files = ['data/test/source/personal/andrew@acooke.org_%s.fit' % file for file in files]
-                args, data = bootstrap_dir(f, mm(DEV), 'read', *files)
+                args, data = bootstrap_db(user, mm(BASE), f, mm(DEV), 'read', *files)
                 read(args, data)
             else:
                 for file in files:
@@ -115,10 +114,11 @@ class TestMonitor(LogTestCase):
 
     # issue 6
     def test_empty_data(self):
+        user = random_test_user()
         with TemporaryDirectory() as f:
-            args, data = bootstrap_dir(f, m(V), '5')
-            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
-            args, data = bootstrap_dir(f, m(V), '5', mm(DEV),
+            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5')
+            bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
+            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
                                       'read', 'data/test/source/other/37140810636.fit')
             read(args, data)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)

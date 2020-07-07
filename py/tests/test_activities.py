@@ -3,7 +3,7 @@ from tempfile import TemporaryDirectory
 
 from sqlalchemy.sql.functions import count
 
-from ch2.commands.args import V, DEV, bootstrap_dir, FORCE, bootstrap_db, BASE
+from ch2.commands.args import V, DEV, FORCE, bootstrap_db, BASE
 from ch2.commands.constants import constants
 from ch2.commands.read import read
 from ch2.common.args import mm, m

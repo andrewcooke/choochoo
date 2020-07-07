@@ -1,10 +1,10 @@
 from io import StringIO
 from tempfile import TemporaryDirectory
 
-from ch2.commands.args import bootstrap_dir, V, DEV, K, READ, bootstrap_db, BASE
-from ch2.common.args import mm, m
+from ch2.commands.args import V, DEV, K, READ, bootstrap_db, BASE
 from ch2.commands.kit import start, change, finish, show, undo, statistics
 from ch2.commands.read import read
+from ch2.common.args import mm, m
 from ch2.config.profile.default import default
 from ch2.diary.model import TYPE
 from ch2.lib import now, local_date_to_time

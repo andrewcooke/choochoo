@@ -1,7 +1,6 @@
 from json import loads
-from tempfile import TemporaryDirectory
 
-from ch2.commands.args import bootstrap_dir, V, bootstrap_db
+from ch2.commands.args import V, bootstrap_db
 from ch2.common.args import m
 from ch2.lib.data import MutableAttr, reftuple
 from ch2.sql import StatisticJournalFloat, StatisticJournalText, Source

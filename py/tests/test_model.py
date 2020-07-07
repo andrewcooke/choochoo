@@ -1,8 +1,8 @@
 from logging import getLogger
 from tempfile import TemporaryDirectory
 
+from ch2.commands.args import DEV, V, BASE, bootstrap_db
 from ch2.commands.read import read
-from ch2.commands.args import bootstrap_dir, DEV, V, BASE, bootstrap_db
 from ch2.common.args import mm, m
 from ch2.config.profile.default import default
 from ch2.diary.database import read_date

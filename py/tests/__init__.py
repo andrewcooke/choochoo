@@ -1,5 +1,5 @@
 import datetime as dt
-from logging import getLogger
+from logging import getLogger, WARNING, INFO, DEBUG
 from unittest import TestCase
 
 from ch2 import PROGNAME
@@ -17,7 +17,16 @@ log = getLogger(__name__)
 class LogTestCase(TestCase):
 
     def setUp(self):
-        configure_log(PROGNAME, '/tmp/ch2-test.log', verbosity=5)
+        configure_log(PROGNAME, '/tmp/ch2-test.log', verbosity=5, levels={
+            'sqlalchemy': WARNING,
+            'matplotlib': INFO,
+            'bokeh': DEBUG,
+            'tornado': INFO,
+            'sentinelsat': DEBUG,
+            'werkzeug': DEBUG,
+            'ch2': DEBUG,
+            '__main__': DEBUG
+        })
 
 
 def random_test_user(args=(mm(USER), 'postgres')):
@@ -25,6 +34,6 @@ def random_test_user(args=(mm(USER), 'postgres')):
     ns = NamespaceWithVariables(parser.parse_args(args=args), PROGNAME, DB_VERSION)
     data = Data(ns)
     user = data_hash(str(dt.datetime.now()))[:6]
-    log.info(f'USer/database {user}')
+    log.info(f'User/database {user}')
     db = make_user_database(data, user, '')
     return user

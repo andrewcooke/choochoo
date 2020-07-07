@@ -3,8 +3,8 @@ from tempfile import TemporaryDirectory
 
 import pandas as pd
 
+from ch2.commands.args import DEV, V, bootstrap_db, BASE
 from ch2.commands.read import read
-from ch2.commands.args import bootstrap_dir, DEV, V, bootstrap_db, BASE
 from ch2.common.args import mm, m
 from ch2.config.profile.default import default
 from ch2.data import Names as N, Statistics

@@ -1,17 +1,16 @@
 
 import datetime as dt
 from logging import getLogger
-from tempfile import TemporaryDirectory
 
 from sqlalchemy.sql.functions import count
 
-from tests import LogTestCase, random_test_user
-from ch2.config.profile.default import default
-from ch2.commands.args import bootstrap_dir, V, DEV, bootstrap_db
+from ch2.commands.args import V, DEV, bootstrap_db
 from ch2.common.args import mm, m
+from ch2.config.profile.default import default
 from ch2.sql import Source
 from ch2.sql.tables.timestamp import Timestamp
 from ch2.sql.utils import add
+from tests import LogTestCase, random_test_user
 
 log = getLogger(__name__)
 

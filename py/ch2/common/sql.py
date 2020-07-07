@@ -44,8 +44,10 @@ class DataSource:
     def get_uri(self, uri=None, **kargs):
         return self.args._format(name=URI, value=uri, **kargs)
 
-    def get_database(self, uri=None, **kwargs):
-        safe_uri = self.get_safe_uri(uri=uri, **kwargs)
+    def get_database(self, uri=None, **kargs):
+        safe_kargs = dict(kargs)
+        if PASSWD in safe_kargs: del safe_kargs[PASSWD]
+        safe_uri = self.get_safe_uri(uri=uri, **safe_kargs)
         log.debug(f'Connecting to {safe_uri}')
-        uri = self.get_uri(uri=uri, **kwargs)
+        uri = self.get_uri(uri=uri, **kargs)
         return self.__factory(uri)

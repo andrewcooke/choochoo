@@ -14,29 +14,34 @@ class NamespaceWithVariables(MutableMapping):
 
     def __init__(self, ns, env_prefix, version):
         self.__env_prefix = env_prefix
-        self._dict = {name: self.__replace(name, value) for name, value in vars(ns).items()}
-        self._dict[VERSION] = version
+        self.__dict = {}
+        self._set_all(vars(ns))
+        self[VERSION] = version
+
+    def _set_all(self, ns):
+        for name, value in ns.items():
+            self[name] = value
 
     def __getitem__(self, name):
-        try:
-            return self._dict[name]
-        except KeyError:
-            return self._dict[self.__bar(name)]
+        return self.__dict[name]
 
     def __setitem__(self, name, value):
-        self._dict[name] = value
+        value = self.__replace(name, value)
+        self.__dict[self.__bar(name)] = value
+        self.__dict[self.__unbar(name)] = value
 
     def __delitem__(self, name):
-        del self._dict[name]
+        del self.__dict[self.__bar(name)]
+        del self.__dict[self.__unbar(name)]
 
     def __iter__(self):
-        return iter(self._dict)
+        return iter(self.__dict)
 
     def __len__(self):
         return len(self.__dict__)
 
     def _format(self, name=None, value=None, **kargs):
-        args = dict(self._dict)
+        args = dict(self.__dict)
         args.update(kargs)
         if not value: value = self[name]
         while value and '{' in value:
@@ -46,11 +51,14 @@ class NamespaceWithVariables(MutableMapping):
 
     def _format_path(self, name=None, value=None, mkdir=True, **kargs):
         path = clean_path(self._format(name=name, value=value, **kargs))
-        if not exists(path): makedirs(path, exist_ok=True)
+        if not exists(path) and mkdir: makedirs(path, exist_ok=True)
         return path
 
     def __bar(self, name):
         return sub('-', '_', name)
+
+    def __unbar(self, name):
+        return sub('_', '-', name)
 
     def __replace(self, name, value):
         '''Environment overrides command line so that system config overrides user preferences.'''

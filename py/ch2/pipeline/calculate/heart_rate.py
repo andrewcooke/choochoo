@@ -27,6 +27,9 @@ class RestHRCalculator(OwnerInMixin, IntervalCalculatorMixin, MultiProcCalculato
     def __init__(self, *args, schedule='d', **kargs):
         super().__init__(*args, schedule=schedule, **kargs)
 
+    # def _missing(self, s):
+    #     return super()._missing(s)
+
     def _read_data(self, s, interval):
         return Statistics(s, start=local_date_to_time(interval.start),
                           finish=local_date_to_time(interval.finish)). \

@@ -1,4 +1,4 @@
-
+import datetime as dt
 from abc import abstractmethod
 from enum import IntEnum
 from logging import getLogger
@@ -176,11 +176,13 @@ class Interval(Source):
         any statistics - it pays no attention to gaps.
         '''
         from .statistic import StatisticJournal, StatisticName
+        # exclude 2 days from zero because here are some stats set at the date equivalent to zero time,
+        # but because of date/time conversions and timezones these are not exactly as time zero
         q = s.query(func.min(StatisticJournal.time), func.max(StatisticJournal.time)). \
-            filter(StatisticJournal.time > TIME_ZERO)
+            filter(StatisticJournal.time > TIME_ZERO + dt.timedelta(days=2))
         if statistics_owner:
             q = q.join(StatisticName).filter(StatisticName.owner == statistics_owner)
-        start, finish = q.one()   # skip entire first day because tz
+        start, finish = q.one()
         if start and finish:
             return start, finish
         else:
