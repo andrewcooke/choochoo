@@ -60,49 +60,75 @@ class BasePipeline:
             return value
 
 
-class MultiProcPipeline(BasePipeline):
+class IncrementalPipeline(BasePipeline):
 
-    def __init__(self, data, *args, owner_out=None, force=False, progress=None,
-                 overhead=1, cost_calc=20, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
-        self._data = data
+    def __init__(self, config, *args, owner_out=None, force=False, progress=None, **kargs):
+        self._config = config
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
         self.force = force  # force re-processing
-        self.__progress = progress
+        self._progress = progress
+        super().__init__(*args, **kargs)
+
+    def run(self):
+        with self._config.db.session_context() as s:
+            self._startup(s)
+            if self.force: self._delete(s)
+            missing = self._missing(s)
+            log.debug(f'Have {len(missing)} missing ranges')
+            self._recalculate(s, missing)
+            self._shutdown(s)
+
+    def _startup(self, s):
+        pass
+
+    @abstractmethod
+    def _delete(self, s):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _missing(self, s):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _recalculate(self, s, missing):
+        raise NotImplementedError()
+
+    def _shutdown(self, s):
+        pass
+
+
+class MultiProcPipeline(IncrementalPipeline):
+
+    def __init__(self, config, *args, owner_out=None, force=False, progress=None,
+                 overhead=1, cost_calc=20, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
         self.overhead = overhead  # next three args are used to decide if workers are needed
         self.cost_calc = cost_calc  # see _cost_benefit for full details
         self.cost_write = cost_write  # defaults guarantee a single thread
         self.n_cpu = max(1, int(cpu_count() * CPU_FRACTION)) if n_cpu is None else n_cpu  # number of cpus available
         self.worker = worker  # if True, then we're in a sub-process
         self.id = id  # the id for the pipeline entry in the database (passed to sub-processes)
-        super().__init__(*args, **kargs)
+        super().__init__(config, *args, owner_out=owner_out, force=force, progress=progress, **kargs)
 
-    def run(self):
-        with self._data.db.session_context() as s:
-            self._startup(s)
-
-            if self.force:
-                if self.worker:
-                    log.warning('Worker deleting data')
-                self._delete(s)
-
-            missing = self._missing(s)
-            log.debug(f'Have {len(missing)} missing ranges')
-
-            if self.worker:
-                log.debug('Worker, so execute directly')
-                self._run_all(s, missing, None)
+    def _recalculate(self, s, missing):
+        if self.worker:
+            log.debug('Worker, so execute directly')
+            self._run_all(s, missing, None)
+        else:
+            local_progress = ProgressTree(len(missing), parent=self._progress)
+            if not missing:
+                log.info(f'No missing data for {short_cls(self)}')
+                local_progress.complete()
             else:
-                local_progress = ProgressTree(len(missing), parent=self.__progress)
-                if not missing:
-                    log.info(f'No missing data for {short_cls(self)}')
-                    local_progress.complete()
+                n_total, n_parallel = self.__cost_benefit(missing, self.n_cpu)
+                if n_parallel < 2 or len(missing) == 1:
+                    self._run_all(s, missing, local_progress)
                 else:
-                    n_total, n_parallel = self.__cost_benefit(missing, self.n_cpu)
-                    if n_parallel < 2 or len(missing) == 1:
-                        self._run_all(s, missing, local_progress)
-                    else:
-                        self.__spawn(s, missing, n_total, n_parallel, local_progress)
-            self._shutdown(s)
+                    self.__spawn(s, missing, n_total, n_parallel, local_progress)
+
+    @abstractmethod
+    def _delete(self, s):
+        if self.worker:
+            log.warning('Worker deleting data')
 
     def _run_all(self, s, missing, progress=None):
         local_progress = progress.increment_or_complete if progress else nullcontext
@@ -110,21 +136,6 @@ class MultiProcPipeline(BasePipeline):
             with local_progress():
                 self._run_one(s, missed)
                 s.commit()
-
-    def _startup(self, s):
-        pass
-
-    def _shutdown(self, s):
-        pass
-
-    # as a general rule, _missing and _args should be implemented together
-    @abstractmethod
-    def _missing(self, s):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _delete(self, s):
-        raise NotImplementedError()
 
     @abstractmethod
     def _run_one(self, s, missed):
@@ -170,7 +181,7 @@ class MultiProcPipeline(BasePipeline):
         # errors in our timing estimates
 
         n_missing = len(missing)
-        workers = Workers(self._data, n_parallel, self.owner_out, self._base_command())
+        workers = Workers(self._config, n_parallel, self.owner_out, self._base_command())
         start, finish = None, -1
         for i in range(n_total):
             start = finish + 1
@@ -181,7 +192,6 @@ class MultiProcPipeline(BasePipeline):
 
         workers.wait()
 
-    # as a general rule, _missing and _args should be implemented together
     @abstractmethod
     def _args(self, missing, start, finish):
         raise NotImplementedError()
@@ -191,11 +201,22 @@ class MultiProcPipeline(BasePipeline):
         raise NotImplementedError()
 
 
-class UniProcPipeline(MultiProcPipeline):
+class UniProcPipeline(IncrementalPipeline):
 
-    def __init__(self, *args, overhead=None, cost_calc=None, cost_write=None, n_cpu=None, worker=None, id=None,
-                 **kargs):
-        super().__init__(*args, overhead=1, cost_calc=0, cost_write=1, n_cpu=None, worker=None, id=None, **kargs)
+    def _recalculate(self, s, missing):
+        local_progress = ProgressTree(len(missing), parent=self._progress)
+        if not missing:
+            log.info(f'No missing data for {short_cls(self)}')
+            local_progress.complete()
+        else:
+            for missed in missing:
+                with local_progress.increment_or_complete():
+                    self._run_one(s, missed)
+                    s.commit()
+
+    @abstractmethod
+    def _run_one(self, s, missed):
+        raise NotImplementedError()
 
 
 class LoaderMixin:

@@ -79,6 +79,7 @@ class JournalCalculatorMixin:
         return f'"{s}" "{f}"'
 
     def _delete(self, s):
+        super()._delete(s)
         start, finish = self._start_finish(type=local_time_to_time)
         s.commit()   # so that we don't have any risk of having something in the session that can be deleted
         statistic_names = s.query(StatisticName.id).filter(StatisticName.owner == self.owner_out)
@@ -193,6 +194,7 @@ class IntervalCalculatorMixin(LoaderMixin):
         return f'"{s}" "{f}"'
 
     def _delete(self, s):
+        super()._delete
         start, finish = self._start_finish()
         # we delete the intervals that the statistics depend on and they will cascade
         for repeat in range(2):

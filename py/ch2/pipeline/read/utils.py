@@ -33,13 +33,14 @@ class FitReaderMixin(LoaderMixin):
         super().__init__(*args, **kargs)
 
     def _delete(self, s):
+        super()._delete(s)
         # not used
         pass
 
     def _expand_paths(self, s, paths):
         from ...commands.read import DOT_FIT
         if paths: return paths
-        data_dir = base_system_path(self._data.base, version=PERMANENT)
+        data_dir = base_system_path(self._config.base, version=PERMANENT)
         if self.sub_dir:
             data_dir = join(data_dir, self.sub_dir)
         else:
