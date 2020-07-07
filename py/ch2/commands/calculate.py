@@ -9,7 +9,7 @@ from ..pipeline.pipeline import run_pipeline
 log = getLogger(__name__)
 
 
-def calculate(args, data):
+def calculate(config):
     '''
 ## calculate
 
@@ -25,7 +25,8 @@ Delete statistics in the date range (or all, if omitted) and then calculate new 
 
 Calculate activity statistics from 2020 onwards in a single process for debugging.
     '''
-    run_statistic_pipelines(data, force=args[FORCE], like=args[LIKE], unlike=args[UNLIKE],
+    args = config.args
+    run_statistic_pipelines(config, force=args[FORCE], like=args[LIKE], unlike=args[UNLIKE],
                             start=args[START], finish=args[FINISH], worker=args[WORKER] is not None, id=args[WORKER],
                             **parse_pairs(args[KARG]))
 

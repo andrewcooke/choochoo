@@ -12,7 +12,7 @@ from ..fit.profile.profile import read_fit
 log = getLogger(__name__)
 
 
-def fix_fit(args, data):
+def fix_fit(config):
     '''
 ## fix-fit
 
@@ -46,6 +46,7 @@ Will attempt to fix the given file (in the test data from git).
 Will prepend a new 14 byte header, drop the old 14 byte header, and fix the header and checksum values.
     '''
 
+    args = config.args
     check = args[NAME] is not None
     if check:
         name = NAME_GOOD if args[NAME] else NAME_BAD

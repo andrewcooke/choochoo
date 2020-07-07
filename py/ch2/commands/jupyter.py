@@ -7,7 +7,7 @@ from ..jupyter.utils import templates, get_template
 log = getLogger(__name__)
 
 
-def jupyter(args, data):
+def jupyter(config):
     '''
 ## jupyter
 
@@ -27,11 +27,12 @@ Indicate whether the background server is running or not.
 
 Stop the background server.
     '''
+    args = config.args
     cmd = args[SUB_COMMAND]
     if cmd == LIST:
         list()
     else:
-        c = JupyterController(args, data)
+        c = JupyterController(config)
         if cmd == STATUS:
             c.status()
         elif cmd == SHOW:

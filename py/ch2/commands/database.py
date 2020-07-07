@@ -16,7 +16,7 @@ from ..common.sql import database_really_exists
 log = getLogger(__name__)
 
 
-def database(args, data):
+def database(config):
     '''
 ## database
 
@@ -36,17 +36,18 @@ Show the current database state.
 
 Delete the current database.
     '''
+    args = config.args
     action = args[SUB_COMMAND]
     if action == SHOW:
-        show(data)
+        show(config)
     elif action == LIST:
         list()
     elif action == DELETE:
-        uri = args[URI] or data.get_uri()
+        uri = args[URI] or config.get_uri()
         if not uri: raise Exception('No current database is defined')
-        delete(data)
+        delete(config)
     else:
-        load(data, args[PROFILE], args[FORCE])
+        load(config, args[PROFILE], args[FORCE])
 
 
 def show(data):

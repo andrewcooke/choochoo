@@ -28,7 +28,7 @@ Docs at http://andrewcooke.github.io/choochoo/index''' % (
         '\n* '.join(COMMANDS.keys()), PROGNAME, m(H), PROGNAME, HELP, PROGNAME, m(H))
 
 
-def help(args, data):
+def help(config):
     '''
 ## help
 
@@ -47,6 +47,7 @@ Displays this information.
 Lists available topics.
     '''
     from .. import COMMANDS
+    args = config.args
     if args[TOPIC] in COMMANDS:
         Markdown().print(COMMANDS[args[TOPIC]].__doc__)
     else:

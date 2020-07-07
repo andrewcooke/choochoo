@@ -12,18 +12,19 @@ log = getLogger(__name__)
 
 class BaseController(ABC):
 
-    def __init__(self, prefix, args, data, server_cls, max_retries=5, retry_secs=3):
+    def __init__(self, prefix, config, server_cls, max_retries=5, retry_secs=3):
         prefix += '-'
+        args = config.args
         self._bind = args[prefix + BIND] if prefix + BIND in args else None
         self._port = args[prefix + PORT] if prefix + PORT in args else None
         self._dev = args[DEV]
-        self._data = data
+        self._config = config
         self.__server_cls = server_cls
         self.__max_retries = max_retries
         self.__retry_secs = retry_secs
 
     def status(self):
-        if self._data.exists_any_process(self.__server_cls):
+        if self._config.exists_any_process(self.__server_cls):
             print('\n  Service running')
             self._status(True)
         else:
@@ -34,7 +35,7 @@ class BaseController(ABC):
         print()
 
     def start(self, restart=False):
-        if self._data.exists_any_process(self.__server_cls):
+        if self._config.exists_any_process(self.__server_cls):
             log.debug('Service already running')
             if restart:
                 self.stop()
@@ -43,9 +44,9 @@ class BaseController(ABC):
         log.debug('Starting remote service')
         ch2 = command_root()
         cmd, log_name = self._build_cmd_and_log(ch2)
-        self._data.run_process(self.__server_cls, cmd, log_name)
+        self._config.run_process(self.__server_cls, cmd, log_name)
         retries = 0
-        while not self._data.exists_any_process(self.__server_cls):
+        while not self._config.exists_any_process(self.__server_cls):
             retries += 1
             if retries > self.__max_retries:
                 raise Exception('Server did not start')
@@ -59,7 +60,7 @@ class BaseController(ABC):
 
     def stop(self):
         log.info('Stopping any running service')
-        self._data.delete_all_processes(self.__server_cls)
+        self._config.delete_all_processes(self.__server_cls)
         self._cleanup()
 
     def _cleanup(self):

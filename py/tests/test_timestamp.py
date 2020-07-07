@@ -19,9 +19,9 @@ class TestTimestamp(LogTestCase):
 
     def test_set(self):
         user = random_test_user()
-        args, data = bootstrap_db(user, m(V), '5')
-        args, data = bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
-        with data.db.session_context() as s:
+        bootstrap_db(user, m(V), '5')
+        config = bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
+        with config.db.session_context() as s:
             source = add(s, Source())
             n = s.query(count(Timestamp.id)).scalar()
             self.assertEqual(n, 0)
@@ -33,9 +33,9 @@ class TestTimestamp(LogTestCase):
 
     def test_context(self):
         user = random_test_user()
-        args, data = bootstrap_db(user, m(V), '5')
-        args, data = bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
-        with data.db.session_context() as s:
+        bootstrap_db(user, m(V), '5')
+        config = bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
+        with config.db.session_context() as s:
             with Timestamp(owner=TestTimestamp).on_success(s):
                 n = s.query(count(Timestamp.id)).scalar()
                 self.assertEqual(n, 0)
@@ -44,9 +44,9 @@ class TestTimestamp(LogTestCase):
 
     def test_context_error(self):
         user = random_test_user()
-        args, data = bootstrap_db(user, m(V), '5')
-        args, data = bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
-        with data.db.session_context() as s:
+        bootstrap_db(user, m(V), '5')
+        config = bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
+        with config.db.session_context() as s:
             try:
                 with Timestamp(owner=TestTimestamp).on_success(s):
                     n = s.query(count(Timestamp.id)).scalar()

@@ -10,7 +10,7 @@ from ..web.server import WebController
 log = getLogger(__name__)
 
 
-def web(args, data):
+def web(config):
     '''
 ## web
 
@@ -26,8 +26,8 @@ Indicate whether the server is running or not.
 
 Stop the server.
     '''
-    cmd = args[SUB_COMMAND]
-    controller = WebController(args, data)
+    cmd = config.args[SUB_COMMAND]
+    controller = WebController(config)
     if cmd == SERVICE:
         controller.service()  # uri only used for initial config
     elif cmd == STATUS:

@@ -42,8 +42,9 @@ class JupyterServer(NotebookApp):
 
 class JupyterController(BaseController):
 
-    def __init__(self, args, data, max_retries=5, retry_secs=3):
-        super().__init__(JUPYTER, args, data, JupyterServer, max_retries=max_retries, retry_secs=retry_secs)
+    def __init__(self, config, max_retries=5, retry_secs=3):
+        super().__init__(JUPYTER, config, JupyterServer, max_retries=max_retries, retry_secs=retry_secs)
+        args = config.args
         self.__proxy_bind = self.__proxy_args(args, BIND, self._bind)
         self.__proxy_port = self.__proxy_args(args, PORT, self._port)
         self.__notebook_dir = args[NOTEBOOK_DIR]
@@ -63,7 +64,7 @@ class JupyterController(BaseController):
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'jupyter-service.log'
-        cmd = f'{ch2} {mm(VERBOSITY)} 5 {mm(LOG)} {log_name} {mm(BASE)} {self._data.base} ' \
+        cmd = f'{ch2} {mm(VERBOSITY)} 5 {mm(LOG)} {log_name} {mm(BASE)} {self._config.base} ' \
               f'{JUPYTER} {SERVICE} {mm(JUPYTER + "-" + BIND)} {self._bind} {mm(JUPYTER + "-" + PORT)} {self._port} ' \
               f'{mm(NOTEBOOK_DIR)} {self.__notebook_dir}'
         if self.__proxy_bind: cmd += f' {mm(PROXY + "-" + BIND)} {self.__proxy_bind}'
@@ -71,14 +72,14 @@ class JupyterController(BaseController):
         return cmd, log_name
 
     def _cleanup(self):
-        self._data.delete_constant(SystemConstant.JUPYTER_URL)
+        self._config.delete_constant(SystemConstant.JUPYTER_URL)
 
     def connection_url(self):
         self.start()
-        return self._data.get_constant(SystemConstant.JUPYTER_URL)
+        return self._config.get_constant(SystemConstant.JUPYTER_URL)
 
     def base_dir(self):
-        return self._data.base
+        return self._config.base
 
     def _run(self):
 
@@ -87,7 +88,7 @@ class JupyterController(BaseController):
         def start():
             log.info('Starting Jupyter server in separate thread')
             asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
-            notebook_dir = self._data.args._format_path(NOTEBOOK_DIR)
+            notebook_dir = self._config.args._format_path(NOTEBOOK_DIR)
             options = ['--notebook-dir', notebook_dir]
             if self._bind is not None: options += ['--ip', self._bind]
             if self._port is not None: options += ['--port', str(self._port)]
@@ -110,7 +111,7 @@ class JupyterController(BaseController):
         old_url = JupyterServer._instance.connection_url
         new_url = uriunsplit(urisplit(old_url)._replace(authority=f'{self.__proxy_bind}:{self.__proxy_port}'))
         log.debug(f'Rewrote {old_url} -> {new_url}')
-        self._data.set_constant(SystemConstant.JUPYTER_URL, new_url, force=True)
+        self._config.set_constant(SystemConstant.JUPYTER_URL, new_url, force=True)
 
         log.info('Jupyter server started')
         while True:

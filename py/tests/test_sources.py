@@ -27,9 +27,9 @@ class TestSources(LogTestCase):
     def test_sources(self):
 
         user = random_test_user()
-        args, data = bootstrap_db(user, m(V), '5', configurator=acooke)
+        config = bootstrap_db(user, m(V), '5', configurator=acooke)
 
-        with data.db.session_context() as s:
+        with config.db.session_context() as s:
 
             # add a diary entry
 
@@ -46,7 +46,7 @@ class TestSources(LogTestCase):
             statistics[0].value = 'hello world'
             statistics[1].value = 64.5
 
-        with data.db.session_context() as s:
+        with config.db.session_context() as s:
 
             # check the diary entry was persisted
 
@@ -63,10 +63,10 @@ class TestSources(LogTestCase):
 
         # generate summary stats
 
-        SummaryCalculator(data, schedule='m').run()
-        SummaryCalculator(data, schedule='y').run()
+        SummaryCalculator(config, schedule='m').run()
+        SummaryCalculator(config, schedule='y').run()
 
-        with data.db.session_context() as s:
+        with config.db.session_context() as s:
 
             # check the summary stats
 
@@ -93,14 +93,14 @@ class TestSources(LogTestCase):
             self.assertEqual(month.start, to_date('2018-09-01'), month.start)
             self.assertEqual(month.finish, to_date('2018-10-01'), month.finish)
 
-        with data.db.session_context() as s:
+        with config.db.session_context() as s:
 
             # delete the diary entry
 
             journal = DiaryTopicJournal.get_or_add(s, '2018-09-29')
             s.delete(journal)
 
-        with data.db.session_context() as s:
+        with config.db.session_context() as s:
 
             # check the delete cascade
 

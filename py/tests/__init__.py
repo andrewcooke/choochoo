@@ -9,7 +9,7 @@ from ch2.common.log import configure_log
 from ch2.commands.args import make_parser, NamespaceWithVariables, DB_VERSION
 from ch2.common.names import USER
 from ch2.common.user import make_user_database
-from ch2.sql.system import Data
+from ch2.sql.system import Config
 
 log = getLogger(__name__)
 
@@ -32,7 +32,7 @@ class LogTestCase(TestCase):
 def random_test_user(args=(mm(USER), 'postgres')):
     parser = make_parser()
     ns = NamespaceWithVariables(parser.parse_args(args=args), PROGNAME, DB_VERSION)
-    data = Data(ns)
+    data = Config(ns)
     user = data_hash(str(dt.datetime.now()))[:6]
     log.info(f'User/database {user}')
     db = make_user_database(data, user, '')

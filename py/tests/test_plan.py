@@ -12,11 +12,10 @@ class TestPlan(LogTestCase):
 
     def test_british(self):
         user = random_test_user()
-        args, data = bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
+        config = bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
         plan = twelve_week_improver('2018-07-25')
-        plan.create(data.db)
-        # run('sqlite3 %s ".dump"' % f.name, shell=True)
-        with data.db.session_context() as s:
+        plan.create(config.db)
+        with config.db.session_context() as s:
             root = s.query(DiaryTopic).filter(DiaryTopic.parent_id == None, DiaryTopic.title == 'Plan').one()
             self.assertEqual(len(root.children), 1)
             self.assertTrue(root.schedule)
@@ -29,11 +28,10 @@ class TestPlan(LogTestCase):
 
     def test_exponential_time(self):
         user = random_test_user()
-        args, data = bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
+        config = bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
         plan = exponential_time('Time test', '2d[2]', '20M', 5, '2018-07-25', '3m')
-        plan.create(data.db)
-        # run('sqlite3 %s ".dump"' % f.name, shell=True)
-        with data.db.session_context() as s:
+        plan.create(config.db)
+        with config.db.session_context() as s:
             root = s.query(DiaryTopic).filter(DiaryTopic.parent_id == None, DiaryTopic.title == 'Plan').one()
             self.assertEqual(len(root.children), 1)
             parent = root.children[0]
@@ -43,11 +41,10 @@ class TestPlan(LogTestCase):
 
     def test_exponential_distance(self):
         user = random_test_user()
-        args, data = bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
+        config = bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
         plan = exponential_distance('Distance test', 'w[mon,wed,fri]', '20km', 5, '2018-07-25', '1m')
-        plan.create(data.db)
-        # run('sqlite3 %s ".dump"' % f.name, shell=True)
-        with data.db.session_context() as s:
+        plan.create(config.db)
+        with config.db.session_context() as s:
             root = s.query(DiaryTopic).filter(DiaryTopic.parent_id == None, DiaryTopic.title == 'Plan').one()
             self.assertEqual(len(root.children), 1)
             parent = root.children[0]

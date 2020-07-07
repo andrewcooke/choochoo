@@ -123,7 +123,7 @@ def connect(args):
     '''
     Bootstrap from commandline-like args.
     '''
-    from .system import Data
+    from .system import Config
     if len(args) == 1 and isinstance(args[0], str):
         args = args[0].split()
     elif args:
@@ -133,7 +133,7 @@ def connect(args):
     args.append(NO_OP)
     ns = NamespaceWithVariables(make_parser(with_noop=True).parse_args(args), PROGNAME, DB_VERSION)
     make_log_from_args(ns)
-    data = Data(ns)
+    data = Config(ns)
     return ns, data.db
 
 

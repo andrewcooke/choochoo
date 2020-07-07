@@ -30,15 +30,16 @@ def make_log_from_args(args):
     })
 
 
-def update_log_color(args, data):
+def update_log_color(config):
     from ..sql import SystemConstant
-    color = args[COLOR]
+    color = config.args[COLOR]
     if color and color == color.upper():
-        data.set_constant(SystemConstant.LOG_COLOR, color.lower(), force=True)
+        config.set_constant(SystemConstant.LOG_COLOR, color.lower(), force=True)
         color = None
     if color is None:
-        color = data.get_constant(SystemConstant.LOG_COLOR, none=True)
-    args[COLOR] = color
+        color = config.get_constant(SystemConstant.LOG_COLOR, none=True)
+    config.args[COLOR] = color
+    return color
 
 
 class Record:

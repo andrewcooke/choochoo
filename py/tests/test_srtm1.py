@@ -21,20 +21,20 @@ class TestSortem(LogTestCase):
     def bilinear(self):
         user = random_test_user()
         bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
-        args, data = bootstrap_db(user, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
+        config = bootstrap_db(user, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
                                    mm(FORCE))
-        constants(args, data)
-        with data.db.session_context() as s:
+        constants(config)
+        with config.db.session_context() as s:
             yield bilinear_elevation_from_constant(s)
 
     @contextmanager
     def spline(self, smooth=0):
         user = random_test_user()
         bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
-        args, data = bootstrap_db(user, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
+        config = bootstrap_db(user, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
                                    mm(FORCE))
-        constants(args, data)
-        with data.db.session_context() as s:
+        constants(config)
+        with config.db.session_context() as s:
             yield spline_elevation_from_constant(s, smooth=smooth)
 
     def test_read(self):

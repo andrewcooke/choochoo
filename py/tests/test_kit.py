@@ -22,8 +22,8 @@ class TestKit(LogTestCase):
 
     def test_bikes(self):
         user = random_test_user()
-        args, data = bootstrap_db(user, m(V), '5', configurator=default)
-        with data.db.session_context() as s:
+        config = bootstrap_db(user, m(V), '5', configurator=default)
+        with config.db.session_context() as s:
             with self.assertRaises(Exception) as ctx:
                 start(s, 'bike', 'cotic', '2020-03-24', False)
             self.assertTrue('--force' in str(ctx.exception), ctx.exception)
@@ -175,9 +175,9 @@ class TestKit(LogTestCase):
     def test_models(self):
 
         user = random_test_user()
-        args, data = bootstrap_db(user, m(V), '5', configurator=default)
+        config = bootstrap_db(user, m(V), '5', configurator=default)
 
-        with data.db.session_context() as s:
+        with config.db.session_context() as s:
             start(s, 'bike', 'cotic', '2018-01-01', True)
             start(s, 'bike', 'marin', '2018-01-01', False)
             change(s, 'cotic', 'chain', 'sram', None, True, True)
@@ -189,18 +189,18 @@ class TestKit(LogTestCase):
             change(s, 'bowman', 'chain', 'sram', None, False, True)
 
         with TemporaryDirectory() as f:
-            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), READ,
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), READ,
                                        'data/test/source/personal/2018-08-03-rec.fit',
                                        m(K), 'cotic')
-            read(args, data)
-            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), READ,
+            read(config)
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), READ,
                                        'data/test/source/personal/2018-08-27-rec.fit',
                                        m(K), 'cotic')
-            read(args, data)
-            run_pipeline(data, PipelineType.CALCULATE, like=['%Activity%'], n_cpu=1)
-            run_pipeline(data, PipelineType.CALCULATE, like=['%Kit%'], n_cpu=1)
+            read(config)
+            run_pipeline(config, PipelineType.CALCULATE, like=['%Activity%'], n_cpu=1)
+            run_pipeline(config, PipelineType.CALCULATE, like=['%Kit%'], n_cpu=1)
 
-        with data.db.session_context() as s:
+        with config.db.session_context() as s:
             bike = get_name(s, 'bike').to_model(s, depth=3, statistics=INDIVIDUAL, own_models=False)
             self.assertEqual(bike[TYPE], KitGroup.SIMPLE_NAME)
             self.assertEqual(bike[NAME], 'bike')

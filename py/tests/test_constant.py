@@ -16,14 +16,14 @@ class TestConstant(LogTestCase):
 
     def test_constant(self):
         user = random_test_user()
-        args, data = bootstrap_db(user, m(V), '5')
+        config = bootstrap_db(user, m(V), '5')
         bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
-        with data.db.session_context() as s:
+        with config.db.session_context() as s:
             n = s.query(count(Constant.id)).scalar()
             self.assertEqual(n, 14)
-        args, data = bootstrap_db(user, m(V), '5', 'constants', 'set', 'fthr:%', '154', mm(FORCE))
-        constants(args, data)
-        with data.db.session_context() as s:
+        config = bootstrap_db(user, m(V), '5', 'constants', 'set', 'fthr:%', '154', mm(FORCE))
+        constants(config)
+        with config.db.session_context() as s:
             n = s.query(count(Constant.id)).scalar()
             self.assertEqual(n, 14)
             # todo - maybe test for value?

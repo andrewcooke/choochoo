@@ -22,8 +22,8 @@ class TestData(LogTestCase):
         power = Power('${bike}', '${weight}')
 
         user = random_test_user()
-        args, data = bootstrap_db(user, m(V), '5')
-        with data.db.session_context() as s:
+        config = bootstrap_db(user, m(V), '5')
+        with config.db.session_context() as s:
             source = Source(type=SourceType.SOURCE)
             s.add(source)
             StatisticJournalText.add(s, 'Bike', None, None, self, source, '{"mass": 42}', '1980-01-01')

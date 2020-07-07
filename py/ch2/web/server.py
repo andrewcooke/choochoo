@@ -50,8 +50,9 @@ class JSONRequest(Request, JSONMixin):
 
 class WebController(BaseController):
 
-    def __init__(self, args, data, max_retries=1, retry_secs=1):
-        super().__init__(WEB, args, data, WebServer, max_retries=max_retries, retry_secs=retry_secs)
+    def __init__(self, config, max_retries=1, retry_secs=1):
+        super().__init__(WEB, config, WebServer, max_retries=max_retries, retry_secs=retry_secs)
+        args = config.args
         self.__warn_data = args[WARN + '-' + DATA]
         self.__warn_secure = args[WARN + '-' + SECURE]
         self.__jupyter = JupyterController(args, data)
@@ -60,7 +61,7 @@ class WebController(BaseController):
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'web-service.log'
-        cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._data.base} ' \
+        cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._config.base} ' \
               f'{WEB} {SERVICE} {mm(WEB + "-" + BIND)} {self._bind} {mm(WEB + "-" + PORT)} {self._port} ' \
               f'{mm(JUPYTER + "-" + BIND)} {self.__jupyter._bind} {mm(JUPYTER + "-" + PORT)} {self.__jupyter._port} ' \
               f'{mm(THUMBNAIL_DIR)} {self.__thumbnail_dir} {mm(NOTEBOOK_DIR)} {self.__notebook_dir}'
@@ -69,14 +70,14 @@ class WebController(BaseController):
         return cmd, log_name
 
     def _run(self):
-        self._data.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self._bind, self._port), force=True)
+        self._config.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self._bind, self._port), force=True)
         log.debug(f'Binding to {self._bind}:{self._port}')
         run_simple(self._bind, self._port,
-                   WebServer(self._data, self.__jupyter, warn_data=self.__warn_data, warn_secure=self.__warn_secure),
+                   WebServer(self._config, self.__jupyter, warn_data=self.__warn_data, warn_secure=self.__warn_secure),
                    use_debugger=self._dev, use_reloader=self._dev)
 
     def _cleanup(self):
-        self._data.delete_constant(SystemConstant.WEB_URL)
+        self._config.delete_constant(SystemConstant.WEB_URL)
 
     def _status(self, running):
         if running:
@@ -84,7 +85,7 @@ class WebController(BaseController):
         print()
 
     def connection_url(self):
-        return self._data.get_constant(SystemConstant.WEB_URL, none=True)
+        return self._config.get_constant(SystemConstant.WEB_URL, none=True)
 
 
 def error(exception):

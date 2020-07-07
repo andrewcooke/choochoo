@@ -9,7 +9,7 @@ from ..diary.model import TEXT
 log = getLogger(__name__)
 
 
-def search(args, data):
+def search(config):
     '''
 ## search
 
@@ -74,6 +74,7 @@ Find activities that have a defined name and display both the name and the activ
 
 Set the name on the activity at the given time (again, using the dot syntax).
     '''
+    args = config.args
     if args[SHOW] and args[SET]:
         raise Exception(f'Give at most one of {mm(SHOW)} and {mm(SET)}')
     cmd = args[SUB_COMMAND]

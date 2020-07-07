@@ -42,7 +42,7 @@ WRITE_PATH = 'write-path'
 FLAGS = (ACTIVITIES, MONITOR, CALCULATE)
 
 
-def read(args, data):
+def read(config):
     '''
 ## read
 
@@ -76,15 +76,16 @@ will read files (ie copy them to the permanent store), but do no other processin
 
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
+    args = config.args
     if args[WORKER]:
-        run_pipeline(data, None, paths=args[PATH], force=args[FORCE], worker=bool(args[WORKER]),
+        run_pipeline(config, None, paths=args[PATH], force=args[FORCE], worker=bool(args[WORKER]),
                      id=args[WORKER], **parse_pairs(args[KARG]))
     else:
         record = Record(log)
         flags = infer_flags(args, *FLAGS)
         nfiles, files = open_files(args[PATH])
         with timing(READ):
-            upload_files_and_update(record, data, files=files, nfiles=nfiles, force=args[FORCE],
+            upload_files_and_update(record, config, files=files, nfiles=nfiles, force=args[FORCE],
                                     items=args[KIT], flags=flags, **parse_pairs(args[KARG]))
 
 
@@ -227,35 +228,35 @@ def upload_files(record, data, files=tuple(), nfiles=1, items=tuple(), progress=
             local_progress.complete()  # catch no files case
 
 
-def upload_files_and_update(record, data, files=tuple(), nfiles=1, force=False, items=tuple(),
+def upload_files_and_update(record, config, files=tuple(), nfiles=1, force=False, items=tuple(),
                             flags=None, **kargs):
     # this expects files to be a list of maps from name to stream (or an iterator, if nfiles provided)
     if not flags:
         flags = defaultdict(lambda: True)
     n_options = sum(1 if flags[name] else 0 for name in FLAGS)
     if flags[MONITOR]: n_options += 2
-    progress = SystemProgressTree(data, READ, [1] * (n_options + 1))
+    progress = SystemProgressTree(config, READ, [1] * (n_options + 1))
     log.info(f'Uploading files')
     try:
-        upload_files(record, data, files=files, nfiles=nfiles, items=items, progress=progress)
+        upload_files(record, config, files=files, nfiles=nfiles, items=items, progress=progress)
         # todo - add record to pipelines?
         if flags[ACTIVITIES]:
             log.info('Running activity pipelines')
-            run_pipeline(data, PipelineType.READ_ACTIVITY, force=force, progress=progress, **kargs)
+            run_pipeline(config, PipelineType.READ_ACTIVITY, force=force, progress=progress, **kargs)
         if flags[MONITOR]:
             # run before and after so we know what exists before we update, and import what we read
             log.info('Running monitor pipelines')
-            run_pipeline(data, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
-            with data.db.session_context() as s:
+            run_pipeline(config, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
+            with config.db.session_context() as s:
                 try:
                     log.info('Running Garmin download')
-                    run_garmin(data, s, base=data.base, progress=progress)
+                    run_garmin(config, s, base=config.base, progress=progress)
                 except Exception as e:
                     log.warning(f'Could not get data from Garmin: {e}')
             log.info('Running monitor pipelines (again)')
-            run_pipeline(data, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
+            run_pipeline(config, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
         if flags[CALCULATE]:
             log.info('Running statistics pipelines')
-            run_statistic_pipelines(data, force=force, progress=progress, **kargs)
+            run_statistic_pipelines(config, force=force, progress=progress, **kargs)
     finally:
         progress.complete()

@@ -14,7 +14,7 @@ from ..sql.utils import add
 log = getLogger(__name__)
 
 
-def constants(args, data):
+def constants(config):
     '''
 ## constants
 
@@ -53,9 +53,10 @@ the name of an activity group.
 Names can be matched by SQL patterns.  So FTHR.% matches both FTHR.Run and FTHR.Bike, for example.
 In such a case "entry" in the descriptions above may refer to multiple entries.
     '''
+    args = config.args
     cmd = args[SUB_COMMAND]
     name = None if cmd == LIST else args[NAME]
-    with data.db.session_context() as s:
+    with config.db.session_context() as s:
         if cmd == ADD:
             add_constant(s, name, description=args[DESCRIPTION], single=args[SINGLE], validate=args[VALIDATE])
         else:

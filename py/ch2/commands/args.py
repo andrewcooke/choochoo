@@ -597,20 +597,20 @@ def make_parser(with_noop=False):
 
 def bootstrap_db(user, *args, configurator=None, post_config=None):
 
-    from ..sql.system import Data
+    from ..sql.system import Config
     # used in tests, given a base directory
 
     args = [mm(USER), user] + list(args)
     parser = make_parser()
     ns = NamespaceWithVariables(parser.parse_args(args=args), PROGNAME, DB_VERSION)
     if configurator:
-        data = Data(ns)
+        data = Config(ns)
         with data.db.session_context() as s:
             configurator(s, data)
     args += post_config if post_config else []
     ns = NamespaceWithVariables(parser.parse_args(args=args), PROGNAME, DB_VERSION)
-    data = Data(ns)
-    return ns, data
+    data = Config(ns)
+    return data
 
 
 def parse_pairs(pairs, convert=True, multi=False, comma=False):

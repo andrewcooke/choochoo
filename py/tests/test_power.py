@@ -23,11 +23,11 @@ class TestPower(LogTestCase):
 
             bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
 
-            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
                                        'data/test/source/personal/2018-03-04-qdp.fit')
-            read(args, data)
+            read(config)
 
-            with data.db.session_context() as s:
+            with config.db.session_context() as s:
                 stats = Statistics(s, activity_journal='2018-03-04 07:16:33', with_timespan=True). \
                     by_name(SegmentReader, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X,
                             N.SPHERICAL_MERCATOR_Y, N.DISTANCE, N.ELEVATION, N.SPEED, N.CADENCE, N.HEART_RATE).df

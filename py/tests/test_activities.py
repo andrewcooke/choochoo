@@ -22,17 +22,17 @@ class TestActivities(LogTestCase):
 
         user = random_test_user()
         bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
-        args, data = bootstrap_db(user, m(V), '5', 'constants', 'set', 'SRTM1.dir', '/home/andrew/archive/srtm1', mm(FORCE))
-        constants(args, data)
+        config = bootstrap_db(user, m(V), '5', 'constants', 'set', 'SRTM1.dir', '/home/andrew/archive/srtm1', mm(FORCE))
+        constants(config)
 
         with TemporaryDirectory() as f:
-            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
                                       'data/test/source/personal/2018-08-27-rec.fit')
-            read(args, data)
+            read(config)
 
-        run_pipeline(data, PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
+        run_pipeline(config, PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
 
-        with data.db.session_context() as s:
+        with config.db.session_context() as s:
             n_raw = s.query(count(StatisticJournalFloat.id)). \
                 join(StatisticName). \
                 filter(StatisticName.name == N.RAW_ELEVATION).scalar()
@@ -52,9 +52,9 @@ class TestActivities(LogTestCase):
     def test_segment_bug(self):
         user = random_test_user()
         with TemporaryDirectory() as f:
-            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
             paths = ['/home/andrew/archive/fit/bike/cotic/2016-07-27-pm-z4.fit']
-            run_pipeline(data, PipelineType.READ_ACTIVITY, paths=paths, force=True)
+            run_pipeline(config, PipelineType.READ_ACTIVITY, paths=paths, force=True)
 
     def __assert_basic_stats(self, s):
         for name in [N.ACTIVE_DISTANCE, N.ACTIVE_TIME]:
@@ -72,13 +72,13 @@ class TestActivities(LogTestCase):
         with TemporaryDirectory() as f:
             bootstrap_db(user, mm(BASE), f, m(V), '5')
             bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
-            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
                                           'data/test/source/private/florian.fit')
-            read(args, data)
+            read(config)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(data, PipelineType.CALCULATE, n_cpu=1)
+            run_pipeline(config, PipelineType.CALCULATE, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            with data.db.session_context() as s:
+            with config.db.session_context() as s:
                 self.__assert_basic_stats(s)
 
     def test_michael(self):
@@ -86,13 +86,13 @@ class TestActivities(LogTestCase):
         with TemporaryDirectory() as f:
             bootstrap_db(user, mm(BASE), f, m(V), '5')
             bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
-            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
                                       'data/test/source/other/2019-05-09-051352-Running-iWatchSeries3.fit')
-            read(args, data)
+            read(config)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(data, PipelineType.CALCULATE, n_cpu=1)
+            run_pipeline(config, PipelineType.CALCULATE, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            with data.db.session_context() as s:
+            with config.db.session_context() as s:
                 self.__assert_basic_stats(s)
 
     def test_heart_alarms(self):
@@ -100,13 +100,13 @@ class TestActivities(LogTestCase):
         with TemporaryDirectory() as f:
             bootstrap_db(user, mm(BASE), f, m(V), '5')
             bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
-            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
                                       'data/test/source/personal/2016-07-19-mpu-s-z2.fit')
-            read(args, data)
+            read(config)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(data, PipelineType.CALCULATE, n_cpu=1)
+            run_pipeline(config, PipelineType.CALCULATE, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            with data.db.session_context() as s:
+            with config.db.session_context() as s:
                 for stat in s.query(StatisticJournal). \
                         join(StatisticName). \
                         filter(StatisticName.name == N.ACTIVE_DISTANCE).all():
@@ -118,11 +118,11 @@ class TestActivities(LogTestCase):
             with TemporaryDirectory() as f:
                 bootstrap_db(user, mm(BASE), f, m(V), '5')
                 bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
-                args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
+                config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
                                                f'data/test/source/other/{src}')
-                read(args, data)
+                read(config)
                 # run('sqlite3 %s ".dump"' % f.name, shell=True)
-                run_pipeline(data, PipelineType.CALCULATE, n_cpu=1)
+                run_pipeline(config, PipelineType.CALCULATE, n_cpu=1)
                 # run('sqlite3 %s ".dump"' % f.name, shell=True)
-                with data.db.session_context() as s:
+                with config.db.session_context() as s:
                     self.__assert_basic_stats(s)

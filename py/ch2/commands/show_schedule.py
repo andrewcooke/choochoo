@@ -14,7 +14,7 @@ log = getLogger(__name__)
 INDENT = '   '
 
 
-def show_schedule(args, data):
+def show_schedule(config):
     '''
 ## show-schedule
 
@@ -28,6 +28,7 @@ Print a calendar showing how the given schedule is interpreted.
 
 (Try it and see)
     '''
+    args = config.args
     schedule, start, months = Schedule(args[SCHEDULE]), to_date(args[START], none=True), args[MONTHS]
     if not start:
         start = dt.date.today()

@@ -13,7 +13,7 @@ from ..lib.io import terminal_width
 log = getLogger(__name__)
 
 
-def fit(args, data):
+def fit(config):
     '''
 ## fit
 
@@ -47,6 +47,7 @@ You may need a `--` between patterns and file paths so that the argument parser 
 finish and paths start.
     '''
 
+    args = config.args
     format = args[SUB_COMMAND]
     after_bytes = args[AFTER_BYTES]
     limit_bytes = args[LIMIT_BYTES]

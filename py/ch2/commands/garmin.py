@@ -22,7 +22,7 @@ GARMIN_USER = 'garmin_user'
 GARMIN_PASSWORD = 'garmin_password'
 
 
-def garmin(args, data):
+def garmin(config):
     '''
 ## garmin
 
@@ -38,14 +38,15 @@ Note that this cannot be used to download more than 10 days of data.
 For bulk downloads use
 https://www.garmin.com/en-US/account/datamanagement/
     '''
+    args = config.args
     dates = [args[DATE]] if args[DATE] else []
     dir = clean_path(DIR) if args[DIR] else None
-    with data.db.session_context() as s:
-        run_garmin(data, s, dir=dir, base=args[BASE],
+    with config.db.session_context() as s:
+        run_garmin(config, s, dir=dir, base=args[BASE],
                    user=args[USER], password=args[PASSWD], dates=dates, force=args[FORCE])
 
 
-def run_garmin(data, s, dir=None, base=None, user=None, password=None, dates=None, force=False, progress=None):
+def run_garmin(config, s, dir=None, base=None, user=None, password=None, dates=None, force=False, progress=None):
 
     if not dates: dates = list(missing_dates(s, force=force))
     local_progress = ProgressTree(len(dates), parent=progress)
@@ -58,11 +59,11 @@ def run_garmin(data, s, dir=None, base=None, user=None, password=None, dates=Non
             return
 
         old_format = bool(dir)
-        data_dir = dir or data.args._format_path(DATA_DIR)
+        data_dir = dir or config.args._format_path(DATA_DIR)
         user = user or Constant.get_single(s, GARMIN_USER)
         password = password or Constant.get_single(s, GARMIN_PASSWORD)
 
-        last = data.get_constant(SystemConstant.LAST_GARMIN, none=True)
+        last = config.get_constant(SystemConstant.LAST_GARMIN, none=True)
         if last and (now() - local_time_to_time(last)).total_seconds() < 12 * 60 * 60:
             log.info(f'Too soon since previous call ({last}; 12 hours minimum)')
             return
@@ -85,7 +86,7 @@ def run_garmin(data, s, dir=None, base=None, user=None, password=None, dates=Non
                     log.info('End of data')
                     break
 
-        data.set_constant(SystemConstant.LAST_GARMIN, time_to_local_time(now()), True)
+        config.set_constant(SystemConstant.LAST_GARMIN, time_to_local_time(now()), True)
         return
 
     finally:

@@ -19,11 +19,11 @@ class TestModel(LogTestCase):
         user = random_test_user()
         with TemporaryDirectory() as f:
             bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
-            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
                                        'read', 'data/test/source/personal/2018-03-04-qdp.fit',
                                        '-Kn_cpu=1')
-            read(args, data)
-            with data.db.session_context() as s:
+            read(config)
+            with config.db.session_context() as s:
                 model = list(read_date(s, to_date('2018-03-04')))
                 for i, x in enumerate(model):
                     print(i, x)

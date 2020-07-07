@@ -17,7 +17,7 @@ def database_really_exists(uri):
         return False
 
 
-class DataSource:
+class BaseConfig:
 
     def __init__(self, args, factory, db_version):
         self.args = args

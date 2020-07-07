@@ -28,11 +28,11 @@ class TestMonitor(LogTestCase):
         bootstrap_db(user, m(V), '5')
         with TemporaryDirectory() as f:
             bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
-            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
                                       READ, 'data/test/source/personal/25822184777.fit')
-            read(args, data)
-            run_pipeline(data, PipelineType.CALCULATE, force=True, start='2018-01-01', finish='2018-12-01', n_cpu=1)
-            with data.db.session_context() as s:
+            read(config)
+            run_pipeline(config, PipelineType.CALCULATE, force=True, start='2018-01-01', finish='2018-12-01', n_cpu=1)
+            with config.db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
                 self.assertEqual(164, n)
                 mjournal = s.query(MonitorJournal).one()
@@ -44,12 +44,12 @@ class TestMonitor(LogTestCase):
             bootstrap_db(user, m(V), '5')
             bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
             for file in ('24696157869', '24696160481', '24696163486'):
-                args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
+                config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
                                            'read', mm(MONITOR),
                                            'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
-                read(args, data)
-            run_pipeline(data, PipelineType.CALCULATE, force=True, like=('%Monitor%',), start='2018-01-01', n_cpu=1)
-            with data.db.session_context() as s:
+                read(config)
+            run_pipeline(config, PipelineType.CALCULATE, force=True, like=('%Monitor%',), start='2018-01-01', n_cpu=1)
+            with config.db.session_context() as s:
                 mjournals = s.query(MonitorJournal).order_by(MonitorJournal.start).all()
                 assert mjournals[2].start == to_time('2018-09-06 15:06:00'), mjournals[2].start
                 # steps
@@ -66,19 +66,19 @@ class TestMonitor(LogTestCase):
     def generic_bug(self, files, join=False):
         user = random_test_user()
         with TemporaryDirectory() as f:
-            args, data = bootstrap_db(user, m(V), '5')
+            config = bootstrap_db(user, m(V), '5')
             bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
             if join:
                 files = ['data/test/source/personal/andrew@acooke.org_%s.fit' % file for file in files]
-                args, data = bootstrap_db(user, mm(BASE), f, mm(DEV), 'read', *files)
-                read(args, data)
+                config = bootstrap_db(user, mm(BASE), f, mm(DEV), 'read', *files)
+                read(config)
             else:
                 for file in files:
-                    args, data = bootstrap_db(user, mm(BASE), f, mm(DEV), 'read',
+                    config = bootstrap_db(user, mm(BASE), f, mm(DEV), 'read',
                                                'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
-                    read(args, data)
+                    read(config)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            with data.db.session_context() as s:
+            with config.db.session_context() as s:
                 # steps
                 summary = s.query(StatisticJournal).join(StatisticName). \
                     filter(StatisticJournal.time >= local_date_to_time('2018-10-07'),
@@ -104,15 +104,15 @@ class TestMonitor(LogTestCase):
     def test_empty_data(self):
         user = random_test_user()
         with TemporaryDirectory() as f:
-            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5')
+            bootstrap_db(user, mm(BASE), f, m(V), '5')
             bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
-            args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
                                       'read', 'data/test/source/other/37140810636.fit')
-            read(args, data)
+            read(config)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(data, PipelineType.CALCULATE, n_cpu=1)
+            run_pipeline(config, PipelineType.CALCULATE, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            with data.db.session_context() as s:
+            with config.db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
                 self.assertEqual(n, 44)
                 mjournal = s.query(MonitorJournal).one()

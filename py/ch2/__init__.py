@@ -3,7 +3,7 @@ from logging import getLogger, NullHandler
 from sys import version_info
 
 from .common.global_ import set_global_dev
-from .sql.system import Data
+from .sql.system import Config
 
 getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())
@@ -100,21 +100,20 @@ def main():
     args, command, command_name = args_and_command()
     set_global_dev(args[DEV])
     make_log_from_args(args)
-    data = Data(args)
-    update_log_color(args, data)
-    set_log_color(args[COLOR])
+    config = Config(args)
+    set_log_color(update_log_color(config))
     try:
         if not command:
             log.debug('If you are seeing the "No command given" error during development ' +
                       'you may have forgotten to set the command name via `set_defaults()`.')
             raise Exception('No command given (try `ch2 help`)')
         elif command_name not in (DATABASE, PACKAGE_FIT_PROFILE, HELP):
-            db = data.db if command_name not in (PACKAGE_FIT_PROFILE, HELP) else None
+            db = config.db if command_name not in (PACKAGE_FIT_PROFILE, HELP) else None
             if not db:
                 refuse_until_configured(command_name, False)
             elif db.no_data():
                 refuse_until_configured(command_name, True)
-        command(args, data)
+        command(config)
     except KeyboardInterrupt:
         log.critical('User abort')
         exit(1)

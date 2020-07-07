@@ -15,7 +15,7 @@ from ..sql import ActivityJournal
 log = getLogger(__name__)
 
 
-def thumbnail(args, data):
+def thumbnail(config):
     '''
 ## thumbnail
 
@@ -24,10 +24,10 @@ def thumbnail(args, data):
 
 Generate a thumbnail map of the activity route.
     '''
-    with data.db.session_context() as s:
-        activity_id = parse_activity(s, data.args[ACTIVITY])
+    with config.db.session_context() as s:
+        activity_id = parse_activity(s, config.args[ACTIVITY])
         # display(s, activity_id)
-        create_in_cache(data.args._format_path(THUMBNAIL_DIR), s, activity_id)
+        create_in_cache(config.args._format_path(THUMBNAIL_DIR), s, activity_id)
 
 
 def parse_activity(s, text):

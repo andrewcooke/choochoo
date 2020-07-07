@@ -3,12 +3,12 @@ from logging import getLogger
 from .database import SystemConstant, Process, Database
 from .tables.system import Progress
 from ..commands.args import DB_VERSION
-from ..common.sql import DataSource
+from ..common.sql import BaseConfig
 
 log = getLogger(__name__)
 
 
-class Data(DataSource):
+class Config(BaseConfig):
 
     def __init__(self, args):
         super().__init__(args, Database, DB_VERSION)
