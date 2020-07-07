@@ -9,10 +9,11 @@ from sqlalchemy.orm import aliased
 
 import ch2.common.io
 from .utils import AbortImportButMarkScanned, MultiProcFitReader
+from ..loader import Loader
 from ..pipeline import LoaderMixin
 from ...commands.args import FORCE, READ
 from ...common.args import mm
-from ...common.date import time_to_local_date, format_time
+from ...common.date import time_to_local_date, format_time, to_time
 from ...common.names import POSTGRESQL, SQLITE
 from ...data.frame import read_query
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
@@ -82,9 +83,10 @@ class MonitorReader(MultiProcFitReader, LoaderMixin):
         super().__init__(*args, sub_dir=MONITOR, **kargs)
 
     def _get_loader(self, s, **kargs):
+        # todo - why is this here?  see below - it's supplied
         if 'owner' not in kargs:
             kargs['owner'] = self.owner_out
-        return super()._get_loader(s, **kargs)
+        return super()._get_loader(s, cls=MonitorLoader, **kargs)
 
     def _base_command(self):
         force = mm(FORCE) if self.force else ""
@@ -237,6 +239,7 @@ class MonitorReader(MultiProcFitReader, LoaderMixin):
                                              None, self.owner_out, description=STEPS_DESCRIPTION)
         times = df.loc[(df[NEW_STEPS] != df[N.STEPS]) & ~df[N.STEPS].isna()].index.astype(np.int64) / 1e9
         if len(times):
+            times = [to_time(time) for time in times]
             n = s.query(func.count(StatisticJournal.id)). \
                 filter(StatisticJournal.time.in_(times),
                        StatisticJournal.statistic_name == steps).scalar()
@@ -249,3 +252,11 @@ class MonitorReader(MultiProcFitReader, LoaderMixin):
             loader.add(T.STEPS, Units.STEPS_UNITS, None, row[N.SOURCE], int(row[NEW_STEPS]),
                        time, StatisticJournalInteger, description=STEPS_DESCRIPTION)
         loader.load()
+
+
+class MonitorLoader(Loader):
+
+    def _resolve_duplicate(self, name, instance, prev):
+        log.warning(f'Using max of duplicate values at {instance.time} for {name} '
+                    f'({instance.value}/{prev.value})')
+        prev.value = max(prev.value, instance.value)

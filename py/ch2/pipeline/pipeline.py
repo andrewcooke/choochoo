@@ -209,7 +209,7 @@ class LoaderMixin:
         if not self.__batch: cmd += f' {mm(KARG)} {BATCH}={False}'
         return cmd
 
-    def _get_loader(self, s, add_serial=None, **kargs):
+    def _get_loader(self, s, add_serial=None, cls=Loader, **kargs):
         if 'owner' not in kargs:
             kargs['owner'] = self.owner_out
         if add_serial is None:
@@ -219,7 +219,7 @@ class LoaderMixin:
         if 'batch' not in kargs:
             kargs['batch'] = self.__batch
             self.__batch = False  # only set once or we get multiple callbacks
-        return Loader(s, **kargs)
+        return cls(s, **kargs)
 
 
 class OwnerInMixin:

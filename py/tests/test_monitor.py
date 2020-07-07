@@ -31,12 +31,10 @@ class TestMonitor(LogTestCase):
             args, data = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
                                       READ, 'data/test/source/personal/25822184777.fit')
             read(args, data)
-            # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(data, PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
-            # run('sqlite3 %s ".dump"' % f.name, shell=True)
+            run_pipeline(data, PipelineType.CALCULATE, force=True, start='2018-01-01', finish='2018-12-01', n_cpu=1)
             with data.db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 137)
+                self.assertEqual(164, n)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)
 
@@ -50,8 +48,6 @@ class TestMonitor(LogTestCase):
                                            'read', mm(MONITOR),
                                            'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                 read(args, data)
-            # path = args.system_path(subdir='data', file='activity.db')
-            # run(f'sqlite3 {path} ".dump"', shell=True)
             run_pipeline(data, PipelineType.CALCULATE, force=True, like=('%Monitor%',), start='2018-01-01', n_cpu=1)
             with data.db.session_context() as s:
                 mjournals = s.query(MonitorJournal).order_by(MonitorJournal.start).all()
@@ -62,14 +58,6 @@ class TestMonitor(LogTestCase):
                            StatisticJournal.time < local_date_to_time('2018-09-07'),
                            StatisticName.owner == MonitorCalculator,
                            StatisticName.name == N.DAILY_STEPS).one()
-                if summary.value != 12757:
-                    path = base_system_path(args[BASE], subdir='data', file='activity.db')
-                    run('sqlite3 %s "select * from statistic_journal as j, statistic_journal_integer as i, '
-                        'statistic_name as n where j.id = i.id and j.statistic_name_id = n.id and '
-                        'n.name = \'steps\' order by j.time"' % path, shell=True)
-                    run('sqlite3 %s "select * from statistic_journal as j, statistic_journal_integer as i, '
-                        'statistic_name as n where j.id = i.id and j.statistic_name_id = n.id and '
-                        'n.name = \'cumulative-steps\' order by j.time"' % path, shell=True)
                 # connect has 12757 for this date,
                 self.assertEqual(summary.value, 12757)
 
