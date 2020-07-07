@@ -1,22 +1,21 @@
 from logging import getLogger
-from os import environ
+from os import environ, makedirs
+from os.path import exists
 from re import sub
 from typing import MutableMapping
 
 from .io import clean_path
-from .names import BIND, PORT, OFF, LIGHT, DARK, BASE, USER, U, PASSWD, P, URI
+from .names import BIND, PORT, OFF, LIGHT, DARK, USER, U, PASSWD, P, URI, VERSION
 
 log = getLogger(__name__)
 
 
 class NamespaceWithVariables(MutableMapping):
 
-    def __init__(self, ns, env_prefix):
+    def __init__(self, ns, env_prefix, version):
         self.__env_prefix = env_prefix
         self._dict = {name: self.__replace(name, value) for name, value in vars(ns).items()}
-
-    def __bar(self, name):
-        return sub('-', '_', name)
+        self._dict[VERSION] = version
 
     def __getitem__(self, name):
         try:
@@ -40,10 +39,18 @@ class NamespaceWithVariables(MutableMapping):
         args = dict(self._dict)
         args.update(kargs)
         if not value: value = self[name]
-        if value:
-            return value.format(**args)
-        else:
-            return None
+        while value and '{' in value:
+            log.debug(f'Expanding {value}')
+            value = value.format(**args)
+        return value
+
+    def _format_path(self, name=None, value=None, mkdir=True, **kargs):
+        path = clean_path(self._format(name=name, value=value, **kargs))
+        if not exists(path): makedirs(path, exist_ok=True)
+        return path
+
+    def __bar(self, name):
+        return sub('-', '_', name)
 
     def __replace(self, name, value):
         '''Environment overrides command line so that system config overrides user preferences.'''
@@ -72,8 +79,6 @@ def add_server_args(cmd, prefix='', default_address='localhost', default_port=80
 
 
 def add_data_source_args(parser, uri_default):
-    parser.add_argument(mm(BASE), default='~/.ch2', type=clean_path, metavar='DIR',
-                        help='the base directory for data (default ~/.ch2)')
     parser.add_argument(mm(USER), m(U), default='postgres', metavar='USER', help='the current user')
     parser.add_argument(mm(PASSWD), m(P), default='', metavar='PASS', help='user password')
     parser.add_argument(mm(URI), default=uri_default, help='use the given database URI')

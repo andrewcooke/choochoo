@@ -7,7 +7,7 @@ from os.path import basename, join, exists, dirname
 from .calculate import run_statistic_pipelines
 from .garmin import run_garmin
 from ..commands.args import KIT, READ, FORCE, PATH, base_system_path, PERMANENT, WORKER, parse_pairs, \
-    KARG, infer_flags, ACTIVITIES, CALCULATE
+    KARG, infer_flags, ACTIVITIES, CALCULATE, DATA_DIR
 from ..common.date import time_to_local_time, Y, YMDTHMS
 from ..common.io import touch, clean_path, data_hash
 from ..lib.io import split_fit_path
@@ -210,7 +210,7 @@ def upload_files(record, data, files=tuple(), nfiles=1, items=tuple(), progress=
         local_progress = ProgressTree(nfiles, parent=progress)
     with record.record_exceptions():
         with data.db.session_context() as s:
-            data_dir = base_system_path(data.base, version=PERMANENT)
+            data_dir = data.args._format_path(DATA_DIR)
             check_items(s, items)
             for file in files:
                 with local_progress.increment_or_complete():

@@ -1,7 +1,8 @@
 from contextlib import contextmanager
 from logging import getLogger, DEBUG, INFO, WARNING
+from os.path import join
 
-from ..commands.args import base_system_path
+from ..commands.args import base_system_path, LOG_DIR
 from ..common.log import configure_log, log_current_exception
 from ..common.names import UNDEF, COLOR, BASE
 
@@ -12,7 +13,7 @@ def make_log_from_args(args):
     from ..commands.args import LOG, COMMAND, VERBOSITY, PROGNAME, LOGS, DEV
     name = args[LOG] if LOG in args and args[LOG] else (
             (args[COMMAND] if COMMAND in args and args[COMMAND] else PROGNAME) + f'.{LOG}')
-    path = base_system_path(args[BASE], subdir=LOGS, file=name)
+    path = join(args._format_path(LOG_DIR), name)
     if args[VERBOSITY] is UNDEF:
         verbosity = 5 if args[DEV] else 2
     else:

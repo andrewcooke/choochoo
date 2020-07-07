@@ -1,11 +1,11 @@
 
 from logging import getLogger
-from os.path import exists
+from os.path import exists, join
 
 from matplotlib import use
 from matplotlib.pyplot import show, figure
 
-from .args import ACTIVITY, base_system_path, THUMBNAIL
+from .args import ACTIVITY, base_system_path, THUMBNAIL, THUMBNAIL_DIR
 from .. import BASE
 from ..data.query import Statistics
 from ..names import Names
@@ -25,9 +25,9 @@ def thumbnail(args, data):
 Generate a thumbnail map of the activity route.
     '''
     with data.db.session_context() as s:
-        activity_id = parse_activity(s, args[ACTIVITY])
+        activity_id = parse_activity(s, data.args[ACTIVITY])
         # display(s, activity_id)
-        create_in_cache(args[BASE], s, activity_id)
+        create_in_cache(data.args._format_path(THUMBNAIL_DIR), s, activity_id)
 
 
 def parse_activity(s, text):
@@ -104,8 +104,8 @@ def display(s, activity_id):
     show()
 
 
-def create_in_cache(base, s, activity_id):
-    path = base_system_path(base, subdir=THUMBNAIL, file=f'{activity_id}.png')
+def create_in_cache(dir, s, activity_id):
+    path = join(dir, f'{activity_id}.png')
     if not exists(path):
         df = read_activity(s, activity_id)
         use('agg')

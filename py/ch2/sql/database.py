@@ -9,7 +9,7 @@ from uritools import urisplit
 
 from . import *
 from .support import Base
-from ..commands.args import NO_OP, make_parser, NamespaceWithVariables, PROGNAME
+from ..commands.args import NO_OP, make_parser, NamespaceWithVariables, PROGNAME, DB_VERSION
 from ..common.names import POSTGRESQL
 from ..common.sql import database_really_exists
 from ..lib.log import make_log_from_args
@@ -131,7 +131,7 @@ def connect(args):
     else:
         args = []
     args.append(NO_OP)
-    ns = NamespaceWithVariables(make_parser(with_noop=True).parse_args(args), PROGNAME)
+    ns = NamespaceWithVariables(make_parser(with_noop=True).parse_args(args), PROGNAME, DB_VERSION)
     make_log_from_args(ns)
     data = Data(ns)
     return ns, data.db

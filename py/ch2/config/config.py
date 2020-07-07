@@ -191,8 +191,7 @@ your FF-model parameters (fitness and fatigue).
         add_monitor(s, MonitorReader, c)
 
     def _load_constants(self, s):
-        add_constant(s, SRTM1_DIR_CNAME,
-                     base_system_path(self._data.base, version=PERMANENT, subdir='srtm1', create=False),
+        add_constant(s, SRTM1_DIR_CNAME, self._data.args._format(value='{data-dir}/srtm1'),
                      description='''
 Directory containing SRTM1 hgt files for elevations.
 

@@ -6,6 +6,7 @@ from os import makedirs
 from os.path import join
 
 from ..common.args import mm, m, no, add_server_args, NamespaceWithVariables, color, add_data_source_args
+from ..common.io import clean_path
 from ..common.names import *
 from ..common.names import UNDEF, COLOR, OFF, URI, VERSION, USER, PASSWD
 from ..lib.utils import parse_bool
@@ -44,6 +45,7 @@ SEARCH = 'search'
 SHOW_SCHEDULE = 'show-schedule'
 TEXT = 'text'
 THUMBNAIL = 'thumbnail'
+THUMBNAIL_DIR = 'thumbnail-dir'
 UNLOCK = 'unlock'
 VALIDATE = 'validate'
 
@@ -77,6 +79,7 @@ CSV = 'csv'
 D = 'd'
 DARK = 'dark'
 DATA = 'data'
+DATA_DIR = 'data-dir'
 DATE = 'date'
 DEFAULT = 'default'
 DEFINE = 'define'
@@ -118,6 +121,7 @@ LIMIT_BYTES = 'limit-bytes'
 LIMIT_RECORDS = 'limit-records'
 LOG = 'log'
 LOGS = 'logs'
+LOG_DIR = 'log-dir'
 LONGITUDE = 'longitude'
 LIST = 'list'
 M, MESSAGE = 'm', 'message'
@@ -142,6 +146,7 @@ NAMES = 'names'
 NEW = 'new'
 NOT = 'not'
 NOTEBOOKS = 'notebooks'
+NOTEBOOK_DIR = 'notebook-dir'
 O, OUTPUT = 'o', 'output'
 OWNER = 'owner'
 PATH = 'path'
@@ -225,6 +230,8 @@ def make_parser(with_noop=False):
                         help='verbose log and stack trace on error')
     parser.add_argument(mm(LOG), metavar='FILE',
                         help='the file name for the log (command name by default)')
+    parser.add_argument(mm(LOG_DIR), metavar='DIR', default='{base}/{version}/logs',
+                        help='the directory for the log')
     parser.add_argument(mm(COLOR), mm(COLOUR), type=color, dest=COLOR,
                         help=f'pretty stdout log - {LIGHT}|{DARK}|{OFF} (CAPS to save)')
     parser.add_argument(m(V), mm(VERBOSITY), default=UNDEF, type=int, metavar='N',
@@ -232,6 +239,10 @@ def make_parser(with_noop=False):
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
                         help='display version and exit')
     add_data_source_args(parser, URI_DEFAULT)
+    parser.add_argument(mm(BASE), default='~/.ch2', metavar='DIR',
+                        help='the base directory for data (default ~/.ch2)')
+    parser.add_argument(mm(DATA_DIR), metavar='DIR', default='{base}/permanent',
+                        help='the root directory for storing FIT data')
 
     subparsers = parser.add_subparsers(title='commands', dest=COMMAND)
 
@@ -250,11 +261,21 @@ def make_parser(with_noop=False):
         cmd.add_argument(mm(prefix + DATA), action='store_true', help='warn user that data may be lost')
         cmd.add_argument(mm(prefix + SECURE), action='store_true', help='warn user that the system is insecure')
 
+    def add_thumbnail_dir(cmd):
+        cmd.add_argument(mm(THUMBNAIL_DIR), metavar='DIR', default='{base}/{version}/thumbnail',
+                         help='thumbnail cache')
+
+    def add_notebook_dir(cmd):
+        cmd.add_argument(mm(NOTEBOOK_DIR), metavar='DIR', default='{base}/{version}/notebook',
+                         help='notebook cache')
+
     web_start = web_cmds.add_parser(START, help='start the web server', description='start the web server')
     add_server_args(web_start, prefix=WEB, default_port=WEB_PORT)
     add_server_args(web_start, prefix=JUPYTER, default_port=JUPYTER_PORT)
     add_server_args(web_start, prefix=PROXY, default_port=None, default_address=None)
     add_warning_args(web_start)
+    add_thumbnail_dir(web_start)
+    add_notebook_dir(web_start)
     web_cmds.add_parser(STOP, help='stop the web server', description='stop the web server')
     web_cmds.add_parser(STATUS, help='display status of web server', description='display status of web server')
     web_service = web_cmds.add_parser(SERVICE, help='internal use only - use start/stop',
@@ -263,6 +284,8 @@ def make_parser(with_noop=False):
     add_server_args(web_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
     add_server_args(web_service, prefix=PROXY, default_port=None, default_address=None)
     add_warning_args(web_service)
+    add_thumbnail_dir(web_service)
+    add_notebook_dir(web_service)
 
     read = subparsers.add_parser(READ, help='read data (also calls calculate)',
                                  description='read data (copy it to the permanent store) and '
@@ -346,6 +369,7 @@ def make_parser(with_noop=False):
     jupyter_show.add_argument(ARG, nargs='*', metavar='PARAM', help='template arguments')
     add_server_args(jupyter_show, prefix=JUPYTER, default_port=JUPYTER_PORT)
     add_server_args(jupyter_show, prefix=PROXY, default_port=None, default_address=None)
+    add_notebook_dir(jupyter_show)
     jupyter_start = jupyter_cmds.add_parser(START, help='start a background service',
                                             description='start jupyter as a background service')
     add_server_args(jupyter_start, prefix=JUPYTER, default_port=JUPYTER_PORT)
@@ -548,10 +572,9 @@ def make_parser(with_noop=False):
     fix_fit_params.add_argument(mm(MAX_DELTA_T), type=float, metavar='S',
                                 help='max number of seconds between timestamps')
 
-    thumbnail = subparsers.add_parser(THUMBNAIL,
-                                      help='generate a thumbnail map of an activity')
-    thumbnail.add_argument(ACTIVITY, metavar='ACTIVITY',
-                           help='an activity ID or date')
+    thumbnail = subparsers.add_parser(THUMBNAIL, help='generate a thumbnail map of an activity')
+    thumbnail.add_argument(ACTIVITY, metavar='ACTIVITY', help='an activity ID or date')
+    add_thumbnail_dir(thumbnail)
 
     if with_noop:
         noop = subparsers.add_parser(NO_OP,
@@ -579,13 +602,13 @@ def bootstrap_db(user, *args, configurator=None, post_config=None):
 
     args = [mm(USER), user] + list(args)
     parser = make_parser()
-    ns = NamespaceWithVariables(parser.parse_args(args=args), PROGNAME)
+    ns = NamespaceWithVariables(parser.parse_args(args=args), PROGNAME, DB_VERSION)
     if configurator:
         data = Data(ns)
         with data.db.session_context() as s:
             configurator(s, data)
     args += post_config if post_config else []
-    ns = NamespaceWithVariables(parser.parse_args(args=args), PROGNAME)
+    ns = NamespaceWithVariables(parser.parse_args(args=args), PROGNAME, DB_VERSION)
     data = Data(ns)
     return ns, data
 

@@ -4,7 +4,7 @@ from time import sleep
 
 from requests import HTTPError
 
-from .args import DIR, DATE, FORCE, base_system_path, PERMANENT
+from .args import DIR, DATE, FORCE, base_system_path, PERMANENT, DATA_DIR
 from ..common.names import USER, PASSWD
 from .. import BASE
 from ..common.args import mm
@@ -58,7 +58,7 @@ def run_garmin(data, s, dir=None, base=None, user=None, password=None, dates=Non
             return
 
         old_format = bool(dir)
-        data_dir = dir or base_system_path(base, version=PERMANENT)
+        data_dir = dir or data.args._format_path(DATA_DIR)
         user = user or Constant.get_single(s, GARMIN_USER)
         password = password or Constant.get_single(s, GARMIN_PASSWORD)
 

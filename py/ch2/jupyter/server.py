@@ -9,7 +9,8 @@ from notebook.notebookapp import NotebookApp
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 from uritools import urisplit, uriunsplit
 
-from ..commands.args import NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, LOG, base_system_path, BIND, PORT, PROXY
+from ..commands.args import NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, LOG, base_system_path, BIND, PORT, PROXY, \
+    NOTEBOOK_DIR
 from .. import BASE
 from ..common.args import mm
 from ..lib.server import BaseController
@@ -84,7 +85,7 @@ class JupyterController(BaseController):
         def start():
             log.info('Starting Jupyter server in separate thread')
             asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
-            notebook_dir = base_system_path(self._data.base, subdir=NOTEBOOKS)
+            notebook_dir = self._data.args._format_path(NOTEBOOK_DIR)
             options = ['--notebook-dir', notebook_dir]
             if self._bind is not None: options += ['--ip', self._bind]
             if self._port is not None: options += ['--port', str(self._port)]

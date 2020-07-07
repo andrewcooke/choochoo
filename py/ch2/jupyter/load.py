@@ -13,7 +13,7 @@ import nbformat.v4 as nbv
 from nbformat.sign import NotebookNotary
 
 from .server import get_controller
-from ..commands.args import NOTEBOOKS, base_system_path
+from ..commands.args import NOTEBOOKS, base_system_path, NOTEBOOK_DIR
 from .. import BASE
 from ..common.args import mm
 
@@ -288,7 +288,7 @@ def create_notebook(template, base, args, kargs):
             vars[spec.varargs].append(value)
 
     template = template.__name__
-    notebook_dir = base_system_path(base, subdir=NOTEBOOKS)
+    notebook_dir = args._format_path(NOTEBOOK_DIR)
     root = join(notebook_dir, template)
     all_args = all_args if all_args else template
     name = all_args + IPYNB

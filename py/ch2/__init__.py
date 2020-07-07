@@ -21,7 +21,7 @@ class FatalException(Exception):
 
 from .commands.args import COMMAND, make_parser, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DATABASE, CONSTANTS, CALCULATE, SHOW_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, DB_VERSION
 from .common.names import COLOR, BASE
 from .common.args import NamespaceWithVariables
 from .commands.constants import constants
@@ -85,7 +85,7 @@ def args_and_command():
     command_name = ns.command if hasattr(ns, COMMAND) else None
     command = COMMANDS[command_name] if command_name in COMMANDS else None
     if command_name == NO_OP: ns.verbose = 0
-    args = NamespaceWithVariables(ns, PROGNAME)
+    args = NamespaceWithVariables(ns, PROGNAME, DB_VERSION)
     return args, command, command_name
 
 
