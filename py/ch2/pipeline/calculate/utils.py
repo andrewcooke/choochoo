@@ -4,10 +4,10 @@ from logging import getLogger
 from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
-from ..pipeline import MultiProcPipeline, UniProcPipeline, LoaderMixin
-from ...commands.args import CALCULATE
-from ...lib import local_time_to_time, time_to_local_time, to_date, format_date
+from ..pipeline import MultiProcPipeline, UniProcPipeline
+from ... import CALCULATE
 from ...common.log import log_current_exception
+from ...lib import local_time_to_time, time_to_local_time, to_date, format_date
 from ...lib.schedule import Schedule
 from ...sql import Timestamp, StatisticName, StatisticJournal, ActivityJournal, ActivityGroup, SegmentJournal, Interval
 from ...sql.types import long_cls
@@ -16,7 +16,7 @@ from ...sql.utils import add
 log = getLogger(__name__)
 
 
-class CalculatorMixin:
+class StartFinishCalculatorMixin:
 
     def __init__(self, *args, start=None, finish=None, **kargs):
         self.start = start  # optional start local time (always present for workers)
@@ -34,18 +34,10 @@ class CalculatorMixin:
         return f'{CALCULATE}'
 
 
-class MultiProcCalculator(CalculatorMixin, MultiProcPipeline):
-
-    pass
+class MultiProcCalculator(StartFinishCalculatorMixin, MultiProcPipeline): pass
 
 
-class UniProcCalculator(CalculatorMixin, UniProcPipeline):
-
-    def _base_command(self):
-        raise Exception('UniProc does not support workers')
-
-    def _args(self, missing, start, finish):
-        raise Exception('UniProc does not support workers')
+class UniProcCalculator(StartFinishCalculatorMixin, UniProcPipeline): pass
 
 
 class JournalCalculatorMixin:
@@ -135,7 +127,7 @@ class SegmentJournalCalculatorMixin(JournalCalculatorMixin):
     _journal_type = SegmentJournal
 
 
-class DataFrameCalculatorMixin(LoaderMixin):
+class DataFrameCalculatorMixin:
 
     def __init__(self, *args, add_serial=True, **kargs):
         self.__add_serial = add_serial
@@ -176,7 +168,7 @@ class DataFrameCalculatorMixin(LoaderMixin):
         raise NotImplementedError()
 
 
-class IntervalCalculatorMixin(LoaderMixin):
+class IntervalCalculatorMixin:
 
     def __init__(self, *args, schedule='m', grouped=False, **kargs):
         self.schedule = Schedule(self._assert('schedule', schedule))

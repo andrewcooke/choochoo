@@ -9,6 +9,7 @@ from zipfile import ZipFile
 
 import numpy as np
 
+from ..common.io import clean_path
 from ..common.log import log_current_exception
 from ..sql import Constant
 
@@ -67,7 +68,7 @@ class ElevationSupport:
 
 def elevation_from_constant(s, interp, dir_name=SRTM1_DIR_CNAME):
     try:
-        dir = Constant.from_name(s, dir_name).at(s).value
+        dir = clean_path(Constant.from_name(s, dir_name).at(s).value)
         if not exists(dir): raise Exception(f'SRTM1 directory {dir} missing')
     except:
         log_current_exception(traceback=False)

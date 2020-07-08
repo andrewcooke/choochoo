@@ -10,7 +10,7 @@ from .elevation import ElevationCalculator
 from .impulse import ImpulseCalculator
 from .power import PowerCalculator
 from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
-from ..pipeline import OwnerInMixin
+from ..pipeline import OwnerInMixin, LoaderMixin
 from ..read.segment import SegmentReader
 from ...data import Statistics
 from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats, \
@@ -28,7 +28,8 @@ from ...sql import StatisticJournalFloat, Constant, StatisticJournalText, Statis
 log = getLogger(__name__)
 
 
-class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
+class ActivityCalculator(LoaderMixin, OwnerInMixin,
+                         ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
     def __init__(self, *args, climb=None, response_prefix=None, **kargs):
         self.climb_ref = climb

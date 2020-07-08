@@ -71,7 +71,7 @@ NEW_STEPS = N._new(N.STEPS)
 STEPS_DESCRIPTION = '''The increment in steps read from the FIT file.'''
 
 
-class MonitorReader(MultiProcFitReader, LoaderMixin):
+class MonitorReader(LoaderMixin, MultiProcFitReader):
 
     '''
     These overlap (well, often one starts when another ends),
@@ -83,9 +83,6 @@ class MonitorReader(MultiProcFitReader, LoaderMixin):
         super().__init__(*args, sub_dir=MONITOR, **kargs)
 
     def _get_loader(self, s, **kargs):
-        # todo - why is this here?  see below - it's supplied
-        if 'owner' not in kargs:
-            kargs['owner'] = self.owner_out
         return super()._get_loader(s, cls=MonitorLoader, **kargs)
 
     def _base_command(self):

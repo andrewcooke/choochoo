@@ -25,7 +25,7 @@ class AbortImportButMarkScanned(AbortImport):
     pass
 
 
-class FitReaderMixin(LoaderMixin):
+class FitReaderMixin:
 
     def __init__(self, *args, paths=None, sub_dir=None, **kargs):
         self.paths = paths

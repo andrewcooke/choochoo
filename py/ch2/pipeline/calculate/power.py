@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from .utils import ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator
+from ..pipeline import LoaderMixin
 from ...data import present, linear_resample_time, Statistics
 from ...data.frame import median_dt
 from ...data.lib import interpolate_to_index
@@ -33,7 +34,7 @@ class PowerModel(reftuple('Power', 'bike_model, rider_weight')):
             return instance
 
 
-class PowerCalculator(ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
+class PowerCalculator(LoaderMixin, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
     '''
     See ch2.config.power for examples of how this is configured.

@@ -28,7 +28,7 @@ Response = namedtuple('Response', 'src_owner, title, tau_days, start, scale')
 SCALED = 'scaled'
 
 
-class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
+class ResponseCalculator(LoaderMixin, OwnerInMixin, UniProcCalculator):
     '''
     this is hard to do correctly, incrementally.
 

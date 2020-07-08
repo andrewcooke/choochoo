@@ -1,4 +1,3 @@
-
 from itertools import groupby
 from logging import getLogger
 
@@ -6,6 +5,7 @@ from math import sqrt, ceil
 from pygeotile.point import Point
 
 from .activity import ActivityReader
+from ..pipeline import LoaderMixin
 from ...common.date import to_time, format_time
 from ...lib.utils import sign
 from ...names import N
@@ -25,7 +25,7 @@ NAMES = {N.LATITUDE: 'lat',
 class CalcFailed(Exception): pass
 
 
-class SegmentReader(ActivityReader):
+class SegmentReader(LoaderMixin, ActivityReader):
 
     def __init__(self, *args, inner_bound=10, match_bound=25, **kargs):
         self.inner_bound = inner_bound

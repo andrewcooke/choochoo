@@ -59,6 +59,10 @@ class BasePipeline:
         else:
             return value
 
+    @abstractmethod
+    def run(self):
+        raise NotImplementedError()
+
 
 class IncrementalPipeline(BasePipeline):
 
@@ -176,10 +180,8 @@ class MultiProcPipeline(IncrementalPipeline):
         return n_total, n_parallel
 
     def __spawn(self, s, missing, n_total, n_parallel, progress):
-
         # unfortunately we have to do things with contiguous dates, which may introduce systematic
         # errors in our timing estimates
-
         n_missing = len(missing)
         workers = Workers(self._config, n_parallel, self.owner_out, self._base_command())
         start, finish = None, -1
@@ -189,7 +191,6 @@ class MultiProcPipeline(IncrementalPipeline):
             if start > finish: raise Exception('Bad chunking logic')
             with progress.increment_or_complete(finish - start + 1):
                 workers.run(self.id, self._args(missing, start, finish))
-
         workers.wait()
 
     @abstractmethod
@@ -224,11 +225,6 @@ class LoaderMixin:
     def __init__(self, *args, batch=True, **kargs):
         super().__init__(*args, **kargs)
         self.__batch = batch
-
-    def _base_command(self):
-        cmd = super()._base_command()
-        if not self.__batch: cmd += f' {mm(KARG)} {BATCH}={False}'
-        return cmd
 
     def _get_loader(self, s, add_serial=None, cls=Loader, **kargs):
         if 'owner' not in kargs:

@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from .utils import MultiProcCalculator, SegmentJournalCalculatorMixin, DataFrameCalculatorMixin
-from ..pipeline import OwnerInMixin
+from ..pipeline import OwnerInMixin, LoaderMixin
 from ...data import present, linear_resample_time, Statistics
 from ...names import N, Titles, Summaries as S, Units
 from ...sql import SegmentJournal, StatisticJournalFloat
@@ -12,7 +12,8 @@ log = getLogger(__name__)
 SJOURNAL = 'sjournal'
 
 
-class SegmentCalculator(OwnerInMixin, SegmentJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
+class SegmentCalculator(LoaderMixin, OwnerInMixin,
+                        SegmentJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
     def _delete(self, s):
         super()._delete(s)

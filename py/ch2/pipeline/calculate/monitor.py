@@ -20,7 +20,7 @@ log = getLogger(__name__)
 QUARTER_DAY = 6 * 60 * 60
 
 
-class MonitorCalculator(OwnerInMixin, LoaderMixin, MultiProcCalculator):
+class MonitorCalculator(LoaderMixin, OwnerInMixin, MultiProcCalculator):
 
     '''
     This is a little unusual, in that we can calculate results from partial data and then, when we have
