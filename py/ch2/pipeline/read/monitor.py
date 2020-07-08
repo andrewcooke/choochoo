@@ -85,10 +85,6 @@ class MonitorReader(LoaderMixin, MultiProcFitReader):
     def _get_loader(self, s, **kargs):
         return super()._get_loader(s, cls=MonitorLoader, **kargs)
 
-    def _base_command(self):
-        force = mm(FORCE) if self.force else ""
-        return f'{READ} {force}'
-
     @staticmethod
     def parse_records(data):
         return MonitorReader.read_fit_file(data, merge_duplicates, fix_degrees, unpack_single_bytes)

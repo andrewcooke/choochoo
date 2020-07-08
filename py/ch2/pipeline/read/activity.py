@@ -45,10 +45,6 @@ class ActivityReader(MultiProcFitReader):
         self.__ajournal = None  # save for coverage
         super().__init__(*args, sub_dir=ACTIVITY, **kargs)
 
-    def _base_command(self):
-        force = mm(FORCE) if self.force else ''
-        return f'{READ} {force}'
-
     def _startup(self, s):
         super()._startup(s)
         self.__oracle = bilinear_elevation_from_constant(s)

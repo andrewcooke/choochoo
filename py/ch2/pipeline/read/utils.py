@@ -5,7 +5,8 @@ from os.path import join
 from time import time
 
 from ... import FatalException
-from ...commands.args import base_system_path, PERMANENT
+from ...commands.args import base_system_path, PERMANENT, FORCE, READ
+from ...common.args import mm
 from ...common.date import now
 from ...fit.format.read import filtered_records
 from ...lib import to_time
@@ -116,3 +117,7 @@ class MultiProcFitReader(FitReaderMixin, MultiProcPipeline):
         paths = ' '.join(quote(file_scan.path) for file_scan in missing[start:finish+1])
         log.info(f'Starting worker for {missing[start]} - {missing[finish]}')
         return paths
+
+    def _base_command(self):
+        force = mm(FORCE) if self.force else ''
+        return f'{READ} {force}'
