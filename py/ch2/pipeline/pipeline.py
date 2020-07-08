@@ -74,12 +74,16 @@ class IncrementalPipeline(BasePipeline):
         super().__init__(*args, **kargs)
 
     def run(self):
-        with self._config.db.session_context() as s:
+        with self._config.db.session_context(expire_on_commit=False) as s:
             self._startup(s)
-            if self.force: self._delete(s)
+        if self.force:
+            with self._config.db.session_context() as s:
+                self._delete(s)
+        with self._config.db.session_context(expire_on_commit=False) as s:
             missing = self._missing(s)
-            log.debug(f'Have {len(missing)} missing ranges')
-            self._recalculate(s, missing)
+        log.debug(f'Have {len(missing)} missing ranges')
+        self._recalculate(self._config.db, missing)
+        with self._config.db.session_context() as s:
             self._shutdown(s)
 
     def _startup(self, s):
@@ -94,7 +98,7 @@ class IncrementalPipeline(BasePipeline):
         raise NotImplementedError()
 
     @abstractmethod
-    def _recalculate(self, s, missing):
+    def _recalculate(self, db, missing):
         raise NotImplementedError()
 
     def _shutdown(self, s):
@@ -113,10 +117,10 @@ class MultiProcPipeline(IncrementalPipeline):
         self.id = id  # the id for the pipeline entry in the database (passed to sub-processes)
         super().__init__(config, *args, owner_out=owner_out, force=force, progress=progress, **kargs)
 
-    def _recalculate(self, s, missing):
+    def _recalculate(self, db, missing):
         if self.worker:
             log.debug('Worker, so execute directly')
-            self._run_all(s, missing, None)
+            self._run_all(db, missing, None)
         else:
             local_progress = ProgressTree(len(missing), parent=self._progress)
             if not missing:
@@ -125,21 +129,21 @@ class MultiProcPipeline(IncrementalPipeline):
             else:
                 n_total, n_parallel = self.__cost_benefit(missing, self.n_cpu)
                 if n_parallel < 2 or len(missing) == 1:
-                    self._run_all(s, missing, local_progress)
+                    self._run_all(db, missing, local_progress)
                 else:
-                    self.__spawn(s, missing, n_total, n_parallel, local_progress)
+                    self.__spawn(missing, n_total, n_parallel, local_progress)
 
     @abstractmethod
     def _delete(self, s):
         if self.worker:
             log.warning('Worker deleting data')
 
-    def _run_all(self, s, missing, progress=None):
+    def _run_all(self, db, missing, progress=None):
         local_progress = progress.increment_or_complete if progress else nullcontext
         for missed in missing:
             with local_progress():
-                self._run_one(s, missed)
-                s.commit()
+                with db.session_context() as s:
+                    self._run_one(s, missed)
 
     @abstractmethod
     def _run_one(self, s, missed):
@@ -179,7 +183,7 @@ class MultiProcPipeline(IncrementalPipeline):
         log.info(f'Threads: {n_total}/{n_parallel}')
         return n_total, n_parallel
 
-    def __spawn(self, s, missing, n_total, n_parallel, progress):
+    def __spawn(self, missing, n_total, n_parallel, progress):
         # unfortunately we have to do things with contiguous dates, which may introduce systematic
         # errors in our timing estimates
         n_missing = len(missing)
@@ -204,7 +208,7 @@ class MultiProcPipeline(IncrementalPipeline):
 
 class UniProcPipeline(IncrementalPipeline):
 
-    def _recalculate(self, s, missing):
+    def _recalculate(self, db, missing):
         local_progress = ProgressTree(len(missing), parent=self._progress)
         if not missing:
             log.info(f'No missing data for {short_cls(self)}')
@@ -212,8 +216,8 @@ class UniProcPipeline(IncrementalPipeline):
         else:
             for missed in missing:
                 with local_progress.increment_or_complete():
-                    self._run_one(s, missed)
-                    s.commit()
+                    with db.session_context() as s:
+                        self._run_one(s, missed)
 
     @abstractmethod
     def _run_one(self, s, missed):

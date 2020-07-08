@@ -85,8 +85,8 @@ class DatabaseBase:
         return not self.engine.dialect.has_table(self.engine, table.__tablename__)
 
     @contextmanager
-    def session_context(self):
-        session = self.session()
+    def session_context(self, **kargs):
+        session = self.session(**kargs)
         try:
             yield session
             session.commit()
