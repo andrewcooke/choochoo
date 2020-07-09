@@ -193,7 +193,6 @@ TABLES = 'tables'
 TOKENS = 'tokens'
 TOPIC = 'topic'
 UNDO = 'undo'
-UNLIKE = 'unlike'
 UNSAFE = 'unsafe'
 UNSET = 'unset'
 VALUE = 'value'
@@ -462,8 +461,6 @@ def make_parser(with_noop=False):
     calculate.add_argument(mm(FORCE), action='store_true', help='delete existing statistics')
     calculate.add_argument(mm(LIKE), action='append', default=[], metavar='PATTERN',
                            help='run only matching pipeline classes')
-    calculate.add_argument(mm(UNLIKE), action='append', default=[], metavar='PATTERN',
-                           help='exclude matching pipeline classes')
     calculate.add_argument(START, metavar='START', nargs='?', help='optional start date')
     calculate.add_argument(FINISH, metavar='FINISH', nargs='?', help='optional finish date (if start also given)')
     calculate.add_argument(mm(KARG), m(K.upper()), action='append', default=[], metavar='NAME=VALUE',

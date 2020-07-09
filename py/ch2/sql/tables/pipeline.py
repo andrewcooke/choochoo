@@ -32,21 +32,19 @@ class Pipeline(Base):
     sort = Column(Sort, nullable=False)
 
     @classmethod
-    def _query(cls, s, type=None, like=tuple(), unlike=tuple(), id=None):
+    def _query(cls, s, type=None, like=tuple(), id=None):
         q = s.query(Pipeline)
         if type is not None:  # enum can be 0
             q = q.filter(Pipeline.type == type)
         if like:
             q = q.filter(or_(*[Pipeline.cls.like(pattern) for pattern in like]))
-        if unlike:
-            q = q.filter(not_(or_(*[Pipeline.cls.like(pattern) for pattern in unlike])))
         if id:
             q = q.filter(Pipeline.id == id)
         return q
 
     @classmethod
-    def all(cls, s, type, like=tuple(), unlike=tuple(), id=None):
-        q = cls._query(s, type, like=like, unlike=unlike, id=id)
+    def all(cls, s, type, like=tuple(), id=None):
+        q = cls._query(s, type, like=like, id=id)
         pipelines = q.order_by(Pipeline.sort).all()
         if not pipelines:
             msg = 'No pipelines configured for type %s' % PipelineType(type).name
@@ -58,12 +56,12 @@ class Pipeline(Base):
         yield from pipelines
         
     @classmethod
-    def all_instances(cls, s, type, like=tuple(), unlike=tuple(), id=None):
-        for pipeline in cls.all(s, type, like=like, unlike=unlike, id=id):
+    def all_instances(cls, s, type, like=tuple(), id=None):
+        for pipeline in cls.all(s, type, like=like, id=id):
             log.debug(f'Building {pipeline.cls} ({pipeline.args}, {pipeline.kargs})')
             yield pipeline.cls(*pipeline.args, **pipeline.kargs)
 
     @classmethod
-    def count(cls, s, type, like=tuple(), unlike=tuple(), id=None):
-        q = cls._query(s, type, like=like, unlike=unlike, id=id)
+    def count(cls, s, type, like=tuple(), id=None):
+        q = cls._query(s, type, like=like, id=id)
         return q.count()

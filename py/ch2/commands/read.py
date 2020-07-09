@@ -78,8 +78,8 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
     args = config.args
     if args[WORKER]:
-        run_pipeline(config, None, paths=args[PATH], force=args[FORCE], worker=bool(args[WORKER]),
-                     id=args[WORKER], **parse_pairs(args[KARG]))
+        run_pipeline(config, None, paths=args[PATH], force=args[FORCE], worker=args[WORKER],
+                     **parse_pairs(args[KARG]))
     else:
         record = Record(log)
         flags = infer_flags(args, *FLAGS)

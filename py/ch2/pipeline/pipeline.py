@@ -27,13 +27,13 @@ def count_statistics(s):
     return s.query(count(StatisticJournal.id)).scalar()
 
 
-def run_pipeline(data, type, like=tuple(), unlike=tuple(), id=None, progress=None, **extra_kargs):
-    with data.db.session_context() as s:
-        if id is None:  # don't run for each worker
+def run_pipeline(config, type, like=tuple(), progress=None, worker=None, **extra_kargs):
+    with config.db.session_context() as s:
+        if not worker:  # don't run for each worker
             if type in (PipelineType.CALCULATE, PipelineType.READ_ACTIVITY, PipelineType.READ_MONITOR):
                 Interval.clean(s)
-        local_progress = ProgressTree(Pipeline.count(s, type, like=like, unlike=unlike, id=id), parent=progress)
-        for pipeline in Pipeline.all(s, type, like=like, unlike=unlike, id=id):
+        local_progress = ProgressTree(Pipeline.count(s, type, like=like, id=worker), parent=progress)
+        for pipeline in Pipeline.all(s, type, like=like, id=worker):
             kargs = dict(pipeline.kargs)
             kargs.update(extra_kargs)
             msg = f'Ran {short_cls(pipeline.cls)}'
@@ -41,7 +41,8 @@ def run_pipeline(data, type, like=tuple(), unlike=tuple(), id=None, progress=Non
             log.debug(f'Running {pipeline.cls}({pipeline.args}, {kargs})')
             with timing(msg):
                 before = None if id else count_statistics(s)
-                pipeline.cls(data, *pipeline.args, id=pipeline.id, progress=local_progress, **kargs).run()
+                pipeline.cls(config, *pipeline.args, id=pipeline.id, worker=bool(worker), progress=local_progress,
+                             **kargs).run()
                 after = None if id else count_statistics(s)
             if before or after:
                 log.info(f'{msg}: statistic count {before} -> {after} (change of {after - before})')
