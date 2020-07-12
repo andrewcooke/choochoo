@@ -1,5 +1,9 @@
+from re import sub, ASCII
+
 from ch2.common.date import to_time
 
+ADMIN_USER = 'admin-user'
+ADMIN_PASSWD = 'admin-passwd'
 BASE = 'base'
 BIND = 'bind'
 COLOR = 'color'
@@ -24,3 +28,19 @@ WEB = 'web'
 
 UNDEF = object()
 TIME_ZERO = to_time(0.0)
+
+
+def assert_name(name):
+    if not valid_name(name):
+        raise Exception(f'Bad username: {name}')
+    return name
+
+
+def valid_name(name):
+    # this relies on '_' not being a valid identifier to exclude various system tables
+    clean = sub(r'[^-A-Za-z0-9]', '', name, flags=ASCII)
+    if clean != name: return False
+    if name.startswith('template'): return False
+    if name in ('postgres', 'admin', 'public'): return False
+    return True
+

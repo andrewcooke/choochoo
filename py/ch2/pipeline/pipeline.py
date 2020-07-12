@@ -4,17 +4,12 @@ from contextlib import nullcontext
 from logging import getLogger
 
 from psutil import cpu_count
-from sqlalchemy import text
 from sqlalchemy.sql.functions import count
 
 from .loader import Loader
-from ..commands.args import BATCH, KARG
-from ..common.names import POSTGRESQL, SQLITE
-from ..common.args import mm
 from ..lib.utils import timing
 from ..lib.workers import ProgressTree, Workers
-from ..sql import Pipeline, SystemConstant, Interval, PipelineType, StatisticJournal
-from ..sql.database import scheme
+from ..sql import Pipeline, Interval, PipelineType, StatisticJournal
 from ..sql.types import short_cls
 
 log = getLogger(__name__)
@@ -106,7 +101,53 @@ class IncrementalPipeline(BasePipeline):
         pass
 
 
-class MultiProcPipeline(IncrementalPipeline):
+class AsyncPipeline(BasePipeline):
+
+    def __init__(self, config, owner_out=None, force=False, progress=None, **kargs):
+        self._config = config
+        self.owner_out = owner_out or self  # the future owner of any calculated statistics
+        self.force = force  # force re-processing
+        self._progress = progress
+        super().__init__(**kargs)
+
+    def missing(self):
+        with self._config.db.session_context(expire_on_commit=False) as s:
+            self._startup(s)
+        if self.force:
+            with self._config.db.session_context() as s:
+                self._delete(s)
+        with self._config.db.session_context(expire_on_commit=False) as s:
+            return self._missing(s)
+        # no shutdown - that's only after actually doing something
+
+    def run(self):
+        with self._config.db.session_context(expire_on_commit=False) as s:
+            self._startup(s)
+            missing = self._missing(s)
+        self._recalculate(self._config.db, missing)
+        with self._config.db.session_context() as s:
+            self._shutdown(s)
+
+    def _startup(self, s):
+        pass
+
+    @abstractmethod
+    def _delete(self, s):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _missing(self, s):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _recalculate(self, db, missing):
+        raise NotImplementedError()
+
+    def _shutdown(self, s):
+        pass
+
+
+class MultiProcPipeline(AsyncPipeline):
 
     def __init__(self, config, *args, owner_out=None, force=False, progress=None,
                  overhead=1, cost_calc=20, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
@@ -207,7 +248,7 @@ class MultiProcPipeline(IncrementalPipeline):
         raise NotImplementedError()
 
 
-class UniProcPipeline(IncrementalPipeline):
+class UniProcPipeline(AsyncPipeline):
 
     def _recalculate(self, db, missing):
         local_progress = ProgressTree(len(missing), parent=self._progress)

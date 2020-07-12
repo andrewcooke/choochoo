@@ -2,15 +2,15 @@ from contextlib import contextmanager
 from logging import getLogger, DEBUG, INFO, WARNING
 from os.path import join
 
-from ..commands.args import base_system_path, LOG_DIR
-from ..common.log import configure_log, log_current_exception
-from ..common.names import UNDEF, COLOR, BASE
+from ..commands.args import LOG_DIR
+from ..common.log import configure_log, log_current_exception, set_log_color
+from ..common.names import UNDEF, COLOR
 
 log = getLogger(__name__)
 
 
 def make_log_from_args(args):
-    from ..commands.args import LOG, COMMAND, VERBOSITY, PROGNAME, LOGS, DEV
+    from ..commands.args import LOG, COMMAND, VERBOSITY, PROGNAME, DEV
     name = args[LOG] if LOG in args and args[LOG] else (
             (args[COMMAND] if COMMAND in args and args[COMMAND] else PROGNAME) + f'.{LOG}')
     path = join(args._format_path(LOG_DIR), name)
@@ -28,18 +28,7 @@ def make_log_from_args(args):
         'ch2': DEBUG,
         '__main__': DEBUG
     })
-
-
-def update_log_color(config):
-    from ..sql import SystemConstant
-    color = config.args[COLOR]
-    if color and color == color.upper():
-        config.set_constant(SystemConstant.LOG_COLOR, color.lower(), force=True)
-        color = None
-    if color is None:
-        color = config.get_constant(SystemConstant.LOG_COLOR, none=True)
-    config.args[COLOR] = color
-    return color
+    set_log_color(args[COLOR])
 
 
 class Record:

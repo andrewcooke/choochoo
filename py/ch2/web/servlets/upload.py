@@ -16,8 +16,8 @@ log = getLogger(__name__)
 
 class Upload:
 
-    def __init__(self, data):
-        self.__data = data
+    def __init__(self, config):
+        self.__config = config
 
     def __call__(self, request, s):
         files = [{NAME: file.filename, STREAM: file.stream} for file in request.files.getlist('files')]
@@ -25,14 +25,14 @@ class Upload:
         force = parse_bool(request.form.get('force'))
         # we do this in two stages
         # first, immediate saving of files while web browser waiting for response
-        upload_files(Record(log), self.__data, files=files, nfiles=len(files), items=items)
+        upload_files(Record(log), self.__config, files=files, nfiles=len(files), items=items)
         # second, start rest of ingest process in background
-        cmd = f'{command_root()} {mm(VERBOSITY)} 0 {mm(BASE)} {self.__data.base} {mm(LOG)} {WEB}-{READ}.log ' \
-              f'{mm(URI)} {self.__data.get_uri()}'
+        cmd = f'{command_root()} {mm(VERBOSITY)} 0 {mm(BASE)} {self.__config.args[BASE]} {mm(LOG)} {WEB}-{READ}.log ' \
+              f'{mm(URI)} {self.__config.get_uri()}'
         if global_dev(): cmd += f' {mm(DEV)}'
         cmd += f' {READ}'
         if force: cmd += f' {mm(FORCE)}'
         log.info(f'Starting {cmd}')
         ps.Popen(args=cmd, shell=True)
         # wait so that the progress has time to kick in
-        self.__data.wait_for_progress(READ)
+        self.__config.wait_for_progress(READ)

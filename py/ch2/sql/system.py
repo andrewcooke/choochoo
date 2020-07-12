@@ -3,7 +3,7 @@ from logging import getLogger
 from .database import SystemConstant, Process, Database
 from .tables.system import Progress
 from ..commands.args import DB_VERSION
-from ..common.sql import BaseConfig
+from ..common.config import BaseConfig
 
 log = getLogger(__name__)
 

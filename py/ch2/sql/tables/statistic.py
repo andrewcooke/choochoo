@@ -61,12 +61,12 @@ class StatisticName(Base):
 
     @classmethod
     def add_if_missing(cls, s, name, type, units, summary, owner, description=None, title=None):
-        s.commit()  # start new transaction here in case rollback
         q = s.query(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticName.owner == owner)
         statistic_name = q.one_or_none()
         if not statistic_name:
+            s.commit()  # start new transaction here in case rollback
             statistic_name = add(s, StatisticName(name=name, units=units, summary=summary, owner=owner,
                                                   statistic_journal_type=type, description=description,
                                                   title=title))

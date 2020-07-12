@@ -17,12 +17,12 @@ class CacheResponse(Response, ETagResponseMixin):
 
 class Thumbnail(ContentType):
 
-    def __init__(self, data):
-        self._data = data
+    def __init__(self, config):
+        self.__config = config
 
     def __call__(self, request, s, activity):
         activity_id = parse_activity(s, activity)
-        dir = self._data.args._format_path(THUMBNAIL_DIR)
+        dir = self.__config.args._format_path(THUMBNAIL_DIR)
         path = create_in_cache(dir, s, activity_id)
         try:
             log.debug(f'Reading {path}')
@@ -32,5 +32,5 @@ class Thumbnail(ContentType):
             response.cache_control.max_age = 3600
             return response
         except Exception as e:
-            log.warning(f'Error serving {file}: {e}')
+            log.warning(f'Error serving {path}: {e}')
             raise

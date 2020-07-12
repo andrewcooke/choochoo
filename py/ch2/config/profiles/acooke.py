@@ -1,5 +1,5 @@
 
-from ..config import Config, WALK, SWIM, RUN, BIKE
+from ..profile import Profile, WALK, SWIM, RUN, BIKE
 from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_constant
 from ..power import add_simple_power_estimate, add_kit_power_estimate, add_kit_power_model
 from ...commands.args import DEFAULT, base_system_path, PERMANENT
@@ -13,7 +13,7 @@ from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ...sql.utils import add
 
 
-def acooke(s, data):
+def acooke(config):
     '''
 ## acooke
 
@@ -25,14 +25,14 @@ This extends the default configuration with:
 
 Unlikely to be useful to others, but works as an example of how you can extend the code yourself.
     '''
-    ACooke(data).load(s)
+    ACooke(config).load()
 
 
 ROAD = 'Road'
 MTB = 'MTB'
 
 
-class ACooke(Config):
+class ACooke(Profile):
 
     def _load_diary_topics(self, s, c):
         super()._load_diary_topics(s, c)

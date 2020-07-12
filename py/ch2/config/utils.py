@@ -1,11 +1,11 @@
 
-from . import profile
+from . import profiles
 from ..lib.inspect import read_package
 
 
-def profiles():
-    return dict(read_package(profile))
+def get_profiles():
+    return dict(read_package(profiles))
 
 
 def get_profile(name):
-    return profiles()[name]
+    return get_profiles()[name]

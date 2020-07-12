@@ -61,7 +61,7 @@ class WebController(BaseController):
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'web-service.log'
-        cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._config.base} ' \
+        cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._config.args[BASE]} ' \
               f'{WEB} {SERVICE} {mm(WEB + "-" + BIND)} {self._bind} {mm(WEB + "-" + PORT)} {self._port} ' \
               f'{mm(JUPYTER + "-" + BIND)} {self.__jupyter._bind} {mm(JUPYTER + "-" + PORT)} {self.__jupyter._port} ' \
               f'{mm(THUMBNAIL_DIR)} {self.__thumbnail_dir} {mm(NOTEBOOK_DIR)} {self.__notebook_dir}'
@@ -96,19 +96,19 @@ def error(exception):
 
 class WebServer:
 
-    def __init__(self, data, jcontrol, warn_data=False, warn_secure=False):
-        self.__data = data
+    def __init__(self, config, jcontrol, warn_data=False, warn_secure=False):
+        self.__config = config
         self.__warn_data = warn_data
         self.__warn_secure = warn_secure
 
         analysis = Analysis()
-        configure = Configure(data)
+        configure = Configure(config)
         diary = Diary()
         jupyter = Jupyter(jcontrol)
         kit = Kit()
         static = Static('.static')
-        upload = Upload(data)
-        thumbnail = Thumbnail(data.base)
+        upload = Upload(config)
+        thumbnail = Thumbnail(config)
         search = Search()
 
         self.url_map = Map([
@@ -166,8 +166,8 @@ class WebServer:
         try:
             endpoint, values = adapter.match()
             values.pop('_', None)
-            if self.__data.db:
-                with self.__data.db.session_context() as s:
+            if self.__config.db:
+                with self.__config.db.session_context() as s:
                     return endpoint(request, s, **values)
             else:
                 return endpoint(request, None, **values)
@@ -183,7 +183,7 @@ class WebServer:
         return self.wsgi_app(environ, start_response)
 
     def get_busy(self):
-        percent = self.__data.get_percent(READ)
+        percent = self.__config.get_percent(READ)
         if percent is None: percent = 100
         # the client uses the complete message when the problem has passed
         return {MESSAGE: 'Loading data and recalculating statistics.',

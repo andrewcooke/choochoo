@@ -4,9 +4,9 @@ from logging import getLogger
 from sqlalchemy import exists
 
 from ...commands.args import SERVICE, WEB, DB_VERSION
-from ...common.names import POSTGRESQL, SQLITE, URI
+from ...common.names import POSTGRESQL, SQLITE, URI, BASE
 from ...common.args import mm
-from ...commands.database import load, delete
+from ...commands.db import load, delete_and_check
 from ...commands.help import HTML, filter, parse, P, LI, PRE
 from ...commands.import_ import import_source
 from ...config.utils import profiles
@@ -46,12 +46,12 @@ VERSIONS = 'versions'
 
 class Configure:
 
-    def __init__(self, data):
-        self.__data = data
+    def __init__(self, config):
+        self.__config = config
         self.__html = HTML(delta=1, parser=filter(parse, yes=(P, LI, PRE)))
 
     def is_configured(self):
-        return not bool(self.__data.db.no_data())
+        return not bool(self.__config.db.no_data())
 
     def is_empty(self, s):
         return not s.query(exists().where(ActivityJournal.id > 0)).scalar()
@@ -62,36 +62,36 @@ class Configure:
     def read_profiles(self, request, s):
         fn_argspec_by_name = profiles()
         data = {PROFILES: {name: self.html(fn_argspec_by_name[name][0].__doc__) for name in fn_argspec_by_name},
-                CONFIGURED: not bool(self.__data.db.no_data()),
+                CONFIGURED: not bool(self.__config.db.no_data()),
                 VERSION: DB_VERSION,
-                DIRECTORY: self.__data.base}
+                DIRECTORY: self.__config.args[BASE]}
         return data
 
     def write_profile(self, request, s):
         data = request.json
-        if not self.__data.get_uri():
+        if not self.__config.get_uri():
             raise Exception(f'Bootstrap via web requires '
                             f'`{WEB} {SERVICE} ({mm(SQLITE)} | {mm(POSTGRESQL)} | {mm(URI)})`')
-        load(self.__data, data[PROFILE])
-        self.__data.reset()
+        load(self.__config, data[PROFILE])
+        self.__config.reset()
 
     def delete(self, request, s):
-        delete(self.__data)
-        self.__data.reset()
+        delete_and_check(self.__config, force=True)
+        self.__config.reset()
 
     def read_import(self, request, s):
         record = Record(log)
-        return {IMPORTED: {DIARY: diary_imported(record, self.__data.db),
-                           ACTIVITY: activity_imported(record, self.__data.db),
-                           KIT: kit_imported(record, self.__data.db),
-                           CONSTANT: constant_imported(record, self.__data.db),
-                           SEGMENT: segment_imported(record, self.__data.db)},
-                VERSIONS: available_versions(self.__data)}
+        return {IMPORTED: {DIARY: diary_imported(record, self.__config.db),
+                           ACTIVITY: activity_imported(record, self.__config.db),
+                           KIT: kit_imported(record, self.__config.db),
+                           CONSTANT: constant_imported(record, self.__config.db),
+                           SEGMENT: segment_imported(record, self.__config.db)},
+                VERSIONS: available_versions(self.__config)}
 
     def write_import(self, request, s):
         data = request.json
         record = Record(log)
-        import_source(self.__data, record, data[VERSION])
+        import_source(self.__config, record, data[VERSION])
         return record.json()
 
     def read_constants(self, request, s):

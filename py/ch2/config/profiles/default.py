@@ -1,15 +1,15 @@
 
 from logging import getLogger
 
-from ..config import Config
+from ..profile import Profile
 
 log = getLogger(__name__)
 
 
-def default(s, data):
+def default(config):
     '''
 ## default
 
 The default configuration with basic activity groups, diary topics and FF parameters.
     '''
-    Config(data).load(s)
+    Profile(config).load()

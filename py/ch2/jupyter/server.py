@@ -64,7 +64,7 @@ class JupyterController(BaseController):
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'jupyter-service.log'
-        cmd = f'{ch2} {mm(VERBOSITY)} 5 {mm(LOG)} {log_name} {mm(BASE)} {self._config.base} ' \
+        cmd = f'{ch2} {mm(VERBOSITY)} 5 {mm(LOG)} {log_name} {mm(BASE)} {self._config.args[BASE]} ' \
               f'{JUPYTER} {SERVICE} {mm(JUPYTER + "-" + BIND)} {self._bind} {mm(JUPYTER + "-" + PORT)} {self._port} ' \
               f'{mm(NOTEBOOK_DIR)} {self.__notebook_dir}'
         if self.__proxy_bind: cmd += f' {mm(PROXY + "-" + BIND)} {self.__proxy_bind}'
@@ -79,7 +79,7 @@ class JupyterController(BaseController):
         return self._config.get_constant(SystemConstant.JUPYTER_URL)
 
     def base_dir(self):
-        return self._config.base
+        return self._config.args[BASE]
 
     def _run(self):
 

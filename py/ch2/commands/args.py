@@ -6,7 +6,6 @@ from os import makedirs
 from os.path import join
 
 from ..common.args import mm, m, no, add_server_args, NamespaceWithVariables, color, add_data_source_args
-from ..common.io import clean_path
 from ..common.names import *
 from ..common.names import UNDEF, COLOR, OFF, URI, VERSION, USER, PASSWD
 from ..lib.utils import parse_bool
@@ -79,8 +78,10 @@ CSV = 'csv'
 D = 'd'
 DARK = 'dark'
 DATA = 'data'
+DATABASES = 'databases'
 DATA_DIR = 'data-dir'
 DATE = 'date'
+DB = 'db'
 DEFAULT = 'default'
 DEFINE = 'define'
 DELETE = 'delete'
@@ -155,6 +156,7 @@ PERMANENT = 'permanent'
 PLAN = 'plan'
 PRINT = 'print'
 PROFILE = 'profile'
+PROFILES = 'profiles'
 PROFILE_VERSION = 'profile-version'
 PROTOCOL_VERSION = 'protocol-version'
 PROXY = 'proxy'
@@ -173,6 +175,8 @@ SEGMENTS = 'segments'
 SERVICE = 'service'
 SET = 'set'
 SCHEDULE = 'schedule'
+SCHEMA = 'schema'
+SCHEMAS = 'schemas'
 SECURE = 'secure'
 SHOW = 'show'
 SINGLE = 'single'
@@ -187,6 +191,7 @@ STATISTIC_JOURNALS = 'statistic-journals'
 STATUS = 'status'
 STOP = 'stop'
 SUB_COMMAND = 'sub-command'
+SUB2_COMMAND = 'sub2-command'
 SYSTEM = 'system'
 TABLE = 'table'
 TABLES = 'tables'
@@ -195,6 +200,7 @@ TOPIC = 'topic'
 UNDO = 'undo'
 UNSAFE = 'unsafe'
 UNSET = 'unset'
+USERS = 'users'
 VALUE = 'value'
 W, WARN = 'w', 'warn'
 WAYPOINTS = 'waypoints'
@@ -231,8 +237,8 @@ def make_parser(with_noop=False):
                         help='the file name for the log (command name by default)')
     parser.add_argument(mm(LOG_DIR), metavar='DIR', default='{base}/{version}/logs',
                         help='the directory for the log')
-    parser.add_argument(mm(COLOR), mm(COLOUR), type=color, dest=COLOR,
-                        help=f'pretty stdout log - {LIGHT}|{DARK}|{OFF} (CAPS to save)')
+    parser.add_argument(mm(COLOR), mm(COLOUR), type=color, dest=COLOR, default=DARK,
+                        help=f'pretty stdout log - {LIGHT}|{DARK}|{OFF}')
     parser.add_argument(m(V), mm(VERBOSITY), default=UNDEF, type=int, metavar='N',
                         help='output level for stderr (0: silent; 5:noisy)')
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
@@ -243,15 +249,15 @@ def make_parser(with_noop=False):
     parser.add_argument(mm(DATA_DIR), metavar='DIR', default='{base}/permanent',
                         help='the root directory for storing FIT data')
 
-    subparsers = parser.add_subparsers(title='commands', dest=COMMAND)
+    commands = parser.add_subparsers(title='commands', dest=COMMAND)
 
     # high-level commands used daily
 
-    help = subparsers.add_parser(HELP, help='display help',
+    help = commands.add_parser(HELP, help='display help',
                                  description='display additional help (beyond -h) for any command')
     help.add_argument(TOPIC, nargs='?', metavar=TOPIC, help='the subject for help')
 
-    web = subparsers.add_parser(WEB, help='the web interface (probably all you need)',
+    web = commands.add_parser(WEB, help='the web interface (probably all you need)',
                                 description='start, stop and manage the web interface')
     web_cmds = web.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
 
@@ -286,7 +292,7 @@ def make_parser(with_noop=False):
     add_thumbnail_dir(web_service)
     add_notebook_dir(web_service)
 
-    read = subparsers.add_parser(READ, help='read data (also calls calculate)',
+    read = commands.add_parser(READ, help='read data (also calls calculate)',
                                  description='read data (copy it to the permanent store) and '
                                              'calculate statistics (add information to the database)')
     read.add_argument(mm(FORCE), action='store_true', help='reprocess existing data')
@@ -307,7 +313,7 @@ def make_parser(with_noop=False):
                          help='show value from matching entries')
         cmd.add_argument(mm(SET), metavar='NAME=VALUE', help='update matching entries')
 
-    search = subparsers.add_parser(SEARCH, help='search the database', description='search the database')
+    search = commands.add_parser(SEARCH, help='search the database', description='search the database')
     search_cmds = search.add_subparsers(title='search target', dest=SUB_COMMAND, required=True)
     search_text = search_cmds.add_parser(TEXT, help='search for text in activities',
                                          description='search for text in activities')
@@ -319,7 +325,7 @@ def make_parser(with_noop=False):
                                             description='search for sources')
     add_search_query(search_sources)
 
-    constants = subparsers.add_parser(CONSTANTS, help='set and examine constants',
+    constants = commands.add_parser(CONSTANTS, help='set and examine constants',
                                       description='set and examine constants')
     constants_cmds = constants.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
     constants_list = constants_cmds.add_parser(LIST, help='list all constant names',
@@ -353,11 +359,11 @@ def make_parser(with_noop=False):
     constants_remove.add_argument(NAME, metavar='NAME', help='name')
     constants_remove.add_argument(mm(FORCE), action='store_true', help='allow remove of multiple constants')
 
-    validate = subparsers.add_parser(VALIDATE, help='check (and optionally fix) data in the database',
+    validate = commands.add_parser(VALIDATE, help='check (and optionally fix) data in the database',
                                      description='check (and optionally fix) data in the database')
     validate.add_argument(mm(FIX), action='store_true', help='correct errors when possible')
 
-    jupyter = subparsers.add_parser(JUPYTER, help='data analysis in jupyter',
+    jupyter = commands.add_parser(JUPYTER, help='data analysis in jupyter',
                                     description='data analysis in jupyter')
     jupyter_cmds = jupyter.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
     jupyter_cmds.add_parser(LIST, help='list available templates',
@@ -381,7 +387,7 @@ def make_parser(with_noop=False):
     add_server_args(jupyter_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
     add_server_args(jupyter_service, prefix=PROXY, default_port=None, default_address=None)
 
-    kit = subparsers.add_parser(KIT, help='manage kit',
+    kit = commands.add_parser(KIT, help='manage kit',
                                 description='add, remove, modify and display kit details')
     kit_cmds = kit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
     kit_start = kit_cmds.add_parser(START, help='define a new item (new bike, new shoe)',
@@ -426,21 +432,30 @@ def make_parser(with_noop=False):
     kit_dump = kit_cmds.add_parser(DUMP, help='dump to script')
     kit_dump.add_argument(mm(CMD), help='command to use instead of ch2')
 
-    database = subparsers.add_parser(DATABASE, help='configure the database')
-    database_cmds = database.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    database_show = database_cmds.add_parser(SHOW, help='show current configuration')
-    database_list = database_cmds.add_parser(LIST, help='list available profiles')
-    database_load = database_cmds.add_parser(LOAD, help='configure using the given profile')
-    database_load.add_argument(mm(FORCE), action='store_true', help='overwrite existing database')
-    database_profiles = database_load.add_subparsers(title='profile', dest=PROFILE, required=True)
-    from ..config.utils import profiles
-    for name in profiles():
-        database_profile = database_profiles.add_parser(name)
-        database_profile.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
-    database_delete = database_cmds.add_parser(DELETE, help='delete the current database (or one at a given URI)')
-    database_delete.add_argument(mm(URI), help='use the given database URI')
+    db = commands.add_parser(DB, help='configure the database')
+    db_cmds = db.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    db_list = db_cmds.add_parser(LIST, help='show current configuration')
+    db_list_item = db_list.add_subparsers(title='item to list', dest=ITEM, required=True)
+    db_list_item.add_parser(USERS, help='show configured users')
+    db_list_item.add_parser(SCHEMAS, help='show configured schema')
+    db_list_item.add_parser(PROFILES, help='show available profiles')
+    db_list_item.add_parser(DATABASES, help='show configured databases')
+    db_add = db_cmds.add_parser(ADD, help='extend current configuration')
+    db_add_item = db_add.add_subparsers(title='item to add', dest=ITEM, required=True)
+    db_add_item.add_parser(USER, help='add a user (once per cluster)')
+    db_add_item.add_parser(DATABASE, help='add a database (for each version in a cluster)')
+    db_add_profile = db_add_item.add_parser(PROFILE, help='add a profile (for each user and version)')
+    db_add_schema_profiles = db_add_profile.add_subparsers(title='profile', dest=PROFILE, required=True)
+    from ..config.utils import get_profiles
+    for name in get_profiles():
+        db_add_schema_profiles.add_parser(name)
+    db_remove = db_cmds.add_parser(REMOVE, help='reduce current configuration')
+    db_remove_item = db_remove.add_subparsers(title='item to remove', dest=ITEM, required=True)
+    db_remove_item.add_parser(USER, help='remove a user')
+    db_remove_item.add_parser(DATABASE, help='remove a database')
+    db_remove_item.add_parser(SCHEMA, help='remove a schema')
 
-    import_ = subparsers.add_parser(IMPORT, help='import data from a previous version')
+    import_ = commands.add_parser(IMPORT, help='import data from a previous version')
     import_.add_argument(SOURCE,
                          help='version or uri to import from (version assumes same URI structure as current database)')
     import_.add_argument(mm(DISABLE), action='store_true', help='disable following options (they enable by default)')
@@ -450,14 +465,14 @@ def make_parser(with_noop=False):
     import_.add_argument(mm(CONSTANTS), action='store_true', help='enable (or disable) import of constant data')
     import_.add_argument(mm(SEGMENTS), action='store_true', help='enable (or disable) import of segment data')
 
-    garmin = subparsers.add_parser(GARMIN, help='download monitor data from garmin connect')
+    garmin = commands.add_parser(GARMIN, help='download monitor data from garmin connect')
     garmin.add_argument(DIR, metavar='DIR', nargs='?', help='the directory where FIT files are stored')
     garmin.add_argument(mm(USER), metavar='USER', help='garmin connect username')
     garmin.add_argument(mm(PASSWD), metavar='PASSWORD', help='garmin connect password')
     garmin.add_argument(mm(DATE), metavar='DATE', type=to_date, help='date to download')
     garmin.add_argument(mm(FORCE), action='store_true', help='allow longer date range')
 
-    calculate = subparsers.add_parser(CALCULATE, help='(re-)calculate statistics')
+    calculate = commands.add_parser(CALCULATE, help='(re-)calculate statistics')
     calculate.add_argument(mm(FORCE), action='store_true', help='delete existing statistics')
     calculate.add_argument(mm(LIKE), action='append', default=[], metavar='PATTERN',
                            help='run only matching pipeline classes')
@@ -468,7 +483,7 @@ def make_parser(with_noop=False):
     calculate.add_argument(mm(WORKER), metavar='ID', type=int,
                            help='internal use only (identifies sub-process workers)')
 
-    fit = subparsers.add_parser(FIT, help='display contents of fit file')
+    fit = commands.add_parser(FIT, help='display contents of fit file')
     fit_cmds = fit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
     fit_grep = fit_cmds.add_parser(GREP, help='show matching entries')
     fit_records = fit_cmds.add_parser(RECORDS, help='show high-level structure (ordered by time)')
@@ -525,7 +540,7 @@ def make_parser(with_noop=False):
         cmd.add_argument(mm(WIDTH), type=int,
                          help='display width')
 
-    fix_fit = subparsers.add_parser(FIX_FIT, help='fix a corrupted fit file')
+    fix_fit = commands.add_parser(FIX_FIT, help='fix a corrupted fit file')
     fix_fit.add_argument(PATH, metavar='PATH', nargs='+', help='path to fit file')
     fix_fit.add_argument(m(W), mm(WARN), action='store_true', help='additional warning messages')
     fix_fit_output = fix_fit.add_argument_group(title='output (default hex to stdout)').add_mutually_exclusive_group()
@@ -569,22 +584,22 @@ def make_parser(with_noop=False):
     fix_fit_params.add_argument(mm(MAX_DELTA_T), type=float, metavar='S',
                                 help='max number of seconds between timestamps')
 
-    thumbnail = subparsers.add_parser(THUMBNAIL, help='generate a thumbnail map of an activity')
+    thumbnail = commands.add_parser(THUMBNAIL, help='generate a thumbnail map of an activity')
     thumbnail.add_argument(ACTIVITY, metavar='ACTIVITY', help='an activity ID or date')
     add_thumbnail_dir(thumbnail)
 
     if with_noop:
-        noop = subparsers.add_parser(NO_OP,
+        noop = commands.add_parser(NO_OP,
                                      help='used within jupyter (no-op from cmd line)')
 
-    package_fit_profile = subparsers.add_parser(PACKAGE_FIT_PROFILE,
+    package_fit_profile = commands.add_parser(PACKAGE_FIT_PROFILE,
                                                 help='parse and save the global fit profile (dev only)')
     package_fit_profile.add_argument(PATH, metavar='PROFILE',
                                      help='the path to the profile (Profile.xlsx)')
     package_fit_profile.add_argument(m(W), mm(WARN), action='store_true',
                                      help='additional warning messages')
 
-    show_schedule = subparsers.add_parser(SHOW_SCHEDULE, help='print schedule locations in a calendar')
+    show_schedule = commands.add_parser(SHOW_SCHEDULE, help='print schedule locations in a calendar')
     show_schedule.add_argument(SCHEDULE, metavar='SCHEDULE', help='schedule to test')
     show_schedule.add_argument(mm(START), metavar='DATE', help='date to start displaying data')
     show_schedule.add_argument(mm(MONTHS), metavar='N', type=int, help='number of months to display')

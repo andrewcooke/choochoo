@@ -22,11 +22,11 @@ class FatalException(Exception):
 from .commands.args import COMMAND, make_parser, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DATABASE, CONSTANTS, CALCULATE, SHOW_SCHEDULE, MONITOR, GARMIN, \
     UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, DB_VERSION
-from .common.names import COLOR, BASE
+from .common.names import COLOR, BASE, DB
 from .common.args import NamespaceWithVariables
 from .commands.constants import constants
 from .commands.validate import validate
-from .commands.database import database
+from .commands.db import db
 from .commands.fit import fit
 from .commands.fix_fit import fix_fit
 from .commands.garmin import garmin
@@ -41,8 +41,7 @@ from .commands.show_schedule import show_schedule
 from .commands.thumbnail import thumbnail
 from .commands.read import read
 from .commands.web import web
-from .lib.log import make_log_from_args, update_log_color
-from .common.log import set_log_color
+from .lib.log import make_log_from_args
 from .sql.database import SystemConstant
 
 log = getLogger(__name__)
@@ -59,7 +58,7 @@ at the command line.
 
 
 COMMANDS = {CONSTANTS: constants,
-            DATABASE: database,
+            DB: db,
             FIT: fit,
             FIX_FIT: fix_fit,
             GARMIN: garmin,
@@ -85,7 +84,7 @@ def args_and_command():
     command_name = ns.command if hasattr(ns, COMMAND) else None
     command = COMMANDS[command_name] if command_name in COMMANDS else None
     if command_name == NO_OP: ns.verbose = 0
-    args = NamespaceWithVariables(ns, PROGNAME, DB_VERSION)
+    args = NamespaceWithVariables._from_ns(ns, PROGNAME, DB_VERSION)
     return args, command, command_name
 
 
@@ -101,14 +100,16 @@ def main():
     set_global_dev(args[DEV])
     make_log_from_args(args)
     config = Config(args)
-    set_log_color(update_log_color(config))
     try:
         if not command:
             log.debug('If you are seeing the "No command given" error during development ' +
                       'you may have forgotten to set the command name via `set_defaults()`.')
             raise Exception('No command given (try `ch2 help`)')
-        elif command_name not in (DATABASE, PACKAGE_FIT_PROFILE, HELP):
-            db = config.db if command_name not in (PACKAGE_FIT_PROFILE, HELP) else None
+        elif command_name not in (DB, PACKAGE_FIT_PROFILE, HELP):
+            try:
+                db = config.db if command_name not in (PACKAGE_FIT_PROFILE, HELP) else None
+            except Exception as e:
+                log.warning(e)
             if not db:
                 refuse_until_configured(command_name, False)
             elif db.no_data():

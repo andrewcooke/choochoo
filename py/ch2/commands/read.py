@@ -7,7 +7,7 @@ from os.path import basename, join, exists, dirname
 from .calculate import run_statistic_pipelines
 from .garmin import run_garmin
 from ..commands.args import KIT, READ, FORCE, PATH, base_system_path, PERMANENT, WORKER, parse_pairs, \
-    KARG, infer_flags, ACTIVITIES, CALCULATE, DATA_DIR
+    KARG, infer_flags, ACTIVITIES, CALCULATE, DATA_DIR, BASE
 from ..common.date import time_to_local_time, Y, YMDTHMS
 from ..common.io import touch, clean_path, data_hash
 from ..lib.io import split_fit_path
@@ -250,7 +250,7 @@ def upload_files_and_update(record, config, files=tuple(), nfiles=1, force=False
             with config.db.session_context() as s:
                 try:
                     log.info('Running Garmin download')
-                    run_garmin(config, s, base=config.base, progress=progress)
+                    run_garmin(config, s, base=config.args[BASE], progress=progress)
                 except Exception as e:
                     log.warning(f'Could not get data from Garmin: {e}')
             log.info('Running monitor pipelines (again)')

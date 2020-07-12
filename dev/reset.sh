@@ -15,22 +15,14 @@ if [ ! -d $BASE ]; then
     exit 1
 fi
 
-ACTIVITY=$BASE/data/activity.db
-if [ ! -f $ACTIVITY ]; then
-    echo -e "\nmissing $BASE/data/activity.db"
-    exit 1
-fi
-
-TEMP=/tmp/activity-reset.db
-rm -f $TEMP
-echo -e "\ncopying $ACTIVITY to $TEMP"
-cp $ACTIVITY $TEMP
-
 echo -e "\ndeleting $BASE"
 rm -fr $BASE
 
+echo -e "\ndeleting database"
+psql -Upostgres -hlocalhost -c "drop database if exists \"activity-$VERSION\""
+
 echo -e "\nreinstalling"
-dev/ch2 --dev --color DARK configure load acooke
+dev/ch2 --dev --color DARK database load acooke
 
 echo -e "\nupgrading old data"
 dev/ch2 --dev upgrade $TEMP

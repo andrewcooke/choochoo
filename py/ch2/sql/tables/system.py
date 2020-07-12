@@ -1,4 +1,3 @@
-import datetime as dt
 from logging import getLogger
 from os import getpid
 from time import time, sleep

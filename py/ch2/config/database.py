@@ -6,7 +6,7 @@ from ..common.names import TIME_ZERO
 from ..sql import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
     DiaryTopic, DiaryTopicField, ActivityTopic, ActivityTopicField
 from ..sql.tables.constant import ValidateNamedTuple
-from ..sql.types import long_cls
+from ..sql.types import long_cls, short_cls
 
 log = getLogger(__name__)
 
@@ -62,7 +62,22 @@ def add_activity_group(s, name, sort, description=None):
     return add(s, ActivityGroup(name=name, sort=sort, description=description))
 
 
-def add_statistics(s, cls, sort, **kargs):
+def add_pipeline(s, cls, type, sort, kargs, blocked_by=tuple()):
+    pipeline = add(s, Pipeline(cls=cls, type=type, sort=sort, kargs=kargs))
+    for blocker_cls in blocked_by:
+        q = s.query(Pipeline). \
+            filter(Pipeline.type == pipeline.type,
+                   Pipeline.cls == blocker_cls)
+        if q.count():
+            for blocker in q.all():
+                pipeline.blocked_by.append(blocker)
+            log.debug(f'{short_cls(blocker_cls)} blocks {short_cls(cls)}')
+        else:
+            raise Exception(f'{short_cls(blocker_cls)} is not a current pipeline')
+    return pipeline
+
+
+def add_statistics(s, cls, sort, blocked_by=tuple(), **kargs):
     '''
     Add a class to the statistics pipeline.
 
@@ -74,8 +89,8 @@ def add_statistics(s, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
-    log.debug(f'Adding statistic pipeline {cls}')
-    return add(s, Pipeline(cls=cls, type=PipelineType.CALCULATE, sort=sort, kargs=kargs))
+    log.debug(f'Adding statistic pipeline {short_cls(cls)}')
+    return add_pipeline(s, cls, PipelineType.CALCULATE, sort, kargs, blocked_by=blocked_by)
 
 
 def add_displayer(s, cls, sort, **kargs):
@@ -90,8 +105,8 @@ def add_displayer(s, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
-    log.debug(f'Adding displayer pipeline {cls}')
-    return add(s, Pipeline(cls=cls, type=PipelineType.DISPLAY, sort=sort, kargs=kargs))
+    log.debug(f'Adding displayer pipeline {short_cls(cls)}')
+    return add_pipeline(s, cls, PipelineType.DISPLAY, sort, kargs, blocked_by=())
 
 
 def add_activity_displayer_delegate(s, cls, sort, **kargs):
@@ -105,8 +120,8 @@ def add_activity_displayer_delegate(s, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
-    log.debug(f'Adding activity displayer pipeline {cls}')
-    return add(s, Pipeline(cls=cls, type=PipelineType.DISPLAY_ACTIVITY, sort=sort, kargs=kargs))
+    log.debug(f'Adding activity displayer pipeline {short_cls(cls)}')
+    return add_pipeline(s, cls, PipelineType.DISPLAY_ACTIVITY, sort, kargs, blocked_by=())
 
 
 def add_monitor(s, cls, sort, **kargs):
@@ -121,8 +136,8 @@ def add_monitor(s, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
-    log.debug(f'Adding monitor pipeline {cls}')
-    return add(s, Pipeline(cls=cls, type=PipelineType.READ_MONITOR, sort=sort, kargs=kargs))
+    log.debug(f'Adding monitor pipeline {short_cls(cls)}')
+    return add_pipeline(s, cls, PipelineType.READ_MONITOR, sort, kargs, blocked_by=())
 
 
 def add_activities(s, cls, sort, **kargs):
@@ -137,8 +152,8 @@ def add_activities(s, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
-    log.debug(f'Loading activity pipeline {cls}')
-    return add(s, Pipeline(cls=cls, type=PipelineType.READ_ACTIVITY, sort=sort, kargs=kargs))
+    log.debug(f'Loading activity pipeline {short_cls(cls)}')
+    return add_pipeline(s, cls, PipelineType.READ_ACTIVITY, sort, kargs, blocked_by=())
 
 
 def add_constant(s, title, value, description=None, units=None, name=None,

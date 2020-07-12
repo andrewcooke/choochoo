@@ -11,6 +11,7 @@ from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.schedule import Schedule
 from ..names import N, Titles, Sports, Units, Summaries as S
+from ..pipeline.calculate import ImpulseCalculator
 from ..pipeline.calculate.achievement import AchievementCalculator
 from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.elevation import ElevationCalculator
@@ -18,6 +19,7 @@ from ..pipeline.calculate.heart_rate import RestHRCalculator
 from ..pipeline.calculate.kit import KitCalculator
 from ..pipeline.calculate.monitor import MonitorCalculator
 from ..pipeline.calculate.nearby import SimilarityCalculator, NearbyCalculator
+from ..pipeline.calculate.power import PowerCalculator
 from ..pipeline.calculate.response import ResponseCalculator
 from ..pipeline.calculate.segment import SegmentCalculator
 from ..pipeline.calculate.summary import SummaryCalculator
@@ -49,28 +51,29 @@ SWIM = 'Swim'
 WALK = 'Walk'
 
 
-class Config:
+class Profile:
     '''
     A class-based approach so that we can easily modify the config for different profiles.
     '''
 
-    def __init__(self, data):
-        self._data = data
+    def __init__(self, config):
+        self._config = config
         self._activity_groups = {}
 
-    def load(self, s):
-        # hopefully you won't need to over-ride this, but instead one of the more specific methods
-        self._pre(s)
-        self._load_specific_activity_groups(s)
-        self._load_activities_pipeline(s, Counter())
-        self._load_statistics_pipeline(s, Counter())
-        self._load_diary_pipeline(s, Counter())
-        self._load_monitor_pipeline(s, Counter())
-        self._load_constants(s)
-        self._load_diary_topics(s, Counter())
-        self._load_activity_topics(s, Counter())
-        self._post_diary(s)
-        self._post(s)
+    def load(self):
+        with self._config.db.session_context() as s:
+            # hopefully you won't need to over-ride this, but instead one of the more specific methods
+            self._pre(s)
+            self._load_specific_activity_groups(s)
+            self._load_activities_pipeline(s, Counter())
+            self._load_statistics_pipeline(s, Counter())
+            self._load_diary_pipeline(s, Counter())
+            self._load_monitor_pipeline(s, Counter())
+            self._load_constants(s)
+            self._load_diary_topics(s, Counter())
+            self._load_activity_topics(s, Counter())
+            self._post_diary(s)
+            self._post(s)
 
     def _pre(self, s):
         pass
@@ -146,14 +149,20 @@ your FF-model parameters (fitness and fatigue).
         add_responses(s, c, self._ff_parameters(), prefix=N.DEFAULT)
 
     def _load_standard_statistics(self, s, c):
-        add_statistics(s, ActivityCalculator, c, owner_in=short_cls(ResponseCalculator),
-                       climb=CLIMB_CNAME, response_prefix=N.DEFAULT)
         add_statistics(s, SegmentCalculator, c, owner_in=short_cls(SegmentReader))
         add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))
         add_statistics(s, RestHRCalculator, c, owner_in=short_cls(MonitorReader))
         add_statistics(s, KitCalculator, c, owner_in=short_cls(SegmentReader))
-        add_statistics(s, SimilarityCalculator, c, owner_in=short_cls(ActivityCalculator))
-        add_statistics(s, NearbyCalculator, c, owner_in=short_cls(SimilarityCalculator))
+        add_statistics(s, ActivityCalculator, c,
+                       blocked_by=[PowerCalculator, ElevationCalculator, ImpulseCalculator, ResponseCalculator],
+                       owner_in=short_cls(ResponseCalculator),
+                       climb=CLIMB_CNAME, response_prefix=N.DEFAULT)
+        add_statistics(s, SimilarityCalculator, c,
+                       blocked_by=[ActivityCalculator],
+                       owner_in=short_cls(ActivityCalculator))
+        add_statistics(s, NearbyCalculator, c,
+                       blocked_by=[SimilarityCalculator],
+                       owner_in=short_cls(SimilarityCalculator))
 
     def _load_summary_statistics(self, s, c):
         # need to call normalize here because schedule isn't a schedule type column,
@@ -191,7 +200,7 @@ your FF-model parameters (fitness and fatigue).
         add_monitor(s, MonitorReader, c)
 
     def _load_constants(self, s):
-        add_constant(s, SRTM1_DIR_CNAME, self._data.args._format(value='{data-dir}/srtm1'),
+        add_constant(s, SRTM1_DIR_CNAME, self._config.args._format(value='{data-dir}/srtm1'),
                      description='''
 Directory containing SRTM1 hgt files for elevations.
 
@@ -257,5 +266,5 @@ so do not use an important password that applies to many accounts.
 
     def _load_sys(self, s):
         # finally, update the timezone
-        DiaryTopicJournal.check_tz(self._data, s)
+        DiaryTopicJournal.check_tz(self._config, s)
 

@@ -5,7 +5,7 @@ from os.path import join
 from time import time
 
 from ... import FatalException
-from ...commands.args import base_system_path, PERMANENT, FORCE, READ
+from ...commands.args import base_system_path, PERMANENT, FORCE, READ, BASE
 from ...common.args import mm
 from ...common.date import now
 from ...fit.format.read import filtered_records
@@ -41,7 +41,7 @@ class FitReaderMixin:
     def _expand_paths(self, s, paths):
         from ...commands.read import DOT_FIT
         if paths: return paths
-        data_dir = base_system_path(self._config.base, version=PERMANENT)
+        data_dir = base_system_path(self._config.args[BASE], version=PERMANENT)
         if self.sub_dir:
             data_dir = join(data_dir, self.sub_dir)
         else:

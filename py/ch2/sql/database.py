@@ -104,9 +104,6 @@ class Database(DatabaseBase):
 
     def __init__(self, uri):
         super().__init__(uri)
-        if self.no_schema(Source):
-            log.info('Creating tables')
-            Base.metadata.create_all(self.engine)
 
     def no_data(self):
         with self.session_context() as s:

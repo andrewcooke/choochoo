@@ -3,7 +3,8 @@ from enum import IntEnum
 from json import dumps
 from logging import getLogger
 
-from sqlalchemy import Column, Integer, not_, or_
+from sqlalchemy import Column, Integer, not_, or_, Table, ForeignKey
+from sqlalchemy.orm import relationship
 
 from ..support import Base
 from ..types import Cls, Json, Sort
@@ -20,16 +21,26 @@ class PipelineType(IntEnum):
     READ_MONITOR = 3
 
 
+PipelineDependency = Table('pipeline_dependency', Base.metadata,
+                           Column('blocks', Integer, ForeignKey('pipeline.id')),
+                           Column('blocked_by', Integer, ForeignKey('pipeline.id')))
+
+
 class Pipeline(Base):
 
     __tablename__ = 'pipeline'
 
     id = Column(Integer, primary_key=True)
     type = Column(Integer, nullable=False, index=True)
-    cls = Column(Cls, nullable=False)
+    cls = Column(Cls, nullable=False)  # not unique - may run various instances
     args = Column(Json, nullable=False, server_default=dumps(()))
     kargs = Column(Json, nullable=False, server_default=dumps({}))
     sort = Column(Sort, nullable=False)
+
+    blocks = relationship('Pipeline', secondary=PipelineDependency,
+                          foreign_keys=[PipelineDependency.c.blocks])
+    blocked_by = relationship('Pipeline', secondary=PipelineDependency,
+                              foreign_keys=[PipelineDependency.c.blocked_by])
 
     @classmethod
     def _query(cls, s, type=None, like=tuple(), id=None):
@@ -65,3 +76,5 @@ class Pipeline(Base):
     def count(cls, s, type, like=tuple(), id=None):
         q = cls._query(s, type, like=like, id=id)
         return q.count()
+
+
