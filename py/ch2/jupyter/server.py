@@ -47,7 +47,7 @@ class JupyterController(BaseController):
         args = config.args
         self.__proxy_bind = self.__proxy_args(args, BIND, self._bind)
         self.__proxy_port = self.__proxy_args(args, PORT, self._port)
-        self.__notebook_dir = args[NOTEBOOK_DIR]
+        self.__notebook_dir = args[NOTEBOOK_DIR] if NOTEBOOK_DIR in args else None
 
     @staticmethod
     def __proxy_args(args, name, default):

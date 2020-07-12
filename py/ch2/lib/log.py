@@ -15,7 +15,7 @@ def make_log_from_args(args):
             (args[COMMAND] if COMMAND in args and args[COMMAND] else PROGNAME) + f'.{LOG}')
     path = join(args._format_path(LOG_DIR), name)
     if args[VERBOSITY] is UNDEF:
-        verbosity = 5 if args[DEV] else 2
+        verbosity = 5 if args[DEV] else 4
     else:
         verbosity = args[VERBOSITY]
     configure_log('ch2', path, verbosity, {

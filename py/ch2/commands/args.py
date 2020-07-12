@@ -18,6 +18,7 @@ CH2_VERSION = '0.35.0'
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 
 URI_DEFAULT = 'postgresql://{user}:{passwd}@localhost/activity-{version}'
+URI_PREVIOUS = 'postgresql://{user}:{passwd}@localhost/activity-{version}?search_path={user}:previous'
 
 PROGNAME = 'ch2'
 
@@ -456,8 +457,10 @@ def make_parser(with_noop=False):
     db_remove_item.add_parser(SCHEMA, help='remove a schema')
 
     import_ = commands.add_parser(IMPORT, help='import data from a previous version')
-    import_.add_argument(SOURCE,
-                         help='version or uri to import from (version assumes same URI structure as current database)')
+    import_.add_argument(SOURCE, nargs='?',
+                         help='version or uri to import from '
+                              '(version assumes same URI structure as current database); '
+                              'omit to list available sources')
     import_.add_argument(mm(DISABLE), action='store_true', help='disable following options (they enable by default)')
     import_.add_argument(mm(DIARY), action='store_true', help='enable (or disable) import of diary data')
     import_.add_argument(mm(ACTIVITIES), action='store_true', help='enable (or disable) import of activity data')

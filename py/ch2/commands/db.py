@@ -148,7 +148,6 @@ def test_schema(cnxn, schema):
     return bool(execute(cnxn, 'select 1 from pg_namespace where nspname = :schema', schema=schema).first())
 
 
-# https://wiki.postgresql.org/wiki/Clone_schema
 def backup_schema(config):
     user = config.args[USER]
     assert_name(user)
@@ -157,6 +156,7 @@ def backup_schema(config):
     if test_schema(cnxn, previous):
         remove(cnxn, 'schema', previous, ' cascade', extended=True)
     add_schema(cnxn, user, previous, extended=True)
+    # https://wiki.postgresql.org/wiki/Clone_schema
     with with_log(f'Copying tables to {previous}'):
         for row in execute(cnxn, 'select table_name from information_schema.tables WHERE table_schema = :schema',
                            schema=user).fetchall():
@@ -207,11 +207,18 @@ def set(cnxn, part, schema, user, stmt, extended=False):
 def add_schema(cnxn, user, schema, extended=False):
     # search_path is set separately because we don't include the backup
     assert_name(user)
-    assert_name(schema, extended=extended)
-    add(cnxn, 'schema', schema, f'create schema {{name}} authorization {quote(cnxn, user)}', extended=extended)
-    set(cnxn, 'usage', schema, user, 'grant usage on schema {schema} to {user}', extended=extended)
+    assert_name(schema,
+                extended=extended)
+    add(cnxn, 'schema', schema, f'create schema {{name}} authorization {quote(cnxn, user)}',
+        extended=extended)
+    set(cnxn, 'usage', schema, user, 'grant usage on schema {schema} to {user}',
+        extended=extended)
     set(cnxn, 'permissions', schema, user,
-        'grant insert, select, update, delete on all tables in schema {schema} to {user}', extended=extended)
+        'grant insert, select, update, delete on all tables in schema {schema} to {user}',
+        extended=extended)
+    set(cnxn, 'permissions', schema, user,
+        'alter default privileges in schema {schema} grant insert, select, update, delete on tables to {user}',
+        extended=extended)
 
 
 def add_profile(config):

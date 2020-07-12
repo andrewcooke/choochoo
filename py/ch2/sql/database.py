@@ -1,17 +1,13 @@
 from contextlib import contextmanager
 from logging import getLogger
 
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine, MetaData, text
 from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.sql.functions import count
-from sqlalchemy_utils import create_database
-from uritools import urisplit
+from uritools import urisplit, uriunsplit
 
 from . import *
-from .support import Base
 from ..commands.args import NO_OP, make_parser, NamespaceWithVariables, PROGNAME, DB_VERSION
-from ..common.names import POSTGRESQL
-from ..common.sql import database_really_exists
+from ..common.log import log_current_exception
 from ..lib.log import make_log_from_args
 from ..lib.utils import grouper
 
@@ -65,20 +61,34 @@ class DirtySession(Session):
         self.__dirty_ids = set()
 
 
+class CannotConnect(Exception): pass
+
+
 class DatabaseBase:
 
     def __init__(self, uri):
-        self.uri = uri
-        options = {'echo': False}
-        uri_parts = urisplit(uri)
-        # todo - could be part of uri?
-        if POSTGRESQL == uri_parts.scheme: options.update(executemany_mode="values")
-        if not database_really_exists(uri):
-            log.warning(f'Creating database at {uri}')
-            create_database(uri)
-        log.debug(f'Creating engine with options {options}')
-        self.engine = create_engine(uri, **options)
-        self.session = sessionmaker(bind=self.engine, class_=DirtySession)
+        try:
+            self.uri = uri
+            options = {'echo': False, 'executemany_mode': 'values'}
+            connect_args = {}
+            uri_parts = urisplit(uri)
+            if uri_parts.query:
+                for name, value in uri_parts.getquerydict().items():
+                    if len(value) > 1: raise Exception(f'Multiple values for option {name}')
+                    value = value[0]
+                    log.debug(f'Have additional URI option {name} = {value}')
+                    if name == 'echo': options[name] = bool(value)
+                    elif name == 'executemany_mode': options[name] = value
+                    elif name == 'search_path': connect_args['options'] = f'-csearch_path={value}'
+                    else: raise Exception(f'Unsupported option {name} = {value}')
+                uri = uriunsplit(uri_parts._replace(query=None))
+            log.debug(f'Creating engine for {uri} with options {options} and connect args {connect_args}')
+            self.engine = create_engine(uri, **options, connect_args=connect_args)
+            self.session = sessionmaker(bind=self.engine, class_=DirtySession)
+            self.engine.connect().execute(text('select 1')).fetchone()  # test connection
+        except:
+            log_current_exception(traceback=False)
+            raise CannotConnect(f'Could not connect to database')
 
     def no_schema(self, table):
         # https://stackoverflow.com/questions/33053241/sqlalchemy-if-table-does-not-exist
@@ -106,11 +116,15 @@ class Database(DatabaseBase):
         super().__init__(uri)
 
     def no_data(self):
-        with self.session_context() as s:
-            n_topics = s.query(count(DiaryTopic.id)).scalar()
-            n_activities = s.query(count(ActivityGroup.id)).scalar()
-            n_statistics = s.query(count(StatisticName.id)).scalar()
-            return not (n_topics + n_activities + n_statistics)
+        try:
+            with self.session_context() as s:
+                n_topics = s.query(DiaryTopicJournal.id).count()
+                n_activities = s.query(ActivityJournal).count()
+                n_statistics = s.query(StatisticJournal).count()
+                return not (n_topics + n_activities + n_statistics)
+        except:
+            log_current_exception(traceback=False)
+            return True
 
     def no_schema(self, table=Constant):
         return super().no_schema(table=table)
@@ -140,5 +154,3 @@ class ReflectedDatabase(DatabaseBase):
         super().__init__(*args, **kargs)
         self.meta = MetaData()
         self.meta.reflect(bind=self.engine)
-
-

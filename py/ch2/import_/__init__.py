@@ -1,12 +1,14 @@
 from collections import namedtuple
 from logging import getLogger
 
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm.exc import NoResultFound
 
-from ..commands.args import DB_VERSION, URI_DEFAULT
+from ..commands.args import DB_VERSION, URI_DEFAULT, URI_PREVIOUS
 from ..lib import format_date, time_to_local_date, to_time
 from ..sql import StatisticJournal, StatisticName, StatisticJournalType
 from ..common.sql import database_really_exists
+from ..sql.database import Database, CannotConnect
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ..common.names import TIME_ZERO
 from ..sql.types import short_cls
@@ -87,25 +89,29 @@ def clone_with(result, **kargs):
     return namedtuple('clone', result._fields, defaults=result)(**kargs)
 
 
-def available_versions(data, max_depth=3):
-    return [version[1] for version in sorted(find_versions(data, max_depth=max_depth), reverse=True)]
+def available_versions(config, max_depth=3):
+    return [version[1] for version in sorted(find_versions(config, max_depth=max_depth), reverse=True)]
 
 
-def find_versions(data, max_depth=3):
+def find_versions(config, max_depth=3):
     current_version = [int(version) for version in DB_VERSION.split('-')]
     for major, minor in count_down_version(current_version, max_depth=max_depth):
         version = f'{major}-{minor}'
-        for uri_template in [URI_DEFAULT, URI_SQLITE, URI_POSTGRESQL]:
-            uri = data.get_uri(uri_template, version=version)
+        for uri_template in [URI_DEFAULT, URI_PREVIOUS]:
+            if [major, minor] == current_version and uri_template == URI_DEFAULT: continue
+            uri = config.args._with(version=version)._format(value=uri_template)
             log.debug(f'Trying uri {uri} for version {version}')
-            if database_really_exists(uri):
-                log.info(f'Found {uri}')
-                yield version, uri
+            try:
+                db = Database(uri)
+                if not db.no_data():
+                    log.info(f'Import candidate for {version} at {uri_template}')
+                    yield version, uri
+            except CannotConnect:
+                pass
 
 
 def count_down_version(current_version, restart_minor=0, max_depth=3):
     major, minor = current_version
-    minor -= 1  # skip current
     while major >= 0:
         while minor >= 0 and max_depth > 0:
             yield major, minor

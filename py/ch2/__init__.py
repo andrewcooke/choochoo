@@ -105,7 +105,8 @@ def main():
             log.debug('If you are seeing the "No command given" error during development ' +
                       'you may have forgotten to set the command name via `set_defaults()`.')
             raise Exception('No command given (try `ch2 help`)')
-        elif command_name not in (DB, PACKAGE_FIT_PROFILE, HELP):
+        elif command_name not in (DB, PACKAGE_FIT_PROFILE, HELP, IMPORT):
+            db = None
             try:
                 db = config.db if command_name not in (PACKAGE_FIT_PROFILE, HELP) else None
             except Exception as e:

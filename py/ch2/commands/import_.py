@@ -3,6 +3,7 @@ from logging import getLogger
 
 from .args import SOURCE, SEGMENTS, CONSTANTS, KIT, ACTIVITIES, DIARY, \
     infer_flags
+from ..import_ import available_versions
 from ..import_.activity import import_activity
 from ..import_.constant import import_constant
 from ..import_.diary import import_diary
@@ -36,11 +37,18 @@ Import only diary entries.
 
 Import everything but diary entries.
     '''
-    flags = infer_flags(config.args, DIARY, ACTIVITIES, KIT, CONSTANTS, SEGMENTS)
-    import_source(config, Record(log), config.args[SOURCE], flags=flags)
+    source = config.args[SOURCE]
+    if source:
+        flags = infer_flags(config.args, DIARY, ACTIVITIES, KIT, CONSTANTS, SEGMENTS)
+        import_source(config, Record(log), config.args[SOURCE], flags=flags)
+    else:
+        for uri in available_versions(config):
+            print(uri)
 
 
 def import_source(config, record, source, flags=None):
+    if config.db.no_schema():
+        raise Exception(f'Cannot import into a database with no schema (add profile first)')
     # engine needed if source is not a URI
     with record.record_exceptions():
         uri = infer_uri(config, source)

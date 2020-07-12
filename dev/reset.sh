@@ -19,10 +19,14 @@ echo -e "\ndeleting $BASE"
 rm -fr $BASE
 
 echo -e "\ndeleting database"
-psql -Upostgres -hlocalhost -c "drop database if exists \"activity-$VERSION\""
+dev/ch2 db remove database
 
-echo -e "\nreinstalling"
-dev/ch2 --dev --color DARK database load acooke
+echo -e "\nre-creating database"
+dev/ch2 db add database
+dev/ch2 db add user
+dev/ch2 db add profile acooke
+
+exit 2
 
 echo -e "\nupgrading old data"
 dev/ch2 --dev upgrade $TEMP
