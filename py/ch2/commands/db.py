@@ -11,7 +11,7 @@ from .args import SUB_COMMAND, LIST, PROFILE, DB_VERSION, FORCE, ITEM, USERS, SC
 from .help import Markdown
 from ..common.args import mm
 from ..common.log import log_current_exception
-from ..common.names import URI, USER, ADMIN_USER, ADMIN_PASSWD, valid_name, assert_name, PASSWD
+from ..common.names import URI, USER, ADMIN_USER, ADMIN_PASSWD, valid_name, assert_name, PASSWD, PREVIOUS
 from ..common.sql import database_really_exists
 from ..config.utils import profiles, get_profile
 from ..sql.support import Base
@@ -86,11 +86,11 @@ def get_postgres_cnxn(config):
     return get_cnxn(config, uri=uriunsplit(urisplit(config.args[URI])._replace(path='/postgres')))
 
 
-def print_query(cnxn, query):
+def print_query(cnxn, query, extended=False):
     log.debug(query)
     for row in cnxn.execute(text(query)).fetchall():
         name = row[0]
-        if valid_name(name):
+        if valid_name(name, extended=extended):
             print(name)
 
 
@@ -99,7 +99,7 @@ def list_users(config):
 
 
 def list_schemas(config):
-    print_query(get_cnxn(config), 'select nspname from pg_namespace')
+    print_query(get_cnxn(config), 'select nspname from pg_namespace', extended=True)
 
 
 def list_databases(config):
@@ -121,8 +121,8 @@ def quote(cnxn, name):
     return cnxn.engine.dialect.identifier_preparer.quote_identifier(name)
 
 
-def remove(cnxn, part, name, extra=''):
-    name = assert_name(name)
+def remove(cnxn, part, name, extra='', extended=False):
+    name = assert_name(name, extended=extended)
     with with_log(f'Removing {part} {name}'):
         stmt = f'drop {part} {quote(cnxn, name)}' + extra
         log.debug(stmt)
@@ -139,13 +139,44 @@ def remove_database(config):
            urlsplit(config.args._format(URI)).path[1:])
 
 
-def remove_schema(config):
+def execute(cnxn, stmt, **kargs):
+    log.debug(f'Executing {stmt} with {kargs}')
+    return cnxn.execute(text(stmt), **kargs)
+
+
+def test_schema(cnxn, schema):
+    return bool(execute(cnxn, 'select 1 from pg_namespace where nspname = :schema', schema=schema).first())
+
+
+# https://wiki.postgresql.org/wiki/Clone_schema
+def backup_schema(config):
+    user = config.args[USER]
+    assert_name(user)
+    previous = user + ':' + PREVIOUS
+    cnxn = get_cnxn(config)
+    if test_schema(cnxn, previous):
+        remove(cnxn, 'schema', previous, ' cascade', extended=True)
+    add_schema(cnxn, user, previous, extended=True)
+    with with_log(f'Copying tables to {previous}'):
+        for row in execute(cnxn, 'select table_name from information_schema.tables WHERE table_schema = :schema',
+                           schema=user).fetchall():
+            table = row[0]
+            execute(cnxn, f'create table {quote(cnxn, previous)}.{quote(cnxn, table)} '
+                          f'(like {quote(cnxn, user)}.{quote(cnxn, table)} '
+                          f'including constraints including indexes including defaults)')
+            execute(cnxn, f'insert into {quote(cnxn, previous)}.{quote(cnxn, table)} '
+                          f'(select * from {quote(cnxn, user)}.{quote(cnxn, table)})')
+
+
+def remove_schema(config, backup=True):
+    if backup:
+        backup_schema(config)
     # todo - will this work with the user?  maybe need to use postgres but connect to this database
     remove(get_cnxn(config), 'schema', config.args[USER], ' cascade')
 
 
-def add(cnxn, part, name, stmt, **kargs):
-    assert_name(name)
+def add(cnxn, part, name, stmt, extended=False, **kargs):
+    assert_name(name, extended=extended)
     with with_log(f'Adding {part} {name}'):
         stmt = stmt.format(name=quote(cnxn, name))
         log.debug(stmt)
@@ -164,8 +195,8 @@ def add_database(config):
         f'create database {{name}} with owner {quote(cnxn, config.args[USER])}')
 
 
-def set(cnxn, part, schema, user, stmt):
-    assert_name(schema)
+def set(cnxn, part, schema, user, stmt, extended=False):
+    assert_name(schema, extended=extended)
     assert_name(user)
     with with_log(f'Setting {part} on {schema} for {user}'):
         stmt = stmt.format(schema=quote(cnxn, schema), user=quote(cnxn, user))
@@ -173,14 +204,23 @@ def set(cnxn, part, schema, user, stmt):
         cnxn.execute(text(stmt))
 
 
+def add_schema(cnxn, user, schema, extended=False):
+    # search_path is set separately because we don't include the backup
+    assert_name(user)
+    assert_name(schema, extended=extended)
+    add(cnxn, 'schema', schema, f'create schema {{name}} authorization {quote(cnxn, user)}', extended=extended)
+    set(cnxn, 'usage', schema, user, 'grant usage on schema {schema} to {user}', extended=extended)
+    set(cnxn, 'permissions', schema, user,
+        'grant insert, select, update, delete on all tables in schema {schema} to {user}', extended=extended)
+
+
 def add_profile(config):
     cnxn = get_cnxn(config)
     user = config.args[USER]
-    add(cnxn, 'schema', user, f'create schema {{name}} authorization {quote(cnxn, user)}')
-    set(cnxn, 'search_path', user, user, 'alter role {user} set search_path to {schema}')
-    set(cnxn, 'usage', user, user, 'grant usage on schema {schema} to {user}')
-    set(cnxn, 'permissions', user, user,
-        'grant insert, select, update, delete on all tables in schema {schema} to {user}')
+    assert_name(user)
+    add_schema(cnxn, user, user)
+    with with_log('Setting search_path'):
+        set(cnxn, 'search_path', user, user, 'alter role {user} set search_path to {schema}')
     with with_log('Creating tables'):
         Base.metadata.create_all(config.db.engine)
     profile = config.args[PROFILE]
