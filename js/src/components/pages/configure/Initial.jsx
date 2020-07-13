@@ -35,20 +35,17 @@ function Delete(props) {
     return (<>
         <ColumnCard header='Reset'>
             <Grid item xs={12}><Text>
-                <p>You can delete the current version from the base directory,
-                    removing all data in the database,
-                    along with old logs and jupyter notebooks.</p>
-                <p>Activity data can then be re-read from FIT files (see 'Directories').
-                    In most cases, user data from a <b>previous</b> version can also be imported
-                    (assuming the previous database still exists), but user data entered
-                    into <b>this</b> version will be <b>lost</b>.</p>
+                <p>You can delete the current database by clicking below.  Deleted data are copied
+                    to ':previous' before deletion.  This allows user data to be re-imported into the
+                    new version (see below).  It is <em>not</em> a backup.</p>
+                <p>After deletion and creating a new database, activity data can be re-read from FIT
+                    files (see 'Directories').  In most cases, user data from an earlier version, or
+                    from the ':previous' copy, can also be imported.</p>
             </Text></Grid>
             <ConfirmedWriteButton xs={4} pad={8} label='Delete' variant='contained' method='post'
                                   href='/api/configure/delete' setData={reload}
                                   json={{}} onComplete={onComplete}>
-                Some data can be recalculated from the FITS files (which are <b>not</b> deleted),
-                or from a previous database version,
-                but you will lose any information entered directly into <b>this</b> version of the diary.
+                This will delete your current data and overwrite any already existing ':previous' copy.
             </ConfirmedWriteButton>
         </ColumnCard>
         <Dialog fullScreen={fullScreen} open={wait}>

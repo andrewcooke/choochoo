@@ -55,7 +55,7 @@ class WebController(BaseController):
         args = config.args
         self.__warn_data = args[WARN + '-' + DATA]
         self.__warn_secure = args[WARN + '-' + SECURE]
-        self.__jupyter = JupyterController(args, data)
+        self.__jupyter = JupyterController(config)
         self.__notebook_dir = args[NOTEBOOK_DIR]
         self.__thumbnail_dir = args[THUMBNAIL_DIR]
 
@@ -70,14 +70,16 @@ class WebController(BaseController):
         return cmd, log_name
 
     def _run(self):
-        self._config.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self._bind, self._port), force=True)
+        # todo - repeat this elsewhere if database not present
+        # self._config.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self._bind, self._port), force=True)
         log.debug(f'Binding to {self._bind}:{self._port}')
         run_simple(self._bind, self._port,
                    WebServer(self._config, self.__jupyter, warn_data=self.__warn_data, warn_secure=self.__warn_secure),
                    use_debugger=self._dev, use_reloader=self._dev)
 
     def _cleanup(self):
-        self._config.delete_constant(SystemConstant.WEB_URL)
+        # default in case starting without a database
+        self._config.delete_constant(SystemConstant.WEB_URL, default=None)
 
     def _status(self, running):
         if running:
@@ -183,7 +185,8 @@ class WebServer:
         return self.wsgi_app(environ, start_response)
 
     def get_busy(self):
-        percent = self.__config.get_percent(READ)
+        # default for when database missing
+        percent = self.__config.get_percent(READ, default=100)
         if percent is None: percent = 100
         # the client uses the complete message when the problem has passed
         return {MESSAGE: 'Loading data and recalculating statistics.',

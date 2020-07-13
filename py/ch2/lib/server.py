@@ -60,7 +60,8 @@ class BaseController(ABC):
 
     def stop(self):
         log.info('Stopping any running service')
-        self._config.delete_all_processes(self.__server_cls)
+        # default in case database is missing
+        self._config.delete_all_processes(self.__server_cls, default=None)
         self._cleanup()
 
     def _cleanup(self):

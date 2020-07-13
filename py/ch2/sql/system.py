@@ -1,9 +1,11 @@
+from contextlib import contextmanager
 from logging import getLogger
 
 from .database import SystemConstant, Process, Database
 from .tables.system import Progress
-from ..commands.args import DB_VERSION
+from ..commands.args import DB_VERSION, UNDEF
 from ..common.config import BaseConfig
+from ..common.log import first_line
 
 log = getLogger(__name__)
 
@@ -26,10 +28,11 @@ class Config(BaseConfig):
         with self.db.session_context() as s:
             return SystemConstant.set(s, name, value, force=force)
 
-    def delete_constant(self, name):
+    def delete_constant(self, name, default=UNDEF):
         log.debug(f'Deleting {name}')
-        with self.db.session_context() as s:
-            SystemConstant.delete(s, name)
+        with self.default(default):
+            with self.db.session_context() as s:
+                SystemConstant.delete(s, name)
 
     def get_process(self, owner, pid):
         with self.db.session_context() as s:
@@ -45,9 +48,10 @@ class Config(BaseConfig):
         with self.db.session_context() as s:
             Process.delete(s, owner, pid, delta_seconds=delta_seconds)
 
-    def delete_all_processes(self, owner, delta_seconds=3):
-        with self.db.session_context() as s:
-            Process.delete_all(s, owner, delta_seconds=delta_seconds)
+    def delete_all_processes(self, owner, delta_seconds=3, default=UNDEF):
+        with self.default(default):
+            with self.db.session_context() as s:
+                Process.delete_all(s, owner, delta_seconds=delta_seconds)
 
     def exists_any_process(self, owner):
         with self.db.session_context() as s:
@@ -65,10 +69,22 @@ class Config(BaseConfig):
         with self.db.session_context() as s:
             Progress.remove(s, name)
 
-    def get_percent(self, name):
-        with self.db.session_context() as s:
-            return Progress.get_percent(s, name)
+    def get_percent(self, name, default=UNDEF):
+        with self.default(default):
+            with self.db.session_context() as s:
+                return Progress.get_percent(s, name)
 
     def wait_for_progress(self, name, timeout=60):
         with self.db.session_context() as s:
             return Progress.wait_for_progress(s, name, timeout=timeout)
+
+    @contextmanager
+    def default(self, value=UNDEF):
+        try:
+            yield
+        except Exception as e:
+            if value is UNDEF:
+                raise
+            else:
+                log.warning(f'Error (probably missing database): {first_line(e)}')
+                return value

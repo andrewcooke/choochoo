@@ -8,7 +8,7 @@ from ...commands.db import add_profile, remove_schema
 from ...commands.help import HTML, filter, parse, P, LI, PRE
 from ...commands.import_ import import_source
 from ...common.names import BASE
-from ...config.utils import profiles
+from ...config.utils import profiles, get_profiles
 from ...import_ import available_versions
 from ...import_.activity import activity_imported
 from ...import_.constant import constant_imported
@@ -59,7 +59,7 @@ class Configure:
         return self.__html.str(text)
 
     def read_profiles(self, request, s):
-        fn_argspec_by_name = profiles()
+        fn_argspec_by_name = get_profiles()
         data = {PROFILES: {name: self.html(fn_argspec_by_name[name][0].__doc__) for name in fn_argspec_by_name},
                 CONFIGURED: not bool(self.__config.db.no_data()),
                 VERSION: DB_VERSION,

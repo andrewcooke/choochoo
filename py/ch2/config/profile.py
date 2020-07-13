@@ -6,7 +6,6 @@ from .database import add_activity_group, add_activities, Counter, add_statistic
     add_monitor, add_constant, add_diary_topic, add_diary_topic_field, \
     add_activity_topic_field, add_activity_displayer_delegate, add_activity_topic
 from .impulse import add_responses, add_impulse
-from ..commands.args import base_system_path, DB_VERSION, PERMANENT
 from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.schedule import Schedule
@@ -24,18 +23,17 @@ from ..pipeline.calculate.response import ResponseCalculator
 from ..pipeline.calculate.segment import SegmentCalculator
 from ..pipeline.calculate.summary import SummaryCalculator
 from ..pipeline.display.activity.achievement import AchievementDelegate
-from ..pipeline.display.activity.utils import ActivityDisplayer, ActivityDelegate
 from ..pipeline.display.activity.jupyter import JupyterDelegate
 from ..pipeline.display.activity.nearby import NearbyDelegate
 from ..pipeline.display.activity.segment import SegmentDelegate
+from ..pipeline.display.activity.utils import ActivityDisplayer, ActivityDelegate
 from ..pipeline.display.database import DatabaseDisplayer
 from ..pipeline.display.diary import DiaryDisplayer
 from ..pipeline.display.monitor import MonitorDisplayer
 from ..pipeline.display.response import ResponseDisplayer
 from ..pipeline.read.monitor import MonitorReader
 from ..pipeline.read.segment import SegmentReader
-from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, SystemConstant, ActivityGroup, \
-    ActivityTopic
+from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, ActivityTopic
 from ..sql.types import short_cls
 from ..srtm.file import SRTM1_DIR_CNAME
 

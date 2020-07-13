@@ -80,3 +80,7 @@ def log_current_exception(traceback=UNDEF, exception_level=DEBUG, traceback_leve
     log.log(exception_level, f'Type: {t}')
     if traceback:
         log.log(traceback_level, 'Traceback:\n' + ''.join(format_tb(tb)))
+
+
+def first_line(exception):
+    return str(exception).splitlines()[0]
