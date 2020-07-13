@@ -28,7 +28,7 @@ class Upload:
         upload_files(Record(log), self.__config, files=files, nfiles=len(files), items=items)
         # second, start rest of ingest process in background
         cmd = f'{command_root()} {mm(VERBOSITY)} 0 {mm(BASE)} {self.__config.args[BASE]} {mm(LOG)} {WEB}-{READ}.log ' \
-              f'{mm(URI)} {self.__config.args[URI]}'
+              f'{mm(URI)} {self.__config.args._format(URI)}'
         if global_dev(): cmd += f' {mm(DEV)}'
         cmd += f' {READ}'
         if force: cmd += f' {mm(FORCE)}'
