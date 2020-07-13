@@ -4,6 +4,7 @@ from logging import getLogger
 from sqlalchemy.orm.exc import MultipleResultsFound
 
 from . import journal_imported, match_statistic_name, copy_statistic_journal, clone_with
+from ..common.date import to_date
 from ..common.log import log_current_exception
 from ..sql import DiaryTopic, DiaryTopicJournal
 
@@ -74,7 +75,8 @@ def copy_diary_topic_journal_entries(record, old_s, old, old_statistic_name, new
         old_diary_topic_journal = old_s.query(diary_topic_journal). \
             filter(diary_topic_journal.c.id == old_statistic_journal.source_id).one()
         log.debug(f'Found old diary_topic_journal {old_diary_topic_journal}')
-        new_diary_topic_journal = DiaryTopicJournal.get_or_add(new_s, old_diary_topic_journal.date)
+        # to_date for sqlite
+        new_diary_topic_journal = DiaryTopicJournal.get_or_add(new_s, to_date(old_diary_topic_journal.date))
         log.debug(f'Found new diary_topic_journal {new_diary_topic_journal}')
         copy_statistic_journal(record, old_s, old, old_statistic_name, old_statistic_journal,
                                new_s, new_statistic_name, new_diary_topic_journal)

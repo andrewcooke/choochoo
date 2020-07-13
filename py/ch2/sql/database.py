@@ -82,6 +82,9 @@ class DatabaseBase:
                     elif name == 'search_path': connect_args['options'] = f'-csearch_path={value}'
                     else: raise Exception(f'Unsupported option {name} = {value}')
                 uri = uriunsplit(uri_parts._replace(query=None))
+            if uri_parts.scheme != 'postgresql':
+                log.warning(f'Legacy scheme {uri_parts.scheme}; discarding options')
+                options, connect_args = {}, {}
             log.debug(f'Creating engine for {uri} with options {options} and connect args {connect_args}')
             self.engine = create_engine(uri, **options, connect_args=connect_args)
             self.session = sessionmaker(bind=self.engine, class_=DirtySession)
@@ -123,7 +126,7 @@ class Database(DatabaseBase):
                 n_statistics = s.query(StatisticJournal).count()
                 return not (n_topics + n_activities + n_statistics)
         except:
-            log_current_exception(traceback=False)
+            log.debug('Discarding error which may contain password')
             return True
 
     def no_schema(self, table=Constant):

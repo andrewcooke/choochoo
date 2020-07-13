@@ -1,18 +1,15 @@
 from contextlib import contextmanager
-from logging import getLogger
+from logging import getLogger, INFO
 from urllib.parse import urlsplit
 
 from sqlalchemy import text
-from sqlalchemy_utils import drop_database, database_exists
 from uritools import urisplit, uriunsplit
 
-from .args import SUB_COMMAND, LIST, PROFILE, DB_VERSION, FORCE, ITEM, USERS, SCHEMAS, DATABASES, \
+from .args import SUB_COMMAND, LIST, PROFILE, ITEM, USERS, SCHEMAS, DATABASES, \
     PROFILES, ADD, DATABASE, SCHEMA, REMOVE
 from .help import Markdown
-from ..common.args import mm
 from ..common.log import log_current_exception
 from ..common.names import URI, USER, ADMIN_USER, ADMIN_PASSWD, valid_name, assert_name, PASSWD, PREVIOUS
-from ..common.sql import database_really_exists
 from ..config.utils import profiles, get_profile
 from ..sql.support import Base
 
@@ -36,7 +33,7 @@ def db(config):
     > ch2 db remove schema
     > ch2 db remove database
 
-Utilities for managing the database.
+### Utilities for managing the database.
 
 This command uses the same configuration parameters, and makes the same assumptions about how the system
 works, as other commands.  So creating a database creates a database for the current version, adding a
@@ -50,6 +47,12 @@ The schema is named after, and owned by, the user and the user can only see data
 There is no 'db add schema' because the schema is added implicitly when the profile is added;
 there is no 'db remove profile' because the profile is removed implicitly when the schema is removed
 (a schema contains a profile).
+
+### Note On Backups
+
+When a schema is deleted it is copied to `original_name:previous`.  This is done so that user entries
+can be read across when re-installing the same version.  That is all.  There is no greater backup
+functionality implied or supported.  Backup the database separately if it is important.
 '''
     args = config.args
     action, item = args[SUB_COMMAND], args[ITEM]
@@ -72,7 +75,7 @@ def with_log(msg):
         yield
         log.info(msg.replace('ing ', 'ed '))
     except:
-        log_current_exception()
+        log_current_exception(exception_level=INFO)
         msg = 'Error ' + msg[0].lower() + msg[1:]
         raise Exception(msg)
 
@@ -239,49 +242,49 @@ def add_profile(config):
 
 
 # todo - web needs moving to above --------------
-
-
-def show(config):
-    uri = config.get_uri()
-    if uri:
-        print(f'{URI}:     {uri}')
-        print(f'version: {DB_VERSION}')
-        print(f'exists:  {database_really_exists(uri)}')
-    else:
-        print('no database configured')
-    return
-
-
-def list():
-    fmt = Markdown()
-    for name in profiles():
-        fn, spec = get_profile(name)
-        if fn.__doc__:
-            fmt.print(fn.__doc__)
-        else:
-            print(f' ## {name} - lacks docstring\n')
-
-
-def delete_and_check(config, force=False):
-    # the database exists because it's created when we connect, but does it have a schema?
-    uri = config.get_uri()
-    if force:
-        drop_database(uri)
-    config.reset()
-    if database_exists(uri) and not config.db.no_data():
-        raise Exception(f'Data exist at {uri} (use {mm(FORCE)}?)')
-
-
-def write(uri, profile, config):
-    fn, spec = get_profile(profile)
-    log.info(f'Loading profile {profile}')
-    db = config.get_database(uri)  # writes schema automatically
-    with db.session_context() as s:
-        fn(s, config)  # todo - no need for s
-    log.info(f'Profile {profile} loaded successfully')
-
-
-def load(config, profile, force=False):
-    uri = config.get_uri()
-    delete_and_check(config, force=force)
-    write(uri, profile, config)
+#
+#
+# def show(config):
+#     uri = config.get_uri()
+#     if uri:
+#         print(f'{URI}:     {uri}')
+#         print(f'version: {DB_VERSION}')
+#         print(f'exists:  {database_really_exists(uri)}')
+#     else:
+#         print('no database configured')
+#     return
+#
+#
+# def list():
+#     fmt = Markdown()
+#     for name in profiles():
+#         fn, spec = get_profile(name)
+#         if fn.__doc__:
+#             fmt.print(fn.__doc__)
+#         else:
+#             print(f' ## {name} - lacks docstring\n')
+#
+#
+# def delete_and_check(config, force=False):
+#     # the database exists because it's created when we connect, but does it have a schema?
+#     uri = config.get_uri()
+#     if force:
+#         drop_database(uri)
+#     config.reset()
+#     if database_exists(uri) and not config.db.no_data():
+#         raise Exception(f'Data exist at {uri} (use {mm(FORCE)}?)')
+#
+#
+# def write(uri, profile, config):
+#     fn, spec = get_profile(profile)
+#     log.info(f'Loading profile {profile}')
+#     db = config.get_database(uri)  # writes schema automatically
+#     with db.session_context() as s:
+#         fn(s, config)  # todo - no need for s
+#     log.info(f'Profile {profile} loaded successfully')
+#
+#
+# def load(config, profile, force=False):
+#     uri = config.get_uri()
+#     delete_and_check(config, force=force)
+#     write(uri, profile, config)

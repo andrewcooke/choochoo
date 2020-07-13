@@ -3,6 +3,7 @@ from logging import getLogger
 
 from .args import SOURCE, SEGMENTS, CONSTANTS, KIT, ACTIVITIES, DIARY, \
     infer_flags
+from ..common.names import LIST, URI
 from ..import_ import available_versions
 from ..import_.activity import import_activity
 from ..import_.constant import import_constant
@@ -37,13 +38,19 @@ Import only diary entries.
 
 Import everything but diary entries.
     '''
-    source = config.args[SOURCE]
-    if source:
-        flags = infer_flags(config.args, DIARY, ACTIVITIES, KIT, CONSTANTS, SEGMENTS)
-        import_source(config, Record(log), config.args[SOURCE], flags=flags)
-    else:
+    if config.args[LIST]:
         for uri in available_versions(config):
             print(uri)
+    else:
+        source = config.args[SOURCE]
+        if not source:
+            local = list(available_versions(config))
+            if local:
+                source = local[0]
+            else:
+                raise Exception('No versions found locally')
+        flags = infer_flags(config.args, DIARY, ACTIVITIES, KIT, CONSTANTS, SEGMENTS)
+        import_source(config, Record(log), source, flags=flags)
 
 
 def import_source(config, record, source, flags=None):
@@ -69,6 +76,6 @@ def infer_uri(config, source):
         log.info(f'Using {source} directly as database URI for import')
         return source
     else:
-        safe_uri = config.get_safe_uri(version=source)
+        safe_uri = config.args._with(version=source, passwd='xxxxxx')._format(URI)
         log.info(f'Using {source} as a version number to get URI {safe_uri}')
-        return config.get_uri(version=source)
+        return config.args._with(version=source)._format(URI)

@@ -29,3 +29,9 @@ class BaseConfig:
         log.debug(f'Connecting to {safe_uri}')
         uri = args._format(URI)
         return self.__factory(uri)
+
+    def _with(self, **kargs):
+        # may need to be over-written by subclasses
+        args = self.args._with(**kargs)
+        return BaseConfig(args, self.__factory, args[VERSION])
+

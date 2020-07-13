@@ -56,8 +56,9 @@ def copy_statistic_journal(record, old_s, old, old_statistic_name, old_statistic
     old_value = old_s.query(old_journal).filter(old_journal.c.id == old_statistic_journal.id).one()
     log.debug(f'Resolved old statistic_journal {old_value}')
     new_journal = STATISTIC_JOURNAL_CLASSES[StatisticJournalType(new_statistic_name.statistic_journal_type)]
+    # to_time for sqlite
     previous = new_s.query(new_journal). \
-        filter(new_journal.time == old_statistic_journal.time,
+        filter(new_journal.time == to_time(old_statistic_journal.time),
                new_journal.statistic_name == new_statistic_name).one_or_none()
     # drop ugly auto-titles if nicer ones available (bug fix 0-32 to 0-33)
     if previous and new_statistic_name.name == 'name' and \
@@ -70,8 +71,9 @@ def copy_statistic_journal(record, old_s, old, old_statistic_name, old_statistic
     if previous:
         record.warning(f'Value already exists for {name} ({previous})')
     else:
+        # to_time for sqlite
         new_value = add(new_s,
-                        new_journal(value=old_value.value, time=old_statistic_journal.time,
+                        new_journal(value=old_value.value, time=to_time(old_statistic_journal.time),
                                     statistic_name=new_statistic_name, source=source))
         new_s.commit()  # avoid logging below if error
         date = format_date(time_to_local_date(to_time(new_value.time)))
@@ -97,7 +99,7 @@ def find_versions(config, max_depth=3):
     current_version = [int(version) for version in DB_VERSION.split('-')]
     for major, minor in count_down_version(current_version, max_depth=max_depth):
         version = f'{major}-{minor}'
-        for uri_template in [URI_DEFAULT, URI_PREVIOUS]:
+        for uri_template in [URI_DEFAULT, URI_PREVIOUS, 'sqlite:///{base}/{version}/data/activity.db']:
             if [major, minor] == current_version and uri_template == URI_DEFAULT: continue
             uri = config.args._with(version=version)._format(value=uri_template)
             log.debug(f'Trying uri {uri} for version {version}')

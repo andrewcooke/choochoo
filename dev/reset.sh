@@ -19,17 +19,19 @@ echo -e "\ndeleting $BASE"
 rm -fr $BASE
 
 echo -e "\ndeleting database"
-dev/ch2 db remove database
+dev/ch2 -v4 db remove database
 
 echo -e "\nre-creating database"
-dev/ch2 db add database
-dev/ch2 db add user
-dev/ch2 db add profile acooke
+# have to add user before database, because user owns database
+dev/ch2 -v4 db add user
+dev/ch2 -v4 db add database
+dev/ch2 --dev db add profile acooke
+
+echo -e "\nimporting old data"
+dev/ch2 --dev import
 
 exit 2
 
-echo -e "\nupgrading old data"
-dev/ch2 --dev upgrade $TEMP
-
 echo -e "\nrebuilding"
-dev/ch2 --dev upload
+dev/ch2 --dev read
+

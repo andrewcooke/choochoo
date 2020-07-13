@@ -13,6 +13,9 @@ class Config(BaseConfig):
     def __init__(self, args):
         super().__init__(args, Database, DB_VERSION)
 
+    def _with(self, **kargs):
+        return Config(self.args._with(**kargs))
+
     def get_constant(self, name, none=False):
         with self.db.session_context() as s:
             value = SystemConstant.from_name(s, name, none=none)

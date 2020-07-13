@@ -41,7 +41,7 @@ class Workers:
         self.wait(self.n_parallel - 1)
         log_index = self._free_log_index()
         log_name = f'{short_cls(self.owner)}.{log_index}.{LOG}'
-        cmd = self.ch2 + f' {mm(LOG)} {log_name} {mm(URI)} {self.__config.get_uri()} ' \
+        cmd = self.ch2 + f' {mm(LOG)} {log_name} {mm(URI)} {self.__config.args[URI]} ' \
                          f'{self.cmd} {mm(WORKER)} {id} {args}'
         worker = self.__config.run_process(self.owner, cmd, log_name)
         self.__workers_to_logs[worker] = log_index

@@ -7,7 +7,7 @@ from os.path import join
 
 from ..common.args import mm, m, no, add_server_args, NamespaceWithVariables, color, add_data_source_args
 from ..common.names import *
-from ..common.names import UNDEF, COLOR, OFF, URI, VERSION, USER, PASSWD
+from ..common.names import UNDEF, COLOR, OFF, VERSION, USER, PASSWD
 from ..lib.utils import parse_bool
 
 log = getLogger(__name__)
@@ -229,6 +229,7 @@ def base_system_path(base, subdir=None, file=None, version=DB_VERSION, create=Tr
 def make_parser(with_noop=False):
 
     from ..lib import to_date, to_time
+    from ..common.io import clean_path
 
     parser = ArgumentParser(prog=PROGNAME)
 
@@ -245,7 +246,7 @@ def make_parser(with_noop=False):
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
                         help='display version and exit')
     add_data_source_args(parser, URI_DEFAULT)
-    parser.add_argument(mm(BASE), default='~/.ch2', metavar='DIR',
+    parser.add_argument(mm(BASE), default='~/.ch2', metavar='DIR', type=clean_path,
                         help='the base directory for data (default ~/.ch2)')
     parser.add_argument(mm(DATA_DIR), metavar='DIR', default='{base}/permanent',
                         help='the root directory for storing FIT data')
@@ -460,7 +461,8 @@ def make_parser(with_noop=False):
     import_.add_argument(SOURCE, nargs='?',
                          help='version or uri to import from '
                               '(version assumes same URI structure as current database); '
-                              'omit to list available sources')
+                              'omit to use latest version found locally')
+    import_.add_argument(m(L), mm(LIST), action='store_true', help='list version found locally (and exit)')
     import_.add_argument(mm(DISABLE), action='store_true', help='disable following options (they enable by default)')
     import_.add_argument(mm(DIARY), action='store_true', help='enable (or disable) import of diary data')
     import_.add_argument(mm(ACTIVITIES), action='store_true', help='enable (or disable) import of activity data')

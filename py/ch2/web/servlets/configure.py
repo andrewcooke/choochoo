@@ -3,22 +3,21 @@ from logging import getLogger
 
 from sqlalchemy import exists
 
-from ...commands.args import SERVICE, WEB, DB_VERSION
-from ...common.names import POSTGRESQL, SQLITE, URI, BASE
-from ...common.args import mm
-from ...commands.db import load, delete_and_check
+from ...commands.args import DB_VERSION
+from ...commands.db import add_profile, remove_schema
 from ...commands.help import HTML, filter, parse, P, LI, PRE
 from ...commands.import_ import import_source
+from ...common.names import BASE
 from ...config.utils import profiles
-from ...lib import time_to_local_time, local_time_to_time
-from ...lib.log import Record
 from ...import_ import available_versions
 from ...import_.activity import activity_imported
 from ...import_.constant import constant_imported
 from ...import_.diary import diary_imported
 from ...import_.kit import kit_imported
 from ...import_.segment import segment_imported
-from ...sql import SystemConstant, Constant, StatisticJournal, ActivityJournal
+from ...lib import time_to_local_time, local_time_to_time
+from ...lib.log import Record
+from ...sql import Constant, StatisticJournal, ActivityJournal
 
 log = getLogger(__name__)
 
@@ -69,14 +68,11 @@ class Configure:
 
     def write_profile(self, request, s):
         data = request.json
-        if not self.__config.get_uri():
-            raise Exception(f'Bootstrap via web requires '
-                            f'`{WEB} {SERVICE} ({mm(SQLITE)} | {mm(POSTGRESQL)} | {mm(URI)})`')
-        load(self.__config, data[PROFILE])
+        add_profile(self.__config._with(profile=data[PROFILE]))
         self.__config.reset()
 
     def delete(self, request, s):
-        delete_and_check(self.__config, force=True)
+        remove_schema(self.__config)
         self.__config.reset()
 
     def read_import(self, request, s):
