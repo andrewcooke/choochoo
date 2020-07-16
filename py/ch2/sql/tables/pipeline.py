@@ -4,7 +4,7 @@ from json import dumps
 from logging import getLogger
 
 from sqlalchemy import Column, Integer, not_, or_, Table, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, joinedload
 
 from ..support import Base
 from ..types import Cls, Json, Sort
@@ -33,7 +33,6 @@ class Pipeline(Base):
     id = Column(Integer, primary_key=True)
     type = Column(Integer, nullable=False, index=True)
     cls = Column(Cls, nullable=False)  # not unique - may run various instances
-    args = Column(Json, nullable=False, server_default=dumps(()))
     kargs = Column(Json, nullable=False, server_default=dumps({}))
     sort = Column(Sort, nullable=False)
 
@@ -43,7 +42,7 @@ class Pipeline(Base):
                               foreign_keys=[PipelineDependency.c.blocked_by])
 
     @classmethod
-    def _query(cls, s, type=None, like=tuple(), id=None):
+    def _query(cls, s, type=None, like=tuple(), id=None, eager=False):
         q = s.query(Pipeline)
         if type is not None:  # enum can be 0
             q = q.filter(Pipeline.type == type)
@@ -51,11 +50,13 @@ class Pipeline(Base):
             q = q.filter(or_(*[Pipeline.cls.like(pattern) for pattern in like]))
         if id:
             q = q.filter(Pipeline.id == id)
+        if eager:
+            q = q.options(joinedload(Pipeline.blocked_by))
         return q
 
     @classmethod
-    def all(cls, s, type, like=tuple(), id=None):
-        q = cls._query(s, type, like=like, id=id)
+    def all(cls, s, type, like=tuple(), id=None, eager=False):
+        q = cls._query(s, type, like=like, id=id, eager=eager)
         pipelines = q.order_by(Pipeline.sort).all()
         if not pipelines:
             msg = 'No pipelines configured for type %s' % PipelineType(type).name

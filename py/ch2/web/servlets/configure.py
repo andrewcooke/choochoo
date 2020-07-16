@@ -8,7 +8,7 @@ from ...commands.db import add_profile, remove_schema
 from ...commands.help import HTML, filter, parse, P, LI, PRE
 from ...commands.import_ import import_source
 from ...common.names import BASE
-from ...config.utils import profiles, get_profiles
+from ...config.profile import get_profiles
 from ...import_ import available_versions
 from ...import_.activity import activity_imported
 from ...import_.constant import constant_imported

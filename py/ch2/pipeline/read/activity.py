@@ -4,11 +4,9 @@ from os.path import splitext, basename
 from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
 
-import ch2.common.io
 from .utils import AbortImportButMarkScanned, MultiProcFitReader
 from ... import FatalException
-from ...commands.args import FORCE, DEFAULT, READ
-from ...common.args import mm
+from ...commands.args import DEFAULT
 from ...common.date import to_time, time_to_local_time
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values

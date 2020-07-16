@@ -3,7 +3,7 @@ from logging import getLogger, NullHandler
 from sys import version_info
 
 from .common.global_ import set_global_dev
-from .sql.system import Config
+from .sql.config import Config
 
 getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())

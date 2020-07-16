@@ -10,7 +10,7 @@ from .args import SUB_COMMAND, LIST, PROFILE, ITEM, USERS, SCHEMAS, DATABASES, \
 from .help import Markdown
 from ..common.log import log_current_exception
 from ..common.names import URI, USER, ADMIN_USER, ADMIN_PASSWD, valid_name, assert_name, PASSWD, PREVIOUS
-from ..config.utils import profiles, get_profile
+from ..config.profile import get_profile, get_profiles
 from ..sql.support import Base
 
 log = getLogger(__name__)
@@ -75,7 +75,7 @@ def with_log(msg):
         yield
         log.info(msg.replace('ing ', 'ed '))
     except:
-        log_current_exception(exception_level=INFO)
+        log_current_exception(exception_level=INFO, first=True)
         msg = 'Error ' + msg[0].lower() + msg[1:]
         raise Exception(msg)
 
@@ -111,7 +111,7 @@ def list_databases(config):
 
 def list_profiles(config):
     fmt = Markdown()
-    for name in profiles():
+    for name in get_profiles():
         fn, spec = get_profile(name)
         if fn.__doc__:
             fmt.print(fn.__doc__)

@@ -15,7 +15,7 @@ from ..lib.log import Record
 from ..common.log import log_current_exception
 from ..lib.utils import timing
 from ..lib.workers import ProgressTree, SystemProgressTree
-from ..pipeline.pipeline import run_pipeline
+from ..pipeline.mproc import run_pipeline
 from ..pipeline.read.activity import ActivityReader
 from ..pipeline.read.monitor import MonitorReader
 from ..pipeline.read.utils import AbortImportButMarkScanned

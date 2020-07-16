@@ -69,11 +69,11 @@ class Process(Base):
 
     @classmethod
     def run(cls, s, owner, cmd, log_name):
-        process = ps.Popen(args=cmd, shell=True)
-        log.debug(f'Adding command [{cmd}] (PID {process.pid})')
-        s.add(Process(command=cmd, owner=owner, pid=process.pid, log=log_name))
+        popen = ps.Popen(args=cmd, shell=True)
+        log.debug(f'Adding command [{cmd}]; pid {popen.pid}')
+        s.add(Process(command=cmd, owner=owner, pid=popen.pid, log=log_name))
         s.commit()
-        return process
+        return popen
 
     @classmethod
     def delete(cls, s, owner, pid, delta_seconds=3):

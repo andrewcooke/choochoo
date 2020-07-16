@@ -69,12 +69,14 @@ def set_log_color(color):
                                                             'CRITICAL': 'bold_red'}}))
 
 
-def log_current_exception(traceback=UNDEF, exception_level=DEBUG, traceback_level=DEBUG):
+def log_current_exception(traceback=UNDEF, exception_level=DEBUG, traceback_level=DEBUG, first=False):
     from .global_ import global_dev
     if traceback is UNDEF: traceback = global_dev()
     t, e, tb = exc_info()
     try:
-        log.log(exception_level, f'Exception: {e}')
+        msg = str(e)
+        if first: msg = first_line(msg)
+        log.log(exception_level, f'Exception: {msg}')
     except:
         pass
     log.log(exception_level, f'Type: {t}')

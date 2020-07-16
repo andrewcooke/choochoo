@@ -7,8 +7,13 @@ from psutil import cpu_count
 from sqlalchemy.sql.functions import count
 
 from .loader import Loader
+from .. import BASE, DEV
+from ..commands.args import LOG, WORKER
+from ..common.args import mm
+from ..common.global_ import global_dev
+from ..common.names import VERBOSITY, URI
 from ..lib.utils import timing
-from ..lib.workers import ProgressTree, Workers
+from ..lib.workers import ProgressTree, Workers, command_root
 from ..sql import Pipeline, Interval, PipelineType, StatisticJournal
 from ..sql.types import short_cls
 
@@ -24,7 +29,7 @@ def count_statistics(s):
 
 def run_pipeline(config, type, like=tuple(), progress=None, worker=None, **extra_kargs):
     with config.db.session_context() as s:
-        if not worker:  # don't run for each worker
+        if not worker:
             if type in (PipelineType.CALCULATE, PipelineType.READ_ACTIVITY, PipelineType.READ_MONITOR):
                 Interval.clean(s)
         local_progress = ProgressTree(Pipeline.count(s, type, like=like, id=worker), parent=progress)
@@ -108,6 +113,8 @@ class AsyncPipeline(BasePipeline):
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
         self.force = force  # force re-processing
         self._progress = progress
+        dev = mm(DEV) if global_dev() else ''
+        self.__ch2 = f'{command_root()} {mm(BASE)} {config.args[BASE]} {dev} {mm(VERBOSITY)} 0'
         super().__init__(**kargs)
 
     def missing(self):
@@ -130,6 +137,13 @@ class AsyncPipeline(BasePipeline):
 
     def _startup(self, s):
         pass
+
+    @abstractmethod
+    def command_for_missing(self, pipeline, missing, log_name):
+        cmd = self.__ch2 + f' {mm(LOG)} {log_name} {mm(URI)} {self._config.args._format(URI)} ' \
+                           f'{self._base_command()} {mm(WORKER)} {pipeline.id} {missing}'
+        log.debug(cmd)
+        return cmd
 
     @abstractmethod
     def _delete(self, s):
@@ -160,20 +174,12 @@ class MultiProcPipeline(AsyncPipeline):
         super().__init__(config, *args, owner_out=owner_out, force=force, progress=progress, **kargs)
 
     def _recalculate(self, db, missing):
-        if self.worker:
-            log.debug('Worker, so execute directly')
-            self._run_all(db, missing, None)
+        local_progress = ProgressTree(len(missing), parent=self._progress)
+        if not missing:
+            log.info(f'No missing data for {short_cls(self)}')
+            local_progress.complete()
         else:
-            local_progress = ProgressTree(len(missing), parent=self._progress)
-            if not missing:
-                log.info(f'No missing data for {short_cls(self)}')
-                local_progress.complete()
-            else:
-                n_total, n_parallel = self.__cost_benefit(missing, self.n_cpu)
-                if n_parallel < 2 or len(missing) == 1:
-                    self._run_all(db, missing, local_progress)
-                else:
-                    self.__spawn(missing, n_total, n_parallel, local_progress)
+            self._run_all(db, missing, local_progress)
 
     @abstractmethod
     def _delete(self, s):

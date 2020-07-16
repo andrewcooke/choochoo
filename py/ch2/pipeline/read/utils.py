@@ -119,5 +119,5 @@ class MultiProcFitReader(FitReaderMixin, MultiProcPipeline):
         return paths
 
     def _base_command(self):
-        force = mm(FORCE) if self.force else ''
-        return f'{READ} {force}'
+        force = ' ' + mm(FORCE) if self.force else ''
+        return f'{READ}{force}'

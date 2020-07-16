@@ -8,6 +8,7 @@ from .database import add_activity_group, add_activities, Counter, add_statistic
 from .impulse import add_responses, add_impulse
 from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
+from ..lib.inspect import read_package
 from ..lib.schedule import Schedule
 from ..names import N, Titles, Sports, Units, Summaries as S
 from ..pipeline.calculate import ImpulseCalculator
@@ -266,3 +267,11 @@ so do not use an important password that applies to many accounts.
         # finally, update the timezone
         DiaryTopicJournal.check_tz(self._config, s)
 
+
+def get_profiles():
+    from . import profiles
+    return dict(read_package(profiles))
+
+
+def get_profile(name):
+    return get_profiles()[name]

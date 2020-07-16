@@ -448,7 +448,7 @@ def make_parser(with_noop=False):
     db_add_item.add_parser(DATABASE, help='add a database (for each version in a cluster)')
     db_add_profile = db_add_item.add_parser(PROFILE, help='add a profile (for each user and version)')
     db_add_schema_profiles = db_add_profile.add_subparsers(title='profile', dest=PROFILE, required=True)
-    from ..config.utils import get_profiles
+    from ..config.profile import get_profiles
     for name in get_profiles():
         db_add_schema_profiles.add_parser(name)
     db_remove = db_cmds.add_parser(REMOVE, help='reduce current configuration')
@@ -614,7 +614,7 @@ def make_parser(with_noop=False):
 
 def bootstrap_db(user, *args, configurator=None, post_config=None):
 
-    from ..sql.system import Config
+    from ..sql.config import Config
     # used in tests, given a base directory
 
     args = [mm(USER), user] + list(args)

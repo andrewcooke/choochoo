@@ -9,7 +9,7 @@ from ch2.common.log import configure_log
 from ch2.commands.args import make_parser, NamespaceWithVariables, DB_VERSION
 from ch2.common.names import USER
 from ch2.common.user import make_user_database
-from ch2.sql.system import Config
+from ch2.sql.config import Config
 
 log = getLogger(__name__)
 
