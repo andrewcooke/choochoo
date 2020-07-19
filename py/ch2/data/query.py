@@ -295,7 +295,7 @@ def set_times_from_index(df):
 
 def std_health_statistics(s, freq='1h'):
 
-    from ..pipeline.owners import RestHRCalculator, ResponseCalculator, ActivityCalculator, MonitorCalculator
+    from ..pipeline.owners import RestHRCalculator, ResponseCalculator, ActivityCalculator, StepsCalculator
 
     start = s.query(StatisticJournal.time). \
         filter(StatisticJournal.time > TIME_ZERO). \
@@ -311,7 +311,7 @@ def std_health_statistics(s, freq='1h'):
 
     stats = Statistics(s). \
         by_name(RestHRCalculator, N.REST_HR). \
-        by_name(MonitorCalculator, N.DAILY_STEPS). \
+        by_name(StepsCalculator, N.DAILY_STEPS). \
         by_name(ActivityCalculator, N._delta(N.DEFAULT_ANY), like=True).with_. \
         rename_with_units(N.REST_HR).into(stats, tolerance='30m')
 
@@ -366,7 +366,7 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
 
 if __name__ == '__main__':
 
-    from ..pipeline.owners import ActivityCalculator, SegmentReader, MonitorCalculator
+    from ..pipeline.owners import ActivityCalculator, SegmentReader, StepsCalculator
 
     s = session('-v5')
 

@@ -62,15 +62,16 @@ class Process(Base):
 
     id = Column(Integer, primary_key=True)
     owner = Column(ShortCls, nullable=False, index=True)
-    pid = Column(Integer, nullable=False, index=True)
+    pid = Column(Integer, nullable=False, unique=True)
     start = Column(DateTime(timezone=True), nullable=False, default=now)
     command = Column(Text, nullable=True)
     log = Column(Text, nullable=True)
 
     @classmethod
     def run(cls, s, owner, cmd, log_name):
+        from ...pipeline.mproc import fmt_cmd
         popen = ps.Popen(args=cmd, shell=True)
-        log.debug(f'Adding command [{cmd}]; pid {popen.pid}')
+        log.debug(f'Adding command [{fmt_cmd(cmd)}]; pid {popen.pid}')
         s.add(Process(command=cmd, owner=owner, pid=popen.pid, log=log_name))
         s.commit()
         return popen

@@ -30,7 +30,7 @@ def count_statistics(s):
 def run_pipeline(config, type, like=tuple(), progress=None, worker=None, **extra_kargs):
     with config.db.session_context() as s:
         if not worker:
-            if type in (PipelineType.CALCULATE, PipelineType.READ_ACTIVITY, PipelineType.READ_MONITOR):
+            if type == PipelineType.READ_AND_CALCULATE:
                 Interval.clean(s)
         local_progress = ProgressTree(Pipeline.count(s, type, like=like, id=worker), parent=progress)
         for pipeline in Pipeline.all(s, type, like=like, id=worker):
@@ -38,11 +38,10 @@ def run_pipeline(config, type, like=tuple(), progress=None, worker=None, **extra
             kargs.update(extra_kargs)
             msg = f'Ran {short_cls(pipeline.cls)}'
             if 'activity_group' in kargs: msg += f' ({kargs["activity_group"]})'
-            log.debug(f'Running {pipeline.cls}({pipeline.args}, {kargs})')
+            log.debug(f'Running {pipeline}({kargs})')
             with timing(msg):
                 before = None if id else count_statistics(s)
-                pipeline.cls(config, *pipeline.args, id=pipeline.id, worker=bool(worker), progress=local_progress,
-                             **kargs).run()
+                pipeline.cls(config, id=pipeline.id, worker=bool(worker), progress=local_progress, **kargs).run()
                 after = None if id else count_statistics(s)
             if before or after:
                 log.info(f'{msg}: statistic count {before} -> {after} (change of {after - before})')
@@ -106,13 +105,16 @@ class IncrementalPipeline(BasePipeline):
         pass
 
 
-class AsyncPipeline(BasePipeline):
+class MProcPipeline(BasePipeline):
 
-    def __init__(self, config, owner_out=None, force=False, progress=None, **kargs):
+    def __init__(self, config, owner_out=None, force=False, progress=None, min=1, max=100, gamma=0.5, **kargs):
         self._config = config
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
         self.force = force  # force re-processing
         self._progress = progress
+        self.min = min
+        self.max = max
+        self.gamma = gamma
         dev = mm(DEV) if global_dev() else ''
         self.__ch2 = f'{command_root()} {mm(BASE)} {config.args[BASE]} {dev} {mm(VERBOSITY)} 0'
         super().__init__(**kargs)
@@ -138,12 +140,15 @@ class AsyncPipeline(BasePipeline):
     def _startup(self, s):
         pass
 
-    @abstractmethod
     def command_for_missing(self, pipeline, missing, log_name):
+        from .mproc import fmt_cmd
         cmd = self.__ch2 + f' {mm(LOG)} {log_name} {mm(URI)} {self._config.args._format(URI)} ' \
-                           f'{self._base_command()} {mm(WORKER)} {pipeline.id} {missing}'
-        log.debug(cmd)
+                           f'{self._base_command()} {mm(WORKER)} {pipeline.id} {self.format_missing(missing)}'
+        log.debug(fmt_cmd(cmd))
         return cmd
+
+    def format_missing(self, missing):
+        return " ".join(str(m) for m in missing)
 
     @abstractmethod
     def _delete(self, s):
@@ -161,7 +166,7 @@ class AsyncPipeline(BasePipeline):
         pass
 
 
-class MultiProcPipeline(AsyncPipeline):
+class MultiProcPipeline(MProcPipeline):
 
     def __init__(self, config, *args, owner_out=None, force=False, progress=None,
                  overhead=1, cost_calc=20, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
@@ -254,7 +259,7 @@ class MultiProcPipeline(AsyncPipeline):
         raise NotImplementedError()
 
 
-class UniProcPipeline(AsyncPipeline):
+class UniProcPipeline(MProcPipeline):
 
     def _recalculate(self, db, missing):
         local_progress = ProgressTree(len(missing), parent=self._progress)

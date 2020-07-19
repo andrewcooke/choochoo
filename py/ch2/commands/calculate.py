@@ -30,5 +30,5 @@ Calculate activity statistics from 2020 onwards in a single process for debuggin
 
 
 def run_statistic_pipelines(data, force=False, like=tuple(), start=None, finish=None, worker=None, **kargs):
-    run_pipeline(data, PipelineType.CALCULATE, force=force, like=like, start=start, finish=finish, worker=worker,
+    run_pipeline(data, PipelineType.READ_AND_CALCULATE, force=force, like=like, start=start, finish=finish, worker=worker,
                  **kargs)

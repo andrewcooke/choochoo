@@ -6,6 +6,7 @@ from sqlalchemy.sql.functions import count
 
 from ..pipeline import MultiProcPipeline, UniProcPipeline
 from ... import CALCULATE
+from ...common.date import format_time
 from ...common.log import log_current_exception
 from ...lib import local_time_to_time, time_to_local_time, to_date, format_date
 from ...lib.schedule import Schedule
@@ -48,6 +49,9 @@ class JournalCalculatorMixin:
     '''
 
     _journal_type = None
+
+    def format_missing(self, missing):
+        return f'"{format_time(missing[0])}" "{format_time(missing[-1])}"'
 
     def _delimit_query(self, q):
         start, finish = self._start_finish(type=local_time_to_time)
@@ -168,7 +172,19 @@ class DataFrameCalculatorMixin:
         raise NotImplementedError()
 
 
-class IntervalCalculatorMixin:
+class MissingDateMixin:
+
+    def format_missing(self, missing):
+        return format_date(missing[0]) + " " + format_date(missing[-1])
+
+
+class MissingDatePairMixin:
+
+    def format_missing(self, missing):
+        return format_date(missing[0][0]) + " " + format_date(missing[-1][1])
+
+
+class IntervalCalculatorMixin(MissingDatePairMixin):
 
     def __init__(self, *args, schedule='m', grouped=False, **kargs):
         self.schedule = Schedule(self._assert('schedule', schedule))

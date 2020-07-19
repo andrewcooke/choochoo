@@ -62,35 +62,23 @@ def add_activity_group(s, name, sort, description=None):
     return add(s, ActivityGroup(name=name, sort=sort, description=description))
 
 
-def add_pipeline(s, cls, type, sort, kargs, blocked_by=tuple()):
+def add_pipeline(s, cls, type, sort, blocked_by=tuple(), **kargs):
     pipeline = add(s, Pipeline(cls=cls, type=type, sort=sort, kargs=kargs))
-    for blocker_cls in blocked_by:
-        q = s.query(Pipeline). \
-            filter(Pipeline.type == pipeline.type,
-                   Pipeline.cls == blocker_cls)
-        if q.count():
-            for blocker in q.all():
-                pipeline.blocked_by.append(blocker)
-            log.debug(f'{short_cls(blocker_cls)} blocks {short_cls(cls)}')
+    for blocker in blocked_by:
+        if isinstance(blocker, Pipeline):
+            log.debug(f'{short_cls(blocker.cls)} blocks {short_cls(cls)}')
+            pipeline.blocked_by.append(blocker)
         else:
-            raise Exception(f'{short_cls(blocker_cls)} is not a current pipeline')
+            q = s.query(Pipeline). \
+                filter(Pipeline.type == pipeline.type,
+                       Pipeline.cls == blocker)
+            if q.count():
+                for instance in q.all():
+                    pipeline.blocked_by.append(instance)
+                log.debug(f'{short_cls(blocker)} blocks {short_cls(cls)}')
+            else:
+                raise Exception(f'{short_cls(blocker)} is not a current pipeline')
     return pipeline
-
-
-def add_statistics(s, cls, sort, blocked_by=tuple(), **kargs):
-    '''
-    Add a class to the statistics pipeline.
-
-    The pipeline classes are invoked when the diary is modified and when activities are added.
-    They detect new data and calculate appropriate statistics.
-
-    The sort argument fixes the order in which the classes are instantiated and called and can
-    be an integer or a callable (that returns an integer) like Counter above.
-
-    The kargs are passed to the constructor and so can be used to customize the processing.
-    '''
-    log.debug(f'Adding statistic pipeline {short_cls(cls)}')
-    return add_pipeline(s, cls, PipelineType.CALCULATE, sort, kargs, blocked_by=blocked_by)
 
 
 def add_displayer(s, cls, sort, **kargs):
@@ -106,7 +94,7 @@ def add_displayer(s, cls, sort, **kargs):
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
     log.debug(f'Adding displayer pipeline {short_cls(cls)}')
-    return add_pipeline(s, cls, PipelineType.DISPLAY, sort, kargs, blocked_by=())
+    return add_pipeline(s, cls, PipelineType.DISPLAY, sort, blocked_by=(), **kargs)
 
 
 def add_activity_displayer_delegate(s, cls, sort, **kargs):
@@ -121,39 +109,23 @@ def add_activity_displayer_delegate(s, cls, sort, **kargs):
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
     log.debug(f'Adding activity displayer pipeline {short_cls(cls)}')
-    return add_pipeline(s, cls, PipelineType.DISPLAY_ACTIVITY, sort, kargs, blocked_by=())
+    return add_pipeline(s, cls, PipelineType.DISPLAY_ACTIVITY, sort, blocked_by=(), **kargs)
 
 
-def add_monitor(s, cls, sort, **kargs):
+def add_read_and_calculate(s, cls, blocked_by=(), **kargs):
     '''
-    Add a class to the monitor pipeline.
+    Add a class to the read / calculate pipeline.
 
     The pipeline classes are invoked when activities are imported from FIT files.
-    They read the files and create MonitorJournal entries and associated statistics.
+    They read the files and create journal entries and associated statistics.
 
-    The sort argument fixes the order in which the classes are instantiated and called and can
+    The blocked_by argument fixes the order in which the classes are instantiated and called and can
     be an integer or a callable (that returns an integer) like Counter above.
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
-    log.debug(f'Adding monitor pipeline {short_cls(cls)}')
-    return add_pipeline(s, cls, PipelineType.READ_MONITOR, sort, kargs, blocked_by=())
-
-
-def add_activities(s, cls, sort, **kargs):
-    '''
-    Add a class to the activities pipeline.
-
-    The pipeline classes are invoked when activities are imported from FIT files.
-    They read the files and create ActivityJournal entries and associated statistics.
-
-    The sort argument fixes the order in which the classes are instantiated and called and can
-    be an integer or a callable (that returns an integer) like Counter above.
-
-    The kargs are passed to the constructor and so can be used to customize the processing.
-    '''
-    log.debug(f'Loading activity pipeline {short_cls(cls)}')
-    return add_pipeline(s, cls, PipelineType.READ_ACTIVITY, sort, kargs, blocked_by=())
+    log.debug(f'Adding read / calculate pipeline {short_cls(cls)}')
+    return add_pipeline(s, cls, PipelineType.READ_AND_CALCULATE, 0, blocked_by=blocked_by, **kargs)
 
 
 def add_constant(s, title, value, description=None, units=None, name=None,

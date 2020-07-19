@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from .database import add_statistics, add_enum_constant
+from .database import add_enum_constant, add_read_and_calculate
 from ..names import Titles, Names
 from ..pipeline.calculate.impulse import HRImpulse, ImpulseCalculator
 from ..pipeline.calculate.response import Response, ResponseCalculator
@@ -29,7 +29,7 @@ as with impulses, the responses are named by prefix and constant.
 log = getLogger(__name__)
 
 
-def add_impulse(s, c, activity_group, gamma=2, zero=1, one=6, max_secs=60,
+def add_impulse(s, activity_group, gamma=2, zero=1, one=6, max_secs=60,
                 title=Titles.HR_IMPULSE_10, prefix=Names.DEFAULT):
     '''
     Add configuration for a fitness/fatigue impulse model based on HR zones.
@@ -39,7 +39,7 @@ def add_impulse(s, c, activity_group, gamma=2, zero=1, one=6, max_secs=60,
     if not activity_group:
         raise Exception(f'Impulse must be defined for a specific group')
     constant = add_enum_constant(s, title, HRImpulse,
-                                 {'title': title, 'gamma': 2.0, 'zero': 1, 'one': 6, 'max_secs': 60},
+                                 {'title': title, 'gamma': gamma, 'zero': zero, 'one': one, 'max_secs': max_secs},
                                  single=True, activity_group=activity_group, description='''
 Data needed to calculate the FF-model impulse from heart rate zones.
 * Gamma is an exponent used to weight the relative importance of hard and easy efforts and should be around 1 (typical range 0.5 to 2).
@@ -49,13 +49,14 @@ Data needed to calculate the FF-model impulse from heart rate zones.
 Once the impulse is calculated it is summed with a decay to find fitness and fatigue
 (see Fitness and Fatigue constants). 
 ''')
-    add_statistics(s, ImpulseCalculator, c, owner_in=short_cls(SegmentReader),
-                   impulse_constant=constant.name, prefix=prefix,
-                   activity_group=activity_group)
+    add_read_and_calculate(s, ImpulseCalculator, blocked_by=[SegmentReader],
+                           owner_in=short_cls(SegmentReader),
+                           impulse_constant=constant.name, prefix=prefix,
+                           activity_group=activity_group)
 
 
-def add_responses(s, c, responses=((42, 1, 1, Titles.FITNESS_D % 42, 'fitness'),
-                                   (7, 1, 5, Titles.FATIGUE_D % 7, 'fatigue')),
+def add_responses(s, responses=((42, 1, 1, Titles.FITNESS_D % 42, 'fitness'),
+                                (7, 1, 5, Titles.FATIGUE_D % 7, 'fatigue')),
                   owner_in=ImpulseCalculator, prefix=Names.DEFAULT):
     '''
     Add configuration for a fitness/fatigue response model based on pre-calculated impulses.
@@ -71,6 +72,6 @@ Data needed to calculate the FF-model {label} for {days} days.
 * Start is the initial fitness value.
 * Scale is an arbitrary scale factor (typically used so that fitness and fatigue have comparable values).
 ''') for (days, start, scale, title, label) in responses]
-    add_statistics(s, ResponseCalculator, c,
-                   owner_in=short_cls(owner_in), prefix=prefix,
-                   response_constants=[constant.name for constant in constants])
+    add_read_and_calculate(s, ResponseCalculator, blocked_by=[ImpulseCalculator],
+                           owner_in=short_cls(owner_in), prefix=prefix,
+                           response_constants=[constant.name for constant in constants])

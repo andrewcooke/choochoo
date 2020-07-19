@@ -239,24 +239,15 @@ def upload_files_and_update(record, config, files=tuple(), nfiles=1, force=False
     log.info(f'Uploading files')
     try:
         upload_files(record, config, files=files, nfiles=nfiles, items=items, progress=progress)
-        # todo - add record to pipelines?
-        if flags[ACTIVITIES]:
-            log.info('Running activity pipelines')
-            run_pipeline(config, PipelineType.READ_ACTIVITY, force=force, progress=progress, **kargs)
-        if flags[MONITOR]:
-            # run before and after so we know what exists before we update, and import what we read
-            log.info('Running monitor pipelines')
-            run_pipeline(config, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
-            with config.db.session_context() as s:
-                try:
-                    log.info('Running Garmin download')
-                    run_garmin(config, s, base=config.args[BASE], progress=progress)
-                except Exception as e:
-                    log.warning(f'Could not get data from Garmin: {e}')
-            log.info('Running monitor pipelines (again)')
-            run_pipeline(config, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
-        if flags[CALCULATE]:
-            log.info('Running statistics pipelines')
-            run_statistic_pipelines(config, force=force, progress=progress, **kargs)
+        run_pipeline(config, PipelineType.READ_AND_CALCULATE, force=force, progress=progress, **kargs)
+        # todo - better approach here
+        # with config.db.session_context() as s:
+        #     try:
+        #         log.info('Running Garmin download')
+        #         run_garmin(config, s, base=config.args[BASE], progress=progress)
+        #     except Exception as e:
+        #         log.warning(f'Could not get data from Garmin: {e}')
+        # log.info('Running monitor pipelines (again)')
+        # run_pipeline(config, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
     finally:
         progress.complete()

@@ -3,7 +3,7 @@ from logging import getLogger
 
 from .utils import Displayer
 from ..calculate import SummaryCalculator
-from ..calculate.monitor import MonitorCalculator
+from ..calculate.monitor import StepsCalculator
 from ...names import N
 from ...diary.database import summary_column, interval_column
 from ...diary.model import value, optional_text
@@ -24,7 +24,7 @@ class MonitorDisplayer(Displayer):
     @staticmethod
     def __read_fields(s, date, *names):
         for name in names:
-            journal = StatisticJournal.at_date(s, date, name, MonitorCalculator, None)
+            journal = StatisticJournal.at_date(s, date, name, StepsCalculator, None)
             if journal:
                 yield journal
 

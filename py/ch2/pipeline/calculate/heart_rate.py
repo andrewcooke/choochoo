@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy.signal import find_peaks
 
-from .utils import MultiProcCalculator, IntervalCalculatorMixin
+from .utils import MultiProcCalculator, IntervalCalculatorMixin, MissingDateMixin, MissingDatePairMixin
 from ..pipeline import OwnerInMixin, LoaderMixin
 from ...data import Statistics
 from ...lib import format_date, local_date_to_time
@@ -15,7 +15,6 @@ log = getLogger(__name__)
 
 
 class RestHRCalculator(LoaderMixin, OwnerInMixin, IntervalCalculatorMixin, MultiProcCalculator):
-
     '''
     Used to calculate rest HR from quartiles, but it was never clear we had *the* rest value rather
     than some general lower value.

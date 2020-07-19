@@ -197,8 +197,8 @@ class TestKit(LogTestCase):
                                        'data/test/source/personal/2018-08-27-rec.fit',
                                        m(K), 'cotic')
             read(config)
-            run_pipeline(config, PipelineType.CALCULATE, like=['%Activity%'], n_cpu=1)
-            run_pipeline(config, PipelineType.CALCULATE, like=['%Kit%'], n_cpu=1)
+            run_pipeline(config, PipelineType.READ_AND_CALCULATE, like=['%Activity%'], n_cpu=1)
+            run_pipeline(config, PipelineType.READ_AND_CALCULATE, like=['%Kit%'], n_cpu=1)
 
         with config.db.session_context() as s:
             bike = get_name(s, 'bike').to_model(s, depth=3, statistics=INDIVIDUAL, own_models=False)

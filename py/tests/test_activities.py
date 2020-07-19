@@ -30,7 +30,7 @@ class TestActivities(LogTestCase):
                                       'data/test/source/personal/2018-08-27-rec.fit')
             read(config)
 
-        run_pipeline(config, PipelineType.CALCULATE, force=True, start='2018-01-01', n_cpu=1)
+        run_pipeline(config, PipelineType.READ_AND_CALCULATE, force=True, start='2018-01-01', n_cpu=1)
 
         with config.db.session_context() as s:
             n_raw = s.query(count(StatisticJournalFloat.id)). \
@@ -54,7 +54,7 @@ class TestActivities(LogTestCase):
         with TemporaryDirectory() as f:
             config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
             paths = ['/home/andrew/archive/fit/bike/cotic/2016-07-27-pm-z4.fit']
-            run_pipeline(config, PipelineType.READ_ACTIVITY, paths=paths, force=True)
+            run_pipeline(config, PipelineType.READ, paths=paths, force=True)
 
     def __assert_basic_stats(self, s):
         for name in [N.ACTIVE_DISTANCE, N.ACTIVE_TIME]:
@@ -76,7 +76,7 @@ class TestActivities(LogTestCase):
                                           'data/test/source/private/florian.fit')
             read(config)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(config, PipelineType.CALCULATE, n_cpu=1)
+            run_pipeline(config, PipelineType.READ_AND_CALCULATE, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with config.db.session_context() as s:
                 self.__assert_basic_stats(s)
@@ -90,7 +90,7 @@ class TestActivities(LogTestCase):
                                       'data/test/source/other/2019-05-09-051352-Running-iWatchSeries3.fit')
             read(config)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(config, PipelineType.CALCULATE, n_cpu=1)
+            run_pipeline(config, PipelineType.READ_AND_CALCULATE, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with config.db.session_context() as s:
                 self.__assert_basic_stats(s)
@@ -104,7 +104,7 @@ class TestActivities(LogTestCase):
                                       'data/test/source/personal/2016-07-19-mpu-s-z2.fit')
             read(config)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(config, PipelineType.CALCULATE, n_cpu=1)
+            run_pipeline(config, PipelineType.READ_AND_CALCULATE, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with config.db.session_context() as s:
                 for stat in s.query(StatisticJournal). \
@@ -122,7 +122,7 @@ class TestActivities(LogTestCase):
                                                f'data/test/source/other/{src}')
                 read(config)
                 # run('sqlite3 %s ".dump"' % f.name, shell=True)
-                run_pipeline(config, PipelineType.CALCULATE, n_cpu=1)
+                run_pipeline(config, PipelineType.READ_AND_CALCULATE, n_cpu=1)
                 # run('sqlite3 %s ".dump"' % f.name, shell=True)
                 with config.db.session_context() as s:
                     self.__assert_basic_stats(s)

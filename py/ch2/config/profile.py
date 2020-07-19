@@ -2,9 +2,9 @@
 from logging import getLogger
 
 from .climb import add_climb, CLIMB_CNAME
-from .database import add_activity_group, add_activities, Counter, add_statistics, add_displayer, \
-    add_monitor, add_constant, add_diary_topic, add_diary_topic_field, \
-    add_activity_topic_field, add_activity_displayer_delegate, add_activity_topic
+from .database import add_activity_group, Counter, add_read_and_calculate, add_displayer, add_constant, \
+    add_diary_topic, add_diary_topic_field, add_activity_topic_field, add_activity_displayer_delegate, \
+    add_activity_topic
 from .impulse import add_responses, add_impulse
 from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
@@ -17,7 +17,7 @@ from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.elevation import ElevationCalculator
 from ..pipeline.calculate.heart_rate import RestHRCalculator
 from ..pipeline.calculate.kit import KitCalculator
-from ..pipeline.calculate.monitor import MonitorCalculator
+from ..pipeline.calculate.monitor import StepsCalculator
 from ..pipeline.calculate.nearby import SimilarityCalculator, NearbyCalculator
 from ..pipeline.calculate.power import PowerCalculator
 from ..pipeline.calculate.response import ResponseCalculator
@@ -64,10 +64,9 @@ class Profile:
             # hopefully you won't need to over-ride this, but instead one of the more specific methods
             self._pre(s)
             self._load_specific_activity_groups(s)
-            self._load_activities_pipeline(s, Counter())
-            self._load_statistics_pipeline(s, Counter())
+            self._load_read_pipeline(s)
+            self._load_calculate_pipeline(s)
             self._load_diary_pipeline(s, Counter())
-            self._load_monitor_pipeline(s, Counter())
             self._load_constants(s)
             self._load_diary_topics(s, Counter())
             self._load_activity_topics(s, Counter())
@@ -115,24 +114,25 @@ class Profile:
                 'enhanced_altitude': (Titles.ALTITUDE, Units.M, StatisticJournalType.FLOAT),
                 'cadence': (Titles.CADENCE, Units.RPM, StatisticJournalType.INTEGER)}
 
-    def _load_activities_pipeline(self, s, c):
+    def _load_read_pipeline(self, s):
         sport_to_activity = self._sport_to_activity()
         record_to_db = self._record_to_db()
-        add_activities(s, SegmentReader, c, owner_out=short_cls(SegmentReader),
-                       sport_to_activity=sport_to_activity, record_to_db=record_to_db)
+        add_read_and_calculate(s, SegmentReader, owner_out=short_cls(SegmentReader),
+                               sport_to_activity=sport_to_activity, record_to_db=record_to_db)
+        add_read_and_calculate(s, MonitorReader)
 
     def _ff_parameters(self):
         return ((42, 1, 1, Titles.FITNESS_D % 42, 'fitness'),
                 (7, 1, 5, Titles.FATIGUE_D % 7, 'fatigue'))
 
-    def _load_power_statistics(self, s, c):
+    def _load_power_statistics(self, s):
         # after elevation and before ff etc
         # defaults is none because configuration is complex
         pass
 
-    def _load_ff_statistics(self, s, c, default_fthr=154):
+    def _load_ff_statistics(self, s, default_fthr=154):
         for activity_group in self._activity_groups.values():
-            add_impulse(s, c, activity_group)
+            add_impulse(s, activity_group)
             # we need a value here for various UI reasons.  might as well use my own value...
             add_constant(s, Titles.FTHR, default_fthr,
                          description=f'''
@@ -145,41 +145,47 @@ your FF-model parameters (fitness and fatigue).
                          activity_group=activity_group, units=Units.BPM,
                          statistic_journal_type=StatisticJournalType.INTEGER)
         add_climb(s)  # default climb calculator
-        add_responses(s, c, self._ff_parameters(), prefix=N.DEFAULT)
+        add_responses(s, self._ff_parameters(), prefix=N.DEFAULT)
 
-    def _load_standard_statistics(self, s, c):
-        add_statistics(s, SegmentCalculator, c, owner_in=short_cls(SegmentReader))
-        add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))
-        add_statistics(s, RestHRCalculator, c, owner_in=short_cls(MonitorReader))
-        add_statistics(s, KitCalculator, c, owner_in=short_cls(SegmentReader))
-        add_statistics(s, ActivityCalculator, c,
-                       blocked_by=[PowerCalculator, ElevationCalculator, ImpulseCalculator, ResponseCalculator],
-                       owner_in=short_cls(ResponseCalculator),
-                       climb=CLIMB_CNAME, response_prefix=N.DEFAULT)
-        add_statistics(s, SimilarityCalculator, c,
-                       blocked_by=[ActivityCalculator],
-                       owner_in=short_cls(ActivityCalculator))
-        add_statistics(s, NearbyCalculator, c,
-                       blocked_by=[SimilarityCalculator],
-                       owner_in=short_cls(SimilarityCalculator))
+    def _load_standard_statistics(self, s):
+        add_read_and_calculate(s, SegmentCalculator, blocked_by=[SegmentReader],
+                               owner_in=short_cls(SegmentReader))
+        add_read_and_calculate(s, StepsCalculator, blocked_by=[MonitorReader],
+                               owner_in=short_cls(MonitorReader))
+        add_read_and_calculate(s, RestHRCalculator, blocked_by=[MonitorReader],
+                               owner_in=short_cls(MonitorReader))
+        add_read_and_calculate(s, KitCalculator, blocked_by=[SegmentReader],
+                               owner_in=short_cls(SegmentReader))
+        add_read_and_calculate(s, ActivityCalculator,
+                               blocked_by=[PowerCalculator, ElevationCalculator, ImpulseCalculator, ResponseCalculator],
+                               owner_in=short_cls(ResponseCalculator),
+                               climb=CLIMB_CNAME, response_prefix=N.DEFAULT)
+        add_read_and_calculate(s, SimilarityCalculator, blocked_by=[ActivityCalculator],
+                               owner_in=short_cls(ActivityCalculator))
+        add_read_and_calculate(s, NearbyCalculator, blocked_by=[SimilarityCalculator],
+                               owner_in=short_cls(SimilarityCalculator))
 
-    def _load_summary_statistics(self, s, c):
+    def _load_summary_statistics(self, s):
         # need to call normalize here because schedule isn't a schedule type column,
         # but part of a kargs JSON blob.
         # also, add year first so that monthly doesn't get confused by extra stats range
-        add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('x'))
-        add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('y'))
-        add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('m'))
+        x = add_read_and_calculate(s, SummaryCalculator, blocked_by=[ActivityCalculator],  # todo?
+                                   schedule=Schedule.normalize('x'))
+        y = add_read_and_calculate(s, SummaryCalculator, blocked_by=[x],
+                                   schedule=Schedule.normalize('y'))
+        add_read_and_calculate(s, SummaryCalculator, blocked_by=[y],
+                               schedule=Schedule.normalize('m'))
 
-    def _load_statistics_pipeline(self, s, c):
+    def _load_calculate_pipeline(self, s):
         # order is important here because some pipelines expect values created by others
         # this converts RAW_ELEVATION to ELEVATION, if needed
-        add_statistics(s, ElevationCalculator, c)
-        self._load_power_statistics(s, c)
-        self._load_ff_statistics(s, c)
-        self._load_standard_statistics(s, c)
-        self._load_summary_statistics(s, c)
-        add_statistics(s, AchievementCalculator, c, owner_in=short_cls(ActivityCalculator))
+        add_read_and_calculate(s, ElevationCalculator, blocked_by=[SegmentReader])
+        self._load_power_statistics(s)
+        self._load_ff_statistics(s)
+        self._load_standard_statistics(s)
+        self._load_summary_statistics(s)
+        add_read_and_calculate(s, AchievementCalculator, blocked_by=[SummaryCalculator],
+                               owner_in=short_cls(ActivityCalculator))
 
     def _load_diary_pipeline(self, s, c):
         add_displayer(s, DiaryDisplayer, c)
@@ -194,9 +200,6 @@ your FF-model parameters (fitness and fatigue).
 
     def _activity_displayer_delegates(self):
         return [AchievementDelegate, ActivityDelegate, SegmentDelegate, NearbyDelegate, JupyterDelegate]
-
-    def _load_monitor_pipeline(self, s, c):
-        add_monitor(s, MonitorReader, c)
 
     def _load_constants(self, s):
         add_constant(s, SRTM1_DIR_CNAME, self._config.args._format(value='{data-dir}/srtm1'),

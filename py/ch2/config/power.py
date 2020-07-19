@@ -1,7 +1,8 @@
 
 from logging import getLogger
 
-from .database import add_enum_constant, add_statistics
+from .database import add_enum_constant, add_read_and_calculate
+from ..pipeline.calculate import ElevationCalculator
 from ..pipeline.calculate.power import PowerModel, PowerCalculator, BikeModel
 
 log = getLogger(__name__)
@@ -9,7 +10,7 @@ log = getLogger(__name__)
 POWER_MODEL_CNAME = 'power-model'
 
 
-def add_simple_power_estimate(s, c, activity_group, cda, crr, bike_weight, rider_weight):
+def add_simple_power_estimate(s, activity_group, cda, crr, bike_weight, rider_weight):
     '''
     Configure parameters directly.
     '''
@@ -27,10 +28,11 @@ The physical parameters are encoded directly below.
 * rider_weight is the weight of the rider.
 In more complex configurations these can be references to other constants.
 ''')
-    add_statistics(s, PowerCalculator, c, power_model=power_model.name, activity_group=activity_group.name)
+    add_read_and_calculate(s, PowerCalculator, blocked_by=[ElevationCalculator],
+                           power_model=power_model.name, activity_group=activity_group.name)
 
 
-def add_kit_power_estimate(s, c, activity_groups):
+def add_kit_power_estimate(s, activity_groups):
     '''
     Configure parameters indirectly.  This uses a single constant, but must be run for each group.
     The constant doesn't specify the group, so the current group will be used.
@@ -47,7 +49,8 @@ This is the indirect (complex) configuration which delegates to a kit-specific b
 the weight from a diary entry.
 ''')
     for activity_group in activity_groups:
-        add_statistics(s, PowerCalculator, c, power_model=power_model.name, activity_group=activity_group)
+        add_read_and_calculate(s, PowerCalculator, blocked_by=[ElevationCalculator],
+                               power_model=power_model.name, activity_group=activity_group)
 
 
 def add_kit_power_model(s, kit, activity_group, cda, crr, bike_weight):
