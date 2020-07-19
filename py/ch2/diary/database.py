@@ -36,8 +36,8 @@ def read_pipeline(session, date, schedule=None):
     '''
     date = to_date(date)   # why is this needed?
     for pipeline in Pipeline.all(session, PipelineType.DISPLAY):
-        log.info(f'Building {pipeline.cls} ({pipeline.args}, {pipeline.kargs})')
-        instance = pipeline.cls(*pipeline.args, **pipeline.kargs)
+        log.info(f'Building {pipeline.cls} ({pipeline.kargs})')
+        instance = pipeline.cls(**pipeline.kargs)
         if isinstance(instance, Displayer):  # why is this needed?
             data = list(instance.read(session, date, schedule=schedule))
             if data:

@@ -71,8 +71,8 @@ class Pipeline(Base):
     @classmethod
     def all_instances(cls, s, type, like=tuple(), id=None):
         for pipeline in cls.all(s, type, like=like, id=id):
-            log.debug(f'Building {pipeline.cls} ({pipeline.args}, {pipeline.kargs})')
-            yield pipeline.cls(*pipeline.args, **pipeline.kargs)
+            log.debug(f'Building {pipeline.cls} ({pipeline.kargs})')
+            yield pipeline.cls(**pipeline.kargs)
 
     @classmethod
     def count(cls, s, type, like=tuple(), id=None):

@@ -250,13 +250,13 @@ class Stats:
         self.done += self.__size[index]
 
     def bar(self):
-        width = 36
+        width = 35
         solid = int(width * self.done / self.total) if self.total else width
         blank = width - solid
         return '-' * blank + '#' * solid
 
     def __str__(self):
-        return f'{str(self.__pipeline):>20s} {self.active:2d} {self.done:4d}/{self.total:<4d} {self.bar()}'
+        return f'{str(self.__pipeline):>21s} {self.active:2d} {self.done:4d}/{self.total:<4d} {self.bar()}'
 
     def __bool__(self):
         return self.done == self.total
