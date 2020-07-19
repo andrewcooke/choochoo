@@ -4,6 +4,7 @@ from multiprocessing import cpu_count
 from time import sleep
 
 from ..commands.args import LOG
+from ..common.date import now, format_seconds
 from ..lib.workers import ProgressTree
 from ..sql import PipelineType, Interval, Pipeline
 
@@ -71,13 +72,10 @@ class ProcessRunner:
             while True:
                 try:
                     pipeline, cmd, log_index = queue.pop()
-                    log.debug(f'Preparing worker for {pipeline}')
                     popen = self.__config.run_process(pipeline.cls, cmd, log_name(pipeline, log_index))
-                    log.debug(f'Created subprocess {popen}')
                     pipelines[popen] = (pipeline, log_index)
                     popens.append(popen)
                     if len(popens) == capacity:
-                        log.debug('At capacity')
                         popens = self._run_til_next(pipelines, popens, queue)
                 except EmptyException:
                     if popens:
@@ -126,7 +124,7 @@ class EmptyException(Exception): pass
 
 class DependencyQueue:
 
-    def __init__(self, config, pipelines, kargs):
+    def __init__(self, config, pipelines, kargs, max_missing=50, gamma=0.3):
         self.__clean_pipelines(pipelines)
         self.__config = config
         self.__blocked = [pipeline for pipeline in pipelines if pipeline.blocked_by]
@@ -136,6 +134,8 @@ class DependencyQueue:
         self.__stats = {}  # pipeline: Stats
         self.__order = []
         self.__kargs = kargs
+        self.__max_missing = max_missing
+        self.__gamma = gamma
         self.__active_log_indices = defaultdict(lambda: set())
         # clear out any junk from previous errors?
         for pipeline in self.__unblocked:
@@ -185,14 +185,12 @@ class DependencyQueue:
                 self.complete(pipeline)
                 log.info(f'{pipeline}: no missing data')
         try:
-            log.debug(f'Current order: {self.__order}')
             pipeline = self.__order.pop(0)
             instance, missing = self.__active[pipeline]
             log_index = self.__unused_log_index(pipeline)
             missing_args, missing = self.__split_missing(pipeline, instance, missing)
             cmd = instance.command_for_missing(pipeline, missing_args, log_name(pipeline, log_index))
             if missing:
-                log.debug(f'{pipeline}: {len(missing)} missing still to process')
                 self.__active[pipeline] = (instance, missing)
                 self.__order.append(pipeline)
             else:
@@ -215,8 +213,7 @@ class DependencyQueue:
             log.info(str(self.__stats[pipeline]))
 
     def __split_missing(self, pipeline, instance, missing):
-        n = max(instance.min, min(instance.max, int(pow(self.__stats[pipeline].total, instance.gamma))))
-        n = min(n, len(missing))
+        n = max(1, min(self.__max_missing, len(missing), int(pow(self.__stats[pipeline].total, self.__gamma))))
         return missing[:n], missing[n:]
 
     def shut_down(self):
@@ -237,10 +234,15 @@ class Stats:
         self.active = 0
         self.total = len(missing)
         self.done = 0
+        self.duration_overall = 0
+        self.duration_individual = 0
+        self.__start_overall = now()
+        self.__start_individual = {}
         self.__size = {}
         log.info(f'{self.__pipeline}: {self.total} to process')
 
     def start(self, index, n):
+        self.__start_individual[index] = now()
         self.__size[index] = n
         self.active += 1
 
@@ -248,12 +250,21 @@ class Stats:
         log.info(f'{self.__pipeline}: {self.__size[index]} completed')
         self.active -= 1
         self.done += self.__size[index]
+        self.duration_individual += (now() - self.__start_individual[index]).total_seconds()
+        if self:
+            self.duration_overall = (now() - self.__start_overall).total_seconds()
 
     def bar(self):
         width = 35
         solid = int(width * self.done / self.total) if self.total else width
         blank = width - solid
-        return '-' * blank + '#' * solid
+        bar = '-' * blank + '#' * solid
+        if self:
+            overall_secs = format_seconds(self.duration_overall)
+            individual_secs = format_seconds(self.duration_individual)
+            secs = f' {overall_secs} / {individual_secs}'
+            bar = bar[:-len(secs)] + secs
+        return bar
 
     def __str__(self):
         return f'{str(self.__pipeline):>21s} {self.active:2d} {self.done:4d}/{self.total:<4d} {self.bar()}'

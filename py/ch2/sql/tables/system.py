@@ -117,7 +117,6 @@ class Process(Base):
 # if they don't match we return false because the original process is not running.
 def exists(pid, time, delta_seconds=3, zombie_seconds=10):
     if not ps.pid_exists(pid):
-        log.debug(f'Process {pid} does not exist')
         return False
     process = ps.Process(pid)
     if process.status() == ps.STATUS_ZOMBIE:

@@ -107,14 +107,11 @@ class IncrementalPipeline(BasePipeline):
 
 class MProcPipeline(BasePipeline):
 
-    def __init__(self, config, owner_out=None, force=False, progress=None, min=1, max=100, gamma=0.5, **kargs):
+    def __init__(self, config, owner_out=None, force=False, progress=None, **kargs):
         self._config = config
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
         self.force = force  # force re-processing
         self._progress = progress
-        self.min = min
-        self.max = max
-        self.gamma = gamma
         dev = mm(DEV) if global_dev() else ''
         self.__ch2 = f'{command_root()} {mm(BASE)} {config.args[BASE]} {dev} {mm(VERBOSITY)} 0'
         super().__init__(**kargs)

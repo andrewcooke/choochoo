@@ -3,7 +3,7 @@ from enum import IntEnum
 from json import dumps
 from logging import getLogger
 
-from sqlalchemy import Column, Integer, not_, or_, Table, ForeignKey
+from sqlalchemy import Column, Integer, not_, or_, Table, ForeignKey, Text
 from sqlalchemy.orm import relationship, joinedload
 
 from ..support import Base
@@ -19,6 +19,12 @@ class PipelineType(IntEnum):
     DISPLAY_ACTIVITY = 2
 
 
+# todo - possibly this should be expressed as a dependency on services, rather than directly between pipelines.
+# (i tried this, getting as far as sketching out the tables, and it seemed like a lot of complexity for not
+# much gain when the configuration is not varied much - might be more useful in future with a more flexible
+# system).
+
+# purely for joins, so not exposed by sqlalchemy
 PipelineDependency = Table('pipeline_dependency', Base.metadata,
                            Column('blocks', Integer, ForeignKey('pipeline.id'), primary_key=True),
                            Column('blocked_by', Integer, ForeignKey('pipeline.id'), primary_key=True))
