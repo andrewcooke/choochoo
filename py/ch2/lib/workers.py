@@ -2,80 +2,10 @@ from contextlib import contextmanager
 from logging import getLogger
 from os import getpid
 from sys import argv
-from time import sleep, time
 
 from math import floor
 
-from ..commands.args import VERBOSITY, WORKER, LOG, DEV, URI
-from ..common.names import BASE
-from ..common.args import mm
-from ..common.global_ import global_dev
-from ..sql.types import short_cls
-
 log = getLogger(__name__)
-
-DELTA_TIME = 3
-SLEEP_TIME = 1
-REPORT_TIME = 60
-
-
-class Workers:
-
-    def __init__(self, config, n_parallel, owner, cmd):
-        self.__config = config
-        self.n_parallel = n_parallel
-        self.owner = owner
-        self.cmd = cmd
-        self.__workers_to_logs = {}  # map from Popen to log index
-        dev = mm(DEV) if global_dev() else ''
-        self.ch2 = f'{command_root()} {mm(BASE)} {config.args[BASE]} {dev} {mm(VERBOSITY)} 0'
-        self.clear_all()
-
-    def clear_all(self):
-        for worker in self.__workers_to_logs:
-            log.warning(f'Killing PID {worker.pid} ({worker.args})')
-            self.__config.delete_process(self.owner, worker.pid)
-        self.__config.delete_all_processes(self.owner)
-
-    def run(self, id, args):
-        self.wait(self.n_parallel - 1)
-        log_index = self._free_log_index()
-        log_name = f'{short_cls(self.owner)}.{log_index}.{LOG}'
-        cmd = self.ch2 + f' {mm(LOG)} {log_name} {mm(URI)} {self.__config.args._format(URI)} ' \
-                         f'{self.cmd} {mm(WORKER)} {id} {args}'
-        worker = self.__config.run_process(self.owner, cmd, log_name)
-        self.__workers_to_logs[worker] = log_index
-
-    def wait(self, n_workers=0):
-        last_report = 0
-        while len(self.__workers_to_logs) > n_workers:
-            if time() - last_report > REPORT_TIME:
-                log.debug(f'Currently have {len(self.__workers_to_logs)} workers; waiting to drop to {n_workers}')
-                last_report = time()
-            for worker in list(self.__workers_to_logs.keys()):
-                worker.poll()
-                process = self.__config.get_process(self.owner, worker.pid)
-                if worker.returncode is not None:
-                    if worker.returncode:
-                        msg = f'Command "{process.command}" exited with return code {worker.returncode} ' + \
-                              f'see {process.log} for more info'
-                        log.warning(msg)
-                        self.clear_all()
-                        raise Exception(msg)
-                    else:
-                        log.debug(f'Command "{process.command}" finished successfully')
-                        del self.__workers_to_logs[worker]
-                        self.__config.delete_process(self.owner, worker.pid)
-            sleep(SLEEP_TIME)
-        if last_report:
-            log.debug(f'Now have {len(self.__workers_to_logs)} workers')
-
-    def _free_log_index(self):
-        used = set(self.__workers_to_logs.values())
-        for i in range(self.n_parallel):
-            if i not in used:
-                return i
-        raise Exception('No log available (too many workers)')
 
 
 def command_root():

@@ -1,18 +1,18 @@
-from collections import defaultdict
+from glob import glob
 from glob import glob
 from logging import getLogger
 from os import makedirs
 from os.path import basename, join, exists, dirname
 
-from ..commands.args import KIT, READ, PATH, DATA_DIR, UPLOAD, PROCESS
+from ..commands.args import KIT, PATH, DATA_DIR, UPLOAD, PROCESS
 from ..common.date import time_to_local_time, Y, YMDTHMS
 from ..common.io import touch, clean_path, data_hash
 from ..common.log import log_current_exception
 from ..lib.io import split_fit_path
 from ..lib.log import Record
 from ..lib.utils import timing
-from ..lib.workers import ProgressTree, SystemProgressTree
-from ..pipeline.mproc import run_pipeline
+from ..lib.workers import ProgressTree
+from ..pipeline.process import run_pipeline
 from ..pipeline.read.utils import AbortImportButMarkScanned
 from ..sql import KitItem, FileHash, PipelineType
 

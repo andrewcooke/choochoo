@@ -97,7 +97,7 @@ class ProcessPipeline(BasePipeline):
         pass
 
     def command_for_missing(self, pipeline, missing, log_name):
-        from .mproc import fmt_cmd
+        from .process import fmt_cmd
         force = ' ' + mm(FORCE) if self.force else ''
         cmd = self.__ch2 + f' {mm(LOG)} {log_name} {mm(URI)} {self._config.args._format(URI)} ' \
                            f'{PROCESS}{force} {mm(WORKER)} {pipeline.id} {self.format_missing(missing)}'

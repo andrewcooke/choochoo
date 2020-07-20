@@ -1,13 +1,12 @@
 
 from io import BytesIO
 from logging import getLogger
-from os.path import join, exists
 from re import search, sub
 from zipfile import ZipFile
 
 from requests import session
 
-from ch2.commands.upload import hash_file, DATA, parse_fit_data, build_path, write_file
+from ch2.commands.upload import hash_file, DATA, parse_fit_data, build_path, write_file, NAME
 
 log = getLogger(__name__)
 

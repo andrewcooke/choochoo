@@ -1,6 +1,7 @@
 from logging import getLogger
 from time import sleep
-from urllib.error import HTTPError
+
+from requests import HTTPError
 
 from .monitor import missing_dates
 from ..calculate.utils import MissingDateMixin
@@ -44,7 +45,7 @@ class GarminReader(MissingDateMixin, ProcessPipeline):
                 dates = list(missing_dates(s, force=self.__force_all))
                 if dates:
                     log.debug(f'Download Garmin from {format_date(dates[0])}')
-                    return dates[:0]
+                    return dates[:1]
                 else:
                     log.debug('No Garmin data to download')
             except Exception as e:

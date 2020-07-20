@@ -13,13 +13,13 @@ log = getLogger(__name__)
 
 def run_pipeline(config, type, *args, like=tuple(), progress=None, worker=None, **extra_kargs):
     if type is None or type == PipelineType.PROCESS:
-        mproc_run_pipeline(config, type, *args, like=like, progress=progress, worker=worker, **extra_kargs)
+        run_process_pipeline(config, type, *args, like=like, progress=progress, worker=worker, **extra_kargs)
     else:
         from .pipeline import run_pipeline
         run_pipeline(config, type, like=like, progress=progress, worker=worker, **extra_kargs)
 
 
-def mproc_run_pipeline(config, type, *args, like=tuple(), progress=None, worker=None, **extra_kargs):
+def run_process_pipeline(config, type, *args, like=tuple(), progress=None, worker=None, **extra_kargs):
     if not worker:
         with config.db.session_context() as s:
             Interval.clean(s)
@@ -29,9 +29,9 @@ def mproc_run_pipeline(config, type, *args, like=tuple(), progress=None, worker=
 
 
 def instantiate_pipeline(pipeline, config, *args, **kargs):
-    log.debug(f'Instantiating {pipeline} with {args}, {kargs}')
     kargs = dict(kargs)
     kargs.update(pipeline.kargs)
+    log.debug(f'Instantiating {pipeline} with {args}, {kargs}')
     return pipeline.cls(config, *args, **kargs)
 
 

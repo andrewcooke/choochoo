@@ -308,7 +308,7 @@ def make_parser(with_noop=False):
     process.add_argument(mm(WORKER), metavar='ID', type=int,
                          help='internal use only (identifies sub-process workers)')
     process.add_argument(mm(FORCE), action='store_true', help='reprocess existing data')
-    process.add_argument(mm(KARG), m(K.upper()), nargs='+', metavar='NAME=VALUE',
+    process.add_argument(mm(KARG), m(K.upper()), action='append', default=[], metavar='NAME=VALUE',
                          help='keyword argument to be passed to the pipelines (can be repeated)')
     process.add_argument(mm(LIKE), action='append', default=[], metavar='PATTERN',
                          help='run only matching pipeline classes')

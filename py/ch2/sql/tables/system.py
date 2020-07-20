@@ -70,7 +70,7 @@ class Process(Base):
 
     @classmethod
     def run(cls, s, owner, cmd, log_name):
-        from ...pipeline.mproc import fmt_cmd
+        from ...pipeline.process import fmt_cmd
         popen = ps.Popen(args=cmd, shell=True)
         log.debug(f'Adding command [{fmt_cmd(cmd)}]; pid {popen.pid}')
         s.add(Process(command=cmd, owner=owner, pid=popen.pid, log=log_name))

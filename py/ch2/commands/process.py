@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from .args import LIKE, WORKER, ARG, parse_pairs, KARG
-from ..pipeline.mproc import run_pipeline
+from ..pipeline.process import run_pipeline
 from ..sql.tables.pipeline import PipelineType
 
 log = getLogger(__name__)
