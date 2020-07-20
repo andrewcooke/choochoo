@@ -4,8 +4,7 @@ from logging import getLogger
 from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
-from ..pipeline import MultiProcPipeline, UniProcPipeline
-from ... import CALCULATE
+from ..pipeline import ProcessPipeline
 from ...common.date import format_time
 from ...common.log import log_current_exception
 from ...lib import local_time_to_time, time_to_local_time, to_date, format_date
@@ -19,10 +18,10 @@ log = getLogger(__name__)
 
 class StartFinishCalculatorMixin:
 
-    def __init__(self, *args, start=None, finish=None, **kargs):
+    def __init__(self, config, start=None, finish=None, **kargs):
         self.start = start  # optional start local time (always present for workers)
         self.finish = finish  # optional finish local time (always present for workers)
-        super().__init__(*args, **kargs)
+        super().__init__(config, **kargs)
 
     def _start_finish(self, type=None):
         start, finish = self.start, self.finish
@@ -31,14 +30,8 @@ class StartFinishCalculatorMixin:
             if finish: finish = type(finish)
         return start, finish
 
-    def _base_command(self):
-        return f'{CALCULATE}'
 
-
-class MultiProcCalculator(StartFinishCalculatorMixin, MultiProcPipeline): pass
-
-
-class UniProcCalculator(StartFinishCalculatorMixin, UniProcPipeline): pass
+class ProcessCalculator(StartFinishCalculatorMixin, ProcessPipeline): pass
 
 
 class JournalCalculatorMixin:
@@ -68,11 +61,6 @@ class JournalCalculatorMixin:
             filter(not_(self._journal_type.id.in_(existing_ids.cte()))). \
             order_by(self._journal_type.start)
         return [row[0] for row in self._delimit_query(q)]
-
-    def _args(self, missing, start, finish):
-        s, f = time_to_local_time(missing[start]), time_to_local_time(missing[finish])
-        log.info(f'Starting worker for {s} - {f}')
-        return f'"{s}" "{f}"'
 
     def _delete(self, s):
         super()._delete(s)
@@ -196,11 +184,6 @@ class IntervalCalculatorMixin(MissingDatePairMixin):
         expected = s.query(ActivityGroup).count() + 1 if self.grouped else 1
         return list(Interval.missing_dates(s, expected, self.schedule, self.owner_out, start=start, finish=finish))
 
-    def _args(self, missing, start, finish):
-        s, f = format_date(missing[start][0]), format_date(missing[finish][1])
-        log.info(f'Starting worker for {s} - {f}')
-        return f'"{s}" "{f}"'
-
     def _delete(self, s):
         super()._delete
         start, finish = self._start_finish()
@@ -231,24 +214,27 @@ class IntervalCalculatorMixin(MissingDatePairMixin):
     def _run_one(self, s, missing):
         activity_groups = [None] + (list(s.query(ActivityGroup).all()) if self.grouped else [])
         for activity_group in activity_groups:
-            log.debug(f'Activity group: {activity_group}')
+            log.debug(f'Activity group: {activity_group}; Schedule: {self.schedule}')
             if s.query(Interval). \
                     filter(Interval.schedule == self.schedule,
                            Interval.owner == self.owner_out,
                            Interval.start == missing[0],
                            Interval.activity_group == activity_group).one_or_none():
-                raise Exception('Interval already exists')
-            interval = add(s, Interval(schedule=self.schedule, owner=self.owner_out,
-                                       start=missing[0], finish=missing[1], activity_group=activity_group))
-            s.commit()
-            try:
-                data = self._read_data(s, interval)
-                loader = self._get_loader(s, add_serial=False, clear_timestamp=False)
-                self._calculate_results(s, interval, data, loader)
-                loader.load()
-            except Exception as e:
-                log.error(f'No statistics for {missing} due to error ({e})')
-                log_current_exception()
+                # we can have some activity groups, but not others
+                log.warning(f'Interval already exists for '
+                            f'{activity_group} / {self.schedule} at {format_date(missing[0])}')
+            else:
+                interval = add(s, Interval(schedule=self.schedule, owner=self.owner_out,
+                                           start=missing[0], finish=missing[1], activity_group=activity_group))
+                s.commit()
+                try:
+                    data = self._read_data(s, interval)
+                    loader = self._get_loader(s, add_serial=False, clear_timestamp=False)
+                    self._calculate_results(s, interval, data, loader)
+                    loader.load()
+                except Exception as e:
+                    log.error(f'No statistics for {missing} due to error ({e})')
+                    log_current_exception()
 
     @abstractmethod
     def _read_data(self, s, interval):

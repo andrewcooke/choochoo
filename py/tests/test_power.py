@@ -4,11 +4,11 @@ from tempfile import TemporaryDirectory
 import pandas as pd
 
 from ch2.commands.args import DEV, V, bootstrap_db, BASE
-from ch2.commands.read import read
+from ch2.commands.upload import upload
 from ch2.common.args import mm, m
 from ch2.config.profile.default import default
 from ch2.data import Names as N, Statistics
-from ch2.pipeline.read import SegmentReader
+from ch2.pipeline.read.segment import SegmentReader
 from tests import LogTestCase, random_test_user
 
 log = getLogger(__name__)
@@ -25,7 +25,7 @@ class TestPower(LogTestCase):
 
             config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
                                        'data/test/source/personal/2018-03-04-qdp.fit')
-            read(config)
+            upload(config)
 
             with config.db.session_context() as s:
                 stats = Statistics(s, activity_journal='2018-03-04 07:16:33', with_timespan=True). \

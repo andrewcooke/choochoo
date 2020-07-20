@@ -18,8 +18,7 @@ from .servlets.upload import Upload
 from .static import Static
 from ..commands.args import LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, READ, JUPYTER, WARN, SECURE, THUMBNAIL_DIR, \
     NOTEBOOK_DIR
-from .. import BASE
-from ..common.names import URI
+from ..common.names import BASE
 from ..common.args import mm
 from ..jupyter.server import JupyterController
 from ..common.log import log_current_exception

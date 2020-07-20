@@ -21,25 +21,25 @@ class FatalException(Exception):
 
 from .commands.args import COMMAND, make_parser, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DATABASE, CONSTANTS, CALCULATE, SHOW_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, DB_VERSION
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, READ, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, \
+    DB_VERSION, UPLOAD, PROCESS
 from .common.names import COLOR, BASE, DB
 from .common.args import NamespaceWithVariables
+from .commands.process import process
+from .commands.upload import upload
 from .commands.constants import constants
 from .commands.validate import validate
 from .commands.db import db
 from .commands.fit import fit
 from .commands.fix_fit import fix_fit
-from .commands.garmin import garmin
 from .commands.help import help, Markdown
 from .commands.import_ import import_
 from .commands.jupyter import jupyter
 from .commands.kit import kit
 from .commands.package_fit_profile import package_fit_profile
 from .commands.search import search
-from .commands.calculate import calculate
 from .commands.show_schedule import show_schedule
 from .commands.thumbnail import thumbnail
-from .commands.read import read
 from .commands.web import web
 from .lib.log import make_log_from_args
 from .sql.database import SystemConstant
@@ -61,18 +61,17 @@ COMMANDS = {CONSTANTS: constants,
             DB: db,
             FIT: fit,
             FIX_FIT: fix_fit,
-            GARMIN: garmin,
             HELP: help,
             IMPORT: import_,
             JUPYTER: jupyter,
             KIT: kit,
-            CALCULATE: calculate,
             NO_OP: no_op,
             PACKAGE_FIT_PROFILE: package_fit_profile,
-            READ: read,
+            PROCESS: process,
             SEARCH: search,
             SHOW_SCHEDULE: show_schedule,
             THUMBNAIL: thumbnail,
+            UPLOAD: upload,
             VALIDATE: validate,
             WEB: web
             }

@@ -4,20 +4,15 @@ from logging import getLogger
 from os import makedirs
 from os.path import basename, join, exists, dirname
 
-from .calculate import run_statistic_pipelines
-from .garmin import run_garmin
-from ..commands.args import KIT, READ, FORCE, PATH, base_system_path, PERMANENT, WORKER, parse_pairs, \
-    KARG, infer_flags, ACTIVITIES, CALCULATE, DATA_DIR, BASE
+from ..commands.args import KIT, READ, PATH, DATA_DIR, UPLOAD, PROCESS
 from ..common.date import time_to_local_time, Y, YMDTHMS
 from ..common.io import touch, clean_path, data_hash
+from ..common.log import log_current_exception
 from ..lib.io import split_fit_path
 from ..lib.log import Record
-from ..common.log import log_current_exception
 from ..lib.utils import timing
 from ..lib.workers import ProgressTree, SystemProgressTree
 from ..pipeline.mproc import run_pipeline
-from ..pipeline.read.activity import ActivityReader
-from ..pipeline.read.monitor import MonitorReader
 from ..pipeline.read.utils import AbortImportButMarkScanned
 from ..sql import KitItem, FileHash, PipelineType
 
@@ -39,54 +34,30 @@ DOT_FIT = '.fit'
 READ_PATH = 'read-path'
 WRITE_PATH = 'write-path'
 
-FLAGS = (ACTIVITIES, MONITOR, CALCULATE)
 
-
-def read(config):
+def upload(config):
     '''
-## read
+## upload
 
-    > ch2 read --kit ITEM [ITEM...] -- PATH [PATH ...]
+    > ch2 upload --kit ITEM [ITEM...] -- PATH [PATH ...]
 
-Read FIT files, storing the data in the permanent store on the file system,
-then scan their contents, adding entries to the database, and finally calculating associated statistics.
+Copy FIT files, storing the data in the permanent store on the file system.
+Optionally, call process after, to add data to the database.
 Both monitor and activity files are accepted.
-
-Scanning and calculation of activities can be disabled with --disable, and individual steps can
-be enabled / disabled by name.
 
 ### Examples
 
-    > ch2 read --kit cotic -- ~/fit/2018-01-01.fit
+    > ch2 upload --kit cotic -- ~/fit/2018-01-01.fit
 
 will store the given file, add activity data to the database (associated with the kit 'cotic'), check for
 new monitor data, and update statistics.
-
-    > ch2 read --calculate
-
-is equivalent to `ch2 calculate` (so will not store and files, will not read data, but wil calculate statistics).
-
-    > ch2 read --disable --calculate [PATH ...]
-
-will read files and add their contents to the database, but not calculate statistics.
-
-    > ch2 read --disable [PATH ...]
-
-will read files (ie copy them to the permanent store), but do no other processing.
-
-Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
     args = config.args
-    if args[WORKER]:
-        run_pipeline(config, None, paths=args[PATH], force=args[FORCE], worker=args[WORKER],
-                     **parse_pairs(args[KARG]))
-    else:
-        record = Record(log)
-        flags = infer_flags(args, *FLAGS)
-        nfiles, files = open_files(args[PATH])
-        with timing(READ):
-            upload_files_and_update(record, config, files=files, nfiles=nfiles, force=args[FORCE],
-                                    items=args[KIT], flags=flags, **parse_pairs(args[KARG]))
+    nfiles, files = open_files(args[PATH])
+    with timing(UPLOAD):
+        upload_files(Record(log), config, files=files, nfiles=nfiles, items=args[KIT])
+        if args[PROCESS]:
+            run_pipeline(config, PipelineType.PROCESS)
 
 
 class SkipFile(Exception):
@@ -157,6 +128,8 @@ def check_file(s, file):
 
 
 def parse_fit_data(file, items=None):
+    from ch2.pipeline.read.monitor import MonitorReader
+    from ch2.pipeline.read.activity import ActivityReader
     try:
         # add TIME and TYPE and EXTRA (and maybe SPORT) given (fit) DATA and NAME
         try:
@@ -226,28 +199,3 @@ def upload_files(record, data, files=tuple(), nfiles=1, items=tuple(), progress=
                     except SkipFile as e:
                         record.warning(e)
             local_progress.complete()  # catch no files case
-
-
-def upload_files_and_update(record, config, files=tuple(), nfiles=1, force=False, items=tuple(),
-                            flags=None, **kargs):
-    # this expects files to be a list of maps from name to stream (or an iterator, if nfiles provided)
-    if not flags:
-        flags = defaultdict(lambda: True)
-    n_options = sum(1 if flags[name] else 0 for name in FLAGS)
-    if flags[MONITOR]: n_options += 2
-    progress = SystemProgressTree(config, READ, [1] * (n_options + 1))
-    log.info(f'Uploading files')
-    try:
-        upload_files(record, config, files=files, nfiles=nfiles, items=items, progress=progress)
-        run_pipeline(config, PipelineType.READ_AND_CALCULATE, force=force, progress=progress, **kargs)
-        # todo - better approach here
-        # with config.db.session_context() as s:
-        #     try:
-        #         log.info('Running Garmin download')
-        #         run_garmin(config, s, base=config.args[BASE], progress=progress)
-        #     except Exception as e:
-        #         log.warning(f'Could not get data from Garmin: {e}')
-        # log.info('Running monitor pipelines (again)')
-        # run_pipeline(config, PipelineType.READ_MONITOR, force=force, progress=progress, **kargs)
-    finally:
-        progress.complete()

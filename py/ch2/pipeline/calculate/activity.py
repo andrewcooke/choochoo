@@ -9,7 +9,7 @@ from sqlalchemy import desc
 from .elevation import ElevationCalculator
 from .impulse import ImpulseCalculator
 from .power import PowerCalculator
-from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
+from .utils import ProcessCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 from ..pipeline import OwnerInMixin, LoaderMixin
 from ..read.segment import SegmentReader
 from ...data import Statistics
@@ -29,7 +29,7 @@ log = getLogger(__name__)
 
 
 class ActivityCalculator(LoaderMixin, OwnerInMixin,
-                         ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
+                         ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator):
 
     def __init__(self, *args, climb=None, response_prefix=None, **kargs):
         self.climb_ref = climb

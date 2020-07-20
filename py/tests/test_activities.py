@@ -5,7 +5,7 @@ from sqlalchemy.sql.functions import count
 
 from ch2.commands.args import V, DEV, FORCE, bootstrap_db, BASE
 from ch2.commands.constants import constants
-from ch2.commands.read import read
+from ch2.commands.upload import read
 from ch2.common.args import mm, m
 from ch2.config.profile.default import default
 from ch2.data import Names as N
@@ -30,7 +30,7 @@ class TestActivities(LogTestCase):
                                       'data/test/source/personal/2018-08-27-rec.fit')
             read(config)
 
-        run_pipeline(config, PipelineType.READ_AND_CALCULATE, force=True, start='2018-01-01', n_cpu=1)
+        run_pipeline(config, PipelineType.PROCESS, force=True, start='2018-01-01', n_cpu=1)
 
         with config.db.session_context() as s:
             n_raw = s.query(count(StatisticJournalFloat.id)). \
@@ -76,7 +76,7 @@ class TestActivities(LogTestCase):
                                           'data/test/source/private/florian.fit')
             read(config)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(config, PipelineType.READ_AND_CALCULATE, n_cpu=1)
+            run_pipeline(config, PipelineType.PROCESS, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with config.db.session_context() as s:
                 self.__assert_basic_stats(s)
@@ -90,7 +90,7 @@ class TestActivities(LogTestCase):
                                       'data/test/source/other/2019-05-09-051352-Running-iWatchSeries3.fit')
             read(config)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(config, PipelineType.READ_AND_CALCULATE, n_cpu=1)
+            run_pipeline(config, PipelineType.PROCESS, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with config.db.session_context() as s:
                 self.__assert_basic_stats(s)
@@ -104,7 +104,7 @@ class TestActivities(LogTestCase):
                                       'data/test/source/personal/2016-07-19-mpu-s-z2.fit')
             read(config)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(config, PipelineType.READ_AND_CALCULATE, n_cpu=1)
+            run_pipeline(config, PipelineType.PROCESS, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with config.db.session_context() as s:
                 for stat in s.query(StatisticJournal). \
@@ -122,7 +122,7 @@ class TestActivities(LogTestCase):
                                                f'data/test/source/other/{src}')
                 read(config)
                 # run('sqlite3 %s ".dump"' % f.name, shell=True)
-                run_pipeline(config, PipelineType.READ_AND_CALCULATE, n_cpu=1)
+                run_pipeline(config, PipelineType.PROCESS, n_cpu=1)
                 # run('sqlite3 %s ".dump"' % f.name, shell=True)
                 with config.db.session_context() as s:
                     self.__assert_basic_stats(s)

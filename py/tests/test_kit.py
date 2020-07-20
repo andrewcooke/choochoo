@@ -3,7 +3,7 @@ from tempfile import TemporaryDirectory
 
 from ch2.commands.args import V, DEV, K, READ, bootstrap_db, BASE
 from ch2.commands.kit import start, change, finish, show, undo, statistics
-from ch2.commands.read import read
+from ch2.commands.upload import upload
 from ch2.common.args import mm, m
 from ch2.config.profile.default import default
 from ch2.diary.model import TYPE
@@ -192,13 +192,13 @@ class TestKit(LogTestCase):
             config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), READ,
                                        'data/test/source/personal/2018-08-03-rec.fit',
                                        m(K), 'cotic')
-            read(config)
+            upload(config)
             config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), READ,
                                        'data/test/source/personal/2018-08-27-rec.fit',
                                        m(K), 'cotic')
-            read(config)
-            run_pipeline(config, PipelineType.READ_AND_CALCULATE, like=['%Activity%'], n_cpu=1)
-            run_pipeline(config, PipelineType.READ_AND_CALCULATE, like=['%Kit%'], n_cpu=1)
+            upload(config)
+            run_pipeline(config, PipelineType.PROCESS, like=['%Activity%'], n_cpu=1)
+            run_pipeline(config, PipelineType.PROCESS, like=['%Kit%'], n_cpu=1)
 
         with config.db.session_context() as s:
             bike = get_name(s, 'bike').to_model(s, depth=3, statistics=INDIVIDUAL, own_models=False)

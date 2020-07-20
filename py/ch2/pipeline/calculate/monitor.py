@@ -6,7 +6,7 @@ from sqlalchemy import exists
 from sqlalchemy.sql import func
 from sqlalchemy.sql.functions import count
 
-from .utils import MultiProcCalculator, MissingDateMixin
+from .utils import ProcessCalculator, MissingDateMixin
 from ..pipeline import LoaderMixin, OwnerInMixin
 from ...lib import local_date_to_time, time_to_local_date, to_date, format_date
 from ...common.log import log_current_exception
@@ -20,7 +20,7 @@ log = getLogger(__name__)
 QUARTER_DAY = 6 * 60 * 60
 
 
-class StepsCalculator(MissingDateMixin, LoaderMixin, OwnerInMixin, MultiProcCalculator):
+class StepsCalculator(MissingDateMixin, LoaderMixin, OwnerInMixin, ProcessCalculator):
     '''
     This is a little unusual, in that we can calculate results from partial data and then, when we have
     more data, we need to delete the previous values.  So we need to be careful (1) in deciding when
@@ -131,8 +131,3 @@ class StepsCalculator(MissingDateMixin, LoaderMixin, OwnerInMixin, MultiProcCalc
         loader.add(Titles.DAILY_STEPS, Units.STEPS_UNITS, S.join(S.SUM, S.AVG, S.CNT, S.MAX, S.MSR),
                    source, daily_steps, start, StatisticJournalInteger,
                    description='''The number of steps in a day.''')
-
-    def _args(self, missing, start, finish):
-        start, finish = format_date(missing[start]), format_date(missing[finish])
-        log.info(f'Starting worker for {start} - {finish}')
-        return f'"{start}" "{finish}"'

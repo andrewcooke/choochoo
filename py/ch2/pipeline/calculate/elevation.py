@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
+from .utils import ProcessCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 from ..pipeline import LoaderMixin
 from ...data import Statistics
 from ...data.elevation import smooth_elevation
@@ -12,7 +12,7 @@ from ...sql import StatisticJournalFloat
 log = getLogger(__name__)
 
 
-class ElevationCalculator(LoaderMixin, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
+class ElevationCalculator(LoaderMixin, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator):
 
     def __init__(self, *args, smooth=3, **kargs):
         self.smooth = smooth

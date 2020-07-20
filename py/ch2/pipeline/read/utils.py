@@ -2,18 +2,16 @@ from abc import abstractmethod
 from glob import iglob
 from logging import getLogger
 from os.path import join
-from time import time
 
+from ..pipeline import ProcessPipeline
 from ... import FatalException
-from ...commands.args import base_system_path, PERMANENT, FORCE, READ, BASE
-from ...common.args import mm
+from ...commands.args import base_system_path, PERMANENT, BASE
 from ...common.date import now
+from ...common.log import log_current_exception
 from ...fit.format.read import filtered_records
 from ...lib import to_time
-from ...common.log import log_current_exception
 from ...lib.io import modified_file_scans
-from ..pipeline import LoaderMixin, MultiProcPipeline
-from ...sql import Timestamp
+from ...sql import Timestamp, FileScan
 
 log = getLogger(__name__)
 
@@ -28,18 +26,13 @@ class AbortImportButMarkScanned(AbortImport):
 
 class FitReaderMixin:
 
-    def __init__(self, *args, paths=None, sub_dir=None, **kargs):
+    def __init__(self, config, *paths, sub_dir=None, **kargs):
         self.paths = paths
         self.sub_dir = sub_dir
-        super().__init__(*args, **kargs)
+        super().__init__(config, **kargs)
 
-    def _delete(self, s):
-        super()._delete(s)
-        # not used
-        pass
-
-    def _expand_paths(self, s, paths):
-        from ...commands.read import DOT_FIT
+    def _expand_paths(self, paths):
+        from ...commands.upload import DOT_FIT
         if paths: return paths
         data_dir = base_system_path(self._config.args[BASE], version=PERMANENT)
         if self.sub_dir:
@@ -49,9 +42,11 @@ class FitReaderMixin:
         return iglob(join(data_dir, '**/*' + DOT_FIT), recursive=True)
 
     def _missing(self, s):
-        return modified_file_scans(s, self._expand_paths(s, self.paths), self.owner_out, self.force)
+        return modified_file_scans(s, self._expand_paths(self.paths), self.owner_out, self.force)
 
     def _run_one(self, s, file_scan):
+        # we need to get the file_scan in this session (missing is separate and objects are zombies)
+        file_scan = s.query(FileScan).filter(FileScan.id == file_scan.id).one()
         try:
             self._read(s, file_scan)
             file_scan.last_scan = now()
@@ -111,13 +106,5 @@ def quote(text):
     return '"' + text + '"'
 
 
-class MultiProcFitReader(FitReaderMixin, MultiProcPipeline):
+class ProcessFitReader(FitReaderMixin, ProcessPipeline): pass
 
-    def _args(self, missing, start, finish):
-        paths = ' '.join(quote(file_scan.path) for file_scan in missing[start:finish+1])
-        log.info(f'Starting worker for {missing[start]} - {missing[finish]}')
-        return paths
-
-    def _base_command(self):
-        force = ' ' + mm(FORCE) if self.force else ''
-        return f'{READ}{force}'

@@ -1,7 +1,7 @@
-
+from .garmin import Garmin
 from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field
 from ..power import add_simple_power_estimate, add_kit_power_estimate, add_kit_power_model
-from ..profile import Profile, WALK, SWIM, RUN, BIKE
+from ..profile import WALK, SWIM, RUN, BIKE
 from ...commands.args import DEFAULT
 from ...common.names import TIME_ZERO
 from ...diary.model import TYPE, EDIT
@@ -32,7 +32,7 @@ ROAD = 'Road'
 MTB = 'MTB'
 
 
-class ACooke(Profile):
+class ACooke(Garmin):
 
     def _load_diary_topics(self, s, c):
         super()._load_diary_topics(s, c)

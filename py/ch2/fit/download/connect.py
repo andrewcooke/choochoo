@@ -7,6 +7,8 @@ from zipfile import ZipFile
 
 from requests import session
 
+from ch2.commands.upload import hash_file, DATA, parse_fit_data, build_path, write_file
+
 log = getLogger(__name__)
 
 
@@ -118,17 +120,7 @@ class GarminConnect:
             # log.debug('text: %s' % response.text)
         return response
 
-    def get_monitoring_to_zip_file(self, date, dir):
-        path = join(dir, date.strftime('%Y-%m-%d.zip'))
-        if exists(path):
-            raise Exception('"%s" already exists' % path)
-        response = self.get_monitoring(date)
-        with open(path, 'wb') as f:
-            f.write(response.content)
-        log.info('Downloaded data for %s to %s' % (date, path))
-
     def get_monitoring_to_fit_file(self, date, data_dir, old_format=False):
-        from ...commands.read import write_file, DATA, hash_file, NAME, parse_fit_data, build_path
         response = self.get_monitoring(date)
         zipfile = ZipFile(BytesIO(response.content))
         for name in zipfile.namelist():

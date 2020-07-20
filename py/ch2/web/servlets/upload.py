@@ -3,9 +3,9 @@ from logging import getLogger
 import psutil as ps
 
 from ...commands.args import WEB, READ, LOG, VERBOSITY, FORCE, DEV, URI
-from ... import BASE
 from ...common.args import mm
-from ...commands.read import STREAM, NAME, upload_files
+from ...common.names import BASE
+from ...commands.upload import STREAM, NAME, upload_files
 from ...common.global_ import global_dev
 from ...lib.log import Record
 from ...lib.utils import parse_bool

@@ -4,8 +4,7 @@ from logging import getLogger
 from time import sleep
 
 from .workers import command_root
-from ..commands.args import VERBOSITY, BIND, PORT, DEV
-from .. import BASE
+from ..commands.args import BIND, PORT, DEV
 
 log = getLogger(__name__)
 

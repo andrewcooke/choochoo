@@ -6,7 +6,7 @@ from logging import getLogger
 import numpy as np
 import pandas as pd
 
-from .utils import ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator
+from .utils import ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator
 from ..pipeline import LoaderMixin
 from ...data import present, linear_resample_time, Statistics
 from ...data.frame import median_dt
@@ -34,7 +34,7 @@ class PowerModel(reftuple('Power', 'bike_model, rider_weight')):
             return instance
 
 
-class PowerCalculator(LoaderMixin, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
+class PowerCalculator(LoaderMixin, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator):
 
     '''
     See ch2.config.power for examples of how this is configured.

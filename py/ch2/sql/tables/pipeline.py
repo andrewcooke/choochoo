@@ -14,7 +14,7 @@ log = getLogger(__name__)
 
 class PipelineType(IntEnum):
 
-    READ_AND_CALCULATE = 0
+    PROCESS = 0
     DISPLAY = 1
     DISPLAY_ACTIVITY = 2
 
@@ -38,7 +38,6 @@ class Pipeline(Base):
     type = Column(Integer, nullable=False, index=True)
     cls = Column(Cls, nullable=False)  # not unique - may run various instances
     kargs = Column(Json, nullable=False, server_default=dumps({}))
-    sort = Column(Sort, nullable=False)
 
     # https://stackoverflow.com/a/5652169 (no idea why i need both here)
     blocks = relationship('Pipeline', secondary=PipelineDependency,
@@ -63,8 +62,7 @@ class Pipeline(Base):
 
     @classmethod
     def all(cls, s, type, like=tuple(), id=None):
-        q = cls._query(s, type, like=like, id=id)
-        pipelines = q.order_by(Pipeline.sort).all()
+        pipelines = cls._query(s, type, like=like, id=id).all()
         if not pipelines:
             msg = 'No pipelines configured for type %s' % PipelineType(type).name
             if like:

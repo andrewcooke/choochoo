@@ -1,6 +1,8 @@
 from json import dumps
 from logging import getLogger
 
+from sqlalchemy import desc
+
 from ..names import simple_name
 from ..common.names import TIME_ZERO
 from ..sql import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
@@ -62,9 +64,9 @@ def add_activity_group(s, name, sort, description=None):
     return add(s, ActivityGroup(name=name, sort=sort, description=description))
 
 
-def add_pipeline(s, cls, type, sort, blocked_by=tuple(), **kargs):
-    pipeline = add(s, Pipeline(cls=cls, type=type, sort=sort, kargs=kargs))
-    for blocker in blocked_by:
+def add_pipeline(s, cls, type, blocked_by=None, **kargs):
+    pipeline = add(s, Pipeline(cls=cls, type=type, kargs=kargs))
+    for blocker in blocked_by or ():
         if isinstance(blocker, Pipeline):
             log.debug(f'{short_cls(blocker.cls)} blocks {short_cls(cls)}')
             pipeline.blocked_by.append(blocker)
@@ -75,13 +77,19 @@ def add_pipeline(s, cls, type, sort, blocked_by=tuple(), **kargs):
             if q.count():
                 for instance in q.all():
                     pipeline.blocked_by.append(instance)
-                log.debug(f'{short_cls(blocker)} blocks {short_cls(cls)}')
+                log.debug(f'{blocker} blocks {cls}')
             else:
                 raise Exception(f'{short_cls(blocker)} is not a current pipeline')
     return pipeline
 
 
-def add_displayer(s, cls, sort, **kargs):
+def add_next_pipeline(s, cls, type, **kargs):
+    previous = s.query(Pipeline).filter(Pipeline.type == type).order_by(desc(Pipeline.id)).first()
+    if previous: previous = [previous]
+    return add_pipeline(s, cls, type, blocked_by=previous, **kargs)
+
+
+def add_displayer(s, cls, **kargs):
     '''
     Add a class to the diary pipeline.
 
@@ -94,10 +102,10 @@ def add_displayer(s, cls, sort, **kargs):
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
     log.debug(f'Adding displayer pipeline {short_cls(cls)}')
-    return add_pipeline(s, cls, PipelineType.DISPLAY, sort, blocked_by=(), **kargs)
+    return add_next_pipeline(s, cls, PipelineType.DISPLAY, **kargs)
 
 
-def add_activity_displayer_delegate(s, cls, sort, **kargs):
+def add_activity_displayer_delegate(s, cls, **kargs):
     '''
     Add a class to the activity displayer pipeline.
 
@@ -109,10 +117,10 @@ def add_activity_displayer_delegate(s, cls, sort, **kargs):
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
     log.debug(f'Adding activity displayer pipeline {short_cls(cls)}')
-    return add_pipeline(s, cls, PipelineType.DISPLAY_ACTIVITY, sort, blocked_by=(), **kargs)
+    return add_next_pipeline(s, cls, PipelineType.DISPLAY_ACTIVITY, **kargs)
 
 
-def add_read_and_calculate(s, cls, blocked_by=(), **kargs):
+def add_read_and_calculate(s, cls, blocked_by=None, **kargs):
     '''
     Add a class to the read / calculate pipeline.
 
@@ -125,7 +133,7 @@ def add_read_and_calculate(s, cls, blocked_by=(), **kargs):
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
     log.debug(f'Adding read / calculate pipeline {short_cls(cls)}')
-    return add_pipeline(s, cls, PipelineType.READ_AND_CALCULATE, 0, blocked_by=blocked_by, **kargs)
+    return add_pipeline(s, cls, PipelineType.PROCESS, blocked_by=blocked_by, **kargs)
 
 
 def add_constant(s, title, value, description=None, units=None, name=None,

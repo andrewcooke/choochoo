@@ -4,9 +4,10 @@ from os.path import splitext, basename
 from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
 
-from .utils import AbortImportButMarkScanned, MultiProcFitReader
+from .utils import AbortImportButMarkScanned, ProcessFitReader
 from ... import FatalException
 from ...commands.args import DEFAULT
+from ...commands.upload import ACTIVITY
 from ...common.date import to_time, time_to_local_time
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
@@ -28,12 +29,11 @@ log = getLogger(__name__)
 # /home/andrew/archive/fit/batch/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24715592701_tap-sync-18690-cc1dd93225119215a1ea87c584a974ce.fit
 # /home/andrew/archive/fit/batch/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24718989709_tap-sync-18690-effaaaffdd06b9419991471bd92d53d5.fit
 
-class ActivityReader(MultiProcFitReader):
+class ActivityReader(ProcessFitReader):
 
     KIT = 'kit'
 
     def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, **kargs):
-        from ...commands.read import ACTIVITY
         self.define = define if define else {}
         self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
         self.record_to_db = [(field, title, units, STATISTIC_JOURNAL_CLASSES[type])

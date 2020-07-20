@@ -8,14 +8,14 @@ from math import log10
 from sqlalchemy import distinct
 from sqlalchemy.sql.functions import count
 
-from .utils import UniProcCalculator, MissingDatePairMixin
+from .utils import MissingDatePairMixin, ProcessCalculator
 from ..pipeline import LoaderMixin, OwnerInMixin
 from ..read.segment import SegmentReader
 from ...common.date import round_hour, to_time, local_date_to_time, now
+from ...common.names import TIME_ZERO
 from ...data import Statistics, present
 from ...data.response import sum_to_hour, calc_response
 from ...names import Names as N, SPACE
-from ...common.names import TIME_ZERO
 from ...sql import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
     StatisticJournalFloat
 from ...sql.tables.source import SourceType
@@ -28,7 +28,7 @@ Response = namedtuple('Response', 'src_owner, title, tau_days, start, scale')
 SCALED = 'scaled'
 
 
-class ResponseCalculator(MissingDatePairMixin, LoaderMixin, OwnerInMixin, UniProcCalculator):
+class ResponseCalculator(MissingDatePairMixin, LoaderMixin, OwnerInMixin, ProcessCalculator):
     '''
     this is hard to do correctly, incrementally.
 

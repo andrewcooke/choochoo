@@ -1,19 +1,17 @@
 
 from abc import abstractmethod
-from contextlib import nullcontext
 from logging import getLogger
 
-from psutil import cpu_count
 from sqlalchemy.sql.functions import count
 
 from .loader import Loader
-from .. import BASE, DEV
-from ..commands.args import LOG, WORKER
+from ..commands.args import LOG, WORKER, DEV, PROCESS, FORCE
 from ..common.args import mm
 from ..common.global_ import global_dev
+from ..common.names import BASE
 from ..common.names import VERBOSITY, URI
 from ..lib.utils import timing
-from ..lib.workers import ProgressTree, Workers, command_root
+from ..lib.workers import ProgressTree, command_root
 from ..sql import Pipeline, Interval, PipelineType, StatisticJournal
 from ..sql.types import short_cls
 
@@ -30,7 +28,7 @@ def count_statistics(s):
 def run_pipeline(config, type, like=tuple(), progress=None, worker=None, **extra_kargs):
     with config.db.session_context() as s:
         if not worker:
-            if type == PipelineType.READ_AND_CALCULATE:
+            if type == PipelineType.PROCESS:
                 Interval.clean(s)
         local_progress = ProgressTree(Pipeline.count(s, type, like=like, id=worker), parent=progress)
         for pipeline in Pipeline.all(s, type, like=like, id=worker):
@@ -64,57 +62,18 @@ class BasePipeline:
         raise NotImplementedError()
 
 
-class IncrementalPipeline(BasePipeline):
+class ProcessPipeline(BasePipeline):
 
-    def __init__(self, config, *args, owner_out=None, force=False, progress=None, **kargs):
+    def __init__(self, config, *args, owner_out=None, force=False, progress=None, worker=None, id=None, **kargs):
         self._config = config
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
         self.force = force  # force re-processing
         self._progress = progress
-        super().__init__(*args, **kargs)
-
-    def run(self):
-        with self._config.db.session_context(expire_on_commit=False) as s:
-            self._startup(s)
-        if self.force:
-            with self._config.db.session_context() as s:
-                self._delete(s)
-        with self._config.db.session_context(expire_on_commit=False) as s:
-            missing = self._missing(s)
-        log.debug(f'Have {len(missing)} missing ranges')
-        self._recalculate(self._config.db, missing)
-        with self._config.db.session_context() as s:
-            self._shutdown(s)
-
-    def _startup(self, s):
-        pass
-
-    @abstractmethod
-    def _delete(self, s):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _missing(self, s):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _recalculate(self, db, missing):
-        raise NotImplementedError()
-
-    def _shutdown(self, s):
-        pass
-
-
-class MProcPipeline(BasePipeline):
-
-    def __init__(self, config, owner_out=None, force=False, progress=None, **kargs):
-        self._config = config
-        self.owner_out = owner_out or self  # the future owner of any calculated statistics
-        self.force = force  # force re-processing
-        self._progress = progress
+        self.worker = worker
+        self.id = id
         dev = mm(DEV) if global_dev() else ''
         self.__ch2 = f'{command_root()} {mm(BASE)} {config.args[BASE]} {dev} {mm(VERBOSITY)} 0'
-        super().__init__(**kargs)
+        super().__init__(*args, **kargs)
 
     def missing(self):
         with self._config.db.session_context(expire_on_commit=False) as s:
@@ -139,8 +98,9 @@ class MProcPipeline(BasePipeline):
 
     def command_for_missing(self, pipeline, missing, log_name):
         from .mproc import fmt_cmd
+        force = ' ' + mm(FORCE) if self.force else ''
         cmd = self.__ch2 + f' {mm(LOG)} {log_name} {mm(URI)} {self._config.args._format(URI)} ' \
-                           f'{self._base_command()} {mm(WORKER)} {pipeline.id} {self.format_missing(missing)}'
+                           f'{PROCESS}{force} {mm(WORKER)} {pipeline.id} {self.format_missing(missing)}'
         log.debug(fmt_cmd(cmd))
         return cmd
 
@@ -149,114 +109,18 @@ class MProcPipeline(BasePipeline):
 
     @abstractmethod
     def _delete(self, s):
-        raise NotImplementedError()
+        raise NotImplementedError('_delete')
 
     @abstractmethod
     def _missing(self, s):
-        raise NotImplementedError()
+        raise NotImplementedError('_missing')
 
     @abstractmethod
     def _recalculate(self, db, missing):
-        raise NotImplementedError()
+        raise NotImplementedError('_recalculate')
 
     def _shutdown(self, s):
         pass
-
-
-class MultiProcPipeline(MProcPipeline):
-
-    def __init__(self, config, *args, owner_out=None, force=False, progress=None,
-                 overhead=1, cost_calc=20, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
-        self.overhead = overhead  # next three args are used to decide if workers are needed
-        self.cost_calc = cost_calc  # see _cost_benefit for full details
-        self.cost_write = cost_write  # defaults guarantee a single thread
-        self.n_cpu = max(1, int(cpu_count() * CPU_FRACTION)) if n_cpu is None else n_cpu  # number of cpus available
-        self.worker = worker  # if True, then we're in a sub-process
-        self.id = id  # the id for the pipeline entry in the database (passed to sub-processes)
-        super().__init__(config, *args, owner_out=owner_out, force=force, progress=progress, **kargs)
-
-    def _recalculate(self, db, missing):
-        local_progress = ProgressTree(len(missing), parent=self._progress)
-        if not missing:
-            log.info(f'No missing data for {short_cls(self)}')
-            local_progress.complete()
-        else:
-            self._run_all(db, missing, local_progress)
-
-    @abstractmethod
-    def _delete(self, s):
-        if self.worker:
-            log.warning('Worker deleting data')
-
-    def _run_all(self, db, missing, progress=None):
-        local_progress = progress.increment_or_complete if progress else nullcontext
-        for missed in missing:
-            with local_progress():
-                with db.session_context() as s:
-                    self._run_one(s, missed)
-
-    @abstractmethod
-    def _run_one(self, s, missed):
-        raise NotImplementedError()
-
-    def __cost_benefit(self, missing, n_cpu):
-
-        # is it worth using workers?  there's some cost in starting them up and there will be contention
-        # in accessing the database.
-        # let's say COST (for one missing time) is COST_WRITE + COST_CALC (ignoring units).
-        # if we have N_MISSING tasks divided into N_TOTAL workloads amongst N_PARALLEL workers
-        # then we have these conditions (in order):
-        #   N_PARALLEL * (COST_WRITES/ COST) <= 1 so that we avoid blocking completely on writes
-        #   N_PARALLEL <= N_CPU
-        #   N_TOTAL <= N_MISSING / N_PARALLEL
-        #   (N_MISSING / N_TOTAL) * COST > OVERHEAD so we're not wasting our time
-        #   N_TOTAL <= N_PARALLEL * MAX_REPEAT because we want large batches, but not too large
-        # really we should include estimates of disk and cpu speed here, in which case we need to separate
-        # out COST_READ too (currently folded into COST_CALC).
-
-        log.debug(f'Batching for n_cpu={n_cpu}, overhead={self.overhead}, '
-                  f'cost_writes={self.cost_write}, cost_calc={self.cost_calc}')
-        n_missing = len(missing)
-        cost = self.cost_write + self.cost_calc
-        limit = cost / self.cost_write
-        log.debug(f'Limit on parallel workers from database contention is {limit:3.1f}')
-        log.debug(f'Limit on parallel workers from CPU count is {n_cpu:d}')
-        n_parallel = int(min(limit, n_cpu))
-        n_total = int((n_missing + n_parallel - 1) / n_parallel)
-        log.debug(f'Limit on total workers from work available is {n_total:d}')
-        limit = cost * n_missing / self.overhead
-        log.debug(f'Limit on total workers from overhead is {limit:3.1f}')
-        n_total = min(n_total, int(limit))
-        limit = n_parallel * MAX_REPEAT
-        log.debug(f'Limit on total workers to boost batch size is {limit:d}')
-        n_total = min(n_total, limit)
-        log.info(f'Threads: {n_total}/{n_parallel}')
-        return n_total, n_parallel
-
-    def __spawn(self, missing, n_total, n_parallel, progress):
-        # unfortunately we have to do things with contiguous dates, which may introduce systematic
-        # errors in our timing estimates
-        n_missing = len(missing)
-        workers = Workers(self._config, n_parallel, self.owner_out, self._base_command())
-        start, finish = None, -1
-        for i in range(n_total):
-            start = finish + 1
-            finish = int(0.5 + (i+1) * (n_missing-1) / n_total)
-            if start > finish: raise Exception('Bad chunking logic')
-            with progress.increment_or_complete(finish - start + 1):
-                workers.run(self.id, self._args(missing, start, finish))
-        workers.wait()
-
-    @abstractmethod
-    def _args(self, missing, start, finish):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _base_command(self):
-        raise NotImplementedError()
-
-
-class UniProcPipeline(MProcPipeline):
 
     def _recalculate(self, db, missing):
         local_progress = ProgressTree(len(missing), parent=self._progress)
@@ -276,8 +140,8 @@ class UniProcPipeline(MProcPipeline):
 
 class LoaderMixin:
 
-    def __init__(self, *args, batch=True, **kargs):
-        super().__init__(*args, **kargs)
+    def __init__(self, config, *args, batch=True, **kargs):
+        super().__init__(config, *args, **kargs)
         self.__batch = batch
 
     def _get_loader(self, s, add_serial=None, cls=Loader, **kargs):

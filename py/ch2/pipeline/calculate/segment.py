@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from .utils import MultiProcCalculator, SegmentJournalCalculatorMixin, DataFrameCalculatorMixin
+from .utils import ProcessCalculator, SegmentJournalCalculatorMixin, DataFrameCalculatorMixin
 from ..pipeline import OwnerInMixin, LoaderMixin
 from ...data import present, linear_resample_time, Statistics
 from ...names import N, Titles, Summaries as S, Units
@@ -13,14 +13,14 @@ SJOURNAL = 'sjournal'
 
 
 class SegmentCalculator(LoaderMixin, OwnerInMixin,
-                        SegmentJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
+                        SegmentJournalCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator):
 
     def _delete(self, s):
         super()._delete(s)
         SegmentJournal.clean(s)
 
     def _read_dataframe(self, s, sjournal):
-        from ..owners import SegmentReader
+        from ch2.pipeline.read.segment import SegmentReader
         return Statistics(s, activity_journal=sjournal.activity_journal). \
             by_name(SegmentReader, N.HEART_RATE).df
 

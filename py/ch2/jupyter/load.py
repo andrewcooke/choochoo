@@ -14,7 +14,7 @@ from nbformat.sign import NotebookNotary
 
 from .server import get_controller
 from ..commands.args import NOTEBOOKS, base_system_path, NOTEBOOK_DIR
-from .. import BASE
+from ..common.names import BASE
 from ..common.args import mm
 
 log = getLogger(__name__)

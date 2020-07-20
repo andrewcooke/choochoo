@@ -5,7 +5,6 @@ from sys import stdout
 import re
 
 from .args import TOPIC, HELP, PROGNAME
-from .. import BASE
 from ..common.args import m
 from ..lib.io import terminal_width
 

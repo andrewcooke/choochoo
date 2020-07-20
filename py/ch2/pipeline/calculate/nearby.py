@@ -8,7 +8,7 @@ from sqlalchemy import inspect, select, alias, and_, distinct, func, not_
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import count
 
-from .utils import UniProcCalculator
+from .utils import ProcessCalculator
 from ..pipeline import OwnerInMixin
 from ...common.log import log_current_exception
 from ...lib.dbscan import DBSCAN
@@ -17,14 +17,14 @@ from ...names import Names
 from ...rtree import MatchType
 from ...rtree.spherical import SQRTree
 from ...sql import ActivityJournal, ActivityGroup, ActivitySimilarity, ActivityNearby, StatisticName, \
-    StatisticJournal, StatisticJournalFloat, Timestamp, Source
+    StatisticJournal, StatisticJournalFloat, Timestamp
 
 log = getLogger(__name__)
 Nearby = namedtuple('Nearby', 'constraint, activity_group, border, start, finish, '
                               'latitude, longitude, height, width, fraction')
 
 
-class SimilarityCalculator(OwnerInMixin, UniProcCalculator):
+class SimilarityCalculator(OwnerInMixin, ProcessCalculator):
 
     def __init__(self, *args, fraction=0.01, border=150, **kargs):
         self.fraction = fraction
@@ -227,7 +227,7 @@ class NearbySimilarityDBSCAN(DBSCAN):
         return [x[0] for x in qlo.all()] + [x[0] for x in qhi.all()]
 
 
-class NearbyCalculator(OwnerInMixin, UniProcCalculator):
+class NearbyCalculator(OwnerInMixin, ProcessCalculator):
 
     def _missing(self, s):
         # todo - should really be per-activity group (ie activity group per thread)

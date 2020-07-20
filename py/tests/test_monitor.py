@@ -1,15 +1,13 @@
 from logging import getLogger
-from subprocess import run
 from tempfile import TemporaryDirectory
 
 import sqlalchemy.sql.functions as func
+from ch2.config.profile.default import default
 
-from ch2 import BASE
-from ch2.commands.args import V, DEV, MONITOR, base_system_path, bootstrap_db, READ
-from ch2.commands.read import read
+from ch2.commands.args import V, DEV, MONITOR, bootstrap_db, READ, BASE
+from ch2.commands.upload import upload
 from ch2.common.args import mm, m
 from ch2.common.date import to_time, local_date_to_time
-from ch2.config.profile.default import default
 from ch2.data import Names as N
 from ch2.pipeline.calculate.monitor import StepsCalculator
 from ch2.pipeline.pipeline import run_pipeline
@@ -30,8 +28,8 @@ class TestMonitor(LogTestCase):
             bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
             config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
                                       READ, 'data/test/source/personal/25822184777.fit')
-            read(config)
-            run_pipeline(config, PipelineType.READ_AND_CALCULATE, force=True, start='2018-01-01', finish='2018-12-01', n_cpu=1)
+            upload(config)
+            run_pipeline(config, PipelineType.PROCESS, force=True, start='2018-01-01', finish='2018-12-01', n_cpu=1)
             with config.db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
                 self.assertEqual(164, n)
@@ -47,8 +45,8 @@ class TestMonitor(LogTestCase):
                 config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
                                            'read', mm(MONITOR),
                                            'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
-                read(config)
-            run_pipeline(config, PipelineType.READ_AND_CALCULATE, force=True, like=('%Monitor%',), start='2018-01-01', n_cpu=1)
+                upload(config)
+            run_pipeline(config, PipelineType.PROCESS, force=True, like=('%Monitor%',), start='2018-01-01', n_cpu=1)
             with config.db.session_context() as s:
                 mjournals = s.query(MonitorJournal).order_by(MonitorJournal.start).all()
                 assert mjournals[2].start == to_time('2018-09-06 15:06:00'), mjournals[2].start
@@ -71,12 +69,12 @@ class TestMonitor(LogTestCase):
             if join:
                 files = ['data/test/source/personal/andrew@acooke.org_%s.fit' % file for file in files]
                 config = bootstrap_db(user, mm(BASE), f, mm(DEV), 'read', *files)
-                read(config)
+                upload(config)
             else:
                 for file in files:
                     config = bootstrap_db(user, mm(BASE), f, mm(DEV), 'read',
                                                'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
-                    read(config)
+                    upload(config)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with config.db.session_context() as s:
                 # steps
@@ -108,9 +106,9 @@ class TestMonitor(LogTestCase):
             bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
             config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV),
                                       'read', 'data/test/source/other/37140810636.fit')
-            read(config)
+            upload(config)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(config, PipelineType.READ_AND_CALCULATE, n_cpu=1)
+            run_pipeline(config, PipelineType.PROCESS, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with config.db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()

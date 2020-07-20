@@ -156,6 +156,7 @@ PATTERN = 'pattern'
 PERMANENT = 'permanent'
 PLAN = 'plan'
 PRINT = 'print'
+PROCESS = 'process'
 PROFILE = 'profile'
 PROFILES = 'profiles'
 PROFILE_VERSION = 'profile-version'
@@ -201,6 +202,7 @@ TOPIC = 'topic'
 UNDO = 'undo'
 UNSAFE = 'unsafe'
 UNSET = 'unset'
+UPLOAD = 'upload'
 USERS = 'users'
 VALUE = 'value'
 W, WARN = 'w', 'warn'
@@ -253,8 +255,6 @@ def make_parser(with_noop=False):
 
     commands = parser.add_subparsers(title='commands', dest=COMMAND)
 
-    # high-level commands used daily
-
     help = commands.add_parser(HELP, help='display help',
                                  description='display additional help (beyond -h) for any command')
     help.add_argument(TOPIC, nargs='?', metavar=TOPIC, help='the subject for help')
@@ -294,20 +294,26 @@ def make_parser(with_noop=False):
     add_thumbnail_dir(web_service)
     add_notebook_dir(web_service)
 
-    read = commands.add_parser(READ, help='read data (also calls calculate)',
-                                 description='read data (copy it to the permanent store) and '
-                                             'calculate statistics (add information to the database)')
-    read.add_argument(mm(FORCE), action='store_true', help='reprocess existing data')
-    read.add_argument(mm(KIT), m(K), action='append', default=[], metavar='ITEM',
-                      help='kit items associated with activities')
-    read.add_argument(PATH, metavar='PATH', nargs='*', default=[], help='path to FIT file(s) containing data')
-    read.add_argument(mm(KARG), m(K.upper()), action='append', default=[], metavar='NAME=VALUE',
-                      help='keyword argument to be passed to the pipelines (can be repeated)')
-    read.add_argument(mm(WORKER), metavar='ID', type=int, help='internal use only (identifies sub-process workers)')
-    read.add_argument(mm(DISABLE), action='store_true', help='disable following options (they enable by default)')
-    read.add_argument(mm(ACTIVITIES), action='store_true', help='enable (or disable) processing of activity data')
-    read.add_argument(mm(MONITOR), action='store_true', help='enable (or disable) processing of monitor data')
-    read.add_argument(mm(CALCULATE), action='store_true', help='enable (or disable) calculating statistics')
+    upload = commands.add_parser(UPLOAD, help='upload data (copy FIT files to permanent store)',
+                                 description='copy files to the permanent store and (optionally) process the data')
+    upload.add_argument(mm(KIT), m(K), action='append', default=[], metavar='ITEM',
+                        help='kit items associated with activities')
+    upload.add_argument(mm(no(PROCESS)), action='store_false', dest=PROCESS,
+                        help='do not call process after uploading')
+    upload.add_argument(mm(FORCE), action='store_true', help='reprocess existing data')
+    upload.add_argument(PATH, metavar='PATH', nargs='*', default=[], help='path to FIT file(s) containing data')
+
+    process = commands.add_parser(PROCESS, help='process data (add information to the database)',
+                                  description='read new files from the permanent store and calculate statistics')
+    process.add_argument(mm(WORKER), metavar='ID', type=int,
+                         help='internal use only (identifies sub-process workers)')
+    process.add_argument(mm(FORCE), action='store_true', help='reprocess existing data')
+    process.add_argument(mm(KARG), m(K.upper()), nargs='+', metavar='NAME=VALUE',
+                         help='keyword argument to be passed to the pipelines (can be repeated)')
+    process.add_argument(mm(LIKE), action='append', default=[], metavar='PATTERN',
+                         help='run only matching pipeline classes')
+    process.add_argument(ARG, nargs='*', metavar='ARG',
+                         help='additional arguments')
 
     def add_search_query(cmd, query_help='search terms (similar to SQL)'):
         cmd.add_argument(QUERY, metavar='QUERY', default=[], nargs='+', help=query_help)
@@ -470,24 +476,6 @@ def make_parser(with_noop=False):
     import_.add_argument(mm(CONSTANTS), action='store_true', help='enable (or disable) import of constant data')
     import_.add_argument(mm(SEGMENTS), action='store_true', help='enable (or disable) import of segment data')
 
-    garmin = commands.add_parser(GARMIN, help='download monitor data from garmin connect')
-    garmin.add_argument(DIR, metavar='DIR', nargs='?', help='the directory where FIT files are stored')
-    garmin.add_argument(mm(USER), metavar='USER', help='garmin connect username')
-    garmin.add_argument(mm(PASSWD), metavar='PASSWORD', help='garmin connect password')
-    garmin.add_argument(mm(DATE), metavar='DATE', type=to_date, help='date to download')
-    garmin.add_argument(mm(FORCE), action='store_true', help='allow longer date range')
-
-    calculate = commands.add_parser(CALCULATE, help='(re-)calculate statistics')
-    calculate.add_argument(mm(FORCE), action='store_true', help='delete existing statistics')
-    calculate.add_argument(mm(LIKE), action='append', default=[], metavar='PATTERN',
-                           help='run only matching pipeline classes')
-    calculate.add_argument(START, metavar='START', nargs='?', help='optional start date')
-    calculate.add_argument(FINISH, metavar='FINISH', nargs='?', help='optional finish date (if start also given)')
-    calculate.add_argument(mm(KARG), m(K.upper()), action='append', default=[], metavar='NAME=VALUE',
-                           help='keyword argument to be passed to the pipelines (can be repeated)')
-    calculate.add_argument(mm(WORKER), metavar='ID', type=int,
-                           help='internal use only (identifies sub-process workers)')
-
     fit = commands.add_parser(FIT, help='display contents of fit file')
     fit_cmds = fit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
     fit_grep = fit_cmds.add_parser(GREP, help='show matching entries')
@@ -594,8 +582,7 @@ def make_parser(with_noop=False):
     add_thumbnail_dir(thumbnail)
 
     if with_noop:
-        noop = commands.add_parser(NO_OP,
-                                     help='used within jupyter (no-op from cmd line)')
+        noop = commands.add_parser(NO_OP, help='used within jupyter (no-op from cmd line)')
 
     package_fit_profile = commands.add_parser(PACKAGE_FIT_PROFILE,
                                                 help='parse and save the global fit profile (dev only)')

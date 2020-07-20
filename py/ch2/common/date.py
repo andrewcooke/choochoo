@@ -45,6 +45,13 @@ def to_date(value, none=False):
         raise ValueError('Cannot parse "%s" as a date' % value)
 
 
+def dates_from(start):
+    today = time_to_local_date(now())
+    while start <= today:
+        yield start
+        start += dt.timedelta(days=1)
+
+
 def to_time(value, none=False):
     if none and value is None:
         return None

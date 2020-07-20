@@ -4,7 +4,7 @@ from random import choice
 
 from sqlalchemy import func, inspect, and_, select
 
-from .utils import MultiProcCalculator, IntervalCalculatorMixin
+from .utils import ProcessCalculator, IntervalCalculatorMixin
 from ..pipeline import LoaderMixin
 from ...data.frame import _tables
 from ...common.date import local_date_to_time
@@ -25,7 +25,7 @@ def fuzz(n, q):
     return int(i)
 
 
-class SummaryCalculator(LoaderMixin, IntervalCalculatorMixin, MultiProcCalculator):
+class SummaryCalculator(LoaderMixin, IntervalCalculatorMixin, ProcessCalculator):
 
     # todo - this should have a worker per activity group
 

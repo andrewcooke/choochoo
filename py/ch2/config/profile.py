@@ -6,7 +6,6 @@ from .database import add_activity_group, Counter, add_read_and_calculate, add_d
     add_diary_topic, add_diary_topic_field, add_activity_topic_field, add_activity_displayer_delegate, \
     add_activity_topic
 from .impulse import add_responses, add_impulse
-from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.inspect import read_package
 from ..lib.schedule import Schedule
@@ -32,6 +31,7 @@ from ..pipeline.display.database import DatabaseDisplayer
 from ..pipeline.display.diary import DiaryDisplayer
 from ..pipeline.display.monitor import MonitorDisplayer
 from ..pipeline.display.response import ResponseDisplayer
+from ..pipeline.read.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..pipeline.read.monitor import MonitorReader
 from ..pipeline.read.segment import SegmentReader
 from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, ActivityTopic
@@ -66,7 +66,7 @@ class Profile:
             self._load_specific_activity_groups(s)
             self._load_read_pipeline(s)
             self._load_calculate_pipeline(s)
-            self._load_diary_pipeline(s, Counter())
+            self._load_diary_pipeline(s)
             self._load_constants(s)
             self._load_diary_topics(s, Counter())
             self._load_activity_topics(s, Counter())
@@ -169,7 +169,8 @@ your FF-model parameters (fitness and fatigue).
         # need to call normalize here because schedule isn't a schedule type column,
         # but part of a kargs JSON blob.
         # also, add year first so that monthly doesn't get confused by extra stats range
-        x = add_read_and_calculate(s, SummaryCalculator, blocked_by=[ActivityCalculator],  # todo?
+        x = add_read_and_calculate(s, SummaryCalculator,
+                                   blocked_by=[ActivityCalculator, RestHRCalculator],
                                    schedule=Schedule.normalize('x'))
         y = add_read_and_calculate(s, SummaryCalculator, blocked_by=[x],
                                    schedule=Schedule.normalize('y'))
@@ -187,16 +188,15 @@ your FF-model parameters (fitness and fatigue).
         add_read_and_calculate(s, AchievementCalculator, blocked_by=[SummaryCalculator],
                                owner_in=short_cls(ActivityCalculator))
 
-    def _load_diary_pipeline(self, s, c):
-        add_displayer(s, DiaryDisplayer, c)
-        add_displayer(s, MonitorDisplayer, c)
+    def _load_diary_pipeline(self, s):
+        add_displayer(s, DiaryDisplayer)
+        add_displayer(s, MonitorDisplayer)
         # prefix ties in to the ff statistics config
-        add_displayer(s, ResponseDisplayer, c, owner_in=short_cls(ResponseCalculator), prefix=N.DEFAULT)
-        add_displayer(s, ActivityDisplayer, c)
-        c2 = Counter()
+        add_displayer(s, ResponseDisplayer, owner_in=short_cls(ResponseCalculator), prefix=N.DEFAULT)
+        add_displayer(s, ActivityDisplayer)
         for delegate in self._activity_displayer_delegates():
-            add_activity_displayer_delegate(s, delegate, c2)
-        add_displayer(s, DatabaseDisplayer, c)
+            add_activity_displayer_delegate(s, delegate)
+        add_displayer(s, DatabaseDisplayer)
 
     def _activity_displayer_delegates(self):
         return [AchievementDelegate, ActivityDelegate, SegmentDelegate, NearbyDelegate, JupyterDelegate]

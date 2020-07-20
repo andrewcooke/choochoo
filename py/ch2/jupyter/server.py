@@ -9,10 +9,9 @@ from notebook.notebookapp import NotebookApp
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 from uritools import urisplit, uriunsplit
 
-from ..commands.args import NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, LOG, base_system_path, BIND, PORT, PROXY, \
-    NOTEBOOK_DIR
-from .. import BASE
+from ..commands.args import JUPYTER, SERVICE, VERBOSITY, LOG, BIND, PORT, PROXY, NOTEBOOK_DIR
 from ..common.args import mm
+from ..common.names import BASE
 from ..lib.server import BaseController
 from ..sql import SystemConstant
 

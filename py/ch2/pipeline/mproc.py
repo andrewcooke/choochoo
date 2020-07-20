@@ -11,33 +11,33 @@ from ..sql import PipelineType, Interval, Pipeline
 log = getLogger(__name__)
 
 
-def run_pipeline(config, type, like=tuple(), progress=None, worker=None, **extra_kargs):
-    if type is None or type == PipelineType.READ_AND_CALCULATE:
-        mproc_run_pipeline(config, type, like=like, progress=progress, worker=worker, **extra_kargs)
+def run_pipeline(config, type, *args, like=tuple(), progress=None, worker=None, **extra_kargs):
+    if type is None or type == PipelineType.PROCESS:
+        mproc_run_pipeline(config, type, *args, like=like, progress=progress, worker=worker, **extra_kargs)
     else:
         from .pipeline import run_pipeline
         run_pipeline(config, type, like=like, progress=progress, worker=worker, **extra_kargs)
 
 
-def mproc_run_pipeline(config, type, like=tuple(), progress=None, worker=None, **extra_kargs):
+def mproc_run_pipeline(config, type, *args, like=tuple(), progress=None, worker=None, **extra_kargs):
     if not worker:
         with config.db.session_context() as s:
             Interval.clean(s)
     with config.db.session_context(expire_on_commit=False) as s:
         pipelines = list(sort_pipelines(Pipeline.all(s, type, like=like, id=worker)))
-    ProcessRunner(config, pipelines, worker=worker, **extra_kargs).run(progress)
+    ProcessRunner(config, pipelines, *args, worker=worker, **extra_kargs).run(progress)
 
 
-def instantiate_pipeline(pipeline, config, **kargs):
-    log.debug(f'Instantiating {pipeline} with {kargs}')
+def instantiate_pipeline(pipeline, config, *args, **kargs):
+    log.debug(f'Instantiating {pipeline} with {args}, {kargs}')
     kargs = dict(kargs)
     kargs.update(pipeline.kargs)
-    return pipeline.cls(config, **kargs)
+    return pipeline.cls(config, *args, **kargs)
 
 
 class ProcessRunner:
 
-    def __init__(self, config, pipelines, worker=None, n_cpu=cpu_count(), load=1, **kargs):
+    def __init__(self, config, pipelines, *args, worker=None, n_cpu=cpu_count(), load=1, **kargs):
         if worker and len(pipelines) > 1: raise Exception('Worker with multiple pipelines')
         if not pipelines: raise Exception('No pipelines')
         self.__config = config
@@ -45,6 +45,7 @@ class ProcessRunner:
         self.__worker = worker
         self.__n_cpu = n_cpu
         self.__load = load
+        self.__args = args
         self.__kargs = kargs
 
     def run(self, progress):
@@ -59,8 +60,8 @@ class ProcessRunner:
 
     def __run_local(self, local_progress, pipeline):
         log.info(f'Running pipeline {pipeline} locally with {self.__kargs}')
-        instance = instantiate_pipeline(pipeline, self.__config, id=self.__worker, worker=bool(self.__worker),
-                                        **self.__kargs)
+        instance = instantiate_pipeline(pipeline, self.__config, *self.__args,
+                                        id=self.__worker, worker=bool(self.__worker), **self.__kargs)
         with local_progress.increment_or_complete():
             instance.run()
 
@@ -177,13 +178,13 @@ class DependencyQueue:
             missing = instance.missing()
             self.__stats[pipeline] = Stats(pipeline, missing)
             if missing:
-                log.info(f'{pipeline}: {len(missing)} missing values')
+                log.debug(f'{pipeline}: {len(missing)} missing values')
                 self.__active[pipeline] = (instance, missing)
                 self.__order.insert(0, pipeline)
                 break
             else:
                 self.complete(pipeline)
-                log.info(f'{pipeline}: no missing data')
+                log.debug(f'{pipeline}: no missing data')
         try:
             pipeline = self.__order.pop(0)
             instance, missing = self.__active[pipeline]
@@ -196,7 +197,7 @@ class DependencyQueue:
             else:
                 log.debug(f'{pipeline} will be exhausted after this process')
                 del self.__active[pipeline]
-            log.info(f'{pipeline}: starting batch of {len(missing_args)} missing values')
+            log.debug(f'{pipeline}: starting batch of {len(missing_args)} missing values')
             self.__stats[pipeline].start(log_index, len(missing_args))
             return pipeline, cmd, log_index
         except IndexError:
@@ -232,14 +233,13 @@ class Stats:
     def __init__(self, pipeline, missing):
         self.__pipeline = pipeline
         self.active = 0
-        self.total = len(missing)
+        self.total = len(missing) if missing else 0
         self.done = 0
         self.duration_overall = 0
         self.duration_individual = 0
         self.__start_overall = now()
         self.__start_individual = {}
         self.__size = {}
-        log.info(f'{self.__pipeline}: {self.total} to process')
 
     def start(self, index, n):
         self.__start_individual[index] = now()

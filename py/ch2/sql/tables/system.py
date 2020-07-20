@@ -10,6 +10,7 @@ from ..types import ShortCls, Name
 from ..utils import add
 from ...common.date import to_time
 from ...lib import now
+from ...names import simple_name
 
 log = getLogger(__name__)
 

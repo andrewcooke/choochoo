@@ -76,9 +76,11 @@ class Constant(Source):
         return constant
 
     @classmethod
-    def get_single(cls, s, name):
+    def get_single(cls, s, name, none=False):
         try:
-            constant = Constant.from_name(s, name)
+            constant = Constant.from_name(s, name, none=none)
+            if constant is None:
+                return
             if not constant.single:
                 raise Exception(f'Constant {name} is not single')
             value = constant.at(s).value

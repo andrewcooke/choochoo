@@ -8,12 +8,12 @@ from sqlalchemy import desc, and_, func
 from sqlalchemy.orm import aliased
 
 import ch2.common.io
-from .utils import AbortImportButMarkScanned, MultiProcFitReader
+from .utils import AbortImportButMarkScanned, ProcessFitReader
 from ..loader import Loader
 from ..pipeline import LoaderMixin
 from ...commands.args import FORCE, READ
 from ...common.args import mm
-from ...common.date import time_to_local_date, format_time, to_time
+from ...common.date import time_to_local_date, format_time, to_time, dates_from, now
 from ...common.names import POSTGRESQL, SQLITE
 from ...data.frame import read_query
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
@@ -46,41 +46,30 @@ def missing_dates(s, force=False):
     # (these files don't span more than a day)
     seconds = (latest.finish - latest.start).total_seconds() / 2
     start = time_to_local_date(latest.start + dt.timedelta(seconds=seconds))
-    finish = dt.date.today()
-    days = (finish - start).days
+    days = (time_to_local_date(now()) - start).days
     if days > 14 and not force:
         raise Exception('Too many days (%d) - ' % days +
                         'do a bulk download instead: https://www.garmin.com/en-US/account/datamanagement/')
     if days:
-        while start < finish:
-            yield start
-            start += dt.timedelta(days=1)
+        yield from dates_from(start)
     else:
         log.warning('No dates to download')
-
-
-class MonitorLoaderMixin:
-
-    def _resolve_duplicate(self, name, instance, prev):
-        log.warning(f'Using max of duplicate values at {instance.time} for {name} '
-                    f'({instance.value}/{prev.value})')
-        prev.value = max(prev.value, instance.value)
 
 
 NEW_STEPS = N._new(N.STEPS)
 STEPS_DESCRIPTION = '''The increment in steps read from the FIT file.'''
 
 
-class MonitorReader(LoaderMixin, MultiProcFitReader):
+class MonitorReader(LoaderMixin, ProcessFitReader):
 
     '''
     These overlap (well, often one starts when another ends),
     so we read everything in and then, at the end, remove overlaps.
     '''
 
-    def __init__(self, *args, **kargs):
-        from ...commands.read import MONITOR
-        super().__init__(*args, sub_dir=MONITOR, **kargs)
+    def __init__(self, config, *args, **kargs):
+        from ...commands.upload import MONITOR
+        super().__init__(config, *args, sub_dir=MONITOR, **kargs)
 
     def _get_loader(self, s, **kargs):
         return super()._get_loader(s, cls=MonitorLoader, **kargs)

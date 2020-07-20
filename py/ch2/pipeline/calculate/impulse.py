@@ -5,7 +5,7 @@ from logging import getLogger
 
 import numpy as np
 
-from .utils import MultiProcCalculator, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin
+from .utils import ProcessCalculator, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin
 from ..pipeline import OwnerInMixin, LoaderMixin
 from ...data import Statistics
 from ...data.frame import valid
@@ -20,7 +20,7 @@ HRImpulse = namedtuple('HRImpulse', 'title, gamma, zero, one, max_secs')
 
 
 class ImpulseCalculator(LoaderMixin, OwnerInMixin,
-                        ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
+                        ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator):
 
     def __init__(self, *args, prefix=None, impulse_constant=None, **kargs):
         self.impulse_constant_ref = self._assert('impulse_constant', impulse_constant)

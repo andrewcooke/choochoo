@@ -152,7 +152,7 @@ def undo(s, item, component, model, date, all):
 
 
 def rebuild(config):
-    run_pipeline(config, PipelineType.READ_AND_CALCULATE, force=True, like=[long_cls(KitCalculator)])
+    run_pipeline(config, PipelineType.PROCESS, force=True, like=[long_cls(KitCalculator)])
 
 
 def show(s, name, date, csv=None, output=stdout):

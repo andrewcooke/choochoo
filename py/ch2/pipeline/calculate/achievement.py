@@ -4,7 +4,7 @@ from re import compile
 
 from sqlalchemy import desc, asc
 
-from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin
+from .utils import ProcessCalculator, ActivityJournalCalculatorMixin
 from ..pipeline import OwnerInMixin
 from ...lib import local_time_to_time
 from ...common.log import log_current_exception
@@ -16,7 +16,7 @@ from ...sql.utils import add
 log = getLogger(__name__)
 
 
-class AchievementCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, MultiProcCalculator):
+class AchievementCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, ProcessCalculator):
 
     def _delete(self, s):
         start, finish = self._start_finish(type=local_time_to_time)
