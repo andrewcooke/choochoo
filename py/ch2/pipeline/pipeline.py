@@ -80,6 +80,7 @@ class ProcessPipeline(BasePipeline):
             self._startup(s)
         if self.force:
             with self._config.db.session_context() as s:
+                log.warning(f'Deleting data for {short_cls(self.__class__)}')
                 self._delete(s)
         with self._config.db.session_context(expire_on_commit=False) as s:
             return self._missing(s)
@@ -88,6 +89,10 @@ class ProcessPipeline(BasePipeline):
     def run(self):
         with self._config.db.session_context(expire_on_commit=False) as s:
             self._startup(s)
+        if not self.worker and self.force:
+            with self._config.db.session_context() as s:
+                self._delete(s)
+        with self._config.db.session_context(expire_on_commit=False) as s:
             missing = self._missing(s)
         self._recalculate(self._config.db, missing)
         with self._config.db.session_context() as s:

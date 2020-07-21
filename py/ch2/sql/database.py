@@ -45,7 +45,7 @@ class DirtySession(Session):
 
     def __mark_dirty_intervals(self):
         if self.__dirty_ids:
-            log.debug(f'Marking {len(self.__dirty_ids)} as dirty')
+            log.debug(f'Marking {len(self.__dirty_ids)} intervals dirty')
             for ids in grouper(self.__dirty_ids, 900):
                 self.query(Interval).filter(Interval.id.in_(ids)). \
                     update({Interval.dirty: True}, synchronize_session=False)

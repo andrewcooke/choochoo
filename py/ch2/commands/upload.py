@@ -4,7 +4,7 @@ from logging import getLogger
 from os import makedirs
 from os.path import basename, join, exists, dirname
 
-from ..commands.args import KIT, PATH, DATA_DIR, UPLOAD, PROCESS
+from ..commands.args import KIT, PATH, DATA_DIR, UPLOAD, PROCESS, FORCE
 from ..common.date import time_to_local_time, Y, YMDTHMS
 from ..common.io import touch, clean_path, data_hash
 from ..common.log import log_current_exception
@@ -57,7 +57,7 @@ new monitor data, and update statistics.
     with timing(UPLOAD):
         upload_files(Record(log), config, files=files, nfiles=nfiles, items=args[KIT])
         if args[PROCESS]:
-            run_pipeline(config, PipelineType.PROCESS)
+            run_pipeline(config, PipelineType.PROCESS, force=args[FORCE])
 
 
 class SkipFile(Exception):

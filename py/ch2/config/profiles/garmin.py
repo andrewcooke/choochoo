@@ -29,4 +29,6 @@ class Garmin(Profile):
         # add these, chained so that we load available data (know what is missing),
         # download new data, and load new data
         garmin_reader = add_read_and_calculate(s, GarminReader, blocked_by=[monitor_reader])
-        add_read_and_calculate(s, MonitorReader, blocked_by=[garmin_reader])
+        # this force overrides force=True from the command line
+        # (which is applied on the first invocation above)
+        add_read_and_calculate(s, MonitorReader, blocked_by=[garmin_reader], force=False)

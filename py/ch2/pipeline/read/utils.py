@@ -1,12 +1,13 @@
 from abc import abstractmethod
 from glob import iglob
 from logging import getLogger
-from os.path import join
+from os.path import join, exists
 
 from ..pipeline import ProcessPipeline
 from ... import FatalException
 from ...commands.args import base_system_path, PERMANENT, BASE
 from ...common.date import now
+from ...common.io import touch
 from ...common.log import log_current_exception
 from ...fit.format.read import filtered_records
 from ...lib import to_time
@@ -24,7 +25,7 @@ class AbortImportButMarkScanned(AbortImport):
     pass
 
 
-class FitReaderMixin:
+class ProcessFitReader(ProcessPipeline):
 
     def __init__(self, config, *paths, sub_dir=None, **kargs):
         self.paths = paths
@@ -43,6 +44,22 @@ class FitReaderMixin:
 
     def _missing(self, s):
         return modified_file_scans(s, self._expand_paths(self.paths), self.owner_out, self.force)
+
+    def _delete_n(self, s, n):
+        # we don't delete files!  instead, we touch them so that they appear new
+        # the alternative is to reset the scan time, but that seems like 'lying'
+        q = s.query(FileScan).filter(FileScan.owner == self.owner_out)
+        count = q.count()
+        for i, file_scan in enumerate(q.all()):
+            if exists(file_scan.path):
+                touch(file_scan.path)
+                self._delete_db(s, file_scan)
+                if i % n == 0:
+                    log.debug(f'Deleted {i} / {count}')
+        log.debug(f'Touched {count} files')
+
+    def _delete_db(self, s, file_scan):
+        raise NotImplementedError('_delete_db')
 
     def _run_one(self, s, file_scan):
         # we need to get the file_scan in this session (missing is separate and objects are zombies)
@@ -78,11 +95,11 @@ class FitReaderMixin:
 
     @staticmethod
     def _first(path, records, *names):
-        return FitReaderMixin.assert_contained(path, records, names, 0)
+        return ProcessFitReader.assert_contained(path, records, names, 0)
 
     @staticmethod
     def _last(path, records, *names):
-        return FitReaderMixin.assert_contained(path, records, names, -1)
+        return ProcessFitReader.assert_contained(path, records, names, -1)
 
     @staticmethod
     def assert_contained(path, records, names, index):
@@ -104,7 +121,3 @@ class FitReaderMixin:
 
 def quote(text):
     return '"' + text + '"'
-
-
-class ProcessFitReader(FitReaderMixin, ProcessPipeline): pass
-

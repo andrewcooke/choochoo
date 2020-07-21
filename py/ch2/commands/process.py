@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from .args import LIKE, WORKER, ARG, parse_pairs, KARG
+from .args import LIKE, WORKER, ARG, parse_pairs, KARG, FORCE
 from ..pipeline.process import run_pipeline
 from ..sql.tables.pipeline import PipelineType
 
@@ -26,4 +26,4 @@ Calculate activity statistics from 2020 onwards in a single process for debuggin
     '''
     args = config.args
     run_pipeline(config, PipelineType.PROCESS, *args[ARG],
-                 like=args[LIKE], worker=args[WORKER], **parse_pairs(args[KARG]))
+                 like=args[LIKE], worker=args[WORKER], force=args[FORCE], **parse_pairs(args[KARG]))

@@ -69,7 +69,10 @@ class ActivityReader(ProcessFitReader):
 
     @staticmethod
     def parse_records(data):
-        return ActivityReader.read_fit_file(data, merge_duplicates, fix_degrees, no_bad_values)
+        log.debug('Parsing records')
+        records = ActivityReader.read_fit_file(data, merge_duplicates, fix_degrees, no_bad_values)
+        log.debug('Parsed')
+        return records
 
     @staticmethod
     def read_sport(path, records):
@@ -144,18 +147,24 @@ class ActivityReader(ProcessFitReader):
         return s.query(what). \
                 filter(ActivityJournal.file_hash == file_scan.file_hash)
 
-    def _delete_query(self, s, query):
+    def _delete(self, s):
+        self._delete_n(s, 10)
+
+    def _delete_db(self, s, file_scan):
+        self._delete_query(s, self._file_hash_journals(s, ActivityJournal, file_scan), do_log=False)
+
+    def _delete_query(self, s, query, do_log=True):
         for journal in query.all():
             Timestamp.clear(s, owner=self.owner_out, source=journal)
-            log.debug(f'Deleting {journal}')
+            if do_log: log.debug(f'Deleting {journal}')
             s.delete(journal)
 
     def _delete_journals(self, s, activity_group, first_timestamp, last_timestamp, file_scan):
         log.debug('Deleting overlapping journals')
         self._delete_query(s, self._overlapping_journals(s, ActivityJournal, activity_group,
                                                          first_timestamp, last_timestamp))
-        log.debug('Deleting journals from same file')
-        self._delete_query(s, self._file_hash_journals(s, ActivityJournal, file_scan))
+        # log.debug('Deleting journals from same file')
+        # self._delete_query(s, self._file_hash_journals(s, ActivityJournal, file_scan))
         s.commit()
 
     def _check_journals(self, s, activity_group, first_timestamp, last_timestamp, file_scan):

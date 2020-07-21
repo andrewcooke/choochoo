@@ -88,7 +88,10 @@ class Constant(Source):
             return value
         except Exception as e:
             log_current_exception(traceback=False)
-            raise Exception(f'{name} is not configured')
+            if none:
+                return
+            else:
+                raise Exception(f'{name} is not configured')
 
     @property
     def short_name(self):

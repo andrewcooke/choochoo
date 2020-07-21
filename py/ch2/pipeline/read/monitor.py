@@ -86,6 +86,12 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
     def read_last_timestamp(path, records):
         return MonitorReader._last(path, records, MONITORING_ATTR).value.timestamp
 
+    def _delete(self, s):
+        self._delete_n(s, 100)
+
+    def _delete_db(self, s, file_scan):
+        s.query(MonitorJournal).filter(MonitorJournal.file_hash == file_scan.file_hash).delete()
+
     def _read_data(self, s, file_scan):
         records = self.parse_records(read_fit(file_scan.path))
         first_timestamp = self.read_first_timestamp(file_scan.path, records)
@@ -98,12 +104,8 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
 
         log.info(f'Importing monitor data from {file_scan} '
                  f'for {format_time(first_timestamp)} - {format_time(last_timestamp)}')
-        if self.force:
-            log.debug(f'Deleting previous entry')
-            s.query(MonitorJournal).filter(MonitorJournal.file_hash == file_scan.file_hash).delete()
-        else:
-            if s.query(MonitorJournal).filter(MonitorJournal.file_hash == file_scan.file_hash).count():
-                raise Exception(f'Duplicate for {file_scan.path}')  # should never happen
+        if s.query(MonitorJournal).filter(MonitorJournal.file_hash == file_scan.file_hash).count():
+            raise Exception(f'Duplicate for {file_scan.path}')  # should never happen
         # adding 0.1s to the end time makes the intervals semi-open which simplifies cleanup later
         mjournal = add(s, MonitorJournal(start=first_timestamp,
                                          finish=last_timestamp + dt.timedelta(seconds=0.1),

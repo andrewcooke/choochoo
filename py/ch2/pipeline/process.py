@@ -138,6 +138,7 @@ class DependencyQueue:
         self.__max_missing = max_missing
         self.__gamma = gamma
         self.__active_log_indices = defaultdict(lambda: set())
+        self.__start = now()
         # clear out any junk from previous errors?
         for pipeline in self.__unblocked:
             self.__config.delete_all_processes(pipeline.cls)
@@ -213,12 +214,22 @@ class DependencyQueue:
         for pipeline in self.__stats:
             log.info(str(self.__stats[pipeline]))
 
+    def __log_efficiency(self):
+        clock_time = (now() - self.__start).total_seconds()
+        process_time = 0
+        for pipeline in self.__stats:
+            process_time += self.__stats[pipeline].duration_individual
+        speedup = process_time / clock_time
+        log.info(f'Clock time: {format_seconds(clock_time)}; Process time: {format_seconds(process_time)}; '
+                 f'Speedup: x{speedup:.1f}')
+
     def __split_missing(self, pipeline, instance, missing):
         n = max(1, min(self.__max_missing, len(missing), int(pow(self.__stats[pipeline].total, self.__gamma))))
         return missing[:n], missing[n:]
 
     def shut_down(self):
         self.log()
+        self.__log_efficiency()
         if self.__blocked:
             log.warning(f'{len(self.__blocked)} pipelines still blocked')
             for pipeline in self.__blocked:
