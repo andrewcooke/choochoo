@@ -258,7 +258,7 @@ class ActivityReader(MultiProcFitReader):
         if not have_timespan:
             first_timestamp = only_records[0].timestamp
             log.warning('Experimental handling of data without timespans')
-            timespan = add(s, ActivityTimespan(activity_journal=ajournal, start=first_timestamp))
+            timespan = add(s, ActivityTimespan(activity_journal=ajournal, start=first_timestamp, finish=final_timestamp))
 
         for record in records:
 
