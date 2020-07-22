@@ -2,10 +2,12 @@
 from sqlalchemy import Column, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, backref
 
-from .source import SourceType, UngroupedSource
+from .source import SourceType, UngroupedSource, Source
+from ..triggers import add_child_ddl
 from ...common.date import format_time
 
 
+@add_child_ddl(Source)
 class MonitorJournal(UngroupedSource):
 
     __tablename__ = 'monitor_journal'

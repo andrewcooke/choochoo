@@ -10,9 +10,10 @@ from sqlalchemy.orm import Session, relationship
 from sqlalchemy.sql.functions import count
 
 from ..support import Base
+from ..triggers import add_child_ddl
 from ..types import OpenSched, ShortCls, short_cls
 from ..utils import add
-from ...common.date import to_time, time_to_local_date, max_time, min_time, extend_range
+from ...common.date import time_to_local_date, max_time, min_time, extend_range
 from ...common.names import UNDEF, TIME_ZERO
 from ...lib.utils import timing
 
@@ -148,6 +149,7 @@ class NoStatistics(Exception):
     pass
 
 
+@add_child_ddl(Source)
 class Interval(Source):
 
     __tablename__ = 'interval'
@@ -227,11 +229,12 @@ class Interval(Source):
 
     @classmethod
     def clean(cls, s):
-        q = s.query(Interval).filter(Interval.dirty == True)
+        q = s.query(Interval.id).filter(Interval.dirty == True)
         count = q.count()
         if count:
             log.debug(f'Cleaning {count} dirty intervals')
-            q.delete()
+            s.query(Source).filter(Source.id.in_(q)).delete(synchronize_session=False)
+            s.commit()
         log.debug('Intervals clean')
 
 
@@ -249,6 +252,7 @@ class CompositeComponent(Base):
     UniqueConstraint(output_source_id, input_source_id)  # ordered so output is a useful index
 
 
+@add_child_ddl(Source)
 class Composite(Source):
 
     __tablename__ = 'composite_source'

@@ -4,9 +4,11 @@ from sqlalchemy.orm import relationship
 
 from .source import SourceType, Source, GroupedSource
 from ..support import Base
+from ..triggers import add_child_ddl
 from ...common.date import format_time
 
 
+@add_child_ddl(Source)
 class SegmentJournal(GroupedSource):
 
     __tablename__ = 'segment_journal'

@@ -1,6 +1,7 @@
 from abc import ABC
 from collections import defaultdict, namedtuple
 from logging import getLogger
+from math import isnan
 
 from sqlalchemy_batch_inserts import enable_batch_inserting
 
@@ -59,7 +60,7 @@ class Loader(ABC):
         # note that name is used as title if title is None, and name is reduced to a simple name.
         # so legacy code works correctly
 
-        if value is None or value != value:
+        if value is None or isnan(value):
             raise Exception(f'Bad value for {name}: {value}')
 
         if self.__add_serial:

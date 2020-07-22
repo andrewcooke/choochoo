@@ -10,6 +10,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from .source import Interval
 from ..support import Base
+from ..triggers import add_child_ddl
 from ..types import ShortCls, Name, name_and_title
 from ..utils import add
 from ...common.date import format_seconds, local_date_to_time, time_to_local_time
@@ -330,6 +331,7 @@ class StatisticJournal(Base):
                    StatisticJournal.source_id == source_id).one_or_none()
 
 
+@add_child_ddl(StatisticJournal)
 class StatisticJournalInteger(StatisticJournal):
 
     __tablename__ = 'statistic_journal_integer'
@@ -350,6 +352,7 @@ class StatisticJournalInteger(StatisticJournal):
                            StatisticJournalType.INTEGER, description=description)
 
 
+@add_child_ddl(StatisticJournal)
 class StatisticJournalFloat(StatisticJournal):
 
     __tablename__ = 'statistic_journal_float'
@@ -399,6 +402,7 @@ class StatisticJournalFloat(StatisticJournal):
             return '%s %s' % (self.value, units)
 
 
+@add_child_ddl(StatisticJournal)
 class StatisticJournalText(StatisticJournal):
 
     __tablename__ = 'statistic_journal_text'
@@ -428,6 +432,7 @@ class StatisticJournalText(StatisticJournal):
             return '%s %s' % (self.value, units)
 
 
+@add_child_ddl(StatisticJournal)
 class StatisticJournalTimestamp(StatisticJournal):
 
     __tablename__ = 'statistic_journal_timestamp'

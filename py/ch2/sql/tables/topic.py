@@ -7,10 +7,11 @@ from sqlalchemy import Column, Integer, Text, ForeignKey, UniqueConstraint, Date
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 
-from .source import SourceType, Interval, UngroupedSource, GroupedSource
+from .source import SourceType, Interval, UngroupedSource, GroupedSource, Source
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from .system import SystemConstant
 from ..support import Base
+from ..triggers import add_child_ddl
 from ..types import Json, Sched, Sort
 from ..utils import add
 from ...common.date import local_date_to_time
@@ -167,6 +168,7 @@ class Cache:
         return len(self.__cache)
 
 
+@add_child_ddl(Source)
 class DiaryTopicJournal(UngroupedSource):
 
     __tablename__ = 'diary_topic_journal'
@@ -218,6 +220,7 @@ class DiaryTopicJournal(UngroupedSource):
         return start, start + dt.timedelta(days=1)
 
 
+@add_child_ddl(Source)
 class ActivityTopicJournal(GroupedSource):
 
     __tablename__ = 'activity_topic_journal'

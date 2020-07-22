@@ -1,4 +1,5 @@
 from logging import getLogger
+from math import isnan
 from re import compile
 
 import numpy as np
@@ -154,4 +155,4 @@ def drop_empty(df):
 
 
 def valid(value):
-    return value == value and value is not None
+    return value is not None and not isnan(value)

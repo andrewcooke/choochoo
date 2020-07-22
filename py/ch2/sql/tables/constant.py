@@ -9,6 +9,7 @@ from sqlalchemy.orm import relationship
 
 from .source import Source, SourceType
 from .statistic import STATISTIC_JOURNAL_CLASSES, StatisticJournal
+from ..triggers import add_child_ddl
 from ..types import Cls, Json, lookup_cls, QualifiedName
 from ...common.date import local_date_to_time, format_time, to_time
 from ...common.log import log_current_exception
@@ -17,6 +18,7 @@ from ...common.names import TIME_ZERO
 log = getLogger(__name__)
 
 
+@add_child_ddl(Source)
 class Constant(Source):
 
     __tablename__ = 'constant'

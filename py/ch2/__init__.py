@@ -1,6 +1,6 @@
 from logging import getLogger, NullHandler
 
-from sys import version_info
+from sys import version_info, exit
 
 from .common.global_ import set_global_dev
 from .sql.config import Config

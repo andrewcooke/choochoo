@@ -23,6 +23,9 @@ log = getLogger(__name__)
 BikeModel = namedtuple('BikeModel', 'cda, crr, bike_weight')
 
 
+# todo - remove complex model that didn't work.  no need to read heart rate for example!
+
+
 class PowerModel(reftuple('Power', 'bike_model, rider_weight')):
 
     def expand(self, s, time, default_owner=None, default_activity_group=None):

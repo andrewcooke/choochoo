@@ -5,8 +5,9 @@ from logging import getLogger
 from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint, desc, DateTime
 from sqlalchemy.orm import relationship, backref
 
-from .source import SourceType, GroupedSource
+from .source import SourceType, GroupedSource, Source
 from ..support import Base
+from ..triggers import add_child_ddl
 from ..types import Sort, ShortCls, NullText, Name, name_and_title
 from ...common.date import format_time, local_date_to_time, local_time_to_time
 from ...lib.utils import timing
@@ -43,6 +44,7 @@ class ActivityGroup(Base):
             return instance
 
 
+@add_child_ddl(Source)
 class ActivityJournal(GroupedSource):
 
     __tablename__ = 'activity_journal'
