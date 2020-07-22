@@ -90,7 +90,8 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
         self._delete_n(s, 100)
 
     def _delete_db(self, s, file_scan):
-        s.query(MonitorJournal).filter(MonitorJournal.file_hash == file_scan.file_hash).delete()
+        q = s.query(MonitorJournal.id).filter(MonitorJournal.file_hash == file_scan.file_hash)
+        s.query(Source).filter(Source.id.in_(q)).delete(synchronize_session=False)
 
     def _read_data(self, s, file_scan):
         records = self.parse_records(read_fit(file_scan.path))

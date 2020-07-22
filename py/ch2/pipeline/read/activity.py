@@ -14,7 +14,7 @@ from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
 from ...lib.io import split_fit_path
 from ...names import N, T, Units, Sports, Summaries as S
-from ...sql.database import Timestamp, StatisticJournalText
+from ...sql.database import Timestamp, StatisticJournalText, Source
 from ...sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES, StatisticName, \
     StatisticJournalType, StatisticJournal
@@ -155,9 +155,10 @@ class ActivityReader(ProcessFitReader):
 
     def _delete_query(self, s, query, do_log=True):
         for journal in query.all():
+            # see segment reader (todo - should be merged)
             Timestamp.clear(s, owner=self.owner_out, source=journal)
             if do_log: log.debug(f'Deleting {journal}')
-            s.delete(journal)
+            s.query(Source).filter(Source.id == journal.id).delete(synchronize_session=False)
 
     def _delete_journals(self, s, activity_group, first_timestamp, last_timestamp, file_scan):
         log.debug('Deleting overlapping journals')
