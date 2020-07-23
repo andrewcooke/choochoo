@@ -5,14 +5,12 @@ from urllib.parse import urlsplit
 from sqlalchemy import text
 from uritools import urisplit, uriunsplit
 
-from .args import SUB_COMMAND, LIST, PROFILE, ITEM, USERS, SCHEMAS, DATABASES, \
-    PROFILES, ADD, DATABASE, SCHEMA, REMOVE
+from .args import SUB_COMMAND, LIST, PROFILE, ITEM, USERS, SCHEMAS, DATABASES, PROFILES, ADD, DATABASE, SCHEMA, REMOVE
 from .help import Markdown
 from ..common.log import log_current_exception
 from ..common.names import URI, USER, ADMIN_USER, ADMIN_PASSWD, valid_name, assert_name, PASSWD, PREVIOUS
 from ..config.profile import get_profile, get_profiles
 from ..sql.support import Base
-from ..sql.triggers import initial_ddl
 
 log = getLogger(__name__)
 
@@ -233,9 +231,6 @@ def add_profile(config):
     with with_log('Setting search_path'):
         set(cnxn, 'search_path', user, user, 'alter role {user} set search_path to {schema}')
     with with_log('Creating tables'):
-        # need to be in correct schema - cnxn is in public
-        with config.db.session_context() as s:
-            s.execute(initial_ddl())
         Base.metadata.create_all(config.db.engine)
     profile = config.args[PROFILE]
     fn, spec = get_profile(profile)

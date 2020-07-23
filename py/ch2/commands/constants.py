@@ -123,7 +123,7 @@ def set_constants(s, constants, date, value, force):
         for constant in constants:
             journals += journal_for_constant(s, constant)
         if journals:
-            log.info(f'Need to delete {len(journals)} ConstantJournal entries')
+            log.info(f'Need to delete {len(journals)} constant values')
             if not force:
                 raise Exception(f'Use {mm(FORCE)} to confirm deletion of prior values')
             for journal in journals:

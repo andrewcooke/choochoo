@@ -2,20 +2,6 @@ from sqlalchemy import DDL
 from sqlalchemy.event import listen
 
 
-def initial_ddl():
-    '''
-    Define the function used to raise an exception to protect from deleting child rows directly.
-    '''
-    # double % below is to avoid sqlalchemy interpolation for DDL
-    return DDL('''
-create function refuse_child() returns trigger as $$
-  begin
-    raise 'Attempt to delete from child table %%', TG_TABLE_NAME;
-  end;
-$$ language plpgsql;
-''')
-
-
 def child_ddl(parent, child, identity):
     '''
     Remove the existing foreign key with constraint and add one without cascade.
@@ -43,10 +29,6 @@ $$ language plpgsql;
     for each row
    when (old.type = {identity})
 execute procedure "{child}_cascade"();
- create trigger "{child}_protect_trg"
- before delete on "{child}"
-   when (pg_trigger_depth() = 0)
-execute procedure refuse_child();
 ''')
 
 
