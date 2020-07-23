@@ -9,7 +9,7 @@ from sqlalchemy.event import listens_for, listen
 log = getLogger(__name__)
 
 
-class BatchLoading:
+class BatchLoader:
 
     def __init__(self, enabled=True, max_msg_cnt=10):
         self.enabled = enabled
@@ -43,12 +43,15 @@ class BatchLoading:
     def __key_ok(self, mapper):
         if len(mapper.primary_key) == 1:
             key = mapper.primary_key[0]
-            if key.type.python_type == int and \
-                    key.autoincrement in ('auto', True) and \
-                    key.table == mapper.local_table:
-                return True
-            else:
-                self.warning(f'Unexpected key type for {mapper}')
+            try:
+                if key.type.python_type == int and \
+                        key.autoincrement in ('auto', True) and \
+                        key.table == mapper.local_table:
+                    return True
+                else:
+                    self.warning(f'Unexpected key type for {mapper}')
+            except Exception as e:
+                self.warning(f'Batch error with key {key}: {e!r}')
         else:
             self.warning(f'Composite primary key for {mapper}')
         return False
@@ -89,7 +92,7 @@ class BatchLoading:
         if self.enabled:
             if session not in self.__sessions:
                 self.__sessions.add(session)
-                self.__sessions += 1
+                self.sessions += 1
                 listen(session, 'before_flush', self.__before_flush)
             else:
                 log.warning(f'Tried to register session more than once')

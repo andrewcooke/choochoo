@@ -33,11 +33,6 @@ class Loader(ABC):
 
     def load(self):
         if self:
-            if self.__batch:
-                log.debug('Enabling batch load')
-                enable_batch_inserting(self._s)
-            else:
-                log.debug('Leaving batch mode unchanged')
             for type in self._staging:
                 log.debug(f'Adding {len(self._staging[type])} instances of {type}')
                 for instance in self._staging[type]:

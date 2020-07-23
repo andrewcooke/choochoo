@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from uritools import urisplit, uriunsplit
 
 from . import *
+from .batch import BatchLoader
 from ..commands.args import NO_OP, make_parser, NamespaceWithVariables, PROGNAME, DB_VERSION
 from ..common.log import log_current_exception
 from ..lib.log import make_log_from_args
@@ -67,6 +68,7 @@ class CannotConnect(Exception): pass
 class DatabaseBase:
 
     def __init__(self, uri):
+        self.batch = BatchLoader()
         try:
             self.uri = uri
             options = {'echo': False, 'executemany_mode': 'values'}
@@ -100,6 +102,7 @@ class DatabaseBase:
     @contextmanager
     def session_context(self, **kargs):
         session = self.session(**kargs)
+        self.batch.enable(session)
         try:
             yield session
             session.commit()
@@ -137,7 +140,7 @@ def connect(args):
     '''
     Bootstrap from commandline-like args.
     '''
-    from .system import Config
+    from .config import Config
     if len(args) == 1 and isinstance(args[0], str):
         args = args[0].split()
     elif args:

@@ -16,7 +16,7 @@ pip install jupyter
 pip install matplotlib
 pip install numpy
 pip install openpyxl
-pip install pandas==0.25.3
+pip install pandas
 pip install pendulum
 pip install psutil
 pip install psycopg2
@@ -28,7 +28,6 @@ pip install scipy
 pip install sklearn
 pip install sqlalchemy
 pip install sqlalchemy-utils
-pip install sqlalchemy-batch-inserts
 pip install uritools
 pip install werkzeug
 
