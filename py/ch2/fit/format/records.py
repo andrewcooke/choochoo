@@ -177,7 +177,10 @@ class DictRecord(Record):
 
     def __new__(cls, *args, **kargs):
         self = super().__new__(cls, *args, **kargs)
-        self.attr = dict_to_attr(self.data)
+        # copy across timestamp because it may have come from a timestamp_16 field
+        data = dict(self.data)
+        data['timestamp'] = ((self.timestamp,), 's')
+        self.attr = dict_to_attr(data)
         self.value = Values(self.attr)
         return self
 
