@@ -265,8 +265,7 @@ class Stats:
         if self:
             self.duration_overall = (now() - self.__start_overall).total_seconds()
 
-    def bar(self):
-        width = 35
+    def __bar(self, width):
         solid = int(width * self.done / self.total) if self.total else width
         blank = width - solid
         bar = '-' * blank + '#' * solid
@@ -277,8 +276,15 @@ class Stats:
             bar = bar[:-len(secs)] + secs
         return bar
 
+    def __label(self):
+        label = str(self.__pipeline)
+        for suffix in ('Reader', 'Calculator'):
+            if label.endswith(suffix):
+                label = label[:-len(suffix)+1] + '%'
+        return label
+
     def __str__(self):
-        return f'{str(self.__pipeline):>21s} {self.active:2d} {self.done:4d}/{self.total:<4d} {self.bar()}'
+        return f'{self.__label():>13s} {self.__pipeline.id:<2d} {self.active:2d} {self.done:4d}/{self.total:<4d} {self.__bar(40)}'
 
     def __bool__(self):
         return self.done == self.total

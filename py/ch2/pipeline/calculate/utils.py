@@ -44,7 +44,7 @@ class JournalCalculatorMixin:
     _journal_type = None
 
     def format_missing(self, missing):
-        return f'"{format_time(missing[0])}" "{format_time(missing[-1])}"'
+        return f'"{time_to_local_time(missing[0])}" "{time_to_local_time(missing[-1])}"'
 
     def _delimit_query(self, q):
         start, finish = self._start_finish(type=local_time_to_time)
@@ -52,7 +52,7 @@ class JournalCalculatorMixin:
         if start:
             q = q.filter(self._journal_type.start >= start)
         if finish:
-            q = q.filter(self._journal_type.start <= finish)
+            q = q.filter(self._journal_type.start < finish)
         return q
 
     def _missing(self, s):

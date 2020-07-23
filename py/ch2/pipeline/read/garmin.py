@@ -53,8 +53,12 @@ class GarminReader(MissingDateMixin, ProcessPipeline):
                 log.warning(e)
 
     def _recalculate(self, db, missing):
-        if len(missing) != 1:
+
+        if not missing:
+            return
+        elif len(missing) != 1:
             raise Exception('Expected a single date')
+
         data_dir = self._config.args._format_path(DATA_DIR)
         connect = GarminConnect(log_response=False)
         connect.login(self.__user, self.__password)

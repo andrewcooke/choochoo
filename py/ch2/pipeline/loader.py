@@ -3,8 +3,6 @@ from collections import defaultdict, namedtuple
 from logging import getLogger
 from math import isnan
 
-from sqlalchemy_batch_inserts import enable_batch_inserting
-
 from ..common.date import min_time, max_time
 from ..sql import StatisticName, Interval, Source
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
