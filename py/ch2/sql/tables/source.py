@@ -15,7 +15,6 @@ from ..types import OpenSched, ShortCls, short_cls
 from ..utils import add
 from ...common.date import time_to_local_date, max_time, min_time, extend_range
 from ...common.names import UNDEF, TIME_ZERO
-from ...lib.schedule import Schedule
 from ...lib.utils import timing
 
 log = getLogger(__name__)
@@ -178,19 +177,18 @@ class Interval(Source):
         return 'Interval "%s from %s" (owner %s)' % (self.schedule, self.start, owner)
 
     @classmethod
-    def _raw_statistics_time_range(cls, s, statistics_owner=None):
+    def _raw_statistics_time_range(cls, s, exclude_owners=None):
         '''
-        The time range over which statistics exist (optionally restricted by owner),
-        ignoring constants at "time zero".  This is the first to the last time for
-        any statistics - it pays no attention to gaps.
+        The time range over which statistics exist, ignoring constants at "time zero".
+        This is the first to the last time for any statistics - it pays no attention to gaps.
         '''
         from .statistic import StatisticJournal, StatisticName
         # exclude 2 days from zero because here are some stats set at the date equivalent to zero time,
         # but because of date/time conversions and timezones these are not exactly as time zero
         q = s.query(func.min(StatisticJournal.time), func.max(StatisticJournal.time)). \
             filter(StatisticJournal.time > TIME_ZERO + dt.timedelta(days=2))
-        if statistics_owner:
-            q = q.join(StatisticName).filter(StatisticName.owner == statistics_owner)
+        if exclude_owners:
+            q = q.join(StatisticName).filter(~StatisticName.owner.in_(exclude_owners))
         start, finish = q.one()
         if start and finish:
             return start, finish
@@ -198,16 +196,16 @@ class Interval(Source):
             raise NoStatistics('No statistics are currently defined')
 
     @classmethod
-    def missing_starts(cls, s, expected, schedule, interval_owner, statistic_owner=None, start=None, finish=None):
+    def missing_starts(cls, s, expected, schedule, interval_owner, exclude_owners=None):
         '''
         Previous approach was way too complicated and not thread-safe.  Instead, just enumerate intervals and test.
         '''
-        stats_start_time, stats_finish_time = cls._raw_statistics_time_range(s, statistic_owner)
-        stats_start = time_to_local_date(stats_start_time)
-        stats_finish = time_to_local_date(stats_finish_time)
-        log.debug('Statistics (in general) exist %s - %s' % (stats_start, stats_finish))
-        start = schedule.start_of_frame(start if start else stats_start)
-        finish = finish if finish else schedule.next_frame(stats_finish)
+        stats_start_time, stats_finish_time = cls._raw_statistics_time_range(s, exclude_owners=exclude_owners)
+        start = time_to_local_date(stats_start_time)
+        finish = time_to_local_date(stats_finish_time)
+        log.debug('Statistics (in general) exist %s - %s' % (start, finish))
+        start = schedule.start_of_frame(start)
+        finish = schedule.next_frame(finish)
         while start < finish:
             existing = s.query(Interval). \
                 filter(Interval.start == start,

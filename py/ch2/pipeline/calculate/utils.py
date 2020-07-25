@@ -134,9 +134,11 @@ class IntervalCalculatorMixin:
         super().__init__(*args, **kargs)
 
     def _missing(self, s):
+        from .summary import SummaryCalculator
         expected = s.query(ActivityGroup).count() + 1 if self.grouped else 1
         return [format_dateq(start)
-                for start in Interval.missing_starts(s, expected, self.schedule, self.owner_out)]
+                for start in Interval.missing_starts(s, expected, self.schedule, self.owner_out,
+                                                     exclude_owners=(SummaryCalculator,))]
 
     def _delete(self, s):
         # we delete the intervals that the statistics depend on and they will cascade

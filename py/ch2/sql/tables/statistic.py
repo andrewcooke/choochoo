@@ -35,7 +35,7 @@ class StatisticName(Base):
     description = Column(Text)
     units = Column(Text)
     summary = Column(Text)  # max, min, etc - comma separated list
-    owner = Column(ShortCls, nullable=False, index=True)  # index for deletion
+    owner = Column(ShortCls, nullable=False, index=True)  # index for deletion + exclusion in intervals
     statistic_journal_type = Column(Integer, nullable=False)  # StatisticJournalType
     UniqueConstraint(name, owner)
 
