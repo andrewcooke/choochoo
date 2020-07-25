@@ -148,7 +148,7 @@ def connect(args):
     else:
         args = []
     args.append(NO_OP)
-    ns = NamespaceWithVariables(make_parser(with_noop=True).parse_args(args), PROGNAME, DB_VERSION)
+    ns = NamespaceWithVariables._from_ns(make_parser(with_noop=True).parse_args(args), PROGNAME, DB_VERSION)
     make_log_from_args(ns)
     data = Config(ns)
     return ns, data.db

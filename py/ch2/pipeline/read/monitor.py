@@ -7,14 +7,10 @@ import numpy as np
 from sqlalchemy import desc, and_, func
 from sqlalchemy.orm import aliased
 
-import ch2.common.io
 from .utils import AbortImportButMarkScanned, ProcessFitReader
 from ..loader import Loader
 from ..pipeline import LoaderMixin
-from ...commands.args import FORCE, READ
-from ...common.args import mm
 from ...common.date import time_to_local_date, format_time, to_time, dates_from, now
-from ...common.names import POSTGRESQL, SQLITE
 from ...data.frame import read_query
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...fit.profile.profile import read_fit
@@ -140,65 +136,58 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
             with self._config.db.session_context() as s:
                 log.info('Calculating differential in main thread')
                 self._fix_overlapping_monitors(s)
+                s.commit()
                 self._update_differential(s)
 
     def _fix_overlapping_monitors(self, s):
-        # todo - this is slow and on the main pipeline thread
-        # we can do better using SQL more directly BUT this has been buggy in the past
-        while True:
-            pair = self._next_overlap(s)
-            if pair:
-                a, b = pair
-                if a.start > b.start:
-                    self._fix_pair(s, b, a)
-                else:
-                    self._fix_pair(s, a, b)
-            else:
-                s.commit()
-                return
+        # this used to be done in python and was very slow
+        self._delete_nested(s)
+        self._shift_finish(s)
+        self._delete_past_finish(s)
 
-    def _fix_pair(self, s, a, b):
-        # a starts before b (from caller)
-        log.debug(f'a: {a.id} {a.start} - {a.finish}')
-        log.debug(f'b: {b.id} {b.start} - {b.finish}')
-        if b.finish <= a.finish:
-            # b completely enclosed in a
-            log.warning(f'Deleting monitor journal entry that completely overlaps another')
-            log.debug(f'{a.start} - {a.finish} ({a.id}) encloses {b.start} - {b.finish} ({b.id})')
-            # be careful to delete superclass (will also delete statistics via cascade)
-            s.query(Source).filter(Source.id == b.id).delete()
+    def _delete_nested(self, s):
+        # first, remove any monitor journal entries which are completely enclosed by others
+        m1 = aliased(MonitorJournal)
+        m2 = aliased(MonitorJournal)
+        nested = s.query(m2.id).join(m1). \
+            filter(m1.start <= m2.start,
+                   m1.finish >= m2.finish,
+                   m1.id != m2.id)
+        q = s.query(Source).filter(Source.id.in_(nested))
+        count = q.count()
+        if count:
+            log.warning(f'Deleting {count} nested journal entries')
+            q.delete()
         else:
-            # otherwise, shorten a so it finishes where b starts
-            q = s.query(StatisticJournal). \
-                filter(StatisticJournal.source == a,
-                       StatisticJournal.time >= b.start)
-            count = q.count()
-            if count:
-                # not really a warning because we expect this
-                log.debug(f'Shifting edge of overlapping monitor journals ({count} statistic values)')
-                log.debug(f'{a.start} - {a.finish} ({a.id}) overlaps {b.start} - {b.finish} ({b.id})')
-                q.delete()
-            else:
-                log.debug(f'empty: {q}')
-            # update monitor whether statistics were changed or not
-            log.debug(f'Shift monitor finish back from {a.finish} to {b.start}')
-            # from the above there are no a statistics at b.start, so a.finish can be set to b.start
-            # but that will still trigger _next_overlap, so step back by 0.1s.  since data are at 1s intervals
-            # (at most) this will not lose any data or complicate retrieval (which uses start).
-            a.finish = b.start - dt.timedelta(seconds=0.1)
-            s.flush()  # write to the database so next query moves on
+            log.debug('No nested journal entries')
 
-    def _next_overlap(self, s):
-        MonitorJournal2 = aliased(MonitorJournal)
-        row = s.query(MonitorJournal, MonitorJournal2). \
-                  select_from(MonitorJournal). \
-                  join(MonitorJournal2,
-                       # two overlaps, order, and not self and not null
-                       and_(MonitorJournal2.finish >= MonitorJournal.start,
-                            MonitorJournal2.start <= MonitorJournal.finish,
-                            MonitorJournal.id != MonitorJournal2.id)). \
-                  order_by(MonitorJournal.start, MonitorJournal2.start).first()
-        return row
+    def _shift_finish(self, s):
+        # next, fix up overlapping monitor journal entries so that they abut
+        log.debug(f'Adjusting finish')
+        m1 = aliased(MonitorJournal)
+        m2 = aliased(MonitorJournal)
+        # this is giving a warning but post to sqlalchemy group was deleted
+        overlap = s.query(m1.id.label('id'), (m2.start - dt.timedelta(seconds=0.1)).label('finish')). \
+            filter(m1.start < m2.start,
+                   m1.finish >= m2.start,
+                   m1.id != m2.id).cte()
+        s.query(MonitorJournal). \
+            filter(MonitorJournal.id == overlap.c.id). \
+            update({MonitorJournal.finish: overlap.c.finish})
+
+    def _delete_past_finish(self, s):
+        # finally, drop any values that are not included in the shortened journals
+        q = s.query(StatisticJournal.id). \
+            join(MonitorJournal). \
+            filter(StatisticJournal.source_id == MonitorJournal.id,
+                   StatisticJournal.time > MonitorJournal.finish)
+        count = q.count()
+        if count:
+            log.warning(f'Deleting {count} orphan statistics')
+            # dance around the inability to call q.delete() directly
+            s.query(StatisticJournal).filter(StatisticJournal.id.in_(q)).delete(synchronize_session=False)
+        else:
+            log.debug('No orphan statistics')
 
     def _update_differential(self, s):
         # this reads CUMULATIVE_STEPS (which is what was in the files) and any existing STEPS
