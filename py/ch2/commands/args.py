@@ -75,12 +75,12 @@ COMPACT = 'compact'
 COMPONENT = 'component'
 CONSTRAINT = 'constraint'
 CONTEXT = 'context'
+CPROFILE = 'cprofile'
 CSV = 'csv'
 D = 'd'
 DARK = 'dark'
 DATA = 'data'
 DATABASES = 'databases'
-DATA_DIR = 'data-dir'
 DATE = 'date'
 DB = 'db'
 DEFAULT = 'default'
@@ -93,6 +93,7 @@ DIR = 'dir'
 DISABLE = 'disable'
 DISCARD = 'discard'
 DROP = 'drop'
+DURATION = 'duration'
 EMPTY = 'empty'
 ENABLE = 'enable'
 ENGINE = 'engine'
@@ -250,8 +251,10 @@ def make_parser(with_noop=False):
     add_data_source_args(parser, URI_DEFAULT)
     parser.add_argument(mm(BASE), default='~/.ch2', metavar='DIR', type=clean_path,
                         help='the base directory for data (default ~/.ch2)')
-    parser.add_argument(mm(DATA_DIR), metavar='DIR', default='{base}/permanent',
+    parser.add_argument(mm(DATA), metavar='DIR', default='{base}/permanent',
                         help='the root directory for storing FIT data')
+    parser.add_argument(mm(CPROFILE), metavar='DIR', nargs='?', action='append',
+                        help='save profile data to given file')
 
     commands = parser.add_subparsers(title='commands', dest=COMMAND)
 

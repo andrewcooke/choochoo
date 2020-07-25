@@ -5,7 +5,7 @@ from logging import getLogger
 from sqlalchemy.sql.functions import count
 
 from .loader import Loader
-from ..commands.args import LOG, WORKER, DEV, PROCESS, FORCE
+from ..commands.args import LOG, WORKER, DEV, PROCESS, FORCE, CPROFILE
 from ..common.args import mm
 from ..common.global_ import global_dev
 from ..common.names import BASE
@@ -76,7 +76,8 @@ class ProcessPipeline(BasePipeline):
     In this way startup and shutdown bracket the entire process and are done just once.
     '''
 
-    def __init__(self, config, *args, owner_out=None, force=False, progress=None, worker=None, id=None, **kargs):
+    def __init__(self, config, *args, owner_out=None, force=False, progress=None, worker=None, id=None, cprofile=None,
+                 **kargs):
         self.__args = args
         self._config = config
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
@@ -84,6 +85,7 @@ class ProcessPipeline(BasePipeline):
         self._progress = progress
         self.worker = worker
         self.id = id
+        self.cprofile = cprofile
         dev = mm(DEV) if global_dev() else ''
         self.__ch2 = f'{command_root()} {mm(BASE)} {config.args[BASE]} {dev} {mm(VERBOSITY)} 0'
         super().__init__(**kargs)
@@ -140,7 +142,12 @@ class ProcessPipeline(BasePipeline):
     def command_for_missing(self, pipeline, missing, log_name):
         from .process import fmt_cmd
         force = ' ' + mm(FORCE) if self.force else ''
-        cmd = self.__ch2 + f' {mm(LOG)} {log_name} {mm(URI)} {self._config.args._format(URI)} ' \
+        cprofile = ''
+        if self.cprofile:
+            cprofile = ' ' + mm(CPROFILE)
+            if self.cprofile[0]:
+                cprofile = ' ' + self.cprofile[0]
+        cmd = self.__ch2 + f'{cprofile} {mm(LOG)} {log_name} {mm(URI)} {self._config.args._format(URI)} ' \
                            f'{PROCESS}{force} {mm(WORKER)} {pipeline.id} {" ".join(missing)}'
         log.debug(fmt_cmd(cmd))
         return cmd

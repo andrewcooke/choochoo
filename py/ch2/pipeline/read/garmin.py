@@ -5,7 +5,7 @@ from requests import HTTPError
 
 from .monitor import missing_dates
 from ..pipeline import ProcessPipeline
-from ...commands.args import DATA_DIR
+from ...commands.args import DATA
 from ...common.date import now, local_time_to_time, format_date, to_date, dates_from, time_to_local_time
 from ...common.log import log_current_exception
 from ...fit.download.connect import GarminConnect
@@ -54,7 +54,7 @@ class GarminReader(ProcessPipeline):
 
     def _run_one(self, missed):
         # is only called once with the start date
-        data_dir = self._config.args._format_path(DATA_DIR)
+        data_dir = self._config.args._format_path(DATA)
         connect = GarminConnect(log_response=False)
         connect.login(self.__user, self.__password)
 

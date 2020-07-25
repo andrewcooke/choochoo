@@ -107,9 +107,7 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
                  f'for {format_time(first_timestamp)} - {format_time(last_timestamp)}')
         if s.query(MonitorJournal).filter(MonitorJournal.file_hash == file_scan.file_hash).count():
             raise Exception(f'Duplicate for {file_scan.path}')  # should never happen
-        # adding 0.1s to the end time makes the intervals semi-open which simplifies cleanup later
-        mjournal = add(s, MonitorJournal(start=first_timestamp,
-                                         finish=last_timestamp + dt.timedelta(seconds=0.1),
+        mjournal = add(s, MonitorJournal(start=first_timestamp, finish=last_timestamp,
                                          file_hash_id=file_scan.file_hash.id))
         return mjournal, (first_timestamp, last_timestamp, mjournal, records)
 
@@ -145,19 +143,29 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
                 self._update_differential(s)
 
     def _fix_overlapping_monitors(self, s):
-        pair = self._next_overlap(s)
-        while pair:
-            self._fix_pair(s, *pair)
+        # todo - this is slow and on the main pipeline thread
+        # we can do better using SQL more directly BUT this has been buggy in the past
+        while True:
             pair = self._next_overlap(s)
-        s.commit()
+            if pair:
+                a, b = pair
+                if a.start > b.start:
+                    self._fix_pair(s, b, a)
+                else:
+                    self._fix_pair(s, a, b)
+            else:
+                s.commit()
+                return
 
     def _fix_pair(self, s, a, b):
-        # a starts before b (from query)
+        # a starts before b (from caller)
+        log.debug(f'a: {a.id} {a.start} - {a.finish}')
+        log.debug(f'b: {b.id} {b.start} - {b.finish}')
         if b.finish <= a.finish:
             # b completely enclosed in a
             log.warning(f'Deleting monitor journal entry that completely overlaps another')
             log.debug(f'{a.start} - {a.finish} ({a.id}) encloses {b.start} - {b.finish} ({b.id})')
-            # be careful to delete superclass...
+            # be careful to delete superclass (will also delete statistics via cascade)
             s.query(Source).filter(Source.id == b.id).delete()
         else:
             # otherwise, shorten a so it finishes where b starts
@@ -170,10 +178,15 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
                 log.debug(f'Shifting edge of overlapping monitor journals ({count} statistic values)')
                 log.debug(f'{a.start} - {a.finish} ({a.id}) overlaps {b.start} - {b.finish} ({b.id})')
                 q.delete()
+            else:
+                log.debug(f'empty: {q}')
             # update monitor whether statistics were changed or not
             log.debug(f'Shift monitor finish back from {a.finish} to {b.start}')
-            a.finish = b.start
-            s.flush()  # not sure this is needed
+            # from the above there are no a statistics at b.start, so a.finish can be set to b.start
+            # but that will still trigger _next_overlap, so step back by 0.1s.  since data are at 1s intervals
+            # (at most) this will not lose any data or complicate retrieval (which uses start).
+            a.finish = b.start - dt.timedelta(seconds=0.1)
+            s.flush()  # write to the database so next query moves on
 
     def _next_overlap(self, s):
         MonitorJournal2 = aliased(MonitorJournal)
@@ -182,10 +195,9 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
                   join(MonitorJournal2,
                        # two overlaps, order, and not self and not null
                        and_(MonitorJournal2.finish >= MonitorJournal.start,
-                            MonitorJournal2.start < MonitorJournal.finish,
-                            MonitorJournal.start <= MonitorJournal2.start,
+                            MonitorJournal2.start <= MonitorJournal.finish,
                             MonitorJournal.id != MonitorJournal2.id)). \
-                  order_by(MonitorJournal.start).first()
+                  order_by(MonitorJournal.start, MonitorJournal2.start).first()
         return row
 
     def _update_differential(self, s):
@@ -210,7 +222,7 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
             filter(StatisticName.name == N.CUMULATIVE_STEPS,
                    StatisticName.owner == self.owner_out). \
             order_by(StatisticJournalInteger.time)
-        # log.debug(q)
+        log.debug(q)
         df = read_query(q, index=N.TIME)
         return df
 

@@ -202,7 +202,7 @@ your FF-model parameters (fitness and fatigue).
         return [AchievementDelegate, ActivityDelegate, SegmentDelegate, NearbyDelegate, JupyterDelegate]
 
     def _load_constants(self, s):
-        add_constant(s, SRTM1_DIR_CNAME, self._config.args._format(value='{data-dir}/srtm1'),
+        add_constant(s, SRTM1_DIR_CNAME, self._config.args._format(value='{data}/srtm1'),
                      description='''
 Directory containing SRTM1 hgt files for elevations.
 

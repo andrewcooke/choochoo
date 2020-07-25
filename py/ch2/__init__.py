@@ -3,6 +3,7 @@ from logging import getLogger, NullHandler
 from sys import version_info, exit
 
 from .common.global_ import set_global_dev
+from .lib.cprofile import profile
 from .sql.config import Config
 
 getLogger('bokeh').addHandler(NullHandler())
@@ -99,32 +100,33 @@ def main():
     set_global_dev(args[DEV])
     make_log_from_args(args)
     config = Config(args)
-    try:
-        if not command:
-            log.debug('If you are seeing the "No command given" error during development ' +
-                      'you may have forgotten to set the command name via `set_defaults()`.')
-            raise Exception('No command given (try `ch2 help`)')
-        elif command_name not in (DB, PACKAGE_FIT_PROFILE, HELP, IMPORT):
-            db = None
-            try:
-                db = config.db if command_name not in (PACKAGE_FIT_PROFILE, HELP) else None
-            except Exception as e:
-                log.warning(e)
-            if not db:
-                refuse_until_configured(command_name, False)
-            elif db.no_data():
-                refuse_until_configured(command_name, True)
-        command(config)
-    except KeyboardInterrupt:
-        log.critical('User abort')
-        exit(1)
-    except Exception as e:
-        log.critical(e)
-        log.info('See `%s %s` for available commands.' % (PROGNAME, HELP))
-        log.info('Docs at http://andrewcooke.github.io/choochoo')
-        if not args or args[DEV]:
-            raise
-        exit(2)
+    with profile(args):
+        try:
+            if not command:
+                log.debug('If you are seeing the "No command given" error during development ' +
+                          'you may have forgotten to set the command name via `set_defaults()`.')
+                raise Exception('No command given (try `ch2 help`)')
+            elif command_name not in (DB, PACKAGE_FIT_PROFILE, HELP, IMPORT):
+                db = None
+                try:
+                    db = config.db if command_name not in (PACKAGE_FIT_PROFILE, HELP) else None
+                except Exception as e:
+                    log.warning(e)
+                if not db:
+                    refuse_until_configured(command_name, False)
+                elif db.no_data():
+                    refuse_until_configured(command_name, True)
+            command(config)
+        except KeyboardInterrupt:
+            log.critical('User abort')
+            exit(1)
+        except Exception as e:
+            log.critical(e)
+            log.info('See `%s %s` for available commands.' % (PROGNAME, HELP))
+            log.info('Docs at http://andrewcooke.github.io/choochoo')
+            if not args or args[DEV]:
+                raise
+            exit(2)
 
 
 def refuse_until_configured(command_name, uri):

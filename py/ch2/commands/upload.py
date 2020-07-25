@@ -1,10 +1,9 @@
 from glob import glob
-from glob import glob
 from logging import getLogger
 from os import makedirs
 from os.path import basename, join, exists, dirname
 
-from ..commands.args import KIT, PATH, DATA_DIR, UPLOAD, PROCESS, FORCE
+from ..commands.args import KIT, PATH, DATA, UPLOAD, PROCESS, FORCE, CPROFILE
 from ..common.date import time_to_local_time, Y, YMDTHMS
 from ..common.io import touch, clean_path, data_hash
 from ..common.log import log_current_exception
@@ -57,7 +56,7 @@ new monitor data, and update statistics.
     with timing(UPLOAD):
         upload_files(Record(log), config, files=files, nfiles=nfiles, items=args[KIT])
         if args[PROCESS]:
-            run_pipeline(config, PipelineType.PROCESS, force=args[FORCE])
+            run_pipeline(config, PipelineType.PROCESS, force=args[FORCE], cprofile=args[CPROFILE])
 
 
 class SkipFile(Exception):
@@ -78,7 +77,7 @@ def open_files(paths):
                 stream = open(path, 'rb')
                 yield {STREAM: stream, NAME: name, READ_PATH: path}
             else:
-                log.warning(f'File no longer exists at {path}')
+                raise Exception(f'No file at {path}')
 
     return n, files()
 
@@ -184,7 +183,7 @@ def upload_files(record, data, files=tuple(), nfiles=1, items=tuple(), progress=
         local_progress = ProgressTree(nfiles, parent=progress)
     with record.record_exceptions():
         with data.db.session_context() as s:
-            data_dir = data.args._format_path(DATA_DIR)
+            data_dir = data.args._format_path(DATA)
             check_items(s, items)
             for file in files:
                 with local_progress.increment_or_complete():

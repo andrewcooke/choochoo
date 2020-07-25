@@ -125,7 +125,7 @@ class EmptyException(Exception): pass
 
 class DependencyQueue:
 
-    def __init__(self, config, pipelines, kargs, max_missing=50, gamma=0.3):
+    def __init__(self, config, pipelines, kargs, max_missing=50, min_missing=5, gamma=0.5):
         self.__clean_pipelines(pipelines)
         self.__config = config
         self.__blocked = [pipeline for pipeline in pipelines if pipeline.blocked_by]
@@ -136,6 +136,7 @@ class DependencyQueue:
         self.__order = []
         self.__kargs = kargs
         self.__max_missing = max_missing
+        self.__min_missing = min_missing
         self.__gamma = gamma
         self.__active_log_indices = defaultdict(lambda: set())
         self.__start = now()
@@ -162,6 +163,9 @@ class DependencyQueue:
         if self.__stats[pipeline]:
             log.info(f'{pipeline} complete ({self.__stats[pipeline].done})')
             self.__complete.append(pipeline)
+            instance = self.__active.pop(pipeline)
+            log.debug(f'Calling shutdown for {pipeline}')
+            instance.shutdown()
             for i in reversed(range(len(self.__blocked))):
                 if all(blocker in self.__complete for blocker in self.__blocked[i].blocked_by):
                     unblocked = self.__blocked.pop(i)
@@ -201,8 +205,7 @@ class DependencyQueue:
                 return pipeline, cmd, log_index
             else:
                 log.debug(f'{pipeline} exhausted')
-                instance.shutdown()
-                del self.__active[pipeline]
+                self.__active[pipeline] = instance  # intentionally break if code wrong
         raise EmptyException()
 
     def __unused_log_index(self, pipeline):
@@ -225,7 +228,9 @@ class DependencyQueue:
                  f'Speedup: x{speedup:.1f}')
 
     def __split_missing(self, pipeline, missing):
-        n = max(1, min(self.__max_missing, len(missing), int(pow(self.__stats[pipeline].total, self.__gamma))))
+        lo = min(len(missing), self.__min_missing)
+        hi = max(len(missing), self.__max_missing)
+        n = max(lo, min(hi, int(pow(self.__stats[pipeline].total, self.__gamma))))
         return missing[:n], missing[n:]
 
     def shutdown(self):
