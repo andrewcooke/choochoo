@@ -19,6 +19,10 @@ ALL_DATE_FORMATS = ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S.%f',
                     '%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', YMD, '%Y')
 
 
+def format_dateq(date):
+    return '"' + date.strftime(YMD) + '"'
+
+
 def format_date(date):
     return date.strftime(YMD)
 
@@ -147,6 +151,13 @@ def local_date_to_time(date, none=False):
     ptime = p.DateTime(year=date.year, month=date.month, day=date.day,
                        tzinfo=p.tz.get_local_timezone()).in_timezone(dt.timezone.utc)
     return dt.datetime(*ptime.timetuple()[:6], tzinfo=dt.timezone.utc)
+
+
+def time_to_local_timeq(time, fmt=None, none=False):
+    local_time = time_to_local_time(time, fmt=fmt, none=none)
+    if local_time:
+        local_time = '"' + local_time + '"'
+    return local_time
 
 
 def time_to_local_time(time, fmt=None, none=False):

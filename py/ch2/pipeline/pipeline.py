@@ -63,8 +63,21 @@ class BasePipeline:
 
 
 class ProcessPipeline(BasePipeline):
+    '''
+    Can be either called with no arguments except --like and --force, in which case all outstanding data
+    are processed, or with --worker id (which identifies the pipeline) and arguments (each of which identifies
+    a dataset to process).  In the latter case, --force and --like are ignored.
+
+    When run via ProcessRunner, an instance is created and either:
+    * run() is called, in which case all work (worker or not) is done locally.
+      in this case, worker should not call startup() and shutdown(), but a "full run" should.
+    * startup(), missing(), command_for_missing() (multiple times, invoking worker threads)
+      and shutdown() are called in sequence.  The instance is more like a factory in this case.
+    In this way startup and shutdown bracket the entire process and are done just once.
+    '''
 
     def __init__(self, config, *args, owner_out=None, force=False, progress=None, worker=None, id=None, **kargs):
+        self.__args = args
         self._config = config
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
         self.force = force  # force re-processing
@@ -73,74 +86,67 @@ class ProcessPipeline(BasePipeline):
         self.id = id
         dev = mm(DEV) if global_dev() else ''
         self.__ch2 = f'{command_root()} {mm(BASE)} {config.args[BASE]} {dev} {mm(VERBOSITY)} 0'
-        super().__init__(*args, **kargs)
+        super().__init__(**kargs)
+
+    def startup(self):
+        pass
+
+    def shutdown(self):
+        pass
+
+    def delete(self):
+        with self._config.db.session_context() as s:
+            log.warning(f'Deleting data for {self}')
+            self._delete(s)
+
+    def _delete(self, s):
+        raise NotImplementedError('_delete(s)')
 
     def missing(self):
-        with self._config.db.session_context(expire_on_commit=False) as s:
-            self._startup(s)
+        '''
+        A missing value identities what is to be processed by a worker.  It is typically a file path or
+        the start time (local) of an activity.  It is always a string.
+        '''
         if self.force:
-            with self._config.db.session_context() as s:
-                log.warning(f'Deleting data for {short_cls(self.__class__)}')
-                self._delete(s)
+            self.delete()
         with self._config.db.session_context(expire_on_commit=False) as s:
-            return self._missing(s)
-        # no shutdown - that's only after actually doing something
+            missing = self._missing(s) or []  # allow None
+        log.debug(f'{len(missing)} missing for {self}')
+        return missing
+
+    def _missing(self, s):
+        # this should return strings
+        raise NotImplementedError('_missing(s)')
 
     def run(self):
-        with self._config.db.session_context(expire_on_commit=False) as s:
-            self._startup(s)
-        if not self.worker and self.force:
-            with self._config.db.session_context() as s:
-                self._delete(s)
-        with self._config.db.session_context(expire_on_commit=False) as s:
-            missing = self._missing(s)
-        self._recalculate(self._config.db, missing)
-        with self._config.db.session_context() as s:
-            self._shutdown(s)
+        self.startup()
+        if self.worker:
+            missing = self.__args
+        else:
+            missing = self.missing()  # will call delete if forced
+        local_progress = ProgressTree(len(missing), parent=self._progress)
+        try:
+            for missed in missing:
+                self._run_one(missed)
+                local_progress.increment()
+            self.shutdown()
+        finally:
+            local_progress.complete()
 
-    def _startup(self, s):
-        pass
+    def _run_one(self, missed):
+        # this should accept strings
+        raise NotImplementedError('_run_one(missed)')
 
     def command_for_missing(self, pipeline, missing, log_name):
         from .process import fmt_cmd
         force = ' ' + mm(FORCE) if self.force else ''
         cmd = self.__ch2 + f' {mm(LOG)} {log_name} {mm(URI)} {self._config.args._format(URI)} ' \
-                           f'{PROCESS}{force} {mm(WORKER)} {pipeline.id} {self.format_missing(missing)}'
+                           f'{PROCESS}{force} {mm(WORKER)} {pipeline.id} {" ".join(missing)}'
         log.debug(fmt_cmd(cmd))
         return cmd
 
-    def format_missing(self, missing):
-        return " ".join(str(m) for m in missing)
-
-    @abstractmethod
-    def _delete(self, s):
-        raise NotImplementedError('_delete')
-
-    @abstractmethod
-    def _missing(self, s):
-        raise NotImplementedError('_missing')
-
-    @abstractmethod
-    def _recalculate(self, db, missing):
-        raise NotImplementedError('_recalculate')
-
-    def _shutdown(self, s):
-        pass
-
-    def _recalculate(self, db, missing):
-        local_progress = ProgressTree(len(missing), parent=self._progress)
-        if not missing:
-            log.info(f'No missing data for {short_cls(self)}')
-            local_progress.complete()
-        else:
-            for missed in missing:
-                with local_progress.increment_or_complete():
-                    with db.session_context() as s:
-                        self._run_one(s, missed)
-
-    @abstractmethod
-    def _run_one(self, s, missed):
-        raise NotImplementedError()
+    def __str__(self):
+        return str(short_cls(self.__class__))
 
 
 class LoaderMixin:

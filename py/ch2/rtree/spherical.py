@@ -143,4 +143,4 @@ class Global:
         self.delete(points)
 
     def __bool__(self):
-        return any(bool(t) for t in self.__trees)
+        return any(bool(x) for t in self.__trees for x in t)

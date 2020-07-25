@@ -15,6 +15,7 @@ from ..types import OpenSched, ShortCls, short_cls
 from ..utils import add
 from ...common.date import time_to_local_date, max_time, min_time, extend_range
 from ...common.names import UNDEF, TIME_ZERO
+from ...lib.schedule import Schedule
 from ...lib.utils import timing
 
 log = getLogger(__name__)
@@ -166,6 +167,12 @@ class Interval(Source):
         'polymorphic_identity': SourceType.INTERVAL
     }
 
+    def __init__(self, start=None, finish=None, schedule=None, **kargs):
+        if not start: raise ValueError('Missing start')
+        if not schedule: raise ValueError('Missing schedule')
+        if not finish: finish = schedule.next_frame(start)
+        super().__init__(start=start, finish=finish, schedule=schedule, **kargs)
+
     def __str__(self):
         owner = self.owner if isinstance(self.owner, str) else short_cls(self.owner)
         return 'Interval "%s from %s" (owner %s)' % (self.schedule, self.start, owner)
@@ -191,7 +198,7 @@ class Interval(Source):
             raise NoStatistics('No statistics are currently defined')
 
     @classmethod
-    def missing_dates(cls, s, expected, schedule, interval_owner, statistic_owner=None, start=None, finish=None):
+    def missing_starts(cls, s, expected, schedule, interval_owner, statistic_owner=None, start=None, finish=None):
         '''
         Previous approach was way too complicated and not thread-safe.  Instead, just enumerate intervals and test.
         '''
@@ -202,14 +209,13 @@ class Interval(Source):
         start = schedule.start_of_frame(start if start else stats_start)
         finish = finish if finish else schedule.next_frame(stats_finish)
         while start < finish:
-            next = schedule.next_frame(start)
             existing = s.query(Interval). \
                 filter(Interval.start == start,
                        Interval.schedule == schedule,
                        Interval.owner == interval_owner).count()
             if existing != expected:
-                yield start, next
-            start = next
+                yield start
+            start = schedule.next_frame(start)
 
     @classmethod
     def dirty_all(cls, s):

@@ -11,8 +11,7 @@ from ..pipeline import LoaderMixin
 from ...data import present, linear_resample_time, Statistics
 from ...data.frame import median_dt
 from ...data.lib import interpolate_to_index
-from ...data.power import add_differentials, add_energy_budget, add_loss_estimate, add_power_estimate, PowerException, \
-    add_air_speed
+from ...data.power import add_differentials, add_energy_budget, add_loss_estimate, add_power_estimate
 from ...common.log import log_current_exception
 from ...lib.data import reftuple, MissingReference
 from ...names import N, Units, Summaries, T, simple_name
@@ -21,9 +20,6 @@ from ...sql import StatisticJournalFloat, Constant
 log = getLogger(__name__)
 
 BikeModel = namedtuple('BikeModel', 'cda, crr, bike_weight')
-
-
-# todo - remove complex model that didn't work.  no need to read heart rate for example!
 
 
 class PowerModel(reftuple('Power', 'bike_model, rider_weight')):
@@ -38,10 +34,6 @@ class PowerModel(reftuple('Power', 'bike_model, rider_weight')):
 
 
 class PowerCalculator(LoaderMixin, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator):
-
-    '''
-    See ch2.config.power for examples of how this is configured.
-    '''
 
     def __init__(self, *args, power_model=None, caloric_eff=0.25, **kargs):
         self.power_model_ref = power_model
@@ -59,16 +51,11 @@ class PowerCalculator(LoaderMixin, ActivityGroupCalculatorMixin, DataFrameCalcul
         try:
             self._set_power(s, ajournal)
             df = Statistics(s, activity_journal=ajournal, with_timespan=True). \
-                by_name(SegmentReader, N.DISTANCE, N.SPEED, N.CADENCE, N.LATITUDE,
-                        N.LONGITUDE, N.HEART_RATE). \
+                by_name(SegmentReader, N.DISTANCE, N.SPEED, N.CADENCE). \
                 by_name(ElevationCalculator, N.ELEVATION).df
             ldf = linear_resample_time(df)
             ldf = add_differentials(ldf, max_gap=1.1 * median_dt(df))
-            if N.HEADING not in ldf.columns:
-                raise PowerException('Could not calculate heading')    
             return df, ldf
-        except PowerException as e:
-            log.warning(e)
         except MissingReference as e:
             log.warning(f'Power configuration incorrect ({e})')
         except Exception as e:
@@ -79,7 +66,6 @@ class PowerCalculator(LoaderMixin, ActivityGroupCalculatorMixin, DataFrameCalcul
         df, ldf = dfs
         total_weight = self.power_model.bike_model.bike_weight + self.power_model.rider_weight
         ldf = add_energy_budget(ldf, total_weight)
-        ldf = add_air_speed(ldf, 0, 0)
         ldf = add_loss_estimate(ldf, total_weight, cda=self.power_model.bike_model.cda,
                                 crr=self.power_model.bike_model.crr)
         ldf = add_power_estimate(ldf)

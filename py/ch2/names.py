@@ -76,7 +76,6 @@ class Titles(TitlesBase):
     ACTIVE_TIME = 'Active Time'
     ACTIVITY = 'Activity'
     ACTIVITY_GROUP = 'Activity Group'
-    AIR_SPEED = 'Air Speed'
     ALL = 'All'
     ANY_ALL = '% All'
     ALTITUDE = 'Altitude'
@@ -175,10 +174,6 @@ class Titles(TitlesBase):
 
     LO_REST_HR = TitlesBase._lo(REST_HR)
     HI_REST_HR = TitlesBase._hi(REST_HR)
-
-    AIR_SPEED_2 = TitlesBase._sqr(AIR_SPEED)
-    AVG_AIR_SPEED_2 = TitlesBase._avg(AIR_SPEED_2)
-    DELTA_AIR_SPEED_2 = TitlesBase._delta(AIR_SPEED_2)
 
     SPEED_2 = TitlesBase._sqr(SPEED)
     AVG_SPEED_2 = TitlesBase._avg(SPEED_2)

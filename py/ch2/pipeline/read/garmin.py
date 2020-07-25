@@ -4,7 +4,6 @@ from time import sleep
 from requests import HTTPError
 
 from .monitor import missing_dates
-from ..calculate.utils import MissingDateMixin
 from ..pipeline import ProcessPipeline
 from ...commands.args import DATA_DIR
 from ...common.date import now, local_time_to_time, format_date, to_date, dates_from, time_to_local_time
@@ -18,7 +17,7 @@ GARMIN_USER = 'garmin_user'
 GARMIN_PASSWORD = 'garmin_password'
 
 
-class GarminReader(MissingDateMixin, ProcessPipeline):
+class GarminReader(ProcessPipeline):
 
     def __init__(self, *args, force_all=False, **kargs):
         self.__force_all = force_all
@@ -26,12 +25,13 @@ class GarminReader(MissingDateMixin, ProcessPipeline):
         self.__password = None
         super().__init__(*args, **kargs)
 
-    def _startup(self, s):
-        super()._startup(s)
-        self.__user = Constant.get_single(s, GARMIN_USER, none=True)
-        self.__password = Constant.get_single(s, GARMIN_PASSWORD, none=True)
+    def startup(self):
+        with self._config.db.session_context(expire_on_commit=False) as s:
+            self.__user = Constant.get_single(s, GARMIN_USER, none=True)
+            self.__password = Constant.get_single(s, GARMIN_PASSWORD, none=True)
+        super().startup()
 
-    def _delete(self, s):
+    def delete(self):
         pass
 
     def _missing(self, s):
@@ -42,28 +42,23 @@ class GarminReader(MissingDateMixin, ProcessPipeline):
             log.warning(f'Too soon since previous call ({last}; 12 hours minimum)')
         else:
             try:
-                dates = list(missing_dates(s, force=self.__force_all))
+                dates = [format_date(date) for date in missing_dates(s, force=self.__force_all)]
                 if dates:
-                    log.debug(f'Download Garmin from {format_date(dates[0])}')
-                    return dates[:1]
+                    log.debug(f'Download Garmin from {dates[0]}')
+                    return dates[:1]  # dates[0] in a list
                 else:
                     log.debug('No Garmin data to download')
             except Exception as e:
                 log_current_exception()
                 log.warning(e)
 
-    def _recalculate(self, db, missing):
-
-        if not missing:
-            return
-        elif len(missing) != 1:
-            raise Exception('Expected a single date')
-
+    def _run_one(self, missed):
+        # is only called once with the start date
         data_dir = self._config.args._format_path(DATA_DIR)
         connect = GarminConnect(log_response=False)
         connect.login(self.__user, self.__password)
 
-        for repeat, date in enumerate(dates_from(to_date(missing[0]))):
+        for repeat, date in enumerate(dates_from(to_date(missed))):
             if repeat:
                 sleep(1)
             log.info('Downloading data for %s' % date)

@@ -27,14 +27,12 @@ class AbortImportButMarkScanned(AbortImport):
 
 class ProcessFitReader(ProcessPipeline):
 
-    def __init__(self, config, *paths, sub_dir=None, **kargs):
-        self.paths = paths
+    def __init__(self, config, *args, sub_dir=None, **kargs):
         self.sub_dir = sub_dir
-        super().__init__(config, **kargs)
+        super().__init__(config, *args, **kargs)
 
-    def _expand_paths(self, paths):
+    def _all_paths(self):
         from ...commands.upload import DOT_FIT
-        if paths: return paths
         data_dir = base_system_path(self._config.args[BASE], version=PERMANENT)
         if self.sub_dir:
             data_dir = join(data_dir, self.sub_dir)
@@ -43,7 +41,12 @@ class ProcessFitReader(ProcessPipeline):
         return iglob(join(data_dir, '**/*' + DOT_FIT), recursive=True)
 
     def _missing(self, s):
-        return modified_file_scans(s, self._expand_paths(self.paths), self.owner_out, self.force)
+        return [file_scan.path
+                for file_scan in modified_file_scans(s, self._all_paths(), self.owner_out, self.force)]
+
+    def _delete(self, s):
+        # sub-clases should implement and call _delete_n(s, n)
+        raise NotImplementedError('_delete(s)')
 
     def _delete_n(self, s, n):
         # we don't delete files!  instead, we touch them so that they appear new
@@ -61,21 +64,21 @@ class ProcessFitReader(ProcessPipeline):
     def _delete_db(self, s, file_scan):
         raise NotImplementedError('_delete_db')
 
-    def _run_one(self, s, file_scan):
-        # we need to get the file_scan in this session (missing is separate and objects are zombies)
-        file_scan = s.query(FileScan).filter(FileScan.id == file_scan.id).one()
-        try:
-            self._read(s, file_scan)
-            file_scan.last_scan = now()
-        except AbortImportButMarkScanned as e:
-            log.warning(f'Could not process {file_scan} (scanned)')
-            # log_current_exception()
-            file_scan.last_scan = now()
-        except FatalException:
-            raise
-        except Exception as e:
-            log.warning(f'Could not process {file_scan} (ignored)')
-            log_current_exception()
+    def _run_one(self, missed):
+        with self._config.db.session_context() as s:
+            file_scan = s.query(FileScan).filter(FileScan.path == missed).one()
+            try:
+                self._read(s, file_scan)
+                file_scan.last_scan = now()
+            except AbortImportButMarkScanned as e:
+                log.warning(f'Could not process {file_scan} (scanned)')
+                # log_current_exception()
+                file_scan.last_scan = now()
+            except FatalException:
+                raise
+            except Exception as e:
+                log.warning(f'Could not process {file_scan} (ignored)')
+                log_current_exception()
 
     def _read(self, s, file_scan):
         source, data = self._read_data(s, file_scan)

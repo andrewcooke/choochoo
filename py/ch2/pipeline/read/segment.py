@@ -32,14 +32,17 @@ class SegmentReader(LoaderMixin, ActivityReader):
         self.match_bound = match_bound
         super().__init__(*args, **kargs)
 
-    def _startup(self, s):
-        SegmentJournal.clean(s)
-        super()._startup(s)
-        self.__segments = self._read_segments(s)
+    def startup(self):
+        with self._config.db.session_context() as s:
+            SegmentJournal.clean(s)
+        super().startup()
+        with self._config.db.session_context(expire_on_commit=False) as s:
+            self.__segments = self._read_segments(s)
 
-    def _shutdown(self, s):
-        SegmentJournal.clean(s)
-        super()._shutdown(s)
+    def shutdown(self):
+        with self._config.db.session_context() as s:
+            SegmentJournal.clean(s)
+        super().shutdown()
 
     def _load_data(self, s, loader, data):
         super()._load_data(s, loader, data)
@@ -118,7 +121,7 @@ class SegmentReader(LoaderMixin, ActivityReader):
         i0, i1 = int(minimum), int(minimum) + 1
         k = (minimum - i0) / (i1 - i0)
         t0, t1 = waypoints[i0].time.timestamp(), waypoints[i1].time.timestamp()
-        return to_time(t0 * (1 - k) + t1 * k)
+        return to_time(float(int(0.5 + t0 * (1 - k) + t1 * k)))  # round to nearest second so easy to query
 
     def _plot(self, p):
         '''

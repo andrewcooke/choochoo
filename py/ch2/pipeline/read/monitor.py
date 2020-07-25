@@ -136,12 +136,13 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
                            record.timestamp, StatisticJournalInteger,
                            description='''The number of steps in a day to this point in time.''')
 
-    def _shutdown(self, s):
-        super()._shutdown(s)
+    def shutdown(self):
+        super().shutdown()
         if not self.worker:
-            log.info('Calculating differential in main thread')
-            self._fix_overlapping_monitors(s)
-            self._update_differential(s)
+            with self._config.db.session_context() as s:
+                log.info('Calculating differential in main thread')
+                self._fix_overlapping_monitors(s)
+                self._update_differential(s)
 
     def _fix_overlapping_monitors(self, s):
         pair = self._next_overlap(s)

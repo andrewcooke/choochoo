@@ -305,15 +305,16 @@ def make_parser(with_noop=False):
 
     process = commands.add_parser(PROCESS, help='process data (add information to the database)',
                                   description='read new files from the permanent store and calculate statistics')
-    process.add_argument(mm(WORKER), metavar='ID', type=int,
-                         help='internal use only (identifies sub-process workers)')
-    process.add_argument(mm(FORCE), action='store_true', help='reprocess existing data')
     process.add_argument(mm(KARG), m(K.upper()), action='append', default=[], metavar='NAME=VALUE',
                          help='keyword argument to be passed to the pipelines (can be repeated)')
+    # cannot be expressed in argparse (but checked in command) - force/like and worker are mutually exclusive
+    process.add_argument(mm(FORCE), action='store_true', help='reprocess existing data')
     process.add_argument(mm(LIKE), action='append', default=[], metavar='PATTERN',
                          help='run only matching pipeline classes')
-    process.add_argument(ARG, nargs='*', metavar='ARG',
-                         help='additional arguments')
+    process.add_argument(mm(WORKER), metavar='ID', type=int,
+                         help='internal use only (identifies sub-process workers)')
+    process.add_argument(ARG, nargs='*', metavar='WORKER_ARG',
+                         help=f'internal use only (tasks for {mm(WORKER)})')
 
     def add_search_query(cmd, query_help='search terms (similar to SQL)'):
         cmd.add_argument(QUERY, metavar='QUERY', default=[], nargs='+', help=query_help)

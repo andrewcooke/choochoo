@@ -3,7 +3,7 @@ from logging import getLogger
 
 from .utils import Displayer
 from ..calculate import SummaryCalculator
-from ..calculate.monitor import StepsCalculator
+from ..calculate.steps import StepsCalculator
 from ...names import N
 from ...diary.database import summary_column, interval_column
 from ...diary.model import value, optional_text

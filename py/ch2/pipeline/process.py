@@ -84,7 +84,7 @@ class ProcessRunner:
                         popens = self._run_til_next(pipelines, popens, queue)
                     else:
                         log.debug('Done')
-                        queue.shut_down()
+                        queue.shutdown()
                         return
         finally:
             local_progress.complete()
@@ -176,6 +176,7 @@ class DependencyQueue:
             pipeline = self.__unblocked.pop()
             log.debug(f'Making {pipeline} active')
             instance = instantiate_pipeline(pipeline, self.__config, **self.__kargs)
+            instance.startup()
             missing = instance.missing()
             self.__stats[pipeline] = Stats(pipeline, missing)
             if missing:
@@ -186,23 +187,23 @@ class DependencyQueue:
             else:
                 self.complete(pipeline)
                 log.debug(f'{pipeline}: no missing data')
-        try:
+        while self.__order:
             pipeline = self.__order.pop(0)
             instance, missing = self.__active[pipeline]
-            log_index = self.__unused_log_index(pipeline)
-            missing_args, missing = self.__split_missing(pipeline, instance, missing)
-            cmd = instance.command_for_missing(pipeline, missing_args, log_name(pipeline, log_index))
             if missing:
+                log_index = self.__unused_log_index(pipeline)
+                missing_args, missing = self.__split_missing(pipeline, missing)
+                cmd = instance.command_for_missing(pipeline, missing_args, log_name(pipeline, log_index))
                 self.__active[pipeline] = (instance, missing)
                 self.__order.append(pipeline)
+                log.debug(f'{pipeline}: starting batch of {len(missing_args)} missing values')
+                self.__stats[pipeline].start(log_index, len(missing_args))
+                return pipeline, cmd, log_index
             else:
-                log.debug(f'{pipeline} will be exhausted after this process')
+                log.debug(f'{pipeline} exhausted')
+                instance.shutdown()
                 del self.__active[pipeline]
-            log.debug(f'{pipeline}: starting batch of {len(missing_args)} missing values')
-            self.__stats[pipeline].start(log_index, len(missing_args))
-            return pipeline, cmd, log_index
-        except IndexError:
-            raise EmptyException()
+        raise EmptyException()
 
     def __unused_log_index(self, pipeline):
         index = 0
@@ -223,11 +224,11 @@ class DependencyQueue:
         log.info(f'Clock time: {format_seconds(clock_time)}; Process time: {format_seconds(process_time)}; '
                  f'Speedup: x{speedup:.1f}')
 
-    def __split_missing(self, pipeline, instance, missing):
+    def __split_missing(self, pipeline, missing):
         n = max(1, min(self.__max_missing, len(missing), int(pow(self.__stats[pipeline].total, self.__gamma))))
         return missing[:n], missing[n:]
 
-    def shut_down(self):
+    def shutdown(self):
         self.log()
         self.__log_efficiency()
         if self.__blocked:
@@ -309,7 +310,7 @@ def sort_pipelines(pipelines):
         remaining = remaining.difference(processed)
 
 
-def fmt_cmd(cmd, max=300):
+def fmt_cmd(cmd, max=400):
     if len(cmd) > max:
         n1 = int(0.8 * max)
         n2 = len(cmd) - (max - n1 - 3)

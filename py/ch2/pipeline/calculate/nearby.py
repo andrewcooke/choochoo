@@ -31,13 +31,14 @@ class SimilarityCalculator(OwnerInMixin, ProcessCalculator):
         self.border = border
         super().__init__(*args, **kargs)
 
-    def _startup(self, s):
+    def startup(self):
         log.info(f'Reducing to {int(0.5 + 100 * self.fraction):d}%')
+        super().startup()
 
     def _missing(self, s):
         prev = Timestamp.get(s, self.owner_out)
         if not prev:
-            return [True]
+            return ['missing']
         prev_ids = s.query(Timestamp.source_id). \
             filter(Timestamp.owner == self.owner_in,
                    Timestamp.constraint == None,
@@ -46,7 +47,7 @@ class SimilarityCalculator(OwnerInMixin, ProcessCalculator):
             join(ActivityGroup). \
             filter(not_(ActivityJournal.id.in_(prev_ids))).scalar()
         if later:
-            return [True]
+            return ['missing']
         else:
             return []
 
@@ -54,18 +55,18 @@ class SimilarityCalculator(OwnerInMixin, ProcessCalculator):
         log.warning(f'Deleting similarity data')
         s.query(ActivitySimilarity).delete(synchronize_session=False)
         Timestamp.clear(s, self.owner_out)
-        s.commit()
 
-    def _run_one(self, s, missed):
-        rtree = SQRTree(default_match=MatchType.OVERLAP, default_border=self.border)
-        n_points = defaultdict(lambda: 0)
-        self._prepare(s, rtree, n_points, 30000)
-        n_overlaps = defaultdict(lambda: defaultdict(lambda: 0))
-        new_ids, affected_ids = self._count_overlaps(s, rtree, n_points, n_overlaps, 10000)
-        # this clears itself beforehand
-        # use explicit class to distinguish from subclasses (which compare against this)
-        with Timestamp(owner=self.owner_out).on_success(s):
-            self._save(s, new_ids, affected_ids, n_points, n_overlaps, 10000)
+    def _run_one(self, missed):
+        with self._config.db.session_context() as s:
+            rtree = SQRTree(default_match=MatchType.OVERLAP, default_border=self.border)
+            n_points = defaultdict(lambda: 0)
+            self._prepare(s, rtree, n_points, 30000)
+            n_overlaps = defaultdict(lambda: defaultdict(lambda: 0))
+            new_ids, affected_ids = self._count_overlaps(s, rtree, n_points, n_overlaps, 10000)
+            # this clears itself beforehand
+            # use explicit class to distinguish from subclasses (which compare against this)
+            with Timestamp(owner=self.owner_out).on_success(s):
+                self._save(s, new_ids, affected_ids, n_points, n_overlaps, 10000)
 
     def _prepare(self, s, rtree, n_points, delta):
         n = 0
@@ -235,7 +236,7 @@ class NearbyCalculator(OwnerInMixin, ProcessCalculator):
         latest_groups = Timestamp.get(s, self.owner_out)
         if not latest_groups or latest_similarity.time > latest_groups.time:
             self._delete(s)  # missing isn't really missing...
-            return [True]
+            return ['missing']
         else:
             return []
 
@@ -243,16 +244,17 @@ class NearbyCalculator(OwnerInMixin, ProcessCalculator):
         Timestamp.clear(s, self.owner_out)
         s.query(ActivityNearby).delete()
 
-    def _run_one(self, s, missed):
-        with Timestamp(owner=self.owner_out).on_success(s):
-            for activity_group in s.query(ActivityGroup).all():
-                try:
-                    d_min, n = expand_max(0, 1, 5, lambda d: len(self.dbscan(s, d, activity_group)))
-                    log.info(f'{n} groups at d={d_min}')
-                    self.save(s, self.dbscan(s, d_min, activity_group), activity_group)
-                except Exception as e:
-                    log.warning(f'Failed to find nearby activities for {activity_group.name}: {e}')
-                    log_current_exception(traceback=False)
+    def _run_one(self, missed):
+        with self._config.db.session_context() as s:
+            with Timestamp(owner=self.owner_out).on_success(s):
+                for activity_group in s.query(ActivityGroup).all():
+                    try:
+                        d_min, n = expand_max(0, 1, 5, lambda d: len(self.dbscan(s, d, activity_group)))
+                        log.info(f'{n} groups at d={d_min}')
+                        self.save(s, self.dbscan(s, d_min, activity_group), activity_group)
+                    except Exception as e:
+                        log.warning(f'Failed to find nearby activities for {activity_group.name}: {e}')
+                        log_current_exception(traceback=False)
 
     def dbscan(self, s, d, activity_group):
         return NearbySimilarityDBSCAN(s, activity_group, d, 3).run()

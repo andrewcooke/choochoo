@@ -19,23 +19,11 @@ log = getLogger(__name__)
 class AchievementCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, ProcessCalculator):
 
     def _delete(self, s):
-        start, finish = self._start_finish(type=local_time_to_time)
-        s.commit()   # so that we don't have any risk of having something in the session that can be deleted
-        journal_ids = s.query(ActivityJournal.id)
-        if start is not None:
-            journal_ids = journal_ids.filter(ActivityJournal.finish > start)
-        if finish is not None:
-            journal_ids = journal_ids.filter(ActivityJournal.start < finish)
-        q = s.query(Achievement).filter(Achievement.activity_journal_id.in_(journal_ids))
-        n = q.count()
-        log.debug(f'Deleting {n} achievements')
+        log.debug(f'Deleting {s.query(Achievement).count()} achievements')
         q.delete(synchronize_session=False)
-        Timestamp.clear_keys(s, journal_ids, owner=self.owner_out)
+        Timestamp.clear(s, owner=self.owner_out)
 
     def _startup(self, s):
-        self._table = self._build_table(s)
-
-    def _build_table(self, s):
         table = []
         self._append_like(table, s, 'fastest', 15, N.MIN_KM_TIME_ANY, self.owner_in)
         self._append_like(table, s, 'longest', 10, N.ACTIVE_DISTANCE, self.owner_in)
@@ -47,7 +35,7 @@ class AchievementCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, Proces
         self._append_like(table, s, 'highest', 5, N.CLIMB_ELEVATION, self.owner_in)
         self._append_like(table, s, 'highest', 5, N.CLIMB_DISTANCE, self.owner_in)
         self._append_like(table, s, 'highest', 3, N.MAX_MED_HR_M_ANY, self.owner_in)
-        return table
+        self._table = table
 
     def _append_like(self, table, s, superlative, score, pattern, owner):
         found = 0
@@ -61,14 +49,16 @@ class AchievementCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, Proces
         else:
             log.warning(f'No matches for {pattern} ({owner})')
 
-    def _run_one(self, s, time_or_date):
-        activity_journal = s.query(ActivityJournal).filter(ActivityJournal.start == time_or_date).one()
-        with Timestamp(owner=self.owner_out, source=activity_journal).on_success(s):
-            try:
-                self._calculate_stats(s, activity_journal)
-            except Exception as e:
-                log.error(f'No statistics on {time_or_date}: {e}')
-                log_current_exception()
+    def _run_one(self, missed):
+        start = local_time_to_time(missed)
+        with self._config.db.session_context() as s:
+            activity_journal = s.query(ActivityJournal).filter(ActivityJournal.start == start).one()
+            with Timestamp(owner=self.owner_out, source=activity_journal).on_success(s):
+                try:
+                    self._calculate_stats(s, activity_journal)
+                except Exception as e:
+                    log.error(f'No statistics on {missed}: {e}')
+                    log_current_exception()
 
     def _calculate_stats(self, s, activity_journal):
         log.debug(f'Calculate for {activity_journal} on {activity_journal.start}')

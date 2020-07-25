@@ -65,7 +65,6 @@ def fit_power_parameters(bookmark, large):
     '''
     weight = 64+12  # weight of rider + bike / kg  todo - extract weight from db
     route = add_energy_budget(route, weight)
-    route = add_air_speed(route)
     route = add_cda_estimate(route)
     route = add_crr_estimate(route, weight)
     route.describe()

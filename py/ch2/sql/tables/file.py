@@ -43,6 +43,3 @@ class FileScan(Base):
     @classmethod
     def add(cls, s, path, owner, hash):
         return add(s, FileScan(path=path, owner=owner, last_scan=to_time(0.0), file_hash=FileHash.get_or_add(s, hash)))
-
-    def __str__(self):
-        return self.path

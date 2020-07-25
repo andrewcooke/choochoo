@@ -16,7 +16,7 @@ from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.elevation import ElevationCalculator
 from ..pipeline.calculate.heart_rate import RestHRCalculator
 from ..pipeline.calculate.kit import KitCalculator
-from ..pipeline.calculate.monitor import StepsCalculator
+from ..pipeline.calculate.steps import StepsCalculator
 from ..pipeline.calculate.nearby import SimilarityCalculator, NearbyCalculator
 from ..pipeline.calculate.power import PowerCalculator
 from ..pipeline.calculate.response import ResponseCalculator

@@ -9,7 +9,7 @@ from ch2.commands.upload import upload
 from ch2.common.args import mm, m
 from ch2.common.date import to_time, local_date_to_time
 from ch2.data import Names as N
-from ch2.pipeline.calculate.monitor import StepsCalculator
+from ch2.pipeline.calculate.steps import StepsCalculator
 from ch2.pipeline.pipeline import run_pipeline
 from ch2.sql.tables.monitor import MonitorJournal
 from ch2.sql.tables.pipeline import PipelineType
