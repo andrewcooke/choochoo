@@ -10,6 +10,7 @@ from ch2.commands.args import make_parser, NamespaceWithVariables, DB_VERSION
 from ch2.common.names import USER
 from ch2.common.user import make_user_database
 from ch2.sql.config import Config
+from ch2.sql.support import Base
 
 log = getLogger(__name__)
 
@@ -31,9 +32,11 @@ class LogTestCase(TestCase):
 
 def random_test_user(args=(mm(USER), 'postgres')):
     parser = make_parser()
-    ns = NamespaceWithVariables(parser.parse_args(args=args), PROGNAME, DB_VERSION)
-    data = Config(ns)
+    ns = NamespaceWithVariables._from_ns(parser.parse_args(args=args), PROGNAME, DB_VERSION)
+    config = Config(ns)
     user = data_hash(str(dt.datetime.now()))[:6]
     log.info(f'User/database {user}')
-    db = make_user_database(data, user, '')
+    user_config = make_user_database(config, user, '')
+    log.info('Creating tables')
+    Base.metadata.create_all(user_config.db.engine)
     return user

@@ -16,11 +16,10 @@ from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.elevation import ElevationCalculator
 from ..pipeline.calculate.heart_rate import RestHRCalculator
 from ..pipeline.calculate.kit import KitCalculator
-from ..pipeline.calculate.steps import StepsCalculator
 from ..pipeline.calculate.nearby import SimilarityCalculator, NearbyCalculator
-from ..pipeline.calculate.power import PowerCalculator
 from ..pipeline.calculate.response import ResponseCalculator
 from ..pipeline.calculate.segment import SegmentCalculator
+from ..pipeline.calculate.steps import StepsCalculator
 from ..pipeline.calculate.summary import SummaryCalculator
 from ..pipeline.display.activity.achievement import AchievementDelegate
 from ..pipeline.display.activity.jupyter import JupyterDelegate
@@ -147,7 +146,7 @@ your FF-model parameters (fitness and fatigue).
         add_climb(s)  # default climb calculator
         add_responses(s, self._ff_parameters(), prefix=N.DEFAULT)
 
-    def _load_standard_statistics(self, s):
+    def _load_standard_statistics(self, s, blockers=None):
         add_read_and_calculate(s, SegmentCalculator, blocked_by=[SegmentReader],
                                owner_in=short_cls(SegmentReader))
         add_read_and_calculate(s, StepsCalculator, blocked_by=[MonitorReader],
@@ -156,8 +155,9 @@ your FF-model parameters (fitness and fatigue).
                                owner_in=short_cls(MonitorReader))
         add_read_and_calculate(s, KitCalculator, blocked_by=[SegmentReader],
                                owner_in=short_cls(SegmentReader))
+        blockers = blockers or []
         add_read_and_calculate(s, ActivityCalculator,
-                               blocked_by=[PowerCalculator, ElevationCalculator, ImpulseCalculator, ResponseCalculator],
+                               blocked_by=blockers + [ElevationCalculator, ImpulseCalculator, ResponseCalculator],
                                owner_in=short_cls(ResponseCalculator),
                                climb=CLIMB_CNAME, response_prefix=N.DEFAULT)
         add_read_and_calculate(s, SimilarityCalculator, blocked_by=[ActivityCalculator],
@@ -181,9 +181,9 @@ your FF-model parameters (fitness and fatigue).
         # order is important here because some pipelines expect values created by others
         # this converts RAW_ELEVATION to ELEVATION, if needed
         add_read_and_calculate(s, ElevationCalculator, blocked_by=[SegmentReader])
-        self._load_power_statistics(s)
+        blockers = self._load_power_statistics(s)
         self._load_ff_statistics(s)
-        self._load_standard_statistics(s)
+        self._load_standard_statistics(s, blockers=blockers)
         self._load_summary_statistics(s)
         add_read_and_calculate(s, AchievementCalculator, blocked_by=[SummaryCalculator],
                                owner_in=short_cls(ActivityCalculator))

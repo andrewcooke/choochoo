@@ -1,7 +1,11 @@
 from hashlib import md5
+from logging import getLogger
 from os import makedirs
 from os.path import dirname, normpath, expanduser
 from pathlib import Path
+from shutil import get_terminal_size
+
+log = getLogger(__name__)
 
 
 def touch(path, with_dirs=False):
@@ -31,3 +35,12 @@ def data_hash(data):
     hash = md5()
     hash.update(data)
     return hash.hexdigest()
+
+
+def terminal_width(width=None):
+    width = get_terminal_size()[0] if width is None else width
+    if width is None:
+        log.warning('No terminal width available')
+    else:
+        log.debug(f'Terminal width is {width}')
+    return width

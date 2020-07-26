@@ -7,6 +7,7 @@ from ...common.names import TIME_ZERO
 from ...diary.model import TYPE, EDIT
 from ...lib import to_time, time_to_local_date
 from ...names import Sports
+from ...pipeline.calculate.power import PowerCalculator
 from ...pipeline.read.activity import ActivityReader
 from ...sql import StatisticJournalType, StatisticName, DiaryTopic, DiaryTopicJournal
 from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
@@ -89,6 +90,7 @@ class ACooke(Garmin):
             for kit, activity_group, cda, crr, bike_weight in (('cotic', MTB, 0.42, 0.0055, 12),
                                                                ('bowman', ROAD, 0.42, 0.0055, 8)):
                 add_kit_power_model(s, kit, self._activity_groups[activity_group], cda, crr, bike_weight)
+        return [PowerCalculator]  # additional blocker for activity stats
 
     def _post(self, s):
         # set a default weight for early power calculations

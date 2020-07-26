@@ -2,26 +2,15 @@
 import re
 from logging import getLogger
 from os import stat
-from shutil import get_terminal_size
 
 from sqlalchemy import desc
 
-import ch2.common.io
 from ..common.date import to_time
 from ..common.io import file_hash
 from ..common.names import TIME_ZERO
 from ..sql.tables.file import FileScan, FileHash
 
 log = getLogger(__name__)
-
-
-def terminal_width(width=None):
-    width = get_terminal_size()[0] if width is None else width
-    if width is None:
-        log.warning('No terminal width available')
-    else:
-        log.debug(f'Terminal width is {width}')
-    return width
 
 
 def modified_file_scans(s, paths, owner, force=False):

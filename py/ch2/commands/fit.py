@@ -8,7 +8,7 @@ from ..common.args import no
 from ..fit.profile.profile import read_fit
 from ..fit.summary import summarize_records, summarize_tables, summarize_grep, summarize_csv, summarize_tokens, \
     summarize_fields
-from ..lib.io import terminal_width
+from ..common.io import terminal_width
 
 log = getLogger(__name__)
 

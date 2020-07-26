@@ -5,7 +5,7 @@ from ch2.commands.args import V, DEV, K, READ, bootstrap_db, BASE
 from ch2.commands.kit import start, change, finish, show, undo, statistics
 from ch2.commands.upload import upload
 from ch2.common.args import mm, m
-from ch2.config.profile.default import default
+from ch2.config.profiles.default import default
 from ch2.diary.model import TYPE
 from ch2.lib import now, local_date_to_time
 from ch2.pipeline.pipeline import run_pipeline

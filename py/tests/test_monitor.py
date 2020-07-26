@@ -2,7 +2,7 @@ from logging import getLogger
 from tempfile import TemporaryDirectory
 
 import sqlalchemy.sql.functions as func
-from ch2.config.profile.default import default
+from ch2.config.profiles.default import default
 
 from ch2.commands.args import V, DEV, MONITOR, bootstrap_db, READ, BASE
 from ch2.commands.upload import upload

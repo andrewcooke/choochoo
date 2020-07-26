@@ -4,7 +4,7 @@ from tempfile import TemporaryDirectory
 from ch2.commands.args import DEV, V, BASE, bootstrap_db
 from ch2.commands.upload import upload
 from ch2.common.args import mm, m
-from ch2.config.profile.default import default
+from ch2.config.profiles.default import default
 from ch2.diary.database import read_date
 from ch2.diary.model import LABEL, VALUE
 from ch2.lib import to_date

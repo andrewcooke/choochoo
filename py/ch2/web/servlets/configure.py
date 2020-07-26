@@ -5,8 +5,8 @@ from sqlalchemy import exists
 
 from ...commands.args import DB_VERSION
 from ...commands.db import add_profile, remove_schema
-from ...commands.help import HTML, filter, parse, P, LI, PRE
 from ...commands.import_ import import_source
+from ...common.md import HTML, parse, P, LI, PRE
 from ...common.names import BASE
 from ...config.profile import get_profiles
 from ...import_ import available_versions

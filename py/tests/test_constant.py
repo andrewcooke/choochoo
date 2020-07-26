@@ -5,7 +5,7 @@ from sqlalchemy.sql.functions import count
 from ch2.commands.args import V, DEV, FORCE, bootstrap_db
 from ch2.commands.constants import constants
 from ch2.common.args import mm, m
-from ch2.config.profile.default import default
+from ch2.config.profiles.default import default
 from ch2.sql.tables.constant import Constant
 from tests import LogTestCase, random_test_user
 

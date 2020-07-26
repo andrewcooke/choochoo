@@ -6,7 +6,7 @@ from sqlalchemy.sql.functions import count
 from ch2.commands.args import V, bootstrap_db
 from ch2.common.args import m
 from ch2.common.date import to_date
-from ch2.config.profile.acooke import acooke
+from ch2.config.profiles.acooke import acooke
 from ch2.pipeline.calculate.summary import SummaryCalculator
 from ch2.sql.tables.source import Source, Interval
 from ch2.sql.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, StatisticName, \

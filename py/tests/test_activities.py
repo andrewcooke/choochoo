@@ -5,9 +5,9 @@ from sqlalchemy.sql.functions import count
 
 from ch2.commands.args import V, DEV, FORCE, bootstrap_db, BASE
 from ch2.commands.constants import constants
-from ch2.commands.upload import read
+from ch2.commands.upload import upload
 from ch2.common.args import mm, m
-from ch2.config.profile.default import default
+from ch2.config.profiles.default import default
 from ch2.data import Names as N
 from ch2.pipeline.pipeline import run_pipeline
 from ch2.sql.tables.activity import ActivityJournal
@@ -26,11 +26,9 @@ class TestActivities(LogTestCase):
         constants(config)
 
         with TemporaryDirectory() as f:
-            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
-                                      'data/test/source/personal/2018-08-27-rec.fit')
-            read(config)
-
-        run_pipeline(config, PipelineType.PROCESS, force=True, start='2018-01-01', n_cpu=1)
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'upload',
+                                  'data/test/source/personal/2018-08-27-rec.fit')
+            upload(config)
 
         with config.db.session_context() as s:
             n_raw = s.query(count(StatisticJournalFloat.id)). \
@@ -54,7 +52,7 @@ class TestActivities(LogTestCase):
         with TemporaryDirectory() as f:
             config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
             paths = ['/home/andrew/archive/fit/bike/cotic/2016-07-27-pm-z4.fit']
-            run_pipeline(config, PipelineType.READ, paths=paths, force=True)
+            run_pipeline(config, PipelineType.PROCESS, paths=paths, force=True)
 
     def __assert_basic_stats(self, s):
         for name in [N.ACTIVE_DISTANCE, N.ACTIVE_TIME]:

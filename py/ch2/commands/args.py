@@ -610,13 +610,12 @@ def bootstrap_db(user, *args, configurator=None, post_config=None):
 
     args = [mm(USER), user] + list(args)
     parser = make_parser()
-    ns = NamespaceWithVariables(parser.parse_args(args=args), PROGNAME, DB_VERSION)
+    ns = NamespaceWithVariables._from_ns(parser.parse_args(args=args), PROGNAME, DB_VERSION)
     if configurator:
         data = Config(ns)
-        with data.db.session_context() as s:
-            configurator(s, data)
+        configurator(data)
     args += post_config if post_config else []
-    ns = NamespaceWithVariables(parser.parse_args(args=args), PROGNAME, DB_VERSION)
+    ns = NamespaceWithVariables._from_ns(parser.parse_args(args=args), PROGNAME, DB_VERSION)
     data = Config(ns)
     return data
 

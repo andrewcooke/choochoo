@@ -5,7 +5,7 @@ from logging import getLogger
 from ch2 import constants
 from ch2.commands.args import V, DEV, FORCE, bootstrap_db
 from ch2.common.args import mm, m
-from ch2.config.profile.default import default
+from ch2.config.profiles.default import default
 from ch2.srtm.bilinear import bilinear_elevation_from_constant
 from ch2.srtm.file import SRTM1_DIR_CNAME
 from ch2.srtm.spline import spline_elevation_from_constant
