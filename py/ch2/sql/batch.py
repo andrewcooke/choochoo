@@ -24,7 +24,7 @@ class BatchLoader:
         self.rows = 0
 
     def debug(self, msg):
-        self.__message('debug', msg, log.warning)
+        self.__message('debug', msg, log.debug)
 
     def warning(self, msg):
         self.__message('warning', msg, log.warning)

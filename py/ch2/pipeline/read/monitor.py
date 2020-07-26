@@ -163,7 +163,7 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
 
     def _shift_finish(self, s):
         # next, fix up overlapping monitor journal entries so that they abut
-        log.debug(f'Adjusting finish')
+        log.info(f'Adjusting finish')
         m1 = aliased(MonitorJournal)
         m2 = aliased(MonitorJournal)
         # this is giving a warning but post to sqlalchemy group was deleted
@@ -211,7 +211,7 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
             filter(StatisticName.name == N.CUMULATIVE_STEPS,
                    StatisticName.owner == self.owner_out). \
             order_by(StatisticJournalInteger.time)
-        log.debug(q)
+        # log.debug(q)
         df = read_query(q, index=N.TIME)
         return df
 

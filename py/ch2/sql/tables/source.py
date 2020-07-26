@@ -284,7 +284,7 @@ class Composite(Source):
             join(q_input_counts, q_input_counts.c.id == Composite.id). \
             filter(Composite.n_components != q_input_counts.c.count)
         q_count = s.query(count(Composite.id)).filter(Composite.id.in_(q_bad_nodes))
-        log.debug(q_count)
+        # log.debug(q_count)
         if q_count.scalar():
             log.warning('Need to clean expired composite sources (may take some time)')
             q_bad_nodes = q_bad_nodes.cte(recursive=True)

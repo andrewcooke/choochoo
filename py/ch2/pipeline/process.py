@@ -4,7 +4,7 @@ from multiprocessing import cpu_count
 from time import sleep
 
 from ..commands.args import LOG
-from ..common.date import now, format_seconds
+from ..common.date import now, format_seconds, time_to_local_time
 from ..lib.workers import ProgressTree
 from ..sql import PipelineType, Interval, Pipeline
 
@@ -47,6 +47,9 @@ class ProcessRunner:
         self.__load = load
         self.__args = args
         self.__kargs = kargs
+        self.__max_wait = 0
+        self.__max_wait_procs = 0
+        self.__max_wait_proc = None
 
     def run(self, progress):
         local_progress = ProgressTree(len(self.__pipelines), parent=progress)
@@ -85,19 +88,28 @@ class ProcessRunner:
                     else:
                         log.debug('Done')
                         queue.shutdown()
+                        log.info(f'Maximum wait {format_seconds(self.__max_wait)} for {self.__max_wait_proc} '
+                                 f'with {self.__max_wait_procs} processes')
                         return
         finally:
             local_progress.complete()
 
     def _run_til_next(self, pipelines, popens, queue):
         queue.log()
+        start = now()
         log.debug('Waiting for a subprocess to complete')
         while True:
             for i, popen in enumerate(popens):
                 popen.poll()
                 process = self.__config.get_process(pipelines[popen][0].cls, popen.pid)
                 if popen.returncode is not None:
+                    duration = (now()- start).total_seconds()
+                    log.debug(f'Waited {format_seconds(duration)}')
                     pipeline, log_index = pipelines.pop(popen)
+                    if duration > self.__max_wait:
+                        self.__max_wait = duration
+                        self.__max_wait_procs = len(pipelines) + 1
+                        self.__max_wait_proc = str(pipeline)
                     self.__config.delete_process(pipeline.cls, popen.pid)
                     queue.complete(pipeline, log_index)
                     if popen.returncode:
@@ -125,7 +137,7 @@ class EmptyException(Exception): pass
 
 class DependencyQueue:
 
-    def __init__(self, config, pipelines, kargs, max_missing=5, min_missing=5, gamma=0.3):
+    def __init__(self, config, pipelines, kargs, min_missing=1, max_missing=20, gamma=0.4):
         self.__clean_pipelines(pipelines)
         self.__config = config
         self.__blocked = [pipeline for pipeline in pipelines if pipeline.blocked_by]
@@ -164,6 +176,8 @@ class DependencyQueue:
             log.info(f'{pipeline} complete ({self.__stats[pipeline].done})')
             self.__complete.append(pipeline)
             instance, missing = self.__active.pop(pipeline)
+            if missing: raise Exception(f'Complete pipeline {pipeline} still has missing values {missing}')
+            self.__order = [p for p in self.__order if p != pipeline]
             log.debug(f'Calling shutdown for {pipeline}')
             instance.shutdown()
             for i in reversed(range(len(self.__blocked))):
@@ -190,9 +204,10 @@ class DependencyQueue:
                 break
             else:
                 self.__active[pipeline] = instance, None
+                self.__order.insert(0, pipeline)
                 self.complete(pipeline)
                 log.debug(f'{pipeline}: no missing data')
-        while self.__order:
+        for _ in range(len(self.__order)):  # at most, try each once
             pipeline = self.__order.pop(0)
             instance, missing = self.__active[pipeline]
             if missing:
@@ -207,6 +222,7 @@ class DependencyQueue:
             else:
                 log.debug(f'{pipeline} exhausted')
                 self.__active[pipeline] = instance, None
+                self.__order.append(pipeline)
         raise EmptyException()
 
     def __unused_log_index(self, pipeline):
@@ -216,6 +232,8 @@ class DependencyQueue:
         return index
 
     def log(self):
+        log.info(f'Started {time_to_local_time(self.__start)}; '
+                 f'duration {format_seconds((now() - self.__start).total_seconds())}')
         for pipeline in self.__stats:
             log.info(str(self.__stats[pipeline]))
 
@@ -227,6 +245,7 @@ class DependencyQueue:
         speedup = process_time / clock_time
         log.info(f'Clock time: {format_seconds(clock_time)}; Process time: {format_seconds(process_time)}; '
                  f'Speedup: x{speedup:.1f}')
+        log.info(f'Missing args min {self.__min_missing}; max {self.__max_missing}; gamms {self.__gamma}')
 
     def __split_missing(self, pipeline, missing):
         # this (min, min) is a bit weird but makes sense, i think
