@@ -12,12 +12,13 @@ log = getLogger(__name__)
 def import_activity(record, old, new):
     if not activity_imported(record, new):
         record.info('Importing activity entries')
+        copied = set()  # avoid calling for multiple activity groups (doesn't cause duplicates but prints warnings)
         with old.session_context() as old_s:
-            copy_activity_topic_fields(record, old_s, old, None, new)
+            copy_activity_topic_fields(record, old_s, old, None, new, copied)
             activity_topic = old.meta.tables['activity_topic']
             for old_activity_topic in old_s.query(activity_topic).filter(activity_topic.c.parent_id == None).all():
                 log.info(f'Found old (root) activity_topic {old_activity_topic}')
-                copy_activity_topic_fields(record, old_s, old, old_activity_topic, new)
+                copy_activity_topic_fields(record, old_s, old, old_activity_topic, new, copied)
     else:
         record.warning('Activity entries already imported')
 
@@ -26,7 +27,7 @@ def activity_imported(record, new):
     return journal_imported(record, new, ActivityTopicJournal, 'Activity')
 
 
-def copy_activity_topic_fields(record, old_s, old, old_activity_topic, new):
+def copy_activity_topic_fields(record, old_s, old, old_activity_topic, new, copied):
     log.debug(f'Trying to copy activity_topic_fields for activity_topic {old_activity_topic}')
     activity_topic_field = old.meta.tables['activity_topic_field']
     for old_activity_topic_field in old_s.query(activity_topic_field). \
@@ -35,13 +36,15 @@ def copy_activity_topic_fields(record, old_s, old, old_activity_topic, new):
         log.debug(f'Found old activity_topic_field {old_activity_topic_field}')
         try:
             statistic_name = old.meta.tables['statistic_name']
-            old_statistic_name = old_s.query(statistic_name). \
-                filter(statistic_name.c.id == old_activity_topic_field.statistic_name_id).one()
-            log.debug(f'Found old statistic_name {old_statistic_name}')
-            with new.session_context() as new_s:
-                new_statistic_name = match_statistic_name(record, old_statistic_name, new_s, ActivityTopic)
-                copy_activity_topic_journal_entries(record, old_s, old, old_statistic_name, new_s,
-                                                    new_statistic_name)
+            if statistic_name not in copied:
+                old_statistic_name = old_s.query(statistic_name). \
+                    filter(statistic_name.c.id == old_activity_topic_field.statistic_name_id).one()
+                log.debug(f'Found old statistic_name {old_statistic_name}')
+                with new.session_context() as new_s:
+                    new_statistic_name = match_statistic_name(record, old_statistic_name, new_s, ActivityTopic)
+                    copy_activity_topic_journal_entries(record, old_s, old, old_statistic_name, new_s,
+                                                        new_statistic_name)
+                copied.add(statistic_name)
         except:
             log_current_exception()
     if old_activity_topic:

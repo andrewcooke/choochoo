@@ -125,7 +125,7 @@ class EmptyException(Exception): pass
 
 class DependencyQueue:
 
-    def __init__(self, config, pipelines, kargs, max_missing=50, min_missing=5, gamma=0.5):
+    def __init__(self, config, pipelines, kargs, max_missing=5, min_missing=5, gamma=0.3):
         self.__clean_pipelines(pipelines)
         self.__config = config
         self.__blocked = [pipeline for pipeline in pipelines if pipeline.blocked_by]
@@ -163,7 +163,7 @@ class DependencyQueue:
         if self.__stats[pipeline]:
             log.info(f'{pipeline} complete ({self.__stats[pipeline].done})')
             self.__complete.append(pipeline)
-            instance = self.__active.pop(pipeline)
+            instance, missing = self.__active.pop(pipeline)
             log.debug(f'Calling shutdown for {pipeline}')
             instance.shutdown()
             for i in reversed(range(len(self.__blocked))):
@@ -185,10 +185,11 @@ class DependencyQueue:
             self.__stats[pipeline] = Stats(pipeline, missing)
             if missing:
                 log.debug(f'{pipeline}: {len(missing)} missing values')
-                self.__active[pipeline] = (instance, missing)
+                self.__active[pipeline] = instance, missing
                 self.__order.insert(0, pipeline)
                 break
             else:
+                self.__active[pipeline] = instance, None
                 self.complete(pipeline)
                 log.debug(f'{pipeline}: no missing data')
         while self.__order:
@@ -198,14 +199,14 @@ class DependencyQueue:
                 log_index = self.__unused_log_index(pipeline)
                 missing_args, missing = self.__split_missing(pipeline, missing)
                 cmd = instance.command_for_missing(pipeline, missing_args, log_name(pipeline, log_index))
-                self.__active[pipeline] = (instance, missing)
+                self.__active[pipeline] = instance, missing
                 self.__order.append(pipeline)
                 log.debug(f'{pipeline}: starting batch of {len(missing_args)} missing values')
                 self.__stats[pipeline].start(log_index, len(missing_args))
                 return pipeline, cmd, log_index
             else:
                 log.debug(f'{pipeline} exhausted')
-                self.__active[pipeline] = instance  # intentionally break if code wrong
+                self.__active[pipeline] = instance, None
         raise EmptyException()
 
     def __unused_log_index(self, pipeline):
@@ -228,8 +229,9 @@ class DependencyQueue:
                  f'Speedup: x{speedup:.1f}')
 
     def __split_missing(self, pipeline, missing):
+        # this (min, min) is a bit weird but makes sense, i think
         lo = min(len(missing), self.__min_missing)
-        hi = max(len(missing), self.__max_missing)
+        hi = min(len(missing), self.__max_missing)
         n = max(lo, min(hi, int(pow(self.__stats[pipeline].total, self.__gamma))))
         return missing[:n], missing[n:]
 

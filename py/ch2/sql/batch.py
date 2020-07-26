@@ -18,21 +18,23 @@ class BatchLoader:
         self.reset()
 
     def reset(self):
-        self.errors = defaultdict(lambda: 0)
-        self.warnings = defaultdict(lambda: 0)
+        self.msgs = defaultdict(lambda: 0)
         self.sessions = 0
         self.calls = 0
         self.rows = 0
 
+    def debug(self, msg):
+        self.__message('debug', msg, log.warning)
+
     def warning(self, msg):
-        self.__message(self.warnings, msg, log.warning)
+        self.__message('warning', msg, log.warning)
 
     def error(self, msg):
-        self.__message(self.errors, msg, log.error)
+        self.__message('error', msg, log.error)
 
-    def __message(self, prev, msg, log):
-        prev[msg] += 1
-        if prev[msg] <= self.__max_msg_cnt:
+    def __message(self, type_, msg, log):
+        self.msgs[(type_, msg)] += 1
+        if self.msgs[(type_, msg)] <= self.__max_msg_cnt:
             log(msg)
 
     @staticmethod
@@ -51,7 +53,8 @@ class BatchLoader:
                 else:
                     self.warning(f'Unexpected key type for {mapper}')
             except Exception as e:
-                self.warning(f'Batch error with key {key}: {e!r}')
+                # only debug here because we know this occurs with user-defined types
+                self.debug(f'Batch error with key {key}: {e!r}')
         else:
             self.warning(f'Composite primary key for {mapper}')
         return False

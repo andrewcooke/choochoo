@@ -167,9 +167,9 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
         m1 = aliased(MonitorJournal)
         m2 = aliased(MonitorJournal)
         # this is giving a warning but post to sqlalchemy group was deleted
-        overlap = s.query(m1.id.label('id'), (m2.start - dt.timedelta(seconds=0.1)).label('finish')). \
+        overlap = s.query(m1.id.label('id'), m2.start.label('finish')). \
             filter(m1.start < m2.start,
-                   m1.finish >= m2.start,
+                   m1.finish > m2.start,
                    m1.id != m2.id).cte()
         s.query(MonitorJournal). \
             filter(MonitorJournal.id == overlap.c.id). \
@@ -180,7 +180,7 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
         q = s.query(StatisticJournal.id). \
             join(MonitorJournal). \
             filter(StatisticJournal.source_id == MonitorJournal.id,
-                   StatisticJournal.time > MonitorJournal.finish)
+                   StatisticJournal.time >= MonitorJournal.finish)
         count = q.count()
         if count:
             log.warning(f'Deleting {count} orphan statistics')
