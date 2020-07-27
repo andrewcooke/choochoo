@@ -1,9 +1,12 @@
 from collections import defaultdict
 from logging import getLogger
 from multiprocessing import cpu_count
+from os.path import join, exists
 from time import sleep
 
-from ..commands.args import LOG
+from psutil import NoSuchProcess
+
+from ..commands.args import LOG, LOG_DIR
 from ..common.date import now, format_seconds, time_to_local_time
 from ..lib.workers import ProgressTree
 from ..sql import PipelineType, Interval, Pipeline
@@ -103,7 +106,8 @@ class ProcessRunner:
                 popen.poll()
                 process = self.__config.get_process(pipelines[popen][0].cls, popen.pid)
                 if popen.returncode is not None:
-                    duration = (now()- start).total_seconds()
+                    del popens[i]
+                    duration = (now() - start).total_seconds()
                     log.debug(f'Waited {format_seconds(duration)}')
                     pipeline, log_index = pipelines.pop(popen)
                     if duration > self.__max_wait:
@@ -116,20 +120,37 @@ class ProcessRunner:
                         msg = f'Command "{popen.args}" exited with return code {popen.returncode} ' + \
                               f'see {process.log} for more info'
                         log.warning(msg)
+                        self._copy_log(process.log)
                         self._abort(pipelines, popens)
                         raise Exception(msg)
                     else:
                         log.debug(f'Command "{fmt_cmd(popen.args)}" finished successfully')
-                        del popens[i]
                         return popens
             sleep(0.1)
 
     def _abort(self, pipelines, popens):
         for popen in popens:
             log.warning(f'Killing PID {popen.pid} ({popen.args})')
-            popen.kill()
+            try:
+                popen.kill()
+            except NoSuchProcess:
+                pass
             pipeline, log_index = pipelines[popen]
             self.__config.delete_process(pipeline.cls, popen.pid)
+
+    def _copy_log(self, filename, n_lines=20):
+        dir = self.__config.args._format_path(LOG_DIR)
+        path = join(dir, filename)
+        if exists(path):
+            with open(path) as input:
+                lines = input.readlines()
+                lines = lines[-n_lines:]
+                log.debug(f'>>> Showing last {n_lines} from {path}')
+                for line in lines:
+                    line = line.strip()
+                    log.debug(f'>>> {line}')
+        else:
+            log.warning(f'Cannot find {path}')
 
 
 class EmptyException(Exception): pass

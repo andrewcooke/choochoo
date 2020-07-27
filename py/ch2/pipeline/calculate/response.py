@@ -46,11 +46,10 @@ class ResponseCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
         self.prefix = self._assert('prefix', prefix)
         super().__init__(*args, **kargs)
 
-    def startup(self):
-        with self._config.db.session_context(expire_on_commit=False) as s:
-            self.response_constants = [Constant.from_name(s, name) for name in self.response_constant_names]
-            self.responses = [Response(**loads(constant.at(s).value)) for constant in self.response_constants]
-        super().startup()
+    def _startup(self, s):
+        self.response_constants = [Constant.from_name(s, name) for name in self.response_constant_names]
+        self.responses = [Response(**loads(constant.at(s).value)) for constant in self.response_constants]
+        super()._startup(s)
 
     def _delete(self, s):
         composite_ids = s.query(Composite.id). \
@@ -62,7 +61,7 @@ class ResponseCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
             filter(Source.id.in_(composite_ids)). \
             scalar()
         if n:
-            log.warning(f'Deleting {n} Composite sources ({start} onwards)')
+            log.warning(f'Deleting {n} Composite sources')
             s.query(Source). \
                 filter(Source.id.in_(composite_ids)). \
                 delete(synchronize_session=False)
@@ -94,8 +93,8 @@ class ResponseCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
                    StatisticName.owner == self.owner_out). \
             order_by(StatisticJournal.time.desc()).limit(1).one_or_none()
         if finish is None:
-            log.debug(f'Missing data for {constant}')
-            return True
+            log.debug(f'No data for {constant}')
+            return False  # may simply have no data
         if (now - finish[0]).total_seconds() > 3 * 60 * 60:
             log.debug(f'Insufficient data for {constant}')
             return True

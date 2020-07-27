@@ -7,7 +7,7 @@ from os.path import join
 
 from ..common.args import mm, m, no, add_server_args, NamespaceWithVariables, color, add_data_source_args
 from ..common.names import *
-from ..common.names import UNDEF, COLOR, OFF, VERSION, USER, PASSWD
+from ..common.names import UNDEF, COLOR, OFF, VERSION, USER
 from ..lib.utils import parse_bool
 
 log = getLogger(__name__)
@@ -25,7 +25,6 @@ PROGNAME = 'ch2'
 WEB_PORT = 8000
 JUPYTER_PORT = 8001
 
-CALCULATE = 'calculate'
 CONSTANTS = 'constants'
 DATABASE = 'database'
 DIARY = 'diary'
@@ -40,7 +39,6 @@ KIT = 'kit'
 LOAD = 'load'
 NO_OP = 'no-op'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
-READ = 'read'
 SEARCH = 'search'
 SHOW_SCHEDULE = 'show-schedule'
 TEXT = 'text'
@@ -231,7 +229,7 @@ def base_system_path(base, subdir=None, file=None, version=DB_VERSION, create=Tr
 
 def make_parser(with_noop=False):
 
-    from ..lib import to_date, to_time
+    from ..lib import to_time
     from ..common.io import clean_path
 
     parser = ArgumentParser(prog=PROGNAME)
@@ -299,6 +297,8 @@ def make_parser(with_noop=False):
 
     upload = commands.add_parser(UPLOAD, help='upload data (copy FIT files to permanent store)',
                                  description='copy files to the permanent store and (optionally) process the data')
+    upload.add_argument(mm(KARG), m(K.upper()), action='append', default=[], metavar='NAME=VALUE',
+                        help='keyword argument to be passed to the pipelines (can be repeated)')
     upload.add_argument(mm(KIT), m(K), action='append', default=[], metavar='ITEM',
                         help='kit items associated with activities')
     upload.add_argument(mm(no(PROCESS)), action='store_false', dest=PROCESS,

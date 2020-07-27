@@ -170,7 +170,8 @@ your FF-model parameters (fitness and fatigue).
         # but part of a kargs JSON blob.
         # also, add year first so that monthly doesn't get confused by extra stats range
         x = add_read_and_calculate(s, SummaryCalculator,
-                                   blocked_by=[ActivityCalculator, RestHRCalculator],
+                                   # relying on ActivityCalculator dependencies
+                                   blocked_by=[ActivityCalculator, RestHRCalculator, StepsCalculator],
                                    schedule=Schedule.normalize('x'))
         y = add_read_and_calculate(s, SummaryCalculator, blocked_by=[x],
                                    schedule=Schedule.normalize('y'))

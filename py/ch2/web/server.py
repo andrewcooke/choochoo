@@ -8,20 +8,20 @@ from werkzeug.wrappers.json import JSONMixin
 
 from .json import JsonResponse
 from .servlets.analysis import Analysis
-from .servlets.thumbnail import Thumbnail
 from .servlets.configure import Configure
 from .servlets.diary import Diary
 from .servlets.jupyter import Jupyter
 from .servlets.kit import Kit
 from .servlets.search import Search
+from .servlets.thumbnail import Thumbnail
 from .servlets.upload import Upload
 from .static import Static
-from ..commands.args import LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, READ, JUPYTER, WARN, SECURE, THUMBNAIL_DIR, \
-    NOTEBOOK_DIR
-from ..common.names import BASE
+from ..commands.args import LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, JUPYTER, WARN, SECURE, THUMBNAIL_DIR, \
+    NOTEBOOK_DIR, UPLOAD
 from ..common.args import mm
-from ..jupyter.server import JupyterController
 from ..common.log import log_current_exception
+from ..common.names import BASE
+from ..jupyter.server import JupyterController
 from ..lib.server import BaseController
 from ..sql import SystemConstant
 
@@ -185,7 +185,7 @@ class WebServer:
 
     def get_busy(self):
         # default for when database missing
-        percent = self.__config.get_percent(READ, default=100)
+        percent = self.__config.get_percent(UPLOAD, default=100)
         if percent is None: percent = 100
         # the client uses the complete message when the problem has passed
         return {MESSAGE: 'Loading data and recalculating statistics.',

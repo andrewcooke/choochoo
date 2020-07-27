@@ -32,10 +32,9 @@ class SummaryCalculator(LoaderMixin, IntervalCalculatorMixin, ProcessCalculator)
     def __init__(self, *args, grouped=True, **kargs):
         super().__init__(*args, grouped=grouped, **kargs)
 
-    def startup(self):
-        with self._config.db.session_context() as s:
-            Interval.clean(s)
-        super().startup()
+    def _startup(self, s):
+        Interval.clean(s)
+        super()._startup(s)
 
     def _read_data(self, s, interval):
         # here, data is only statistics names, because calculation also involves loading data

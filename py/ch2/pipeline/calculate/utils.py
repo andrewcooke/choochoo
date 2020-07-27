@@ -41,11 +41,14 @@ class JournalCalculatorMixin:
     def _delete(self, s):
         # delete statistics created by this calculator
         statistic_names = s.query(StatisticName.id).filter(StatisticName.owner == self.owner_out)
-        statistic_journals = self._delimit_delete(s.query(StatisticJournal).
+        statistic_journals = self._delimit_delete(s.query(StatisticJournal.id).
                                                   filter(StatisticJournal.statistic_name_id.in_(statistic_names)))
         for repeat in range(2):
             if repeat:
-                statistic_journals.delete(synchronize_session=False)
+                # usual avoidance of qlalchemy constraints
+                s.query(StatisticJournal). \
+                    filter(StatisticJournal.id.in_(statistic_journals)). \
+                    delete(synchronize_session=False)
                 Timestamp.clear(s, self.owner_out, constraint=None)
             else:
                 n = statistic_journals.count()

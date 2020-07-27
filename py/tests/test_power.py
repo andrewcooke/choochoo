@@ -3,7 +3,7 @@ from tempfile import TemporaryDirectory
 
 import pandas as pd
 
-from ch2.commands.args import DEV, V, bootstrap_db, BASE
+from ch2.commands.args import DEV, V, bootstrap_db, BASE, UPLOAD
 from ch2.commands.upload import upload
 from ch2.common.args import mm, m
 from ch2.config.profiles.default import default
@@ -23,7 +23,7 @@ class TestPower(LogTestCase):
 
             bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
 
-            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), UPLOAD,
                                        'data/test/source/personal/2018-03-04-qdp.fit')
             upload(config)
 

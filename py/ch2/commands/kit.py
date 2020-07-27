@@ -1,13 +1,13 @@
 from logging import getLogger
 from sys import stdout
 
-from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, CALCULATE, NAME, SHOW, CSV, \
+from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, NAME, SHOW, CSV, \
     START, CHANGE, FINISH, DELETE, UNDO, ALL, REBUILD, DUMP, KIT, CMD, VALUE, STATISTICS
 from ..common.args import mm
+from ..common.date import format_minutes
 from ..diary.model import TYPE, UNITS
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_km, \
     is_local_time
-from ..common.date import format_minutes
 from ..lib.tree import to_tree, to_csv
 from ..names import Units, Names
 from ..pipeline.calculate.kit import KitCalculator
@@ -250,8 +250,8 @@ def to_stats(model):
 def to_stats_csv(model):
     if TYPE in model:
         label = f'{q(model[TYPE])},{q(model[NAME])}'
-        if CALCULATE in model:
-            return label, model[CALCULATE]
+        if STATISTICS in model:
+            return label, model[STATISTICS]
         else:
             return label, None
     elif VALUE not in model:

@@ -200,20 +200,23 @@ class Interval(Source):
         '''
         Previous approach was way too complicated and not thread-safe.  Instead, just enumerate intervals and test.
         '''
-        stats_start_time, stats_finish_time = cls._raw_statistics_time_range(s, exclude_owners=exclude_owners)
-        start = time_to_local_date(stats_start_time)
-        finish = time_to_local_date(stats_finish_time)
-        log.debug('Statistics (in general) exist %s - %s' % (start, finish))
-        start = schedule.start_of_frame(start)
-        finish = schedule.next_frame(finish)
-        while start < finish:
-            existing = s.query(Interval). \
-                filter(Interval.start == start,
-                       Interval.schedule == schedule,
-                       Interval.owner == interval_owner).count()
-            if existing != expected:
-                yield start
-            start = schedule.next_frame(start)
+        try:
+            stats_start_time, stats_finish_time = cls._raw_statistics_time_range(s, exclude_owners=exclude_owners)
+            start = time_to_local_date(stats_start_time)
+            finish = time_to_local_date(stats_finish_time)
+            log.debug('Statistics (in general) exist %s - %s' % (start, finish))
+            start = schedule.start_of_frame(start)
+            finish = schedule.next_frame(finish)
+            while start < finish:
+                existing = s.query(Interval). \
+                    filter(Interval.start == start,
+                           Interval.schedule == schedule,
+                           Interval.owner == interval_owner).count()
+                if existing != expected:
+                    yield start
+                start = schedule.next_frame(start)
+        except NoStatistics:
+            log.warning('No data available')
 
     @classmethod
     def dirty_all(cls, s):

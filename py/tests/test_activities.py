@@ -41,11 +41,12 @@ class TestActivities(LogTestCase):
             self.assertEqual(2099, n_fix)
             # WHY does this jump around?
             n = s.query(count(StatisticJournal.id)).scalar()
-            # self.assertEqual(50403, n)
+            self.assertEqual(90661, n)
             self.assertTrue(n > 30000)
             self.assertTrue(n < 100000)
             journal = s.query(ActivityJournal).one()
             self.assertNotEqual(journal.start, journal.finish)
+            print(n)
 
     def test_segment_bug(self):
         user = random_test_user()
@@ -70,12 +71,9 @@ class TestActivities(LogTestCase):
         with TemporaryDirectory() as f:
             bootstrap_db(user, mm(BASE), f, m(V), '5')
             bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
-            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'upload',
                                           'data/test/source/private/florian.fit')
-            read(config)
-            # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(config, PipelineType.PROCESS, n_cpu=1)
-            # run('sqlite3 %s ".dump"' % f.name, shell=True)
+            upload(config)
             with config.db.session_context() as s:
                 self.__assert_basic_stats(s)
 
@@ -84,12 +82,9 @@ class TestActivities(LogTestCase):
         with TemporaryDirectory() as f:
             bootstrap_db(user, mm(BASE), f, m(V), '5')
             bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
-            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'upload',
                                       'data/test/source/other/2019-05-09-051352-Running-iWatchSeries3.fit')
-            read(config)
-            # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(config, PipelineType.PROCESS, n_cpu=1)
-            # run('sqlite3 %s ".dump"' % f.name, shell=True)
+            upload(config)
             with config.db.session_context() as s:
                 self.__assert_basic_stats(s)
 
@@ -98,12 +93,9 @@ class TestActivities(LogTestCase):
         with TemporaryDirectory() as f:
             bootstrap_db(user, mm(BASE), f, m(V), '5')
             bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
-            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'upload',
                                       'data/test/source/personal/2016-07-19-mpu-s-z2.fit')
-            read(config)
-            # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(config, PipelineType.PROCESS, n_cpu=1)
-            # run('sqlite3 %s ".dump"' % f.name, shell=True)
+            upload(config)
             with config.db.session_context() as s:
                 for stat in s.query(StatisticJournal). \
                         join(StatisticName). \
@@ -116,11 +108,8 @@ class TestActivities(LogTestCase):
             with TemporaryDirectory() as f:
                 bootstrap_db(user, mm(BASE), f, m(V), '5')
                 bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
-                config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'read',
+                config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'upload',
                                                f'data/test/source/other/{src}')
-                read(config)
-                # run('sqlite3 %s ".dump"' % f.name, shell=True)
-                run_pipeline(config, PipelineType.PROCESS, n_cpu=1)
-                # run('sqlite3 %s ".dump"' % f.name, shell=True)
+                upload(config)
                 with config.db.session_context() as s:
                     self.__assert_basic_stats(s)

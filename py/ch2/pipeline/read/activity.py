@@ -43,10 +43,9 @@ class ActivityReader(ProcessFitReader):
         self.__ajournal = None  # save for coverage
         super().__init__(*args, sub_dir=ACTIVITY, **kargs)
 
-    def startup(self):
-        with self._config.db.session_context(expire_on_commit=False) as s:
-            self.__oracle = bilinear_elevation_from_constant(s)
-        super().startup()
+    def _startup(self, s):
+        self.__oracle = bilinear_elevation_from_constant(s)
+        super()._startup(s)
 
     def _build_define(self, path):
         define = dict(self.define)

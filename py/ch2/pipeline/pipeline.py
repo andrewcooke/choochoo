@@ -91,9 +91,19 @@ class ProcessPipeline(BasePipeline):
         super().__init__(**kargs)
 
     def startup(self):
+        with self._config.db.session_context(expire_on_commit=False) as s:
+            log.debug(f'Starting up {self}')
+            self._startup(s)
+
+    def _startup(self, s):
         pass
 
     def shutdown(self):
+        with self._config.db.session_context() as s:
+            log.debug(f'Shutting down {self}')
+            self._shutdown(s)
+
+    def _shutdown(self, s):
         pass
 
     def delete(self):
@@ -125,7 +135,7 @@ class ProcessPipeline(BasePipeline):
         if self.worker:
             missing = self.__args
         else:
-            missing = self.missing()  # will call delete if forced
+            missing = [missed.strip('"') for missed in self.missing()]  # will call delete if forced
         local_progress = ProgressTree(len(missing), parent=self._progress)
         try:
             for missed in missing:

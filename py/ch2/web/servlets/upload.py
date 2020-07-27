@@ -2,11 +2,11 @@ from logging import getLogger
 
 import psutil as ps
 
-from ...commands.args import WEB, READ, LOG, VERBOSITY, FORCE, DEV, URI
-from ...common.args import mm
-from ...common.names import BASE
+from ...commands.args import WEB, LOG, VERBOSITY, FORCE, DEV, URI, UPLOAD
 from ...commands.upload import STREAM, NAME, upload_files
+from ...common.args import mm
 from ...common.global_ import global_dev
+from ...common.names import BASE
 from ...lib.log import Record
 from ...lib.utils import parse_bool
 from ...lib.workers import command_root
@@ -27,12 +27,12 @@ class Upload:
         # first, immediate saving of files while web browser waiting for response
         upload_files(Record(log), self.__config, files=files, nfiles=len(files), items=items)
         # second, start rest of ingest process in background
-        cmd = f'{command_root()} {mm(VERBOSITY)} 0 {mm(BASE)} {self.__config.args[BASE]} {mm(LOG)} {WEB}-{READ}.log ' \
+        cmd = f'{command_root()} {mm(VERBOSITY)} 0 {mm(BASE)} {self.__config.args[BASE]} {mm(LOG)} {WEB}-{UPLOAD}.log ' \
               f'{mm(URI)} {self.__config.args._format(URI)}'
         if global_dev(): cmd += f' {mm(DEV)}'
-        cmd += f' {READ}'
+        cmd += f' {UPLOAD}'
         if force: cmd += f' {mm(FORCE)}'
         log.info(f'Starting {cmd}')
         ps.Popen(args=cmd, shell=True)
         # wait so that the progress has time to kick in
-        self.__config.wait_for_progress(READ)
+        self.__config.wait_for_progress(UPLOAD)

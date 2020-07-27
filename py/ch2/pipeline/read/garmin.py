@@ -25,14 +25,10 @@ class GarminReader(ProcessPipeline):
         self.__password = None
         super().__init__(*args, **kargs)
 
-    def startup(self):
-        with self._config.db.session_context(expire_on_commit=False) as s:
-            self.__user = Constant.get_single(s, GARMIN_USER, none=True)
-            self.__password = Constant.get_single(s, GARMIN_PASSWORD, none=True)
-        super().startup()
-
-    def delete(self):
-        pass
+    def _startup(self, s):
+        self.__user = Constant.get_single(s, GARMIN_USER, none=True)
+        self.__password = Constant.get_single(s, GARMIN_PASSWORD, none=True)
+        super()._startup(s)
 
     def _missing(self, s):
         last = self._config.get_constant(SystemConstant.LAST_GARMIN, none=True)

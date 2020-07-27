@@ -19,11 +19,13 @@ log = getLogger(__name__)
 class AchievementCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, ProcessCalculator):
 
     def _delete(self, s):
-        log.debug(f'Deleting {s.query(Achievement).count()} achievements')
+        q = s.query(Achievement)
+        log.debug(f'Deleting {q.count()} achievements')
         q.delete(synchronize_session=False)
         Timestamp.clear(s, owner=self.owner_out)
 
     def _startup(self, s):
+        super()._startup(s)
         table = []
         self._append_like(table, s, 'fastest', 15, N.MIN_KM_TIME_ANY, self.owner_in)
         self._append_like(table, s, 'longest', 10, N.ACTIVE_DISTANCE, self.owner_in)

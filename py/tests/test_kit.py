@@ -1,7 +1,7 @@
 from io import StringIO
 from tempfile import TemporaryDirectory
 
-from ch2.commands.args import V, DEV, K, READ, bootstrap_db, BASE
+from ch2.commands.args import V, DEV, K, bootstrap_db, BASE, UPLOAD
 from ch2.commands.kit import start, change, finish, show, undo, statistics
 from ch2.commands.upload import upload
 from ch2.common.args import mm, m
@@ -189,11 +189,11 @@ class TestKit(LogTestCase):
             change(s, 'bowman', 'chain', 'sram', None, False, True)
 
         with TemporaryDirectory() as f:
-            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), READ,
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), UPLOAD,
                                        'data/test/source/personal/2018-08-03-rec.fit',
                                        m(K), 'cotic')
             upload(config)
-            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), READ,
+            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), UPLOAD,
                                        'data/test/source/personal/2018-08-27-rec.fit',
                                        m(K), 'cotic')
             upload(config)

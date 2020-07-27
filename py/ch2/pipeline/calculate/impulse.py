@@ -28,6 +28,7 @@ class ImpulseCalculator(LoaderMixin, OwnerInMixin,
         super().__init__(*args, **kargs)
 
     def _startup(self, s):
+        super()._startup(s)
         self.impulse_constant = Constant.from_name(s, self.impulse_constant_ref)
         self.impulse = HRImpulse(**loads(self.impulse_constant.at(s).value))
         log.debug('%s: %s' % (self.impulse_constant, self.impulse))

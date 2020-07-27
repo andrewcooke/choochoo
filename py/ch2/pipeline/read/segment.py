@@ -32,12 +32,10 @@ class SegmentReader(LoaderMixin, ActivityReader):
         self.match_bound = match_bound
         super().__init__(*args, **kargs)
 
-    def startup(self):
-        with self._config.db.session_context() as s:
-            SegmentJournal.clean(s)
-        super().startup()
-        with self._config.db.session_context(expire_on_commit=False) as s:
-            self.__segments = self._read_segments(s)
+    def _startup(self, s):
+        super()._startup(s)
+        SegmentJournal.clean(s)
+        self.__segments = self._read_segments(s)
 
     def shutdown(self):
         with self._config.db.session_context() as s:

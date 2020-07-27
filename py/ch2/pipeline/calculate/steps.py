@@ -68,8 +68,9 @@ class StepsCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
             composite_ids = composite_ids.filter(StatisticJournal.time <= finish)
         log.debug(f'Delete query: {composite_ids}')
         q = s.query(Source).filter(Source.id.in_(composite_ids))
-        if q.count():
-            log.warning(f'Deleting {n} Composite sources ({start} - {finish})')
+        count = q.count()
+        if count:
+            log.warning(f'Deleting {count} Composite sources ({start} - {finish})')
             q.delete(synchronize_session=False)
             s.commit()
 

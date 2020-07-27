@@ -132,7 +132,7 @@ def add_read_and_calculate(s, cls, blocked_by=None, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
-    log.debug(f'Adding read / calculate pipeline {short_cls(cls)}')
+    log.debug(f'Adding process pipeline {short_cls(cls)}')
     return add_pipeline(s, cls, PipelineType.PROCESS, blocked_by=blocked_by, **kargs)
 
 
