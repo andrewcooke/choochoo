@@ -74,7 +74,7 @@ class Pipeline(Base):
 
     @classmethod
     def all_instances(cls, s, type, like=tuple(), id=None):
-        for pipeline in cls.all(s, type, like=like, id=id):
+        for pipeline in sort_pipelines(cls.all(s, type, like=like, id=id)):
             log.debug(f'Building {pipeline.cls} ({pipeline.kargs})')
             yield pipeline.cls(**pipeline.kargs)
 
@@ -85,3 +85,18 @@ class Pipeline(Base):
 
     def __str__(self):
         return short_cls(self.cls)
+
+
+def sort_pipelines(pipelines):
+    '''
+    not only does this order pipelines so that, if run in order, none is blocked.  it also expands the
+    graph so that when the session is disconnected we have all the data we need.
+    '''
+    included, processed, remaining = set(pipelines), set(), set(pipelines)
+    log.debug(f'Sorting {", ".join(str(pipeline) for pipeline in included)}')
+    while remaining:
+        for pipeline in remaining:
+            if all(blocker not in included or blocker in processed for blocker in pipeline.blocked_by):
+                yield pipeline
+                processed.add(pipeline)
+        remaining = remaining.difference(processed)

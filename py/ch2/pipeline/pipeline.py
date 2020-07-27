@@ -117,7 +117,8 @@ class ProcessPipeline(BasePipeline):
     def missing(self):
         '''
         A missing value identities what is to be processed by a worker.  It is typically a file path or
-        the start time (local) of an activity.  It is always a string.
+        the start time (local) of an activity.  It is always a string.  It should be quoted if it contains spaces
+        or otherwise needs special hanlding by the shell.
         '''
         if self.force:
             self.delete()

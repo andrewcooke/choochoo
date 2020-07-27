@@ -6,7 +6,7 @@ from sqlalchemy import exists
 from ...commands.args import DB_VERSION
 from ...commands.db import add_profile, remove_schema
 from ...commands.import_ import import_source
-from ...common.md import HTML, parse, P, LI, PRE
+from ...common.md import HTML, parse, P, LI, PRE, filter_
 from ...common.names import BASE
 from ...config.profile import get_profiles
 from ...import_ import available_versions
@@ -47,7 +47,7 @@ class Configure:
 
     def __init__(self, config):
         self.__config = config
-        self.__html = HTML(delta=1, parser=filter(parse, yes=(P, LI, PRE)))
+        self.__html = HTML(delta=1, parser=filter_(parse, yes=(P, LI, PRE)))
 
     def is_configured(self):
         return not bool(self.__config.db.no_data())

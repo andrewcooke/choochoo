@@ -10,6 +10,7 @@ from ..commands.args import LOG, LOG_DIR
 from ..common.date import now, format_seconds, time_to_local_time
 from ..lib.workers import ProgressTree
 from ..sql import PipelineType, Interval, Pipeline
+from ..sql.tables.pipeline import sort_pipelines
 
 log = getLogger(__name__)
 
@@ -254,7 +255,8 @@ class DependencyQueue:
 
     def log(self):
         log.info(f'Started {time_to_local_time(self.__start)}; '
-                 f'duration {format_seconds((now() - self.__start).total_seconds())}')
+                 f'duration {format_seconds((now() - self.__start).total_seconds())}; '
+                 f'{len(self.__blocked)} blocked')
         for pipeline in self.__stats:
             log.info(str(self.__stats[pipeline]))
 
@@ -340,21 +342,6 @@ class Stats:
 
 def log_name(pipeline, log_index):
     return f'{pipeline}.{log_index}.{LOG}'
-
-
-def sort_pipelines(pipelines):
-    '''
-    not only does this order pipelines so that, if run in order, none is blocked.  it also expands the
-    graph so that when the session is disconnected we have all the data we need.
-    '''
-    included, processed, remaining = set(pipelines), set(), set(pipelines)
-    log.debug(f'Sorting {", ".join(str(pipeline) for pipeline in included)}')
-    while remaining:
-        for pipeline in remaining:
-            if all(blocker not in included or blocker in processed for blocker in pipeline.blocked_by):
-                yield pipeline
-                processed.add(pipeline)
-        remaining = remaining.difference(processed)
 
 
 def fmt_cmd(cmd, max=400):

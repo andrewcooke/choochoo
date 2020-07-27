@@ -6,6 +6,7 @@ from ..lib import to_date
 from ..common.date import YMD
 from ..pipeline.calculate.summary import SummaryCalculator
 from ..pipeline.display.utils import Displayer
+from ..sql.tables.pipeline import sort_pipelines
 from ..sql import StatisticJournal, Pipeline, PipelineType, StatisticName
 
 log = getLogger(__name__)
@@ -35,7 +36,7 @@ def read_pipeline(session, date, schedule=None):
     schedule only sent for summary views.
     '''
     date = to_date(date)   # why is this needed?
-    for pipeline in Pipeline.all(session, PipelineType.DISPLAY):
+    for pipeline in sort_pipelines(Pipeline.all(session, PipelineType.DISPLAY)):
         log.info(f'Building {pipeline.cls} ({pipeline.kargs})')
         instance = pipeline.cls(**pipeline.kargs)
         if isinstance(instance, Displayer):  # why is this needed?

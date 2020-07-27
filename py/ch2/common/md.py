@@ -46,7 +46,7 @@ def parse(text):
         yield P, paragraph
 
 
-def filter(parser, yes=None, no=None):
+def filter_(parser, yes=None, no=None):
 
     def filtered(text):
         for tag, value in parser(text):

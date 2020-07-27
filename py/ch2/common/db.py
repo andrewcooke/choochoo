@@ -121,6 +121,7 @@ def add(cnxn, part, name, stmt, extended=False, **kargs):
 
 def add_user(config):
     add(get_postgres_cnxn(config), 'user', config.args[USER],
+        # note that :xxx invokes sqlalchemy's substitution of parameters in text()
         'create role {name} with login password :passwd',
         passwd=config.args[PASSWD])
 
