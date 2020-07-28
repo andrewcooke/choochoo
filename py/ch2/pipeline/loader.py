@@ -4,6 +4,7 @@ from logging import getLogger
 from math import isnan
 
 from ..common.date import min_time, max_time
+from ..names import simple_name
 from ..sql import StatisticName, Interval, Source
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
 
@@ -52,9 +53,35 @@ class Loader(ABC):
     def add(self, name, units, summary, source, value, time, cls, description=None, title=None):
         # note that name is used as title if title is None, and name is reduced to a simple name.
         # so legacy code works correctly
+        title = title or name
+        name = simple_name(name)
+        if name not in self.__statistic_name_cache:
+            if not description: log.warning(f'No description for {name} ({self._owner})')
+            self.__statistic_name_cache[name] = \
+                StatisticName.add_if_missing(self._s, name, STATISTIC_JOURNAL_TYPES[cls],
+                                             units, summary, self._owner,
+                                             description=description, title=title)
+        statistic_name = self.__statistic_name_cache[name]
+        journal_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
+        if cls != journal_class:
+            raise Exception(f'Inconsistent class for {name}: {cls}/{journal_class}')
+
+        self.__add_internal(statistic_name, source, value, time)
+
+    def add_data_only(self, name, source, value, time):
+        if name in self.__statistic_name_cache:
+            statistic_name = self.__statistic_name_cache[name]
+        else:
+            statistic_name = StatisticName.from_name(self._s, name, self._owner)
+            self.__statistic_name_cache[name] = statistic_name
+        self.__add_internal(statistic_name, source, value, time)
+
+    def __add_internal(self, statistic_name, source, value, time):
 
         if value is None or isnan(value):
-            raise Exception(f'Bad value for {name}: {value}')
+            raise Exception(f'Bad value for {statistic_name.name}: {value}')
+
+        journal_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
 
         if self.__add_serial:
             if self.__last_time is None:
@@ -65,17 +92,6 @@ class Loader(ABC):
             elif time < self.__last_time:
                 raise Exception('Time travel - timestamp for statistic decreased')
 
-        self._start = min_time(self._start, time)
-        self._finish = max_time(self._finish, time)
-
-        if name not in self.__statistic_name_cache:
-            if not description: log.warning(f'No description for {name} ({self._owner})')
-            self.__statistic_name_cache[name] = \
-                StatisticName.add_if_missing(self._s, name, STATISTIC_JOURNAL_TYPES[cls],
-                                             units, summary, self._owner,
-                                             description=description, title=title)
-        statistic_name = self.__statistic_name_cache[name]
-
         if isinstance(source, Source):
             if source.id not in self.__source_cache:
                 self.__source_cache[source.id] = source
@@ -84,26 +100,27 @@ class Loader(ABC):
                 self.__source_cache[source] = Source.from_id(self._s, source)
             source = self.__source_cache[source]
 
-        journal_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
-        if cls != journal_class:
-            raise Exception(f'Inconsistent class for {name}: {cls}/{journal_class}')
+        self._start = min_time(self._start, time)
+        self._finish = max_time(self._finish, time)
+
         # set statistic_name and source (as well as ids) so that we can correctly test in
         # Source for dirty intervals
         instance = journal_class(statistic_name=statistic_name, statistic_name_id=statistic_name.id,
                                  source=source, source_id=source.id, value=value, time=time, serial=self.__serial)
 
-        if instance.time in self.__by_name_then_time[name]:
-            previous = self.__by_name_then_time[name][instance.time]
+        if instance.time in self.__by_name_then_time[statistic_name.name]:
+            previous = self.__by_name_then_time[statistic_name.name][instance.time]
             if instance.value == previous.value:
-                log.warning(f'Discarding duplicate for {name} at {instance.time} (value {instance.value})')
+                log.warning(f'Discarding duplicate for {statistic_name.name} at {instance.time} '
+                            f'(value {instance.value})')
             else:
-                self._resolve_duplicate(name, instance, previous)
+                self._resolve_duplicate(statistic_name.name, instance, previous)
             return
         else:
-            self.__by_name_then_time[name][instance.time] = instance
+            self.__by_name_then_time[statistic_name.name][instance.time] = instance
 
         self._staging[journal_class].append(instance)
-        self.__counts[name] += 1
+        self.__counts[statistic_name.name] += 1
 
     def _resolve_duplicate(self, name, instance, prev):
         raise Exception(f'Conflict at ({instance.time}) for {name} '

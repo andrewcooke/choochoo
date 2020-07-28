@@ -86,6 +86,7 @@ def auto_fit(observed, modeled, initial_data, initial_params, evaluate, *vary,
 
 
 def interpolate_to_index(df, extra, *names):
+    log.debug(f'Index with df {df.columns}; extra {extra.columns}; names {names}')
     df['keep'] = True
     both = df.join(extra.loc[:, names], how='outer', sort=True)
     both.loc[both['keep'] != True, ['keep']] = False

@@ -2,6 +2,7 @@
 from logging import getLogger
 
 from .database import add_enum_constant, add_read_and_calculate
+from ..names import simple_name
 from ..pipeline.calculate import ElevationCalculator
 from ..pipeline.calculate.power import PowerModel, PowerCalculator, BikeModel
 
@@ -50,7 +51,7 @@ the weight from a diary entry.
 ''')
     for activity_group in activity_groups:
         add_read_and_calculate(s, PowerCalculator, blocked_by=[ElevationCalculator],
-                               power_model=power_model.name, activity_group=activity_group)
+                               power_model=power_model.name, activity_group=simple_name(activity_group))
 
 
 def add_kit_power_model(s, kit, activity_group, cda, crr, bike_weight):

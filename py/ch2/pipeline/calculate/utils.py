@@ -6,10 +6,11 @@ from sqlalchemy.sql.functions import count
 
 from ..pipeline import ProcessPipeline
 from ...common.date import time_to_local_timeq, format_dateq
-from ...common.log import log_current_exception
+from ...common.log import log_current_exception, log_query
 from ...lib import local_time_to_time, to_date
 from ...lib.schedule import Schedule
-from ...sql import Timestamp, StatisticName, StatisticJournal, ActivityJournal, ActivityGroup, SegmentJournal, Interval
+from ...sql import Timestamp, StatisticName, StatisticJournal, ActivityJournal, ActivityGroup, SegmentJournal, Interval, \
+    Source
 from ...sql.types import short_cls
 from ...sql.utils import add
 
@@ -29,35 +30,50 @@ class JournalCalculatorMixin:
     _journal_type = None
 
     def _missing(self, s):
-        existing_ids = s.query(Timestamp.source_id).filter(Timestamp.owner == self.owner_out)
-        q = s.query(self._journal_type.start). \
-            filter(not_(self._journal_type.id.in_(existing_ids))). \
-            order_by(self._journal_type.start)
-        return [time_to_local_timeq(row[0]) for row in self._delimit_missing(q)]
+        source_ids = self._delimit_timestamp(
+            s.query(Timestamp.source_id).filter(Timestamp.owner == self.owner_out))
+        q = self._delimit_missing(
+            s.query(self._journal_type.start).
+                filter(not_(self._journal_type.id.in_(source_ids))).
+                order_by(self._journal_type.start))
+        return [time_to_local_timeq(row[0]) for row in q]
 
     def _delimit_missing(self, q):
         return q
 
     def _delete(self, s):
-        # delete statistics created by this calculator
-        statistic_names = s.query(StatisticName.id).filter(StatisticName.owner == self.owner_out)
-        statistic_journals = self._delimit_delete(s.query(StatisticJournal.id).
-                                                  filter(StatisticJournal.statistic_name_id.in_(statistic_names)))
+        timestamps = self._delimit_timestamp(
+            s.query(Timestamp).filter(Timestamp.owner == self.owner_out))
+        source_ids = self._delimit_timestamp(
+            s.query(Timestamp.source_id).filter(Timestamp.owner == self.owner_out))
+        statistic_journal_ids = self._delimit_delete(
+            s.query(StatisticJournal.id).
+                join(StatisticName).
+                filter(StatisticName.owner == self.owner_out,
+                       StatisticJournal.source_id.in_(source_ids)))
         for repeat in range(2):
             if repeat:
-                # usual avoidance of qlalchemy constraints
+                # usual avoidance of sqlalchemy constraints
                 s.query(StatisticJournal). \
-                    filter(StatisticJournal.id.in_(statistic_journals)). \
+                    filter(StatisticJournal.id.in_(statistic_journal_ids)). \
                     delete(synchronize_session=False)
-                Timestamp.clear(s, self.owner_out, constraint=None)
+                timestamps.delete()
             else:
-                n = statistic_journals.count()
+                n = statistic_journal_ids.count()
                 if n:
                     log.warning(f'Deleting {n} statistics for {short_cls(self.owner_out)}')
                 else:
                     log.warning(f'No statistics to delete for {short_cls(self.owner_out)}')
+                n = timestamps.count()
+                if n:
+                    log.warning(f'Deleting {n} timestamps for {short_cls(self.owner_out)}')
+                else:
+                    log.warning(f'No timestamps to delete for {short_cls(self.owner_out)}')
 
     def _delimit_delete(self, q):
+        return q
+
+    def _delimit_timestamp(self, q):
         return q
 
     def _get_source(self, s, time):
@@ -76,10 +92,15 @@ class ActivityGroupCalculatorMixin(ActivityJournalCalculatorMixin):
         self.activity_group = activity_group
 
     def _delimit_missing(self, q):
-        return q.join(ActivityGroup).filter(ActivityGroup.name == self.activity_group)
+        return log_query(q.join(ActivityGroup).filter(ActivityGroup.name == self.activity_group),
+                         'Missing:')
 
     def _delimit_delete(self, q):
-        return q.join(ActivityJournal).join(ActivityGroup).filter(ActivityGroup.name == self.activity_group)
+        return log_query(q.join(Source).join(ActivityGroup).filter(ActivityGroup.name == self.activity_group),
+                         'Delete:')
+
+    def _delimit_timestamp(self, q):
+        return q.filter(Timestamp.constraint == self.activity_group)
 
 
 class SegmentJournalCalculatorMixin(JournalCalculatorMixin):
@@ -89,15 +110,16 @@ class SegmentJournalCalculatorMixin(JournalCalculatorMixin):
 
 class DataFrameCalculatorMixin:
 
-    def __init__(self, *args, add_serial=True, **kargs):
+    def __init__(self, *args, add_serial=True, timestamp_constraint=None, **kargs):
         self.__add_serial = add_serial
+        self.__timestamp_constraint = timestamp_constraint
         super().__init__(*args, **kargs)
 
     def _run_one(self, missed):
         with self._config.db.session_context() as s:
             log.debug(f'Calculating for {missed}')
             source = self._get_source(s, local_time_to_time(missed))
-            with Timestamp(owner=self.owner_out, source=source).on_success(s):
+            with Timestamp(owner=self.owner_out, source=source, constraint=self.__timestamp_constraint).on_success(s):
                 try:
                     # data may be structured (doesn't have to be simply a dataframe)
                     data = self._read_dataframe(s, source)

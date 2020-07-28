@@ -54,14 +54,14 @@ def add(s, instance):
     return instance
 
 
-def add_activity_group(s, name, sort, description=None):
+def add_activity_group(s, title, sort, description=None):
     '''
     Add an activity type to the configuration.
 
     These are used to group activities (and related statistics).
     So typical entries might be for cycling, running, etc.
     '''
-    return add(s, ActivityGroup(name=name, sort=sort, description=description))
+    return add(s, ActivityGroup(name=title, sort=sort, description=description))
 
 
 def add_pipeline(s, cls, type, blocked_by=None, **kargs):

@@ -8,11 +8,11 @@ from .loader import Loader
 from ..commands.args import LOG, WORKER, DEV, PROCESS, FORCE, CPROFILE
 from ..common.args import mm
 from ..common.global_ import global_dev
-from ..common.names import BASE
+from ..common.names import BASE, UNDEF
 from ..common.names import VERBOSITY, URI
 from ..lib.utils import timing
 from ..lib.workers import ProgressTree, command_root
-from ..sql import Pipeline, Interval, PipelineType, StatisticJournal
+from ..sql import Pipeline, Interval, PipelineType, StatisticJournal, StatisticName
 from ..sql.types import short_cls
 
 log = getLogger(__name__)
@@ -165,6 +165,11 @@ class ProcessPipeline(BasePipeline):
 
     def __str__(self):
         return str(short_cls(self.__class__))
+
+    def _provides(self, s, name, type_, units, summary, description, owner=UNDEF, title=None):
+        if owner is UNDEF:
+            owner = self.owner_out
+        StatisticName.add_if_missing(s, name, type_, units, summary, owner, description=description, title=title)
 
 
 class LoaderMixin:

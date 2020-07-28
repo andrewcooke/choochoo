@@ -22,10 +22,16 @@ HRImpulse = namedtuple('HRImpulse', 'title, gamma, zero, one, max_secs')
 class ImpulseCalculator(LoaderMixin, OwnerInMixin,
                         ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator):
 
-    def __init__(self, *args, prefix=None, impulse_constant=None, **kargs):
+    def __init__(self, *args, prefix=None, impulse_constant=None, activity_group=None, **kargs):
         self.impulse_constant_ref = self._assert('impulse_constant', impulse_constant)
         self.prefix = self._assert('prefix', prefix)
-        super().__init__(*args, **kargs)
+        super().__init__(*args, timestamp_constraint=activity_group, activity_group=activity_group, **kargs)
+
+    def _missing(self, s):
+        m = super()._missing(s)
+        if m:
+            import pdb; pdb.set_trace()
+        return m
 
     def _startup(self, s):
         super()._startup(s)

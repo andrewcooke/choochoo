@@ -86,3 +86,9 @@ def log_current_exception(traceback=UNDEF, exception_level=DEBUG, traceback_leve
 
 def first_line(exception):
     return str(exception).splitlines()[0]
+
+
+def log_query(q, label=None):
+    if label: log.debug(label)
+    log.debug(q.statement.compile(compile_kwargs={"literal_binds": True}))
+    return q

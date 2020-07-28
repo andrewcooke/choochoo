@@ -8,14 +8,14 @@ import pandas as pd
 
 from .utils import ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator
 from ..pipeline import LoaderMixin
+from ...common.log import log_current_exception
 from ...data import present, linear_resample_time, Statistics
 from ...data.frame import median_dt
 from ...data.lib import interpolate_to_index
 from ...data.power import add_differentials, add_energy_budget, add_loss_estimate, add_power_estimate
-from ...common.log import log_current_exception
 from ...lib.data import reftuple, MissingReference
-from ...names import N, Units, Summaries, T, simple_name
-from ...sql import StatisticJournalFloat, Constant
+from ...names import N, Units, Summaries, T
+from ...sql import Constant, StatisticJournalType
 
 log = getLogger(__name__)
 
@@ -35,10 +35,21 @@ class PowerModel(reftuple('Power', 'bike_model, rider_weight')):
 
 class PowerCalculator(LoaderMixin, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator):
 
-    def __init__(self, *args, power_model=None, caloric_eff=0.25, **kargs):
+    def __init__(self, *args, power_model=None, caloric_eff=0.25, activity_group=None, **kargs):
         self.power_model_ref = power_model
         self.caloric_eff = caloric_eff
-        super().__init__(*args, **kargs)
+        super().__init__(*args, timestamp_constraint=activity_group, activity_group=activity_group, **kargs)
+
+    def _startup(self, s):
+        super()._startup(s)
+        self._provides(s, T.POWER_ESTIMATE, StatisticJournalType.FLOAT, Units.W, Summaries.AVG,
+                       'The estimated power.')
+        self._provides(s, T.HEADING, StatisticJournalType.FLOAT, Units.DEG, None,
+                       'The current heading.')
+        self._provides(s, T.ENERGY_ESTIMATE, StatisticJournalType.FLOAT, Units.J, Summaries.MAX,
+                       'The estimated total energy expended.')
+        self._provides(s, T.CALORIE_ESTIMATE, StatisticJournalType.FLOAT, Units.KCAL, Summaries.MAX,
+                       'The estimated calories burnt.')
 
     def _set_power(self, s, ajournal):
         power_model = PowerModel(**loads(Constant.from_name(s, self.power_model_ref).at(s).value))
@@ -71,27 +82,20 @@ class PowerCalculator(LoaderMixin, ActivityGroupCalculatorMixin, DataFrameCalcul
         ldf = add_power_estimate(ldf)
         return df, ldf
 
-    def _copy_results(self, s, ajournal, loader, dfs,
-                      fields=((T.POWER_ESTIMATE, Units.W, Summaries.AVG, 'The estimated power.'),
-                              (T.HEADING, Units.DEG, None, 'The current heading'))):
+    def _copy_results(self, s, ajournal, loader, dfs, fields=(N.POWER_ESTIMATE,)):
         df, ldf = dfs
         self.__add_total_energy(s, ajournal, loader, ldf)
-        df = interpolate_to_index(df, ldf, *(simple_name(field[0]) for field in fields))
+        df = interpolate_to_index(df, ldf, *fields)
         for time, row in df.iterrows():
-            for title, units, summary, description in fields:
-                name = simple_name(title)
+            for name in fields:
                 if name in row and not pd.isnull(row[name]):
-                    loader.add(name, units, summary, ajournal, row[name], time,
-                               StatisticJournalFloat, title=title, description=description)
+                    loader.add_data_only(name, ajournal, row[name], time)
 
     def __add_total_energy(self, s, ajournal, loader, ldf):
         if present(ldf, N.POWER_ESTIMATE):
             ldf['tmp'] = ldf[N.POWER_ESTIMATE]
             ldf.loc[ldf['tmp'].isna(), ['tmp']] = 0
             energy = np.trapz(y=ldf['tmp'], x=ldf.index.astype(np.int64) / 1e12)
-            loader.add(T.ENERGY_ESTIMATE, Units.KJ, Summaries.MAX, ajournal, energy, ajournal.start,
-                       StatisticJournalFloat, 'The estimated total energy expended.')
-            loader.add(T.CALORIE_ESTIMATE, Units.KCAL, Summaries.MAX, ajournal,
-                       energy * 0.239006 / self.caloric_eff, ajournal.start, StatisticJournalFloat,
-                       'The estimated calories burnt.')
+            loader.add_data_only(N.ENERGY_ESTIMATE, ajournal, energy, ajournal.start)
+            loader.add_data_only(N.CALORIE_ESTIMATE, ajournal, energy * 0.239006 / self.caloric_eff, ajournal.start)
             ldf.drop(columns=['tmp'], inplace=True)

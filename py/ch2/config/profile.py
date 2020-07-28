@@ -41,8 +41,6 @@ log = getLogger(__name__)
 
 NOTES = 'Notes'
 
-BROKEN = 'broken'
-
 BIKE = 'Bike'
 RUN = 'Run'
 SWIM = 'Swim'
@@ -88,10 +86,10 @@ class Profile:
         self._load_activity_group(s, SWIM, 'Swimming activities')
         self._load_activity_group(s, WALK, 'Walking activities')
 
-    def _load_activity_group(self, s, name, description):
-        log.debug(f'Loading activity group {name}')
-        self._activity_groups[name] = \
-            add_activity_group(s, name, len(self._activity_groups), description=description)
+    def _load_activity_group(self, s, title, description):
+        log.debug(f'Loading activity group {title}')
+        self._activity_groups[title] = \
+            add_activity_group(s, title, len(self._activity_groups), description=description)
 
     def _sport_to_activity(self):
         # sport_to_activity maps from the FIT sport field to the activity defined above.

@@ -6,7 +6,7 @@ from ...commands.args import DEFAULT
 from ...common.names import TIME_ZERO
 from ...diary.model import TYPE, EDIT
 from ...lib import to_time, time_to_local_date
-from ...names import Sports
+from ...names import Sports, simple_name
 from ...pipeline.calculate.power import PowerCalculator
 from ...pipeline.read.activity import ActivityReader
 from ...sql import StatisticJournalType, StatisticName, DiaryTopic, DiaryTopicJournal
@@ -69,14 +69,14 @@ class ACooke(Garmin):
 
         return {Sports.SPORT_CYCLING: {
                     ActivityReader.KIT: {
-                        'cotic': MTB,
-                        'bowman': ROAD,
+                        'cotic': simple_name(MTB),
+                        'bowman': simple_name(ROAD),
                     },
-                    DEFAULT: BIKE,
+                    DEFAULT: simple_name(BIKE),
                 },
-                Sports.SPORT_RUNNING: RUN,
-                Sports.SPORT_SWIMMING: SWIM,
-                Sports.SPORT_WALKING: WALK}
+                Sports.SPORT_RUNNING: simple_name(RUN),
+                Sports.SPORT_SWIMMING: simple_name(SWIM),
+                Sports.SPORT_WALKING: simple_name(WALK)}
 
     def _load_power_statistics(self, s, simple=False):
         # add power estimates for the two bikes
