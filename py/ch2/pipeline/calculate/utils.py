@@ -153,14 +153,16 @@ class DataFrameCalculatorMixin:
 
 class IntervalCalculatorMixin:
 
-    def __init__(self, *args, schedule='m', grouped=False, **kargs):
+    def __init__(self, *args, schedule='m', grouped=False, permanent=False, **kargs):
         self.schedule = Schedule(self._assert('schedule', schedule))
         self.grouped = grouped
+        self.permanent = permanent
         super().__init__(*args, **kargs)
 
     def _missing(self, s):
         from .summary import SummaryCalculator
         expected = s.query(ActivityGroup).count() + 1 if self.grouped else 1
+
         return [format_dateq(start)
                 for start in Interval.missing_starts(s, expected, self.schedule, self.owner_out,
                                                      exclude_owners=(SummaryCalculator,))]
@@ -200,7 +202,8 @@ class IntervalCalculatorMixin:
                                 f'{activity_group} / {self.schedule} at {missed}')
                 else:
                     interval = add(s, Interval(schedule=self.schedule, owner=self.owner_out,
-                                               start=start, activity_group=activity_group))
+                                               start=start, activity_group=activity_group,
+                                               permanent=self.permanent))
                     s.commit()
                     try:
                         data = self._read_data(s, interval)

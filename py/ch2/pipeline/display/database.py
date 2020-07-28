@@ -12,7 +12,7 @@ class DatabaseDisplayer(Displayer):
 
     @optional_text('Database')
     def _read_date(self, s, date):
-        q = s.query(Interval.id).filter(Interval.dirty == True)
+        q = s.query(Interval.id).filter(Interval.dirty == True, Interval.permanent == False)
         total = q.count()
         today = q.filter(Interval.start <= date, Interval.finish > date).count()
         if not total:

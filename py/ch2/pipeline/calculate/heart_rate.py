@@ -24,7 +24,7 @@ class RestHRCalculator(LoaderMixin, OwnerInMixin, IntervalCalculatorMixin, Proce
     '''
 
     def __init__(self, *args, schedule='d', **kargs):
-        super().__init__(*args, schedule=schedule, **kargs)
+        super().__init__(*args, schedule=schedule, permanent=True, **kargs)
 
     def _read_data(self, s, interval):
         return Statistics(s, start=local_date_to_time(interval.start),

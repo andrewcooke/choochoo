@@ -27,12 +27,6 @@ class ImpulseCalculator(LoaderMixin, OwnerInMixin,
         self.prefix = self._assert('prefix', prefix)
         super().__init__(*args, timestamp_constraint=activity_group, activity_group=activity_group, **kargs)
 
-    def _missing(self, s):
-        m = super()._missing(s)
-        if m:
-            import pdb; pdb.set_trace()
-        return m
-
     def _startup(self, s):
         super()._startup(s)
         self.impulse_constant = Constant.from_name(s, self.impulse_constant_ref)

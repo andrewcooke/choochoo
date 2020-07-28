@@ -158,6 +158,7 @@ class Interval(Source):
     schedule = Column(OpenSched, nullable=False, index=True)
     owner = Column(ShortCls, nullable=False)
     dirty = Column(Boolean, default=False, nullable=False)
+    permanent = Column(Boolean, default=False, nullable=False)  # if true, do not clean when dirty
     # these are for the schedule - finish is redundant (start is not because of timezone issues)
     start = Column(Date, nullable=False, index=True)
     finish = Column(Date, nullable=False, index=True)
@@ -236,7 +237,7 @@ class Interval(Source):
 
     @classmethod
     def clean(cls, s):
-        q = s.query(Interval.id).filter(Interval.dirty == True)
+        q = s.query(Interval.id).filter(Interval.dirty == True, Interval.permanent == False)
         count = q.count()
         if count:
             log.debug(f'Cleaning {count} dirty intervals')
