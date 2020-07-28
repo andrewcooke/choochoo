@@ -3,7 +3,7 @@
 # a startup script that runs inside the docker build this allows users
 # to modify the behaviour via environment variables.
 
-#currently only a single value is supported:
+# currently only a single value is supported:
 
 # define CH2_DKR_DB_URI to set the database URI.  this will tell the
 # web server where to connect - you must still configure and start the
