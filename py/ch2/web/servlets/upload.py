@@ -22,7 +22,6 @@ class Upload:
     def __call__(self, request, s):
         files = [{NAME: file.filename, STREAM: file.stream} for file in request.files.getlist('files')]
         items = request.form.getlist('kit')
-        force = parse_bool(request.form.get('force'))
         # we do this in two stages
         # first, immediate saving of files while web browser waiting for response
         upload_files(Record(log), self.__config, files=files, nfiles=len(files), items=items)
@@ -31,7 +30,6 @@ class Upload:
               f'{mm(URI)} {self.__config.args._format(URI)}'
         if global_dev(): cmd += f' {mm(DEV)}'
         cmd += f' {UPLOAD}'
-        if force: cmd += f' {mm(FORCE)}'
         log.info(f'Starting {cmd}')
         ps.Popen(args=cmd, shell=True)
         # wait so that the progress has time to kick in

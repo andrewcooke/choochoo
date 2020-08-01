@@ -39,8 +39,7 @@ function Help(props) {
             </p>
             <p>You can also click UPLOAD without selecting any files.
                 This will process any new files that are found on disk
-                (if you added them manually to the data directory, for example)
-                or, if the checkbox is selected, will reprocess all data.</p>
+                (if you added them manually to the data directory, for example).</p>
         </Text>
     </Grid></ColumnCard>)
 }
@@ -56,10 +55,10 @@ function FileList(props) {
     } else {
         // don't understand why this is still generating the key warning
         return files.map((file, i) => (<>
-            <Grid item xs={11} className={classes.baseline} key={i}>
+            <Grid item xs={11} className={classes.baseline} key={2*i}>
                 <Text>{file.name}</Text>
             </Grid>
-            <Grid item xs={1} className={classes.baseline} key={i + 0.5}>
+            <Grid item xs={1} className={classes.baseline} key={2*i+1}>
                 <IconButton onClick={() => onClick(i)} className={classes.noPadding}>
                     <Clear/>
                 </IconButton>
@@ -75,7 +74,6 @@ function FileSelect(props) {
     const classes = useStyles();
     const [files, setFiles] = useState([]);
     const [kit, setKit] = useState([]);
-    const [force, setForce] = useState(false);
 
     function addFiles() {
         const input = document.getElementById('upload-input');
@@ -107,9 +105,7 @@ function FileSelect(props) {
         (calculating missing or stale statistics).
     </p></Text></Grid>) : null;
 
-    const warning = force ? 'Reprocessing all data will take a long time.' :
-        'The ingest process will take some time.';
-
+    const warning = 'The ingest process will take some time.';
     return (<ColumnCard>
         <Grid item xs={8}>
             <Autocomplete multiple options={items.map(item => item.name)} filterSelectedOptions
@@ -125,14 +121,9 @@ function FileSelect(props) {
         </Grid>
         <FileList files={files} onClick={deleteFile}/>
         {empty}
-        <Grid item xs={8}>
-            <FormControlLabel
-                control={<Checkbox checked={force} onChange={event => setForce(event.target.checked)}/>}
-                label='Reprocess all data'/>
-        </Grid>
         <ConfirmedWriteButton label='Upload' href='/api/upload' variant='contained'
                               setData={onSubmit} setError={setError}
-                              form={{'files': files, 'kit': kit, 'force': force}}>
+                              form={{'files': files, 'kit': kit}}>
             {warning}
         </ConfirmedWriteButton>
     </ColumnCard>);

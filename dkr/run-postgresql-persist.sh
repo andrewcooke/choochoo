@@ -2,14 +2,16 @@
 
 CMD=$0
 DEV=
+RESET=0
 PGCONF=postgres-default.conf
 
 help () {
     echo -e "\n  Run the postgres image (only)"
     echo -e "\n  Usage:"
-    echo -e "\n   $CMD [--dev] [--prof] [-h]"
-    echo -e "\n  --dev:       use dev-specific disks"
+    echo -e "\n   $CMD [--reset] [--prof] [--dev] [-h]"
+    echo -e "\n  --reset:     re-create the disks"
     echo -e "  --prof:      use the pgbadger conf for postgres (profiling)"
+    echo -e "  --dev:       use dev-specific disks"
     echo -e "   -h:         show this message\n"
     exit 1
 }
@@ -19,6 +21,8 @@ while [ $# -gt 0 ]; do
         DEV="-dev"
     elif [ $1 == "--prof" ]; then
 	PGCONF=postgres-pgbadger.conf
+    elif [ $1 == "--reset" ]; then
+        RESET=1
     elif [ $1 == "-h" ]; then
         help
     else
@@ -27,6 +31,13 @@ while [ $# -gt 0 ]; do
     fi
     shift
 done
+
+./prune.sh
+
+if (( RESET )); then
+    ./make-postgresql-data-volume.sh $DEV
+    ./make-postgresql-log-volume.sh $DEV
+fi
 
 rm -f postgres.conf
 ln -s $PGCONF postgres.conf
