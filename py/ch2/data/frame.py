@@ -1,6 +1,4 @@
 from logging import getLogger
-from math import isnan
-from re import compile
 
 import numpy as np
 import pandas as pd
@@ -152,7 +150,3 @@ def drop_empty(df):
         if df[column].dropna().empty:
             df = df.drop(columns=[column])
     return df
-
-
-def valid(value):
-    return value is not None and not isnan(value)

@@ -1,9 +1,9 @@
 from abc import ABC
 from collections import defaultdict, namedtuple
 from logging import getLogger
-from math import isnan
 
 from ..common.date import min_time, max_time
+from ..common.math import is_nan
 from ..names import simple_name
 from ..sql import StatisticName, Interval, Source
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
@@ -78,7 +78,7 @@ class Loader(ABC):
 
     def __add_internal(self, statistic_name, source, value, time):
 
-        if value is None or isnan(value):
+        if value is None or is_nan(value):
             raise Exception(f'Bad value for {statistic_name.name}: {value}')
 
         journal_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]

@@ -13,7 +13,7 @@ from ..sql.tables.file import FileScan, FileHash
 log = getLogger(__name__)
 
 
-def modified_file_scans(s, paths, owner, force=False):
+def modified_file_scans(s, paths, owner):
 
     modified = []
 
@@ -37,7 +37,7 @@ def modified_file_scans(s, paths, owner, force=False):
             s.flush()  # want this to appear in queries below
 
         # only look at hash if we are going to process anyway
-        if force or last_modified > file_scan_from_path.last_scan:
+        if last_modified > file_scan_from_path.last_scan:
 
             file_scan_from_hash = s.query(FileScan).\
                 join(FileHash).\
@@ -51,7 +51,7 @@ def modified_file_scans(s, paths, owner, force=False):
                 # update the path to avoid triggering in future
                 file_scan_from_path.last_scan = file_scan_from_hash.last_scan
 
-            if force or last_modified > file_scan_from_hash.last_scan:
+            if last_modified > file_scan_from_hash.last_scan:
                 modified.append(file_scan_from_hash)
 
     s.commit()

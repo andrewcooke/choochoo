@@ -51,11 +51,6 @@ class SimilarityCalculator(OwnerInMixin, ProcessCalculator):
         else:
             return []
 
-    def _delete(self, s):
-        log.warning(f'Deleting similarity data')
-        s.query(ActivitySimilarity).delete(synchronize_session=False)
-        Timestamp.clear(s, self.owner_out)
-
     def _run_one(self, missed):
         with self._config.db.session_context() as s:
             rtree = SQRTree(default_match=MatchType.OVERLAP, default_border=self.border)

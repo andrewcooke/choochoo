@@ -56,7 +56,7 @@ new monitor data, and update statistics.
     with timing(UPLOAD):
         upload_files(Record(log), config, files=files, nfiles=nfiles, items=args[KIT])
         if args[PROCESS]:
-            run_pipeline(config, PipelineType.PROCESS, force=args[FORCE], cprofile=args[CPROFILE])
+            run_pipeline(config, PipelineType.PROCESS, cprofile=args[CPROFILE])
 
 
 class SkipFile(Exception):

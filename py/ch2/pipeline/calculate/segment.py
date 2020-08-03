@@ -15,10 +15,6 @@ SJOURNAL = 'sjournal'
 class SegmentCalculator(LoaderMixin, OwnerInMixin,
                         SegmentJournalCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator):
 
-    def _delete(self, s):
-        super()._delete(s)
-        SegmentJournal.clean(s)
-
     def _read_dataframe(self, s, sjournal):
         from ch2.pipeline.read.segment import SegmentReader
         return Statistics(s, activity_journal=sjournal.activity_journal). \

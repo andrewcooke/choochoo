@@ -3,9 +3,10 @@ from logging import getLogger
 
 from .utils import ProcessCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 from ..pipeline import LoaderMixin
+from ...common.math import is_nan
 from ...data import Statistics
 from ...data.elevation import smooth_elevation
-from ...data.frame import present, valid
+from ...data.frame import present
 from ...names import N, Titles, Units
 from ...sql import StatisticJournalFloat
 
@@ -40,11 +41,11 @@ class ElevationCalculator(LoaderMixin, ActivityJournalCalculatorMixin, DataFrame
 
     def _copy_results(self, s, ajournal, loader, df):
         for time, row in df.iterrows():
-            if N.ELEVATION in row and valid(row[N.ELEVATION]):
+            if N.ELEVATION in row and not is_nan(row[N.ELEVATION]):
                 loader.add(Titles.ELEVATION, Units.M, None, ajournal, row[N.ELEVATION],
                            time, StatisticJournalFloat,
                            description='An estimate of elevation (may come from various sources).')
-            if N.GRADE in row and valid(row[N.GRADE]):
+            if N.GRADE in row and not is_nan(row[N.GRADE]):
                 loader.add(Titles.GRADE, Units.PC, None, ajournal, row[N.GRADE],
                            time, StatisticJournalFloat,
                            description='The gradient of the smoothed SRTM1 elevation.')

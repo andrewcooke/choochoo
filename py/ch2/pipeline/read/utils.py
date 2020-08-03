@@ -41,28 +41,7 @@ class ProcessFitReader(ProcessPipeline):
         return iglob(join(data_dir, '**/*' + DOT_FIT), recursive=True)
 
     def _missing(self, s):
-        return [file_scan.path
-                for file_scan in modified_file_scans(s, self._all_paths(), self.owner_out, self.force)]
-
-    def _delete(self, s):
-        # sub-clases should implement and call _delete_n(s, n)
-        raise NotImplementedError('_delete(s)')
-
-    def _delete_n(self, s, n):
-        # we don't delete files!  instead, we touch them so that they appear new
-        # the alternative is to reset the scan time, but that seems like 'lying'
-        q = s.query(FileScan).filter(FileScan.owner == self.owner_out)
-        count = q.count()
-        for i, file_scan in enumerate(q.all()):
-            if exists(file_scan.path):
-                touch(file_scan.path)
-                self._delete_db(s, file_scan)
-                if i % n == 0:
-                    log.debug(f'Deleted {i} / {count}')
-        log.debug(f'Touched {count} files')
-
-    def _delete_db(self, s, file_scan):
-        raise NotImplementedError('_delete_db')
+        return [file_scan.path for file_scan in modified_file_scans(s, self._all_paths(), self.owner_out)]
 
     def _run_one(self, missed):
         with self._config.db.session_context() as s:

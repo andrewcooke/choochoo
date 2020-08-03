@@ -303,15 +303,13 @@ def make_parser(with_noop=False):
                         help='kit items associated with activities')
     upload.add_argument(mm(no(PROCESS)), action='store_false', dest=PROCESS,
                         help='do not call process after uploading')
-    upload.add_argument(mm(FORCE), action='store_true', help='reprocess existing data')
     upload.add_argument(PATH, metavar='PATH', nargs='*', default=[], help='path to FIT file(s) containing data')
 
     process = commands.add_parser(PROCESS, help='process data (add information to the database)',
                                   description='read new files from the permanent store and calculate statistics')
     process.add_argument(mm(KARG), m(K.upper()), action='append', default=[], metavar='NAME=VALUE',
                          help='keyword argument to be passed to the pipelines (can be repeated)')
-    # cannot be expressed in argparse (but checked in command) - force/like and worker are mutually exclusive
-    process.add_argument(mm(FORCE), action='store_true', help='reprocess existing data')
+    # cannot be expressed in argparse (but checked in command) - like and worker are mutually exclusive
     process.add_argument(mm(LIKE), action='append', default=[], metavar='PATTERN',
                          help='run only matching pipeline classes')
     process.add_argument(mm(WORKER), metavar='ID', type=int,

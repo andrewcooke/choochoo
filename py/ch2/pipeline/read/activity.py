@@ -97,10 +97,7 @@ class ActivityReader(ProcessFitReader):
         sport = self.read_sport(file_scan.path, records)
         activity_group = self._activity_group(s, file_scan.path, sport, self.sport_to_activity, define)
         log.info(f'{activity_group} from {sport} / {define}')
-        if self.force:
-            self._delete_journals(s, activity_group, first_timestamp, last_timestamp, file_scan)
-        else:
-            self._check_journals(s, activity_group, first_timestamp, last_timestamp, file_scan)
+        self._check_journals(s, activity_group, first_timestamp, last_timestamp, file_scan)
         ajournal = add(s, ActivityJournal(activity_group=activity_group,
                                           start=first_timestamp, finish=first_timestamp,  # will be over-written later
                                           file_hash_id=file_scan.file_hash_id))
@@ -146,27 +143,6 @@ class ActivityReader(ProcessFitReader):
     def _file_hash_journals(self, s, what, file_scan):
         return s.query(what). \
                 filter(ActivityJournal.file_hash == file_scan.file_hash)
-
-    def _delete(self, s):
-        self._delete_n(s, 10)
-
-    def _delete_db(self, s, file_scan):
-        self._delete_query(s, self._file_hash_journals(s, ActivityJournal, file_scan), do_log=False)
-
-    def _delete_query(self, s, query, do_log=True):
-        for journal in query.all():
-            # see segment reader (todo - should be merged)
-            Timestamp.clear(s, owner=self.owner_out, source=journal)
-            if do_log: log.debug(f'Deleting {journal}')
-            s.delete(journal)
-
-    def _delete_journals(self, s, activity_group, first_timestamp, last_timestamp, file_scan):
-        log.debug('Deleting overlapping journals')
-        self._delete_query(s, self._overlapping_journals(s, ActivityJournal, activity_group,
-                                                         first_timestamp, last_timestamp))
-        # log.debug('Deleting journals from same file')
-        # self._delete_query(s, self._file_hash_journals(s, ActivityJournal, file_scan))
-        s.commit()
 
     def _check_journals(self, s, activity_group, first_timestamp, last_timestamp, file_scan):
         log.debug('Checking for overlapping journals')

@@ -18,12 +18,6 @@ log = getLogger(__name__)
 
 class AchievementCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, ProcessCalculator):
 
-    def _delete(self, s):
-        q = s.query(Achievement)
-        log.debug(f'Deleting {q.count()} achievements')
-        q.delete(synchronize_session=False)
-        Timestamp.clear(s, owner=self.owner_out)
-
     def _startup(self, s):
         super()._startup(s)
         table = []

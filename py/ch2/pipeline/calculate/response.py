@@ -3,7 +3,6 @@ from collections import namedtuple
 from json import loads
 from logging import getLogger
 
-import numpy as np
 from math import log10
 from sqlalchemy import distinct
 from sqlalchemy.sql.functions import count
@@ -11,7 +10,8 @@ from sqlalchemy.sql.functions import count
 from .utils import ProcessCalculator
 from ..pipeline import LoaderMixin, OwnerInMixin
 from ..read.segment import SegmentReader
-from ...common.date import round_hour, to_time, local_date_to_time, now, format_time
+from ...common.date import round_hour, to_time, now, format_time
+from ...common.math import is_nan
 from ...common.names import TIME_ZERO
 from ...data import Statistics, present
 from ...data.response import sum_to_hour, calc_response
@@ -183,7 +183,7 @@ class ResponseCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
         changes = data.loc[data[name].ne(data[name].shift())]
         for time, row in changes.iterrows():
             id = row[name]
-            if not np.isnan(id):
+            if not is_nan(id):
                 composite = add(s, Composite(n_components=2))
                 add(s, CompositeComponent(input_source_id=id, output_source=composite))
             else:

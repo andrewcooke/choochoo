@@ -29,7 +29,7 @@ Calculate activity statistics from 2020 onwards in a single process for debuggin
     if bool(args[WORKER]) != bool(args[ARG]):
         raise Exception(f'{mm(WORKER)} and arguments should be used together')
     if args[LIKE] and args[WORKER]:
-        raise Exception(f'{mm(FORCE)} and {mm(LIKE)} cannot be used with {mm(WORKER)}')
+        raise Exception(f'{mm(LIKE)} cannot be used with {mm(WORKER)}')
     run_pipeline(config, PipelineType.PROCESS, *args[ARG],
-                 like=args[LIKE], worker=args[WORKER], force=args[FORCE], cprofile=args[CPROFILE],
+                 like=args[LIKE], worker=args[WORKER], cprofile=args[CPROFILE],
                  **parse_pairs(args[KARG]))

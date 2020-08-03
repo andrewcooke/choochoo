@@ -41,38 +41,6 @@ class JournalCalculatorMixin:
     def _delimit_missing(self, q):
         return q
 
-    def _delete(self, s):
-        timestamps = self._delimit_timestamp(
-            s.query(Timestamp).filter(Timestamp.owner == self.owner_out))
-        source_ids = self._delimit_timestamp(
-            s.query(Timestamp.source_id).filter(Timestamp.owner == self.owner_out))
-        statistic_journal_ids = self._delimit_delete(
-            s.query(StatisticJournal.id).
-                join(StatisticName).
-                filter(StatisticName.owner == self.owner_out,
-                       StatisticJournal.source_id.in_(source_ids)))
-        for repeat in range(2):
-            if repeat:
-                # usual avoidance of sqlalchemy constraints
-                s.query(StatisticJournal). \
-                    filter(StatisticJournal.id.in_(statistic_journal_ids)). \
-                    delete(synchronize_session=False)
-                timestamps.delete()
-            else:
-                n = statistic_journal_ids.count()
-                if n:
-                    log.warning(f'Deleting {n} statistics for {short_cls(self.owner_out)}')
-                else:
-                    log.warning(f'No statistics to delete for {short_cls(self.owner_out)}')
-                n = timestamps.count()
-                if n:
-                    log.warning(f'Deleting {n} timestamps for {short_cls(self.owner_out)}')
-                else:
-                    log.warning(f'No timestamps to delete for {short_cls(self.owner_out)}')
-
-    def _delimit_delete(self, q):
-        return q
-
     def _delimit_timestamp(self, q):
         return q
 
@@ -94,10 +62,6 @@ class ActivityGroupCalculatorMixin(ActivityJournalCalculatorMixin):
     def _delimit_missing(self, q):
         return log_query(q.join(ActivityGroup).filter(ActivityGroup.name == self.activity_group),
                          'Missing:')
-
-    def _delimit_delete(self, q):
-        return log_query(q.join(Source).join(ActivityGroup).filter(ActivityGroup.name == self.activity_group),
-                         'Delete:')
 
     def _delimit_timestamp(self, q):
         return q.filter(Timestamp.constraint == self.activity_group)
@@ -166,25 +130,6 @@ class IntervalCalculatorMixin:
         return [format_dateq(start)
                 for start in Interval.missing_starts(s, expected, self.schedule, self.owner_out,
                                                      exclude_owners=(SummaryCalculator,))]
-
-    def _delete(self, s):
-        # we delete the intervals that the statistics depend on and they will cascade
-        for repeat in range(2):
-            if repeat:
-                q = s.query(Interval)
-            else:
-                q = s.query(count(Interval.id))
-            q = q.filter(Interval.schedule == self.schedule, Interval.owner == self.owner_out)
-            if repeat:
-                for interval in q.all():
-                    log.debug(f'Deleting {interval}')
-                    s.delete(interval)
-            else:
-                n = q.scalar()
-                if n:
-                    log.warning(f'Deleting {n} intervals')
-                else:
-                    log.warning('No intervals to delete')
 
     def _run_one(self, missed):
         start = to_date(missed)

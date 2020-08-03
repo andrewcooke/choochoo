@@ -7,13 +7,13 @@ import pandas as pd
 from bokeh.io import show
 from bokeh.models import Rect, ColumnDataSource, Circle, Arc, MultiLine, SaveTool, HoverTool, Label, Plot, Range1d, \
     Title
-from bokeh.palettes import *
 from math import pi
 
 from .utils import tooltip, evenly_spaced_hues
-from ...names import Names as N, like
-from ...lib.data import linscale
 from ...common.date import time_to_local_time, YMD
+from ...common.math import is_nan
+from ...lib.data import linscale
+from ...names import Names as N, like
 
 log = getLogger(__name__)
 
@@ -141,7 +141,7 @@ class Calendar:
     def set_palette(self, name, palette, lo=None, hi=None, min=0, max=1, gamma=1, nan='white'):
         n = len(palette)
         self._df.loc[:, CALENDAR_COLOR] = linscale(self._df[name], lo=lo, hi=hi, min=min, max=max, gamma=gamma). \
-            map(lambda x: nan if np.isnan(x) else palette[_max(0, _min(n-1, int(x * n)))])
+            map(lambda x: nan if is_nan(x) else palette[_max(0, _min(n-1, int(x * n)))])
 
     def set_arc(self, angle, width, size=None, delta_radius=0, lo=0, hi=2, min=30, max=180, gamma=1):
         angle = 90 - self._df[angle]  # +ve anticlock from x
@@ -250,7 +250,7 @@ class Calendar:
 # helpers for generating square arc multiline (a lot of work for not much result)
 
 def _edge(linear, x, y, r):
-    if np.isnan(linear): return x, y
+    if is_nan(linear): return x, y
     d = 2 * r * (linear - int(linear))
     if linear < 1: return x + r - d, y + r
     if linear < 2: return x - r, y + r - d
@@ -259,7 +259,7 @@ def _edge(linear, x, y, r):
 
 
 def _corner(linear, x, y, r):
-    if np.isnan(linear): return x, y
+    if is_nan(linear): return x, y
     if linear < 1: return x + r, y + r
     if linear < 2: return x - r, y + r
     if linear < 3: return x - r, y - r

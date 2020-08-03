@@ -76,12 +76,11 @@ class ProcessPipeline(BasePipeline):
     In this way startup and shutdown bracket the entire process and are done just once.
     '''
 
-    def __init__(self, config, *args, owner_out=None, force=False, progress=None, worker=None, id=None, cprofile=None,
+    def __init__(self, config, *args, owner_out=None, progress=None, worker=None, id=None, cprofile=None,
                  **kargs):
         self.__args = args
         self._config = config
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
-        self.force = force  # force re-processing
         self._progress = progress
         self.worker = worker
         self.id = id
@@ -106,22 +105,12 @@ class ProcessPipeline(BasePipeline):
     def _shutdown(self, s):
         pass
 
-    def delete(self):
-        with self._config.db.session_context() as s:
-            log.warning(f'Deleting data for {self}')
-            self._delete(s)
-
-    def _delete(self, s):
-        raise NotImplementedError('_delete(s)')
-
     def missing(self):
         '''
         A missing value identities what is to be processed by a worker.  It is typically a file path or
         the start time (local) of an activity.  It is always a string.  It should be quoted if it contains spaces
         or otherwise needs special hanlding by the shell.
         '''
-        if self.force:
-            self.delete()
         with self._config.db.session_context(expire_on_commit=False) as s:
             missing = self._missing(s) or []  # allow None
         log.debug(f'{len(missing)} missing for {self}')
@@ -152,14 +141,13 @@ class ProcessPipeline(BasePipeline):
 
     def command_for_missing(self, pipeline, missing, log_name):
         from .process import fmt_cmd
-        force = ' ' + mm(FORCE) if self.force else ''
         cprofile = ''
         if self.cprofile:
             cprofile = ' ' + mm(CPROFILE)
             if self.cprofile[0]:
                 cprofile = ' ' + self.cprofile[0]
         cmd = self.__ch2 + f'{cprofile} {mm(LOG)} {log_name} {mm(URI)} {self._config.args._format(URI)} ' \
-                           f'{PROCESS}{force} {mm(WORKER)} {pipeline.id} {" ".join(missing)}'
+                           f'{PROCESS} {mm(WORKER)} {pipeline.id} {" ".join(missing)}'
         log.debug(fmt_cmd(cmd))
         return cmd
 

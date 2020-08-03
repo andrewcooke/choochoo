@@ -4,9 +4,8 @@ from collections import namedtuple
 from itertools import groupby
 from logging import getLogger
 
-import numpy as np
-
 from .frame import linear_resample, present
+from ..common.math import is_nan
 from ..lib.data import nearest_index, get_index_loc, safe_yield, safe_none
 from ..names import Names as N
 from ..sql import StatisticName, StatisticJournal, Source
@@ -144,7 +143,7 @@ def search(df, params=Climb()):
             # factor of 1000 below to convert km to m
             df[SCORE] = (df[N._delta(N.ELEVATION)] / (1000 * d_distance)) ** params.phi
             score = df.loc[df[N._delta(N.ELEVATION)] > min_elevation, SCORE].max()
-            if not np.isnan(score) and score > max_score:
+            if not is_nan(score) and score > max_score:
                 max_score = score
                 hi = df.loc[df[SCORE] == max_score].index[0]  # arbitrarily pick one if tied (error here w item())
                 lo = df.index[get_index_loc(df, hi) - offset]
@@ -180,7 +179,7 @@ def add_climb_stats(df, climbs):
         if N.POWER_ESTIMATE in df.columns:
             # mean() returns a series!
             power = df.loc[start:finish, [N.POWER_ESTIMATE]].mean()[0]
-            if not np.isnan(power):
+            if not is_nan(power):
                 climb[N.CLIMB_POWER] = power
             else:
                 log.warning(f'Invalid {N.POWER_ESTIMATE} in climb data')

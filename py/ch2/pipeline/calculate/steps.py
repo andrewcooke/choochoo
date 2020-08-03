@@ -54,9 +54,6 @@ class StepsCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
             yield start
             start += dt.timedelta(days=1)
 
-    def _delete(self, s):
-        self._delete_time_range(s)
-
     def _delete_time_range(self, s, start=None, finish=None):
         composite_ids = s.query(Composite.id). \
             join(StatisticJournal, Composite.id == StatisticJournal.source_id). \

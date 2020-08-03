@@ -3,12 +3,10 @@ from collections import namedtuple
 from json import loads
 from logging import getLogger
 
-import numpy as np
-
 from .utils import ProcessCalculator, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin
 from ..pipeline import OwnerInMixin, LoaderMixin
+from ...common.math import is_nan
 from ...data import Statistics
-from ...data.frame import valid
 from ...data.impulse import hr_zone, impulse_10
 from ...names import N, Titles, SPACE
 from ...sql import Constant, StatisticJournalFloat
@@ -59,10 +57,10 @@ class ImpulseCalculator(LoaderMixin, OwnerInMixin,
         title = self.impulse.title
         name_group = self.prefix + SPACE + self.impulse_constant.short_name  # drop activity group as present elsewhere
         for time, row in stats.iterrows():
-            if N.HR_ZONE in row and valid(row[N.HR_ZONE]):
+            if N.HR_ZONE in row and not is_nan(row[N.HR_ZONE]):
                 loader.add(Titles.HR_ZONE, None, None, ajournal, row[N.HR_ZONE], time,
                            StatisticJournalFloat, description=hr_description)
-            if N.HR_IMPULSE_10 in row and valid(row[N.HR_IMPULSE_10]):
+            if N.HR_IMPULSE_10 in row and not is_nan(row[N.HR_IMPULSE_10]):
                 loader.add(name_group, None, None, ajournal, row[N.HR_IMPULSE_10], time,
                            StatisticJournalFloat, description=impulse_description, title=title)
         # if there are no values, add a single 1 so we don't re-process

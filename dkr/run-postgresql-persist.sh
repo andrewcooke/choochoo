@@ -35,8 +35,8 @@ done
 ./prune.sh
 
 if (( RESET )); then
-    ./make-postgresql-data-volume.sh $DEV
-    ./make-postgresql-log-volume.sh $DEV
+    ./make-postgresql-data-volume.sh -$DEV
+    ./make-postgresql-log-volume.sh -$DEV
 fi
 
 rm -f postgres.conf
