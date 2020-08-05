@@ -11,6 +11,8 @@ const useStyles = makeStyles(theme => ({
             // get the widest display possible on a phone, single column
             padding: theme.spacing(1),
         },
+        // 
+        display: 'inline-block',
     },
     align: {
         alignItems: 'flex-end',
