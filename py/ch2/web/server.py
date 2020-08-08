@@ -17,11 +17,11 @@ from .servlets.thumbnail import Thumbnail
 from .servlets.upload import Upload
 from .static import Static
 from ..commands.args import LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, JUPYTER, WARN, SECURE, THUMBNAIL_DIR, \
-    NOTEBOOK_DIR, UPLOAD
+    NOTEBOOK_DIR
 from ..common.args import mm
 from ..common.log import log_current_exception
 from ..common.names import BASE
-from ..jupyter.server import JupyterController
+from ..jupyter.server import JupyterController, JupyterServer
 from ..lib.server import BaseController
 from ..sql import SystemConstant
 
@@ -32,11 +32,7 @@ MAX_MSG = 1000
 
 DATA = 'data'
 REDIRECT = 'redirect'
-ERROR = 'error'
 BUSY = 'busy'
-MESSAGE = 'message'
-COMPLETE = 'complete'
-PERCENT = 'percent'
 
 GET = 'GET'
 PUT = 'PUT'
@@ -105,7 +101,7 @@ class WebServer:
         analysis = Analysis()
         configure = Configure(config)
         diary = Diary()
-        jupyter = Jupyter(jcontrol)
+        jupyter = Jupyter(config, jcontrol)
         kit = Kit()
         static = Static('.static')
         upload = Upload(config)
@@ -118,9 +114,9 @@ class WebServer:
 
             Rule('/api/configure/profiles', endpoint=self.check(configure.read_profiles, config=False), methods=(GET,)),
             Rule('/api/configure/initial', endpoint=self.check(configure.write_profile, config=False), methods=(POST,)),
-            Rule('/api/configure/delete', endpoint=self.check(configure.delete, config=False), methods=(POST,)),
+            Rule('/api/configure/delete', endpoint=self.check(configure.delete, config=False, busy=True), methods=(POST,)),
             Rule('/api/configure/import', endpoint=self.check(configure.read_import, empty=False), methods=(GET,)),
-            Rule('/api/configure/import', endpoint=self.check(configure.write_import, empty=False), methods=(POST,)),
+            Rule('/api/configure/import', endpoint=self.check(configure.write_import, empty=False, busy=True), methods=(POST,)),
             Rule('/api/configure/constants', endpoint=self.check(configure.read_constants, empty=False), methods=(GET,)),
             Rule('/api/configure/constant', endpoint=self.check(configure.write_constant, empty=False), methods=(PUT,)),
             Rule('/api/configure/delete-constant', endpoint=self.check(configure.delete_constant, empty=False), methods=(PUT,)),
@@ -135,24 +131,24 @@ class WebServer:
             Rule('/api/search/activity/<query>', endpoint=search.query_activity, methods=(GET,)),
             Rule('/api/search/activity-terms', endpoint=search.read_activity_terms, methods=(GET,)),
 
-            Rule('/api/jupyter/<template>', endpoint=jupyter, methods=(GET, )),
+            Rule('/api/jupyter/<template>', endpoint=jupyter, methods=(GET,)),
 
-            Rule('/api/kit/edit', endpoint=self.check(kit.read_edit, empty=False), methods=(GET, )),
+            Rule('/api/kit/edit', endpoint=self.check(kit.read_edit, empty=False), methods=(GET,)),
             Rule('/api/kit/retire-item', endpoint=self.check(kit.write_retire_item, empty=False), methods=(PUT,)),
             Rule('/api/kit/replace-model', endpoint=self.check(kit.write_replace_model, empty=False), methods=(PUT,)),
             Rule('/api/kit/add-component', endpoint=self.check(kit.write_add_component, empty=False), methods=(PUT,)),
             Rule('/api/kit/add-group', endpoint=self.check(kit.write_add_group, empty=False), methods=(PUT,)),
             Rule('/api/kit/items', endpoint=self.check(kit.read_items, empty=False), methods=(GET,)),
-            Rule('/api/kit/statistics', endpoint=self.check(kit.read_statistics, empty=False), methods=(GET, )),
-            Rule('/api/kit/<date>', endpoint=self.check(kit.read_snapshot, empty=False), methods=(GET, )),
+            Rule('/api/kit/statistics', endpoint=self.check(kit.read_statistics, empty=False), methods=(GET,)),
+            Rule('/api/kit/<date>', endpoint=self.check(kit.read_snapshot, empty=False), methods=(GET,)),
 
-            Rule('/api/thumbnail/<activity>', endpoint=thumbnail, methods=(GET, )),
-            Rule('/api/static/<path:path>', endpoint=static, methods=(GET, )),
+            Rule('/api/thumbnail/<activity>', endpoint=thumbnail, methods=(GET,)),
+            Rule('/api/static/<path:path>', endpoint=static, methods=(GET,)),
 
-            Rule('/api/upload', endpoint=self.check(upload, empty=False), methods=(PUT, )),
+            Rule('/api/upload', endpoint=self.check(upload, empty=False), methods=(PUT,)),
 
-            Rule('/api/busy', endpoint=self.read_busy, methods=(GET, )),
-            Rule('/api/warnings', endpoint=self.read_warnings, methods=(GET, )),
+            Rule('/api/warnings', endpoint=self.read_warnings, methods=(GET,)),
+            Rule('/api/busy', endpoint=self.read_busy, methods=(GET,)),
             Rule('/api/<path:_>', endpoint=error(BadRequest)),
 
             # ignore path and serve index.html
@@ -183,18 +179,6 @@ class WebServer:
     def __call__(self, environ, start_response):
         return self.wsgi_app(environ, start_response)
 
-    def get_busy(self):
-        # default for when database missing
-        percent = self.__config.get_percent(UPLOAD, default=100)
-        if percent is None: percent = 100
-        # the client uses the complete message when the problem has passed
-        return {MESSAGE: 'Loading data and recalculating statistics.',
-                COMPLETE: 'Data loaded and statistics updated.',
-                PERCENT: percent}
-
-    def read_busy(self, request, s):
-        return JsonResponse({BUSY: self.get_busy()})
-
     def read_warnings(self, request, s):
         warnings = []
         if self.__warn_data:
@@ -208,7 +192,14 @@ class WebServer:
                                      'It is intended only for local, personal use.'})
         return JsonResponse({DATA: warnings})
 
-    def check(self, handler, config=True, empty=True):
+    def read_busy(self, request, s):
+        try:
+            return JsonResponse({DATA: self.__config.exists_any_process(excluding=[JupyterServer])})
+        except:  # various, including database having been deleted
+            log_current_exception()
+            return JsonResponse({DATA: False})
+
+    def check(self, handler, config=True, empty=True, busy=False):
 
         def wrapper(request, s, *args, **kargs):
             if config:
@@ -220,24 +211,14 @@ class WebServer:
                     if self.__configure.is_empty(s):
                         log.debug(f'Redirect (no data)')
                         return JsonResponse({REDIRECT: '/upload'})
-            busy = self.get_busy()
-            if busy[PERCENT] is None or busy[PERCENT] == 100:
-                try:
-                    data = handler(request, s, *args, **kargs)
-                    msg = f'Returning data: {data}'
-                    if len(msg) > MAX_MSG:
-                        msg = msg[:MAX_MSG-20] + ' ... ' + msg[-10:]
-                    log.debug(msg)
-                    return JsonResponse({DATA: data})
-                except Exception as e:
-                    log_current_exception()
-                    # maybe some errors are redirects?
-                    error = str(e).strip()
-                    if not error.endswith('.'): error += '.'
-                    log.debug(f'Returning error: {error}')
-                    return JsonResponse({ERROR: error})
-            else:
-                log.debug(f'Returning busy: {busy}')
-                return JsonResponse({BUSY: busy})
+                # todo - should we test for if s here?
+                if s and busy and self.__config.exists_any_process():
+                    return JsonResponse({REDIRECT: '.'})  # todo - does this work?
+            data = handler(request, s, *args, **kargs)
+            msg = f'Returning data: {data}'
+            if len(msg) > MAX_MSG:
+                msg = msg[:MAX_MSG-20] + ' ... ' + msg[-10:]
+            log.debug(msg)
+            return JsonResponse({DATA: data})
 
         return wrapper

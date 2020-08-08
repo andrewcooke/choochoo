@@ -6,7 +6,7 @@ from requests import HTTPError
 from .monitor import missing_dates
 from ..pipeline import ProcessPipeline
 from ...commands.args import DATA
-from ...common.date import now, local_time_to_time, format_date, to_date, dates_from, time_to_local_time
+from ...common.date import now, local_time_to_time, format_date, to_date, dates_from, time_to_local_time, format_dateq
 from ...common.log import log_current_exception
 from ...fit.download.connect import GarminConnect
 from ...sql import Constant, SystemConstant
@@ -38,7 +38,7 @@ class GarminReader(ProcessPipeline):
             log.warning(f'Too soon since previous call ({last}; 12 hours minimum)')
         else:
             try:
-                dates = [format_date(date) for date in missing_dates(s, force=self.__force_all)]
+                dates = [format_dateq(date) for date in missing_dates(s, force=self.__force_all)]
                 if dates:
                     log.debug(f'Download Garmin from {dates[0]}')
                     return dates[:1]  # dates[0] in a list

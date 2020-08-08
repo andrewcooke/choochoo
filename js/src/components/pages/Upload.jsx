@@ -153,7 +153,6 @@ export default function Upload(props) {
 
     const {history} = props;
     const [items, setItems] = useState(null);
-    const busyState = useState(null);
     const errorState = useState(null);
     const [error, setError] = errorState;
     const [reads, setReads] = useState(0);
@@ -163,12 +162,11 @@ export default function Upload(props) {
     }
 
     useEffect(() => {
-        fetch('/api/kit/items').then(handleJson(history, setItems, setError, busyState));
+        fetch('/api/kit/items').then(handleJson(history, setItems, setError));
     }, [reads]);
 
     return (
         <Layout title='Upload'
-                content={<Columns items={items} reload={reload} setError={setError}/>}
-                reload={reload} busyState={busyState} errorState={errorState}/>
+                content={<Columns items={items} reload={reload} setError={setError}/>} errorState={errorState}/>
     );
 }

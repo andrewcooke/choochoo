@@ -72,6 +72,7 @@ function Columns(props) {
 }
 
 
+// TODO - this isn't used?!
 function SnapshotMenu(props) {
 
     const {datetime, history} = props;
@@ -94,28 +95,20 @@ function SnapshotMenu(props) {
 
 export default function Snapshot(props) {
 
-
     const {match, history} = props;
     const {date} = match.params;
     const [groups, setGroups] = useState(null);
-    const busyState = useState(null);
     const errorState = useState(null);
     const [error, setError] = errorState;
-    const [reads, setReads] = useState(0);
-
-    function reload() {
-        setReads(reads + 1);
-    }
 
     useEffect(() => {
         setGroups(null);
         fetch('/api/kit/' + date)
-            .then(handleJson(history, setGroups, setError, busyState));
-    }, [`${date} ${reads}`]);
+            .then(handleJson(history, setGroups, setError));
+    }, [date]);
 
     return (
         <Layout title={`Kit: ${date}`}
-                content={<Columns groups={groups}/>}
-                reload={reload} busyState={busyState} errorState={errorState}/>
+                content={<Columns groups={groups}/>} errorState={errorState}/>
     );
 }

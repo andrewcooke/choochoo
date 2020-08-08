@@ -265,19 +265,16 @@ def load_notebook(name, vars):
     return Token.to_notebook(tokens)
 
 
-def create_notebook(template, base, args, kargs):
+def create_notebook(config, template, args):
 
     if hasattr(template, '_original'):  # drop wrapper
         template = template._original
 
     all_args = ' '.join(args)
-    if all_args and kargs: all_args += ' '
-    all_args += ' '.join(kargs[key] for key in sorted(kargs.keys()))
     all_args = sub(r'\s+', '-', all_args)
     all_args = sub(escape(sep), '-', all_args)
 
-    vars = dict(kargs)
-    vars[BASE] = base
+    vars = {BASE: config.args[BASE]}
     spec = getfullargspec(template)
     for name, value in zip_longest(spec.args, args):
         if name:
@@ -288,8 +285,7 @@ def create_notebook(template, base, args, kargs):
             vars[spec.varargs].append(value)
 
     template = template.__name__
-    notebook_dir = args._format_path(NOTEBOOK_DIR)
-    root = join(notebook_dir, template)
+    root = join(config.args._format_path(NOTEBOOK_DIR), template)
     all_args = all_args if all_args else template
     name = all_args + IPYNB
     path = join(root, name)
@@ -308,10 +304,10 @@ def create_notebook(template, base, args, kargs):
     return join(template, name)
 
 
-def display_notebook(template, args, kargs):
-    log.debug(f'Displaying {template} with {args}, {kargs}')
+def display_notebook(config, template, args):
+    log.debug(f'Displaying {template} with {args}')
     ctrl = get_controller()
-    name = create_notebook(template, ctrl.base_dir(), args, kargs)
+    name = create_notebook(config, template, args)
     url = f'{ctrl.connection_url()}tree/{name}'
     log.info(f'Displaying {url}')
     web.open(url, autoraise=False)

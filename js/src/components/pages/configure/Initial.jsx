@@ -48,10 +48,10 @@ function Delete(props) {
                 This will delete your current data and overwrite any already existing ':previous' copy.
             </ConfirmedWriteButton>
         </ColumnCard>
-        <Dialog fullScreen={fullScreen} open={wait}>
+        <Dialog open={wait}>
             <DialogTitle>{'Please wait'}</DialogTitle>
             <DialogContent>
-                <DialogContentText>Server is restarting.</DialogContentText>
+                <DialogContentText>Old data are being moved to ':previous'.</DialogContentText>
             </DialogContent>
         </Dialog>
     </>)
@@ -163,7 +163,6 @@ export default function Initial(props) {
 
     return (
         <Layout title='Initial Configuration'
-                content={<Columns data={data} reload={reload}/>}
-                errorState={errorState}/>
+                content={<Columns data={data} reload={reload}/>} errorState={errorState}/>
     );
 }

@@ -268,7 +268,6 @@ export default function Constants(props) {
 
     return (
         <Layout title='Edit Constants'
-                content={<Columns constants={constants} reload={reload}/>}
-                reload={reload} errorState={errorState}/>
+                content={<Columns constants={constants} reload={reload}/>} errorState={errorState}/>
     );
 }

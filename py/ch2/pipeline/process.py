@@ -8,28 +8,27 @@ from psutil import NoSuchProcess
 
 from ..commands.args import LOG, LOG_DIR
 from ..common.date import now, format_seconds, time_to_local_time
-from ..lib.workers import ProgressTree
 from ..sql import PipelineType, Interval, Pipeline
 from ..sql.tables.pipeline import sort_pipelines
 
 log = getLogger(__name__)
 
 
-def run_pipeline(config, type, *args, like=tuple(), progress=None, worker=None, **extra_kargs):
+def run_pipeline(config, type, *args, like=tuple(), worker=None, **extra_kargs):
     if type is None or type == PipelineType.PROCESS:
-        run_process_pipeline(config, type, *args, like=like, progress=progress, worker=worker, **extra_kargs)
+        run_process_pipeline(config, type, *args, like=like, worker=worker, **extra_kargs)
     else:
         from .pipeline import run_pipeline
-        run_pipeline(config, type, like=like, progress=progress, worker=worker, **extra_kargs)
+        run_pipeline(config, type, like=like, worker=worker, **extra_kargs)
 
 
-def run_process_pipeline(config, type, *args, like=tuple(), progress=None, worker=None, **extra_kargs):
+def run_process_pipeline(config, type, *args, like=tuple(), worker=None, **extra_kargs):
     if not worker:
         with config.db.session_context() as s:
             Interval.clean(s)
     with config.db.session_context(expire_on_commit=False) as s:
         pipelines = list(sort_pipelines(Pipeline.all(s, type, like=like, id=worker)))
-    ProcessRunner(config, pipelines, *args, worker=worker, **extra_kargs).run(progress)
+    ProcessRunner(config, pipelines, *args, worker=worker, **extra_kargs).run()
 
 
 def instantiate_pipeline(pipeline, config, *args, **kargs):
@@ -55,48 +54,42 @@ class ProcessRunner:
         self.__max_wait_procs = 0
         self.__max_wait_proc = None
 
-    def run(self, progress):
-        local_progress = ProgressTree(len(self.__pipelines), parent=progress)
+    def run(self):
         if self.__worker or self.__n_cpu == 1:
             if self.__worker and len(self.__pipelines) > 1:
                 raise Exception(f'Worker with multiple classes {self.__worker}')
             for pipeline in self.__pipelines:
-                self.__run_local(local_progress, pipeline)
+                self.__run_local(pipeline)
         else:
-            self.__run_commands(local_progress, DependencyQueue(self.__config, self.__pipelines, self.__kargs))
+            self.__run_commands(DependencyQueue(self.__config, self.__pipelines, self.__kargs))
 
-    def __run_local(self, local_progress, pipeline):
+    def __run_local(self, pipeline):
         log.info(f'Running pipeline {pipeline} locally with {self.__kargs}')
-        instance = instantiate_pipeline(pipeline, self.__config, *self.__args,
-                                        id=self.__worker, worker=bool(self.__worker), **self.__kargs)
-        with local_progress.increment_or_complete():
-            instance.run()
+        instantiate_pipeline(pipeline, self.__config, *self.__args,
+                             id=self.__worker, worker=bool(self.__worker), **self.__kargs).run()
 
-    def __run_commands(self, local_progress, queue):
+    def __run_commands(self, queue):
         log.info('Scheduling worker pipelines')
         capacity = max(1, int(self.__n_cpu * self.__load))
         pipelines, popens = {}, []
-        try:
-            while True:
-                try:
-                    pipeline, cmd, log_index = queue.pop()
-                    popen = self.__config.run_process(pipeline.cls, cmd, log_name(pipeline, log_index))
-                    pipelines[popen] = (pipeline, log_index)
-                    popens.append(popen)
-                    if len(popens) == capacity:
-                        popens = self._run_til_next(pipelines, popens, queue)
-                except EmptyException:
-                    if popens:
-                        log.debug('Nothing new to add')
-                        popens = self._run_til_next(pipelines, popens, queue)
-                    else:
-                        log.debug('Done')
-                        queue.shutdown()
-                        log.info(f'Maximum wait {format_seconds(self.__max_wait)} for {self.__max_wait_proc} '
-                                 f'with {self.__max_wait_procs} processes')
-                        return
-        finally:
-            local_progress.complete()
+        while True:
+            try:
+                pipeline, cmd, log_index = queue.pop()
+                popen = self.__config.run_process(pipeline.cls, cmd, log_name(pipeline, log_index))
+                pipelines[popen] = (pipeline, log_index)
+                popens.append(popen)
+                if len(popens) == capacity:
+                    popens = self._run_til_next(pipelines, popens, queue)
+            except EmptyException:
+                if popens:
+                    log.debug('Nothing new to add')
+                    popens = self._run_til_next(pipelines, popens, queue)
+                else:
+                    log.debug('Done')
+                    queue.shutdown()
+                    log.info(f'Maximum wait {format_seconds(self.__max_wait)} for {self.__max_wait_proc} '
+                             f'with {self.__max_wait_procs} processes')
+                    return
 
     def _run_til_next(self, pipelines, popens, queue):
         queue.log()

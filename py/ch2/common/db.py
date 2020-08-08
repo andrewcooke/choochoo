@@ -104,10 +104,9 @@ def backup_schema(config):
                           f'(select * from {quote(cnxn, user)}.{quote(cnxn, table)})')
 
 
-def remove_schema(config, backup=True):
-    if backup:
+def remove_schema(config, previous=True):
+    if previous and config.args[PREVIOUS]:
         backup_schema(config)
-    # todo - will this work with the user?  maybe need to use postgres but connect to this database
     remove(get_cnxn(config), 'schema', config.args[USER], ' cascade')
 
 

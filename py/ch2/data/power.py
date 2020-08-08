@@ -6,6 +6,7 @@ from logging import getLogger
 import numpy as _np
 import scipy as _sp
 from math import pi
+from pandas import to_numeric
 
 import ch2.common.args
 from .frame import median_dt
@@ -79,10 +80,14 @@ def add_power_estimate(df):
     # power input must balance the energy budget.
     df[N.POWER_ESTIMATE] = (df[N.DELTA_ENERGY] + df[N.LOSS]) / df[N.DELTA_TIME].dt.total_seconds()
     df[N.POWER_ESTIMATE].clip(lower=0, inplace=True)
-    if N.CADENCE in df.columns: df.loc[df[N.CADENCE] < 1, [N.POWER_ESTIMATE]] = 0
-    df.loc[df[N.POWER_ESTIMATE].isna(), [N.POWER_ESTIMATE]] = 0
+    if N.CADENCE in df.columns:
+        df.loc[df[N.CADENCE] < 1, [N.POWER_ESTIMATE]] = 0.0
+    if any(df[N.POWER_ESTIMATE].isna()):
+        df.loc[df[N.POWER_ESTIMATE].isna(), [N.POWER_ESTIMATE]] = 0.0
+        # need to coerce because dtype is object
+        df[N.POWER_ESTIMATE] = df[N.POWER_ESTIMATE].apply(to_numeric, errors='coerce')
     energy = (df[N.POWER_ESTIMATE].iloc[1:] * df[N.DELTA_TIME].iloc[1:]).cumsum()
-    df[N.ENERGY] = 0
+    df[N.ENERGY] = 0.0
     df.loc[1:, [N.ENERGY]] = energy
     return df
 

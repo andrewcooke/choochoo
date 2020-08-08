@@ -4,6 +4,7 @@ import datetime as dt
 import time as t
 from calendar import monthrange
 
+import pytz
 
 Y = '%Y'
 YM = '%Y-%m'
@@ -20,11 +21,15 @@ ALL_DATE_FORMATS = ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S.%f',
 
 
 def format_dateq(date):
-    return '"' + date.strftime(YMD) + '"'
+    return '"' + format_date(date) + '"'
 
 
 def format_date(date):
     return date.strftime(YMD)
+
+
+def format_timeq(time):
+    return '"' + format_time(time) + '"'
 
 
 def format_time(time):
@@ -60,17 +65,17 @@ def to_time(value, none=False):
     if none and value is None:
         return None
     if isinstance(value, dt.datetime):
-        return value.replace(tzinfo=dt.timezone.utc)
+        return value.replace(tzinfo=pytz.UTC)
     elif isinstance(value, dt.date):
         raise Exception('Use tz-aware conversion')
     elif isinstance(value, int):
         return local_date_to_time(to_date(value))
     elif isinstance(value, float):
-        return dt.datetime.fromtimestamp(value, dt.timezone.utc)
+        return dt.datetime.fromtimestamp(value, pytz.UTC)
     else:
         for format in ALL_DATE_FORMATS:
             try:
-                return dt.datetime.strptime(value, format).replace(tzinfo=dt.timezone.utc)
+                return dt.datetime.strptime(value, format).replace(tzinfo=pytz.UTC)
             except ValueError:
                 pass
         raise ValueError('Cannot parse "%s" as a datetime' % value)
@@ -149,8 +154,8 @@ def local_date_to_time(date, none=False):
     if none and date is None: return None
     date = to_date(date)
     ptime = p.DateTime(year=date.year, month=date.month, day=date.day,
-                       tzinfo=p.tz.get_local_timezone()).in_timezone(dt.timezone.utc)
-    return dt.datetime(*ptime.timetuple()[:6], tzinfo=dt.timezone.utc)
+                       tzinfo=p.tz.get_local_timezone()).in_timezone(pytz.UTC)
+    return dt.datetime(*ptime.timetuple()[:6], tzinfo=pytz.UTC)
 
 
 def time_to_local_timeq(time, fmt=None, none=False):
@@ -177,7 +182,7 @@ def local_time_to_time(time, none=False):
     for format in ALL_DATE_FORMATS:
         try:
             return dt.datetime.strptime(time, format).replace(
-                tzinfo=p.tz.get_local_timezone()).astimezone(dt.timezone.utc)
+                tzinfo=p.tz.get_local_timezone()).astimezone(pytz.UTC)
         except ValueError:
             pass
     raise ValueError(f'Cannot parse "{time}" as a datetime')
@@ -203,7 +208,7 @@ def local_time_or_now(date):
 
 
 def now():
-    return dt.datetime.now(tz=dt.timezone.utc)
+    return dt.datetime.now(tz=pytz.UTC)
 
 
 def now_local():
@@ -212,7 +217,7 @@ def now_local():
 
 def time_to_local_date(time):
     time = to_time(time)
-    ptime = p.DateTime(*time.timetuple()[:6], tzinfo=dt.timezone.utc).in_timezone(p.tz.get_local_timezone())
+    ptime = p.DateTime(*time.timetuple()[:6], tzinfo=pytz.UTC).in_timezone(p.tz.get_local_timezone())
     return dt.date(year=ptime.year, month=ptime.month, day=ptime.day)
 
 

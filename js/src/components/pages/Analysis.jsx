@@ -45,24 +45,16 @@ export default function Analysis(props) {
 
     const {history} = props;
     const [params, setParams] = useState(null);
-    const busyState = useState(null);
     const errorState = useState(null);
     const [error, setError] = errorState;
-    const [reads, setReads] = useState(0);
-
-    function reload() {
-        setReads(reads + 1);
-    }
 
     useEffect(() => {
         setParams(null);
         fetch('/api/analysis/parameters')
-            .then(handleJson(history, setParams, setError, busyState));
+            .then(handleJson(history, setParams, setError));
     }, [reads]);
 
     return (
-        <Layout title='Analysis'
-                content={<Columns params={params}/>}
-                reload={reload} busyState={busyState} errorState={errorState}/>
+        <Layout title='Analysis' content={<Columns params={params}/>} errorState={errorState}/>
     );
 }

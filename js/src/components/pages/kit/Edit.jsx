@@ -203,7 +203,6 @@ export default function Edit(props) {
     const {history} = props;
     const [groups, setGroups] = useState(null);
     const [edits, setEdits] = useState(0);
-    const busyState = useState(null);
     const errorState = useState(null);
     const [error, setError] = errorState;
 
@@ -214,12 +213,11 @@ export default function Edit(props) {
     useEffect(() => {
         setGroups(null);
         fetch('/api/kit/edit')
-            .then(handleJson(history, setGroups, setError, busyState));
+            .then(handleJson(history, setGroups, setError));
     }, [edits]);
 
     return (
         <Layout title='Edit Kit'
-                content={<Columns groups={groups} reload={reload}/>}
-                reload={reload} busyState={busyState} errorState={errorState}/>
+                content={<Columns groups={groups} reload={reload}/>} errorState={errorState}/>
     );
 }

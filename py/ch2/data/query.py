@@ -1,8 +1,9 @@
-
 from logging import getLogger
+import datetime as dt
 
 import numpy as np
 import pandas as pd
+import pytz
 from sqlalchemy import asc, desc, distinct
 from sqlalchemy.orm import aliased
 
@@ -302,7 +303,9 @@ def std_health_statistics(s, freq='1h'):
         order_by(asc(StatisticJournal.time)).limit(1).scalar()
     finish = s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
 
-    stats = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq=freq))
+    # convert to UTC because we may have postgres timezones (at UTC, but incompatible)
+    stats = pd.DataFrame(index=pd.date_range(start=start.replace(tzinfo=pytz.UTC),
+                                             end=finish.replace(tzinfo=pytz.UTC), freq=freq))
     set_times_from_index(stats)
 
     stats = Statistics(s). \
@@ -371,7 +374,7 @@ if __name__ == '__main__':
     s = session('-v5')
 
     with timing('select'):
-        # df = std_health_statistics(s)
+        df = std_health_statistics(s)
         # df = std_activity_statistics(s, '2020-05-15', 'road')
         # df = Statistics(s).like(N.CLIMB_ANY, owner=ActivityCalculator).from_(activity_journal='2020-05-15').by_group().df
         # df = Statistics(s).for_(N.ACTIVE_DISTANCE, owner=ActivityCalculator).by_group()
@@ -380,12 +383,12 @@ if __name__ == '__main__':
         # acc = Accumulator(s, with_source=True)
         # acc.by_name(ActivityCalculator, N.CLIMB_ANY, like=True)
         # df = acc.df
-        df = Statistics(s). \
-            by_name(ActivityTopic, N.NAME). \
-            by_name(ActivityCalculator, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB).with_. \
-            copy({N.ACTIVE_DISTANCE: N.ACTIVE_DISTANCE_KM}).add_times().df
-        print(df.describe())
-        df['Duration'] = df[N.ACTIVE_TIME].map(format_seconds)
+        # df = Statistics(s). \
+        #     by_name(ActivityTopic, N.NAME). \
+        #     by_name(ActivityCalculator, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB).with_. \
+        #     copy({N.ACTIVE_DISTANCE: N.ACTIVE_DISTANCE_KM}).add_times().df
+        # print(df.describe())
+        # df['Duration'] = df[N.ACTIVE_TIME].map(format_seconds)
 
     print(df)
     print(df.describe())

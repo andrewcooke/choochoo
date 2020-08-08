@@ -46,7 +46,6 @@ class JupyterController(BaseController):
         args = config.args
         self.__proxy_bind = self.__proxy_args(args, BIND, self._bind)
         self.__proxy_port = self.__proxy_args(args, PORT, self._port)
-        self.__notebook_dir = args[NOTEBOOK_DIR] if NOTEBOOK_DIR in args else None
 
     @staticmethod
     def __proxy_args(args, name, default):
@@ -63,10 +62,10 @@ class JupyterController(BaseController):
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'jupyter-service.log'
-        cmd = f'{ch2} {mm(VERBOSITY)} 5 {mm(LOG)} {log_name} {mm(BASE)} {self._config.args[BASE]} ' \
-              f'{JUPYTER} {SERVICE} {mm(JUPYTER + "-" + BIND)} {self._bind} {mm(JUPYTER + "-" + PORT)} {self._port} ' \
-              f'{mm(NOTEBOOK_DIR)} {self.__notebook_dir}'
-        if self.__proxy_bind: cmd += f' {mm(PROXY + "-" + BIND)} {self.__proxy_bind}'
+        cmd = f'{ch2} {mm(VERBOSITY)} 5 {mm(LOG)} "{log_name}" {mm(BASE)} "{self._config.args[BASE]}" ' \
+              f'{JUPYTER} {SERVICE} {mm(JUPYTER + "-" + BIND)} "{self._bind}" {mm(JUPYTER + "-" + PORT)} {self._port} ' \
+              f'{mm(NOTEBOOK_DIR)} "{self._config.args[NOTEBOOK_DIR]}"'
+        if self.__proxy_bind: cmd += f' {mm(PROXY + "-" + BIND)} "{self.__proxy_bind}"'
         if self.__proxy_port: cmd += f' {mm(PROXY + "-" + PORT)} {self.__proxy_port}'
         return cmd, log_name
 

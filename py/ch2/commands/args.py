@@ -154,6 +154,7 @@ PATH = 'path'
 PATTERN = 'pattern'
 PERMANENT = 'permanent'
 PLAN = 'plan'
+PREVIOUS = 'previous'
 PRINT = 'print'
 PROCESS = 'process'
 PROFILE = 'profile'
@@ -396,6 +397,7 @@ def make_parser(with_noop=False):
                                               description='internal use only - use start/stop')
     add_server_args(jupyter_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
     add_server_args(jupyter_service, prefix=PROXY, default_port=None, default_address=None)
+    add_notebook_dir(jupyter_service)
 
     kit = commands.add_parser(KIT, help='manage kit',
                                 description='add, remove, modify and display kit details')
@@ -455,15 +457,17 @@ def make_parser(with_noop=False):
     db_add_item.add_parser(USER, help='add a user (once per cluster)')
     db_add_item.add_parser(DATABASE, help='add a database (for each version in a cluster)')
     db_add_profile = db_add_item.add_parser(PROFILE, help='add a profile (for each user and version)')
-    db_add_schema_profiles = db_add_profile.add_subparsers(title='profile', dest=PROFILE, required=True)
+    db_add_profile_profiles = db_add_profile.add_subparsers(title='profile', dest=PROFILE, required=True)
     from ..config.profile import get_profiles
     for name in get_profiles():
-        db_add_schema_profiles.add_parser(name)
+        db_add_profile_profiles.add_parser(name)
     db_remove = db_cmds.add_parser(REMOVE, help='reduce current configuration')
     db_remove_item = db_remove.add_subparsers(title='item to remove', dest=ITEM, required=True)
     db_remove_item.add_parser(USER, help='remove a user')
     db_remove_item.add_parser(DATABASE, help='remove a database')
-    db_remove_item.add_parser(SCHEMA, help='remove a schema')
+    db_remove_schema = db_remove_item.add_parser(SCHEMA, help='remove a schema')
+    db_remove_schema.add_argument(mm(no(PREVIOUS)), dest=PREVIOUS, action='store_false',
+                                  help='do not create a :previous copy')
 
     import_ = commands.add_parser(IMPORT, help='import data from a previous version')
     import_.add_argument(SOURCE, nargs='?',

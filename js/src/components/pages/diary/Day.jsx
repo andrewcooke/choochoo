@@ -14,7 +14,7 @@ import {
     ValueField
 } from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
-import {Thumbnail, Layout} from "../../elements";
+import {Thumbnail, Layout, BusyWarning} from "../../elements";
 import {ColumnCard, ColumnList, LinkButton, Loading, Text} from "../../../common/elements";
 import {handleJson} from "../../functions";
 import {parse} from "date-fns";
@@ -173,13 +173,14 @@ function TopLevelPaper(props) {
 
 function Content(props) {
 
-    const {writer, json, history} = props;
+    const {writer, json, history, setError} = props;
 
     if (json === null) {
         return <Loading/>;  // undefined initial data
     } else {
         // drop outer date label since we already have that in the page
         return (<ColumnList>
+            <BusyWarning setError={setError}/>
             {json.slice(1).map((row, i) => <TopLevelPaper writer={writer} json={row} history={history} key={i}/>)}
         </ColumnList>);
     }
@@ -190,26 +191,19 @@ export default function Day(props) {
 
     const {match, history, writer} = props;
     const {date} = match.params;
-    const datetime = parse(date, FMT_DAY, new Date());
     const [json, setJson] = useState(null);
-    const busyState = useState(null);
     const errorState = useState(null);
     const [error, setError] = errorState;
-    const [reads, setReads] = useState(0);
-
-    function reload() {
-        setReads(reads + 1);
-    }
 
     useEffect(() => {
         setJson(null);
         fetch('/api/diary/' + date)
-            .then(handleJson(history, setJson, setError, busyState));
-    }, [date, reads]);
+            .then(handleJson(history, setJson, setError));
+    }, [date]);
 
     return (
         <Layout title={`Diary: ${date}`}
-                content={<Content writer={writer} json={json} history={history}/>}
-                reload={reload} busyState={busyState} errorState={errorState}/>
+                content={<Content writer={writer} json={json} history={history} setError={setError}/>}
+                errorState={errorState}/>
     );
 }

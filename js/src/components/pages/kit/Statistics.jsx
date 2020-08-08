@@ -65,24 +65,17 @@ export default function Statistics(props) {
 
     const {history} = props;
     const [components, setComponents] = useState(null);
-    const busyState = useState(null);
     const errorState = useState(null);
     const [error, setError] = errorState;
-    const [reads, setReads] = useState(0);
-
-    function reload() {
-        setReads(reads + 1);
-    }
 
     useEffect(() => {
         setComponents(null);
         fetch('/api/kit/statistics')
-            .then(handleJson(history, setComponents, setError, busyState));
-    }, [reads]);
+            .then(handleJson(history, setComponents, setError));
+    });
 
     return (
         <Layout title='Kit Statistics'
-                content={<Columns components={components}/>}
-                reload={reload} busyState={busyState} errorState={errorState}/>
+                content={<Columns components={components}/>} errorState={errorState}/>
     );
 }

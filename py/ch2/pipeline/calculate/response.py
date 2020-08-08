@@ -3,6 +3,7 @@ from collections import namedtuple
 from json import loads
 from logging import getLogger
 
+import pytz
 from math import log10
 from sqlalchemy import distinct
 from sqlalchemy.sql.functions import count
@@ -10,7 +11,7 @@ from sqlalchemy.sql.functions import count
 from .utils import ProcessCalculator
 from ..pipeline import LoaderMixin, OwnerInMixin
 from ..read.segment import SegmentReader
-from ...common.date import round_hour, to_time, now, format_time
+from ...common.date import round_hour, to_time, now, format_timeq
 from ...common.math import is_nan
 from ...common.names import TIME_ZERO
 from ...data import Statistics, present
@@ -72,7 +73,7 @@ class ResponseCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
         # clean out any gaps by unzipping the chained composites
         Composite.clean(s)
         # range we expect data for
-        finish = round_hour(dt.datetime.now(tz=dt.timezone.utc), up=True)
+        finish = round_hour(dt.datetime.now(tz=pytz.UTC), up=True)
         missing_sources = self.__missing_sources(s)
         missing_recent = any(self.__missing_recent(s, constant.short_name, finish)
                              for constant in self.response_constants)
@@ -81,7 +82,7 @@ class ResponseCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
             if missing_sources: log.info('Additional sources (so will re-calculate)')
             self._delete(s)
             start = round_hour(self.__start(s), up=False)
-            return [format_time(start)]
+            return [format_timeq(start)]
         else:
             return []
 
@@ -113,10 +114,10 @@ class ResponseCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
             join(StatisticName). \
             filter(StatisticName.owner == self.owner_out,
                    Source.type == SourceType.ACTIVITY)
-        n_avaialble = available.scalar()
+        n_available = available.scalar()
         n_used = used.scalar()
-        log.debug(f'Using {n_used} of {n_avaialble} sources')
-        return n_used != n_avaialble
+        log.debug(f'Using {n_used} of {n_available} sources')
+        return n_used != n_available
 
     def __start(self, s):
         # avoid constants defined at time 0
@@ -139,10 +140,10 @@ class ResponseCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
                 for constant, response in zip(self.response_constants, self.responses):
                     name = self.prefix + SPACE + constant.short_name
                     log.info(f'Creating values for {response.title} ({name})')
-                    hr3600 = sum_to_hour(data, SCALED)
+                    imp3600 = sum_to_hour(data, SCALED)
                     params = (log10(response.tau_days * 24),
                               log10(response.start) if response.start > 0 else 1)
-                    result = calc_response(hr3600, params) * response.scale
+                    result = calc_response(imp3600, params) * response.scale
                     loader = self._get_loader(s, add_serial=False)
                     source, sources = None, list(all_sources)
                     for time, value in result.iteritems():

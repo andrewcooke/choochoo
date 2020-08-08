@@ -3,14 +3,13 @@ from logging import getLogger
 from os import makedirs
 from os.path import basename, join, exists, dirname
 
-from ..commands.args import KIT, PATH, DATA, UPLOAD, PROCESS, FORCE, CPROFILE
+from ..commands.args import KIT, PATH, DATA, UPLOAD, PROCESS, CPROFILE
 from ..common.date import time_to_local_time, Y, YMDTHMS
 from ..common.io import touch, clean_path, data_hash
 from ..common.log import log_current_exception
 from ..lib.io import split_fit_path
 from ..lib.log import Record
 from ..lib.utils import timing
-from ..lib.workers import ProgressTree
 from ..pipeline.process import run_pipeline
 from ..pipeline.read.utils import AbortImportButMarkScanned
 from ..sql import KitItem, FileHash, PipelineType
@@ -52,9 +51,8 @@ will store the given file, add activity data to the database (associated with th
 new monitor data, and update statistics.
     '''
     args = config.args
-    nfiles, files = open_files(args[PATH])
     with timing(UPLOAD):
-        upload_files(Record(log), config, files=files, nfiles=nfiles, items=args[KIT])
+        upload_files(Record(log), config, files=open_files(args[PATH]), items=args[KIT])
         if args[PROCESS]:
             run_pipeline(config, PipelineType.PROCESS, cprofile=args[CPROFILE])
 
@@ -64,22 +62,16 @@ class SkipFile(Exception):
 
 
 def open_files(paths):
-    # converts a list of paths to a map of file names to file dicts with open streams
-    n = len(paths)
-
-    def files():
-        # use an iterator here to avoid opening too many files at once
-        for path in paths:
-            path = clean_path(path)
-            if exists(path):
-                name = basename(path)
-                log.debug(f'Reading {path}')
-                stream = open(path, 'rb')
-                yield {STREAM: stream, NAME: name, READ_PATH: path}
-            else:
-                raise Exception(f'No file at {path}')
-
-    return n, files()
+    # use an iterator here to avoid opening too many files at once
+    for path in paths:
+        path = clean_path(path)
+        if exists(path):
+            name = basename(path)
+            log.debug(f'Reading {path}')
+            stream = open(path, 'rb')
+            yield {STREAM: stream, NAME: name, READ_PATH: path}
+        else:
+            raise Exception(f'No file at {path}')
 
 
 def check_items(s, items):
@@ -176,25 +168,19 @@ def write_file(file):
         raise Exception(f'Could not save {file[NAME]}')
 
 
-def upload_files(record, data, files=tuple(), nfiles=1, items=tuple(), progress=None):
-    try:
-        local_progress = ProgressTree(len(files), parent=progress)
-    except TypeError:
-        local_progress = ProgressTree(nfiles, parent=progress)
+def upload_files(record, data, files=tuple(), items=tuple()):
     with record.record_exceptions():
         with data.db.session_context() as s:
             data_dir = data.args._format_path(DATA)
             check_items(s, items)
             for file in files:
-                with local_progress.increment_or_complete():
-                    try:
-                        read_file(file)
-                        hash_file(file)
-                        parse_fit_data(file, items=items)
-                        build_path(data_dir, file)
-                        check_file(s, file)
-                        write_file(file)
-                        record.info(f'Uploaded {file[NAME]} to {file[WRITE_PATH]}')
-                    except SkipFile as e:
-                        record.warning(e)
-            local_progress.complete()  # catch no files case
+                try:
+                    read_file(file)
+                    hash_file(file)
+                    parse_fit_data(file, items=items)
+                    build_path(data_dir, file)
+                    check_file(s, file)
+                    write_file(file)
+                    record.info(f'Uploaded {file[NAME]} to {file[WRITE_PATH]}')
+                except SkipFile as e:
+                    record.warning(e)

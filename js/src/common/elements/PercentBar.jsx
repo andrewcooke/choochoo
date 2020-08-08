@@ -32,7 +32,7 @@ export default function PercentBar(props) {
     const text = label ? label : percent.toFixed(0) + ' %';
     const finalWidth = fraction === undefined ? sprintf('%d', width + 1) : sprintf('%d%%', 100 * fraction);
 
-    return (<svg width={finalWidth} height={0} className={classes.svg}>
+    return (<svg width={finalWidth} height={height} className={classes.svg}>
         <g transform='translate(0.5, -15.5)'>
             <rect width='100%' height={height} className={classes.barBackground}/>
             <rect width={sprintf('%d%%', percent)} height={height} className={classes.barForeground}/>

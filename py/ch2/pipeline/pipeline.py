@@ -5,13 +5,13 @@ from logging import getLogger
 from sqlalchemy.sql.functions import count
 
 from .loader import Loader
-from ..commands.args import LOG, WORKER, DEV, PROCESS, FORCE, CPROFILE
+from ..commands.args import LOG, WORKER, DEV, PROCESS, CPROFILE
 from ..common.args import mm
 from ..common.global_ import global_dev
 from ..common.names import BASE, UNDEF
 from ..common.names import VERBOSITY, URI
 from ..lib.utils import timing
-from ..lib.workers import ProgressTree, command_root
+from ..lib.workers import command_root
 from ..sql import Pipeline, Interval, PipelineType, StatisticJournal, StatisticName
 from ..sql.types import short_cls
 
@@ -25,12 +25,11 @@ def count_statistics(s):
     return s.query(count(StatisticJournal.id)).scalar()
 
 
-def run_pipeline(config, type, like=tuple(), progress=None, worker=None, **extra_kargs):
+def run_pipeline(config, type, like=tuple(), worker=None, **extra_kargs):
     with config.db.session_context() as s:
         if not worker:
             if type == PipelineType.PROCESS:
                 Interval.clean(s)
-        local_progress = ProgressTree(Pipeline.count(s, type, like=like, id=worker), parent=progress)
         for pipeline in Pipeline.all(s, type, like=like, id=worker):
             kargs = dict(pipeline.kargs)
             kargs.update(extra_kargs)
@@ -39,7 +38,7 @@ def run_pipeline(config, type, like=tuple(), progress=None, worker=None, **extra
             log.debug(f'Running {pipeline}({kargs})')
             with timing(msg):
                 before = None if id else count_statistics(s)
-                pipeline.cls(config, id=pipeline.id, worker=bool(worker), progress=local_progress, **kargs).run()
+                pipeline.cls(config, id=pipeline.id, worker=bool(worker), **kargs).run()
                 after = None if id else count_statistics(s)
             if before or after:
                 log.info(f'{msg}: statistic count {before} -> {after} (change of {after - before})')
@@ -76,12 +75,11 @@ class ProcessPipeline(BasePipeline):
     In this way startup and shutdown bracket the entire process and are done just once.
     '''
 
-    def __init__(self, config, *args, owner_out=None, progress=None, worker=None, id=None, cprofile=None,
+    def __init__(self, config, *args, owner_out=None, worker=None, id=None, cprofile=None,
                  **kargs):
         self.__args = args
         self._config = config
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
-        self._progress = progress
         self.worker = worker
         self.id = id
         self.cprofile = cprofile
@@ -126,14 +124,9 @@ class ProcessPipeline(BasePipeline):
             missing = self.__args
         else:
             missing = [missed.strip('"') for missed in self.missing()]  # will call delete if forced
-        local_progress = ProgressTree(len(missing), parent=self._progress)
-        try:
-            for missed in missing:
-                self._run_one(missed)
-                local_progress.increment()
-            self.shutdown()
-        finally:
-            local_progress.complete()
+        for missed in missing:
+            self._run_one(missed)
+        self.shutdown()
 
     def _run_one(self, missed):
         # this should accept strings

@@ -1,4 +1,5 @@
 from logging import getLogger
+from re import compile
 
 import numpy as np
 import pandas as pd

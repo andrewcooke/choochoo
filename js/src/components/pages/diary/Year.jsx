@@ -12,24 +12,18 @@ export default function Year(props) {
     const {date} = match.params;
     const datetime = parse(date, FMT_YEAR, new Date());
     const [json, setJson] = useState(null);
-    const busyState = useState(null);
     const errorState = useState(null);
     const [error, setError] = errorState;
-    const [reads, setReads] = useState(0);
-
-    function reload() {
-        setReads(reads + 1);
-    }
 
     useEffect(() => {
         setJson(null);
         fetch('/api/diary/' + date)
-            .then(handleJson(history, setJson, setError, busyState));
-    }, [`${date} ${reads}`]);
+            .then(handleJson(history, setJson, setError));
+    }, [date]);
 
     return (
         <Layout title={`Diary: ${date}`}
-                content={<Schedule json={json} history={history} start={datetime} ymdSelected={0}/>}
-                reload={reload} busyState={busyState} errorState={errorState}/>
+                content={<Schedule json={json} history={history} start={datetime} ymdSelected={0} setError={setError}/>}
+                errorState={errorState}/>
     );
 }

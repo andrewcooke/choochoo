@@ -110,7 +110,7 @@ function Field(props) {
 
 export default function Schedule(props) {
 
-    const {json, history, start, ymdSelected} = props;
+    const {json, history, start, ymdSelected, setError} = props;
 
     let finish;
     if (ymdSelected === 0) {
@@ -125,6 +125,7 @@ export default function Schedule(props) {
     } else {
         // drop outer date label since we already have that in the page
         return (<ColumnList>
+            <BuyWarning setError={setError}/>
             <SearchResults query={query}/>
             {json.slice(1).map((row, i) => <TopLevelPaper json={row} history={history} key={i}/>)}
         </ColumnList>);

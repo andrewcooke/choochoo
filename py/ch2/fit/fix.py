@@ -2,6 +2,8 @@
 import datetime as dt
 from logging import getLogger
 
+import pytz
+
 from .format.tokens import FileHeader, token_factory, Checksum, State
 from .profile.profile import read_profile
 from ..commands.args import ADD_HEADER, HEADER_SIZE, PROFILE_VERSION, PROTOCOL_VERSION, MIN_SYNC_CNT, \
@@ -262,7 +264,7 @@ def validate_data(data, state, warn=False, force=True):
                 record.force()
             offset += len(token)
         log.info('Last timestamp:  %s' % state.timestamp)
-        if state.timestamp > dt.datetime.now(tz=dt.timezone.utc):
+        if state.timestamp > dt.datetime.now(tz=pytz.UTC):
             log.warning('Timestamp in future')
         checksum = Checksum(data[offset:])
         checksum.validate(data, log)

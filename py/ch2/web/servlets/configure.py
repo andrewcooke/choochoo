@@ -3,11 +3,12 @@ from logging import getLogger
 
 from sqlalchemy import exists
 
-from ...commands.args import DB_VERSION
+from ..worker import run_and_wait
+from ...commands.args import DB_VERSION, REMOVE, SCHEMA
 from ...commands.db import add_profile, remove_schema
 from ...commands.import_ import import_source
 from ...common.md import HTML, parse, P, LI, PRE, filter_
-from ...common.names import BASE
+from ...common.names import BASE, DB, WEB
 from ...config.profile import get_profiles
 from ...import_ import available_versions
 from ...import_.activity import activity_imported
@@ -72,7 +73,8 @@ class Configure:
         self.__config.reset()
 
     def delete(self, request, s):
-        remove_schema(self.__config)
+        # run this as a sub-command so that the user sees that process are running if they try to multi-task
+        run_and_wait(self.__config, f'{DB} {REMOVE} {SCHEMA}', Configure, f'{WEB}-{DB}.log')
         self.__config.reset()
 
     def read_import(self, request, s):

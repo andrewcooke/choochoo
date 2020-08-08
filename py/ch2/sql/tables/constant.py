@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from json import dumps, loads
 from logging import getLogger
 
+import pytz
 from sqlalchemy import Column, Integer, ForeignKey, Boolean, desc
 from sqlalchemy.orm import relationship
 
@@ -63,7 +64,7 @@ class Constant(Source):
         if date:
             time = local_date_to_time(date)
         if not time:
-            time = dt.datetime.now(tz=dt.timezone.utc)
+            time = dt.datetime.now(tz=pytz.UTC)
         return s.query(StatisticJournal). \
             filter(StatisticJournal.statistic_name == self.statistic_name,
                    StatisticJournal.time <= time,

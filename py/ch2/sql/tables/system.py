@@ -3,10 +3,10 @@ from os import getpid
 from time import time, sleep
 
 import psutil as ps
-from sqlalchemy import Column, Text, Integer, DateTime
+from sqlalchemy import Column, Text, Integer, DateTime, distinct
 
 from ..support import Base
-from ..types import ShortCls, Name
+from ..types import ShortCls, Name, short_cls
 from ..utils import add
 from ...common.date import to_time
 from ...lib import now
@@ -97,11 +97,19 @@ class Process(Base):
         s.commit()
 
     @classmethod
-    def exists_any(cls, s, owner):
-        for process in s.query(Process).filter(Process.owner == owner).all():
-            if process.__still_running():
-                return True
-        cls.delete_all(s, owner)
+    def exists_any(cls, s, owner=None, excluding=None):
+        if owner:
+            owners = [short_cls(owner)]
+        else:
+            owners = [row[0] for row in s.query(distinct(Process.owner)).all()]
+        owners = set(owners)
+        if excluding:
+            owners = owners.difference(short_cls(exc) for exc in excluding)
+        for owner in owners:
+            for process in s.query(Process).filter(Process.owner == owner).all():
+                if process.__still_running():
+                    return True
+            cls.delete_all(s, owner)
         return False
 
     def __still_running(self, delta_seconds=3):
@@ -116,7 +124,7 @@ class Process(Base):
 # if we're given a delta time, the start time of the process and database records have to match
 # (or it's some other unrelated process because the process counter wrapped round)
 # if they don't match we return false because the original process is not running.
-def exists(pid, time, delta_seconds=3, zombie_seconds=10):
+def exists(pid, start_time, delta_seconds=3, zombie_seconds=10):
     if not ps.pid_exists(pid):
         return False
     process = ps.Process(pid)
@@ -128,94 +136,14 @@ def exists(pid, time, delta_seconds=3, zombie_seconds=10):
             log.debug(f'Timeout waiting for zombie {pid}')
         return False
     elif delta_seconds:
-        creation_ok = abs(process.create_time() - time.timestamp()) < delta_seconds
+        creation_ok = abs(process.create_time() - start_time.timestamp()) < delta_seconds
         if creation_ok:
             log.debug(f'Process {pid} still exists')
         else:
-            log.debug(f'Creation time for process {pid} incorrect ({process.create_time()} / {time.timestamp()})')
+            log.debug(f'Creation time for process {pid} incorrect ({process.create_time()} / {start_time.timestamp()})')
         return creation_ok
     else:
         log.debug(f'Assuming process {pid} is same as expected')
         return True   # if delta_seconds = 0 don't check, just assume same
 
 
-class Progress(Base):
-
-    __tablename__ = 'progress'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(Name, nullable=False, unique=True)
-    pid = Column(Integer, nullable=False, index=True)
-    start = Column(DateTime(timezone=True), nullable=False)
-    percent = Column(Integer, nullable=False, default=0)
-    error = Column(Text, nullable=True)
-
-    def __str__(self):
-        return f'Progress {self.name} / {self.pid}'
-
-    @classmethod
-    def create(cls, s, name, delta_seconds=3):
-        progress = s.query(Progress).filter(Progress.name == name).one_or_none()
-        if progress:
-            if progress.percent != 100 and exists(progress.pid, progress.start, delta_seconds=delta_seconds):
-                raise Exception(f'Progress {name} already exists (PID {progress.pid})')
-            else:
-                log.debug(f'Removing old progress {name} / {progress.pid}')
-                s.delete(progress)
-                s.commit()
-        us = ps.Process(getpid())
-        add(s, Progress(name=name, pid=us.pid, start=to_time(us.create_time())))
-
-    @classmethod
-    def update(cls, s, name, **kargs):
-        progress = s.query(Progress).filter(Progress.name == name, Progress.pid == getpid()).one_or_none()
-        if not progress:
-            raise Exception(f'No existing progress for {name} / {getpid()}')
-        for name in kargs:
-            value = kargs[name]
-            log.debug(f'Setting progress {name}={value}')
-            if hasattr(progress, name):
-                setattr(progress, name, value)
-            else:
-                raise AttributeError(name)
-
-    @classmethod
-    def remove(cls, s, name):
-        s.query(Progress).filter(Progress.name == name).delete()
-
-    @classmethod
-    def get_percent(cls, s, name, delta_seconds=3):
-        progress = s.query(Progress).filter(Progress.name == name).one_or_none()
-        if progress is None or not exists(progress.pid, progress.start, delta_seconds=delta_seconds):
-            log.debug(f'No percent for {name}')
-            return None
-        else:
-            log.debug(f'Progress for {name} is {progress.percent}%')
-            return progress.percent
-
-    @classmethod
-    def wait_for_progress(cls, s, name, timeout=60, delta_seconds=3, pause=1):
-
-        def pid(progress):
-            if progress:
-                pid = progress.pid
-                s.expire(progress)
-                return pid
-
-        log.debug(f'Waiting for progress {name}')
-        start = now()
-        initial = s.query(Progress).filter(Progress.name == name).one_or_none()
-        log.debug(f'Initial progress: {initial}')
-        if initial and exists(initial.pid, initial.start, delta_seconds=delta_seconds):
-            return
-
-        # use PIDs so that we don't need to worry about expired objects
-        initial = pid(initial)
-        while True:
-            sleep(pause)
-            current = pid(s.query(Progress).filter(Progress.name == name).one_or_none())
-            log.debug(f'Waiting for PID - comparing {initial} and {current}')
-            if current != initial:
-                return
-            elif (now() - start).total_seconds() >= timeout:
-                raise Exception(f'Did not find progress {name} before {timeout}s')

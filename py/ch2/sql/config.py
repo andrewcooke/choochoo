@@ -2,7 +2,6 @@ from contextlib import contextmanager
 from logging import getLogger
 
 from .database import SystemConstant, Process, Database
-from .tables.system import Progress
 from ..commands.args import DB_VERSION, UNDEF
 from ..common.config import BaseConfig
 from ..common.log import first_line
@@ -53,30 +52,9 @@ class Config(BaseConfig):
             with self.db.session_context() as s:
                 Process.delete_all(s, owner, delta_seconds=delta_seconds)
 
-    def exists_any_process(self, owner):
+    def exists_any_process(self, owner=None, excluding=None):
         with self.db.session_context() as s:
-            return Process.exists_any(s, owner)
-
-    def create_progress(self, name, delta_seconds=3):
-        with self.db.session_context() as s:
-            Progress.create(s, name, delta_seconds=delta_seconds)
-
-    def update_progress(self, name, **kargs):
-        with self.db.session_context() as s:
-            Progress.update(s, name, **kargs)
-
-    def remove_progress(self, name):
-        with self.db.session_context() as s:
-            Progress.remove(s, name)
-
-    def get_percent(self, name, default=UNDEF):
-        with self.default(default):
-            with self.db.session_context() as s:
-                return Progress.get_percent(s, name)
-
-    def wait_for_progress(self, name, timeout=60):
-        with self.db.session_context() as s:
-            return Progress.wait_for_progress(s, name, timeout=timeout)
+            return Process.exists_any(s, owner=owner, excluding=excluding)
 
     @contextmanager
     def default(self, value=UNDEF):

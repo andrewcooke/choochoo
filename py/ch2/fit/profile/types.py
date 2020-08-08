@@ -5,6 +5,8 @@ from collections import namedtuple
 from re import compile
 from struct import unpack, pack
 
+import pytz
+
 from .support import Named, Rows
 from ...lib.data import WarnDict, WarnList
 
@@ -236,11 +238,11 @@ class AliasInteger(AutoInteger):
         self.name = name
 
 
-def timestamp_to_time(timestamp, tzinfo=dt.timezone.utc):
+def timestamp_to_time(timestamp, tzinfo=pytz.UTC):
     return dt.datetime(1989, 12, 31, tzinfo=tzinfo) + dt.timedelta(seconds=timestamp)
 
 
-def time_to_timestamp(time, tzinfo=dt.timezone.utc):
+def time_to_timestamp(time, tzinfo=pytz.UTC):
     return int((time - dt.datetime(1989, 12, 31, tzinfo=tzinfo)).total_seconds())
 
 
@@ -251,9 +253,9 @@ class Date(AliasInteger):
 
     def __init__(self, log, name, utc=True):
         super().__init__(log, name, 'uint32')
-        self.__tzinfo = dt.timezone.utc if utc else None
+        self.__tzinfo = pytz.UTC if utc else None
 
-    def convert(self, time, tzinfo=dt.timezone.utc):
+    def convert(self, time, tzinfo=pytz.UTC):
         if time is not None:
             return timestamp_to_time(time, tzinfo=tzinfo)
 
@@ -296,9 +298,9 @@ class Date16(AliasInteger):
 
     def __init__(self, log, name, utc=True):
         super().__init__(log, name, 'uint16')
-        self.__tzinfo = dt.timezone.utc if utc else None
+        self.__tzinfo = pytz.UTC if utc else None
 
-    def convert(self, time, timestamp, tzinfo=dt.timezone.utc):
+    def convert(self, time, timestamp, tzinfo=pytz.UTC):
         current = time_to_timestamp(timestamp, tzinfo=tzinfo)
         delta = time - (current & 0xffff)
         if delta < 0 and abs(delta) < 0x8000:

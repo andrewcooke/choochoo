@@ -1,30 +1,18 @@
 import React, {useEffect, useState} from 'react';
 import {Grid, Link} from "@material-ui/core";
-import {ColumnCard, ColumnList, P} from "../../common/elements";
-import {Layout} from "../elements";
+import {ColumnCard, ColumnList, P, Warning} from "../../common/elements";
+import {BusyWarning, Layout} from "../elements";
 import handleJson from "../functions/handleJson";
 import {useHistory} from "react-router-dom";
-import {makeStyles} from "@material-ui/styles";
 
 
-const useStyles = makeStyles(theme => ({
-    warning: {
-        background: theme.palette.secondary.dark,
-        paddingBottom: '0px',
-    },
-}));
-
-
-function Warning(props) {
+function ConfigWarning(props) {
 
     const {warning} = props;
-    const classes = useStyles();
+    const extra = (<P>For more information on how to configure docker see&nbsp;
+            <Link href='https://andrewcooke.github.io/choochoo/docker'>here</Link>.</P>);
 
-    return (<ColumnCard header={warning.title} className={classes.warning}><Grid item xs={12}>
-        <P>{warning.text}</P>
-        <P>For more information on how to configure docker see&nbsp;
-            <Link href='https://andrewcooke.github.io/choochoo/docker'>here</Link>.</P>
-    </Grid></ColumnCard>);
+    return <Warning title={warning.title} warning={warning.text} extra={extra}/>;
 }
 
 
@@ -38,7 +26,7 @@ function Warnings(props) {
         fetch('/api/warnings').then(handleJson(history, setWarnings, setError));
     }, [1]);
 
-    return warnings.map((warning, i) => <Warning warning={warning} key={i}/>);
+    return warnings.map((warning, i) => <ConfigWarning warning={warning} key={i}/>);
 }
 
 
@@ -58,6 +46,7 @@ export default function Welcome(props) {
                 href='https://github.com/andrewcooke/choochoo/issues'>here</Link>.</P>
         </Grid></ColumnCard>
         <Warnings setError={setError}/>
+        <BusyWarning setError={setError}/>
     </ColumnList>);
 
     return (

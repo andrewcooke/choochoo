@@ -11,7 +11,6 @@ const useStyles = makeStyles(theme => ({
             // get the widest display possible on a phone, single column
             padding: theme.spacing(1),
         },
-        // 
         display: 'inline-block',
     },
     align: {
@@ -33,7 +32,9 @@ export function ColumnCardBase(props) {
 
 
 export default function ColumnCard(props) {
+
     const {header = null, variant, children, className} = props;
+
     return (<ColumnCardBase variant={variant} className={className}
         header={header !== null ? <Typography variant='h2'>{header}</Typography> : header}>
         {children}
