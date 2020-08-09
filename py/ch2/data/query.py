@@ -298,8 +298,9 @@ def std_health_statistics(s, freq='1h'):
 
     from ..pipeline.owners import RestHRCalculator, ResponseCalculator, ActivityCalculator, StepsCalculator
 
+    # 2 days to skip constants etc with time zones
     start = s.query(StatisticJournal.time). \
-        filter(StatisticJournal.time > TIME_ZERO). \
+        filter(StatisticJournal.time > TIME_ZERO + dt.timedelta(days=2)). \
         order_by(asc(StatisticJournal.time)).limit(1).scalar()
     finish = s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
 
