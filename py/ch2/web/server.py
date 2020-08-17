@@ -32,7 +32,6 @@ MAX_MSG = 1000
 
 DATA = 'data'
 REDIRECT = 'redirect'
-BUSY = 'busy'
 
 GET = 'GET'
 PUT = 'PUT'
@@ -193,11 +192,7 @@ class WebServer:
         return JsonResponse({DATA: warnings})
 
     def read_busy(self, request, s):
-        try:
-            return JsonResponse({DATA: self.__config.exists_any_process(excluding=[JupyterServer])})
-        except:  # various, including database having been deleted
-            log_current_exception()
-            return JsonResponse({DATA: False})
+        return JsonResponse({DATA: self.__configure.is_busy()})
 
     def check(self, handler, config=True, empty=True, busy=False):
 

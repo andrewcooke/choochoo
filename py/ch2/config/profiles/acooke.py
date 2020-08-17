@@ -18,7 +18,7 @@ def acooke(config):
     '''
 ## acooke
 
-This extends the default configuration with:
+This extends the garmin configuration with:
 
 * Diary entries that I need
 * Additional activity groups selected on the kit used

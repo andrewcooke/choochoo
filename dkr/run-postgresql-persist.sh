@@ -2,6 +2,7 @@
 
 CMD=$0
 DEV=
+DEV2=
 RESET=0
 PGCONF=postgres-default.conf
 
@@ -19,6 +20,7 @@ help () {
 while [ $# -gt 0 ]; do
     if [ $1 == "--dev" ]; then
         DEV="-dev"
+        DEV2="--dev"
     elif [ $1 == "--prof" ]; then
 	PGCONF=postgres-pgbadger.conf
     elif [ $1 == "--reset" ]; then
@@ -35,8 +37,8 @@ done
 ./prune.sh
 
 if (( RESET )); then
-    ./make-postgresql-data-volume.sh -$DEV
-    ./make-postgresql-log-volume.sh -$DEV
+    ./make-postgresql-data-volume.sh $DEV2
+    ./make-postgresql-log-volume.sh $DEV2
 fi
 
 rm -f postgres.conf

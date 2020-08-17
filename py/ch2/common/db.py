@@ -92,16 +92,33 @@ def backup_schema(config):
     if test_schema(cnxn, previous):
         remove(cnxn, 'schema', previous, ' cascade', extended=True)
     add_schema(config, schema=previous, extended=True, set_search_path=False)
+    q_user = quote(cnxn, user)
+    q_previous = quote(cnxn, previous)
     # https://wiki.postgresql.org/wiki/Clone_schema
     with with_log(f'Copying tables to {previous}'):
-        for row in execute(cnxn, 'select table_name from information_schema.tables WHERE table_schema = :schema',
+        for row1 in execute(cnxn, 'select table_name from information_schema.tables WHERE table_schema = :schema',
                            schema=user).fetchall():
-            table = row[0]
-            execute(cnxn, f'create table {quote(cnxn, previous)}.{quote(cnxn, table)} '
-                          f'(like {quote(cnxn, user)}.{quote(cnxn, table)} '
-                          f'including constraints including indexes including defaults)')
-            execute(cnxn, f'insert into {quote(cnxn, previous)}.{quote(cnxn, table)} '
-                          f'(select * from {quote(cnxn, user)}.{quote(cnxn, table)})')
+            table = row1[0]
+            src = f'{q_user}.{quote(cnxn, table)}'
+            dst = f'{q_previous}.{quote(cnxn, table)}'
+            log.info(f'Creating {dst}')
+            execute(cnxn, f'create table {dst} ' 
+                          f'(like {src} including constraints including indexes including defaults)')
+            log.info(f'Copying {src} to {dst}')
+            execute(cnxn, f'insert into {src} (select * from {dst})')
+        for row1 in execute(cnxn, 'select table_name from information_schema.tables WHERE table_schema = :schema',
+                           schema=user).fetchall():
+            table = row1[0]
+            src = f'{q_user}.{quote(cnxn, table)}'
+            dst = f'{q_previous}.{quote(cnxn, table)}'
+            log.info(f'Setting foreign key constraints on {dst}')
+            for row2 in execute(cnxn, f'select pg_get_constraintdef(oid), conname from pg_constraint '
+                                      f'where contype=\'f\' and conrelid = \'{src}\'::regclass'):
+                key, name = row2[0], row2[1]
+                key = key.replace(user, previous)
+                stmt = f'alter table {dst} add constraint {name} {key}'
+                log.debug(key)
+                execute(cnxn, stmt)
 
 
 def remove_schema(config, previous=True):

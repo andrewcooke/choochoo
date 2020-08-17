@@ -1,8 +1,9 @@
 from logging import getLogger
 
-from .args import SUB_COMMAND, LIST, PROFILE, ITEM, USERS, SCHEMAS, DATABASES, PROFILES, ADD, DATABASE, SCHEMA, REMOVE
+from .args import SUB_COMMAND, LIST, PROFILE, ITEM, USERS, SCHEMAS, DATABASES, PROFILES, ADD, DATABASE, SCHEMA, REMOVE, \
+    BACKUP
 from ..common.db import get_cnxn, add_schema, with_log, remove_schema, remove_database, remove_user, add_database, \
-    add_user, list_databases, list_schemas, list_users
+    add_user, list_databases, list_schemas, list_users, backup_schema
 from ..common.md import Markdown
 from ..common.names import USER, assert_name
 from ..config.profile import get_profile, get_profiles
@@ -58,6 +59,7 @@ functionality implied or supported.  Backup the database separately if it is imp
      ADD: {USER: add_user,
            DATABASE: add_database,
            PROFILE: add_profile},
+     BACKUP: {SCHEMA: backup_schema},
      REMOVE: {USER: remove_user,
               DATABASE: remove_database,
               SCHEMA: remove_schema}}[action][item](config)
@@ -81,54 +83,3 @@ def add_profile(config):
     fn, spec = get_profile(profile)
     with with_log(f'Loading profile {profile}'):
         fn(config)
-
-
-
-
-# todo - web needs moving to above --------------
-#
-#
-# def show(config):
-#     uri = config.get_uri()
-#     if uri:
-#         print(f'{URI}:     {uri}')
-#         print(f'version: {DB_VERSION}')
-#         print(f'exists:  {database_really_exists(uri)}')
-#     else:
-#         print('no database configured')
-#     return
-#
-#
-# def list():
-#     fmt = Markdown()
-#     for name in profiles():
-#         fn, spec = get_profile(name)
-#         if fn.__doc__:
-#             fmt.print(fn.__doc__)
-#         else:
-#             print(f' ## {name} - lacks docstring\n')
-#
-#
-# def delete_and_check(config, force=False):
-#     # the database exists because it's created when we connect, but does it have a schema?
-#     uri = config.get_uri()
-#     if force:
-#         drop_database(uri)
-#     config.reset()
-#     if database_exists(uri) and not config.db.no_data():
-#         raise Exception(f'Data exist at {uri} (use {mm(FORCE)}?)')
-#
-#
-# def write(uri, profile, config):
-#     fn, spec = get_profile(profile)
-#     log.info(f'Loading profile {profile}')
-#     db = config.get_database(uri)  # writes schema automatically
-#     with db.session_context() as s:
-#         fn(s, config)  # todo - no need for s
-#     log.info(f'Profile {profile} loaded successfully')
-#
-#
-# def load(config, profile, force=False):
-#     uri = config.get_uri()
-#     delete_and_check(config, force=force)
-#     write(uri, profile, config)

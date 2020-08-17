@@ -15,7 +15,6 @@ const useStyles = makeStyles(theme => ({
 export default function JupyterMenu(props) {
 
     const {json, label, template, params} = props;
-    const [, ...rest] = json;
     const classes = useStyles();
 
     function mkItem(row, handleClose, i) {
@@ -28,6 +27,6 @@ export default function JupyterMenu(props) {
     }
 
     return (<Grid item xs={4} className={classes.center}>
-        <MenuButton json={rest} label={label} mkItem={mkItem}/>
+        <MenuButton json={json} label={label} mkItem={mkItem}/>
     </Grid>);
 }

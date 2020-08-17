@@ -24,7 +24,9 @@ class RestHRCalculator(LoaderMixin, OwnerInMixin, IntervalCalculatorMixin, Proce
     '''
 
     def __init__(self, *args, schedule='d', **kargs):
-        super().__init__(*args, schedule=schedule, permanent=True, **kargs)
+        # this seems to block updating with new (obviously enough) - but why was it added?
+        # super().__init__(*args, schedule=schedule, permanent=True, **kargs)
+        super().__init__(*args, schedule=schedule, **kargs)
 
     def _read_data(self, s, interval):
         return Statistics(s, start=local_date_to_time(interval.start),

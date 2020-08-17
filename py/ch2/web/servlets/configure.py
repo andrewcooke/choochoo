@@ -7,6 +7,7 @@ from ..worker import run_and_wait
 from ...commands.args import DB_VERSION, REMOVE, SCHEMA
 from ...commands.db import add_profile, remove_schema
 from ...commands.import_ import import_source
+from ...common.log import log_current_exception
 from ...common.md import HTML, parse, P, LI, PRE, filter_
 from ...common.names import BASE, DB, WEB
 from ...config.profile import get_profiles
@@ -16,6 +17,7 @@ from ...import_.constant import constant_imported
 from ...import_.diary import diary_imported
 from ...import_.kit import kit_imported
 from ...import_.segment import segment_imported
+from ...jupyter.server import JupyterServer
 from ...lib import time_to_local_time, local_time_to_time
 from ...lib.log import Record
 from ...sql import Constant, StatisticJournal, ActivityJournal
@@ -24,6 +26,7 @@ log = getLogger(__name__)
 
 
 ACTIVITY = 'activity'
+BUSY = 'busy'
 CONFIGURED = 'configured'
 CONSTANT = 'constant'
 DESCRIPTION = 'description'
@@ -56,6 +59,13 @@ class Configure:
     def is_empty(self, s):
         return not s.query(exists().where(ActivityJournal.id > 0)).scalar()
 
+    def is_busy(self):
+        try:
+            return self.__config.exists_any_process(excluding=[JupyterServer])
+        except:  # various, including database having been deleted
+            log_current_exception()
+            return False
+
     def html(self, text):
         return self.__html.str(text)
 
@@ -63,6 +73,7 @@ class Configure:
         fn_argspec_by_name = get_profiles()
         data = {PROFILES: {name: self.html(fn_argspec_by_name[name][0].__doc__) for name in fn_argspec_by_name},
                 CONFIGURED: not bool(self.__config.db.no_data()),
+                BUSY: self.is_busy(),
                 VERSION: DB_VERSION,
                 DIRECTORY: self.__config.args[BASE]}
         return data
@@ -73,8 +84,11 @@ class Configure:
         self.__config.reset()
 
     def delete(self, request, s):
-        # run this as a sub-command so that the user sees that process are running if they try to multi-task
-        run_and_wait(self.__config, f'{DB} {REMOVE} {SCHEMA}', Configure, f'{WEB}-{DB}.log')
+        try:
+            # run this as a sub-command so that the user sees that process are running if they try to multi-task
+            run_and_wait(self.__config, f'{DB} {REMOVE} {SCHEMA}', Configure, f'{WEB}-{DB}.log')
+        except:  # since we delete the database there won't be a process to remove
+            log_current_exception()
         self.__config.reset()
 
     def read_import(self, request, s):

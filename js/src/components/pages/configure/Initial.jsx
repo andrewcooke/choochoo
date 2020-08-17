@@ -1,15 +1,13 @@
 import React, {useEffect, useState} from 'react';
 import {Dialog, DialogContent, DialogContentText, DialogTitle, Grid, TextField} from "@material-ui/core";
 import {ConfirmedWriteButton, Layout} from "../../elements";
-import {ColumnCard, ColumnList, Loading, P, Text, TextCard} from "../../../common/elements";
+import {ColumnCard, ColumnList, Loading, P, Text, TextCard, Warning} from "../../../common/elements";
 import {handleJson} from "../../functions";
 import {Autocomplete} from "@material-ui/lab";
 import log from "loglevel";
 
 
 function Directory(props) {
-
-    const {data} = props;
 
     return (<TextCard header='Directories'>
         <p>Choochoo stores all files below the "base" directory, which you can choose
@@ -24,7 +22,7 @@ function Directory(props) {
 
 function Delete(props) {
 
-    const {data, reload} = props;
+    const {reload} = props;
     const [wait, setWait] = useState(false);
 
     function onComplete() {
@@ -127,10 +125,13 @@ function ConfiguredNo(props) {
 
 function Columns(props) {
 
-    const {data ,reload} = props;
+    const {data, reload} = props;
 
     if (data === null) {
         return <Loading/>;
+    } else if (data.busy) {
+        return <Warning title='Busy'
+                        warning='The system cannot be configured while busy processing data.'/>;
     } else if (data.configured) {
         return <ConfiguredYes data={data} reload={reload}/>;
     } else {

@@ -64,6 +64,7 @@ ALL = 'all'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
 ARG = 'arg'
+BACKUP = 'backup'
 BATCH = 'batch'
 BORDER = 'border'
 CHANGE = 'change'
@@ -461,6 +462,9 @@ def make_parser(with_noop=False):
     from ..config.profile import get_profiles
     for name in get_profiles():
         db_add_profile_profiles.add_parser(name)
+    db_backup = db_cmds.add_parser(BACKUP, help='backup current configuration')
+    db_backup_item = db_backup.add_subparsers(title='item to backup', dest=ITEM, required=True)
+    db_backup_item.add_parser(SCHEMA, help='backup a schema')
     db_remove = db_cmds.add_parser(REMOVE, help='reduce current configuration')
     db_remove_item = db_remove.add_subparsers(title='item to remove', dest=ITEM, required=True)
     db_remove_item.add_parser(USER, help='remove a user')
