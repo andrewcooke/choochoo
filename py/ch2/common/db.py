@@ -97,7 +97,7 @@ def backup_schema(config):
     # https://wiki.postgresql.org/wiki/Clone_schema
     with with_log(f'Copying tables to {previous}'):
         for row1 in execute(cnxn, 'select table_name from information_schema.tables WHERE table_schema = :schema',
-                           schema=user).fetchall():
+                            schema=user).fetchall():
             table = row1[0]
             src = f'{q_user}.{quote(cnxn, table)}'
             dst = f'{q_previous}.{quote(cnxn, table)}'
@@ -105,9 +105,9 @@ def backup_schema(config):
             execute(cnxn, f'create table {dst} ' 
                           f'(like {src} including constraints including indexes including defaults)')
             log.info(f'Copying {src} to {dst}')
-            execute(cnxn, f'insert into {src} (select * from {dst})')
+            execute(cnxn, f'insert into {dst} (select * from {src})')
         for row1 in execute(cnxn, 'select table_name from information_schema.tables WHERE table_schema = :schema',
-                           schema=user).fetchall():
+                            schema=user).fetchall():
             table = row1[0]
             src = f'{q_user}.{quote(cnxn, table)}'
             dst = f'{q_previous}.{quote(cnxn, table)}'
