@@ -24,9 +24,8 @@ class RestHRCalculator(LoaderMixin, OwnerInMixin, IntervalCalculatorMixin, Proce
     '''
 
     def __init__(self, *args, schedule='d', **kargs):
-        # this seems to block updating with new (obviously enough) - but why was it added?
-        # super().__init__(*args, schedule=schedule, permanent=True, **kargs)
-        super().__init__(*args, schedule=schedule, **kargs)
+        # permanent blocks clearing of dirty values - cleared explicitly by
+        super().__init__(*args, schedule=schedule, permanent=True, **kargs)
 
     def _read_data(self, s, interval):
         return Statistics(s, start=local_date_to_time(interval.start),
@@ -41,13 +40,14 @@ class RestHRCalculator(LoaderMixin, OwnerInMixin, IntervalCalculatorMixin, Proce
                 rest_hr = hist.index[peak].left
                 measurements = hist.loc[rest_hr]
                 if measurements > len(df) * 0.01:
-                    log.debug(f'Rest HR is {rest_hr} with {measurements} values')
+                    log.debug(f'Rest HR for {format_date(interval.start)} is {rest_hr} with {measurements} values')
                     # conversion to int as value above is numpy int64
                     loader.add(Titles.REST_HR, Units.BPM, S.join(S.MIN, S.MSR), interval,
                                int(rest_hr), local_date_to_time(interval.start), StatisticJournalInteger,
                                'The rest heart rate')
                     return
                 else:
-                    log.debug(f'Skipping rest HR at {rest_hr} because too few measurements ({measurements}/{len(df)})')
+                    log.debug(f'Skipping rest HR at {format_date(interval.start)} because too few measurements '
+                              f'({measurements}/{len(df)})')
         log.warning(f'Unable to calculate rest HR at {format_date(interval.start)}')
 

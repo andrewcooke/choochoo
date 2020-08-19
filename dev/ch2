@@ -1,5 +1,4 @@
 #!/bin/bash
 
-pushd py > /dev/null
-source env/bin/activate
-python -m ch2 "$@"
+source py/env/bin/activate
+ch2 "$@"

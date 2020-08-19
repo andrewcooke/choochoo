@@ -46,7 +46,7 @@ class PowerCalculator(LoaderMixin, ActivityGroupCalculatorMixin, DataFrameCalcul
                        'The estimated power.')
         self._provides(s, T.HEADING, StatisticJournalType.FLOAT, Units.DEG, None,
                        'The current heading.')
-        self._provides(s, T.ENERGY_ESTIMATE, StatisticJournalType.FLOAT, Units.J, Summaries.MAX,
+        self._provides(s, T.ENERGY_ESTIMATE, StatisticJournalType.FLOAT, Units.KJ, Summaries.MAX,
                        'The estimated total energy expended.')
         self._provides(s, T.CALORIE_ESTIMATE, StatisticJournalType.FLOAT, Units.KCAL, Summaries.MAX,
                        'The estimated calories burnt.')

@@ -236,11 +236,17 @@ class Interval(Source):
         s.record_dirty_intervals(row[0] for row in q.all())
 
     @classmethod
-    def clean(cls, s):
-        q = s.query(Interval.id).filter(Interval.dirty == True, Interval.permanent == False)
+    def clean(cls, s, owner=None):
+        q = s.query(Interval.id).filter(Interval.dirty == True)
+        if owner:
+            extra = f' (owner {owner})'
+            q = q.filter(Interval.owner == owner)
+        else:
+            extra = ' (not permanent)'
+            q = q.filter(Interval.permanent == False)
         count = q.count()
         if count:
-            log.debug(f'Cleaning {count} dirty intervals')
+            log.debug(f'Cleaning {count} dirty intervals {extra}')
             s.query(Source).filter(Source.id.in_(q)).delete(synchronize_session=False)
             s.commit()
         log.debug('Intervals clean')

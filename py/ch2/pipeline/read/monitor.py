@@ -8,6 +8,7 @@ from sqlalchemy import desc, and_, func
 from sqlalchemy.orm import aliased
 
 from .utils import AbortImportButMarkScanned, ProcessFitReader
+from ..calculate import RestHRCalculator
 from ..loader import Loader
 from ..pipeline import LoaderMixin
 from ...common.date import time_to_local_date, format_time, to_time, dates_from, now
@@ -15,7 +16,7 @@ from ...data.frame import read_query
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...fit.profile.profile import read_fit
 from ...names import N, T, Units
-from ...sql import MonitorJournal, StatisticJournalInteger, StatisticName, StatisticJournal
+from ...sql import MonitorJournal, StatisticJournalInteger, StatisticName, StatisticJournal, Interval
 from ...sql.database import StatisticJournalType, Source
 from ...sql.utils import add
 
@@ -70,6 +71,13 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
     def _get_loader(self, s, **kargs):
         return super()._get_loader(s, cls=MonitorLoader, **kargs)
 
+    def _missing(self, s):
+        missing = super()._missing(s)
+        if missing:
+            # clear rest heart rate so it will be recalculated
+            Interval.clean(s, owner=RestHRCalculator)
+        return missing
+
     @staticmethod
     def parse_records(data):
         return MonitorReader.read_fit_file(data, merge_duplicates, fix_degrees, unpack_single_bytes)
@@ -123,14 +131,13 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
                            record.timestamp, StatisticJournalInteger,
                            description='''The number of steps in a day to this point in time.''')
 
-    def shutdown(self):
-        super().shutdown()
+    def _shutdown(self, s):
+        super()._shutdown(s)
         if not self.worker:
-            with self._config.db.session_context() as s:
-                log.info('Calculating differential in main thread')
-                self._fix_overlapping_monitors(s)
-                s.commit()
-                self._update_differential(s)
+            log.info('Calculating differential in main thread')
+            self._fix_overlapping_monitors(s)
+            s.commit()
+            self._update_differential(s)
 
     def _fix_overlapping_monitors(self, s):
         # this used to be done in python and was very slow
