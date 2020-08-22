@@ -37,7 +37,7 @@ Stop the background server.
             c.status()
         elif cmd == SHOW:
             set_controller(c)  # c is passed implicitly to template via global
-            show(args)
+            show(args, config=config)
         elif cmd == SERVICE:
             c.service()
         elif cmd == START:
@@ -65,12 +65,12 @@ def check_params(params, spec):
     return params
 
 
-def show(args):
+def show(args, config):
     name = args[NAME]
     params = args[ARG]
     try:
         fn, spec = get_template(name)
         params = check_params(params, spec)
-        fn(*params)
+        fn(*params, config=config)
     except KeyError:
         raise Exception(f'No template called {name} (see {PROGNAME} {JUPYTER} {LIST})')

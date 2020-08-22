@@ -19,16 +19,18 @@ def make_log_from_args(args):
     else:
         verbosity = args[VERBOSITY]
     configure_log('ch2', path, verbosity, {
-        'sqlalchemy': WARNING,
-        'matplotlib': INFO,
         'bokeh': DEBUG,
-        'tornado': INFO,
-        'sentinelsat': DEBUG,
-        'werkzeug': DEBUG,
         'ch2': DEBUG,
+        'jupyter': DEBUG,
+        'matplotlib': DEBUG,
+        'sentinelsat': DEBUG,
+        'sqlalchemy': WARNING,
+        'tornado': DEBUG,
+        'werkzeug': DEBUG,
         '__main__': DEBUG
     })
     set_log_color(args[COLOR])
+    log.info(f'Logging to {path}')
 
 
 class Record:

@@ -84,7 +84,9 @@ class JupyterController(BaseController):
         started = Event()
 
         def start():
+            from ..lib.log import make_log_from_args
             log.info('Starting Jupyter server in separate thread')
+            make_log_from_args(self._config.args._with(command='jupyter-server'))
             asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
             notebook_dir = self._config.args._format_path(NOTEBOOK_DIR)
             options = ['--notebook-dir', notebook_dir]

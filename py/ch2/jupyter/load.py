@@ -305,6 +305,7 @@ def create_notebook(config, template, args):
 
 
 def display_notebook(config, template, args):
+    import pdb; pdb.set_trace()
     log.debug(f'Displaying {template} with {args}')
     ctrl = get_controller()
     name = create_notebook(config, template, args)

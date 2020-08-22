@@ -14,7 +14,6 @@ log = getLogger(__name__)
 
 @contextmanager
 def profile(args):
-    log.debug(args[CPROFILE])
     use_profile = bool(args[CPROFILE])
     dir, profiler, start = 'profile', None, now()
     if use_profile:
