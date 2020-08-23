@@ -45,7 +45,7 @@ done
 
 source ../py/env/bin/activate
 
-pip freeze > requirements.txt
+pip freeze | grep -v choochoo > requirements.txt
 
 # basic image and support
 # (we need to install db libs whatever db we are using because of python deps)
@@ -113,8 +113,8 @@ fi
 cat >> $FILE <<EOF
 workdir /
 expose 8000 8001
-copy dkr/docker-start.sh .
-cmd ./docker-start.sh
+copy dkr/start-docker.sh .
+cmd ./start-docker.sh
 EOF
 
 echo -e "\ncreated $FILE for $VERSION\n"

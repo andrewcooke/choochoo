@@ -25,8 +25,10 @@ while [ $# -gt 0 ]; do
 done
 
 ./prune.sh
+
 docker volume rm -f "choochoo-data$DEV"
 docker volume create "choochoo-data$DEV"
+
 docker run --rm \
        -v "choochoo-data$DEV":/data \
        opensuse/leap \
@@ -48,15 +50,26 @@ docker run --rm \
        -v ~/.ch2:/ch2 \
        opensuse/leap \
        cp -rv /ch2/permanent/activity /data/permanent/
-docker run --rm \
-       -v "choochoo-data$DEV":/data \
-       -v ~/.ch2:/ch2 \
-       opensuse/leap \
-       cp -rv /ch2/0-34 /data/
-docker run --rm \
-       -v "choochoo-data$DEV":/data \
-       -v ~/.ch2:/ch2 \
-       opensuse/leap \
-       cp -rv /ch2/0-33 /data/
-docker volume ls
 
+source version.sh
+
+if [ -e ~/.ch2/$VERSION ]; then
+    docker run --rm \
+	   -v "choochoo-data$DEV":/data \
+	   -v ~/.ch2:/ch2 \
+	   opensuse/leap \
+	   cp -rv /ch2/$VERSION /data/
+fi
+if [ -e ~/.ch2/$VERSION_1 ]; then
+    docker run --rm \
+	   -v "choochoo-data$DEV":/data \
+	   -v ~/.ch2:/ch2 \
+	   opensuse/leap \
+	   cp -rv /ch2/$VERSION_1 /data/
+fi
+docker run --rm \
+       -v "choochoo-data$DEV":/data \
+       opensuse/leap \
+       mkdir -p /data/$VERSION/notebook
+
+docker volume ls

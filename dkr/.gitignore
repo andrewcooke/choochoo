@@ -1,2 +1,4 @@
 auto-prune
 postgres.conf
+Dockerfile.jupyter
+docker-compose.yml

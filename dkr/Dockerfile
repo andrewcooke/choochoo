@@ -24,5 +24,5 @@ copy data/sdk/Profile.xlsx /app
 run ch2 package-fit-profile ./Profile.xlsx
 workdir /
 expose 8000 8001
-copy dkr/docker-start.sh .
-cmd ./docker-start.sh
+copy dkr/start-docker.sh .
+cmd ./start-docker.sh
