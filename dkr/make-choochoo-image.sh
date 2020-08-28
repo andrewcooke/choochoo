@@ -63,4 +63,4 @@ CMD="DOCKER_BUILDKIT=$BUILDKIT docker build --network host --tag andrewcooke/cho
 echo -e "\n> $CMD\n"
 eval $CMD
 popd > /dev/null
-rm $FILE
+#rm $FILE

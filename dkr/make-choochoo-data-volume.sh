@@ -71,5 +71,9 @@ docker run --rm \
        -v "choochoo-data$DEV":/data \
        opensuse/leap \
        mkdir -p /data/$VERSION/notebook
+docker run --rm \
+       -v "choochoo-data$DEV":/data \
+       opensuse/leap \
+       chown -R $(id -u):$(id -g) /data
 
 docker volume ls

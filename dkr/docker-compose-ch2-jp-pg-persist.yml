@@ -3,15 +3,28 @@ services:
   ch2:
     image: 'andrewcooke/choochoo:latest-local'
     container_name: 'choochoo'
+    user: '${ID}'
     ports:
       - '127.0.0.1:8000:8000'
-      - '127.0.0.1:8001:8001'
-    environment:
-      - 'CH2_DKR_URI=postgresql://postgres@postgresql/activity-{version}'
     volumes:
-      - 'choochoo-data:/data'
+      - 'choochoo-dataDEV:/data'
     depends_on:
       - 'pg'
+      - 'jp'
+  jp:
+    image: 'andrewcooke/jupyter:latest-local'
+    container_name: 'jupyter'
+    user: '${ID}'
+    command: 'start-notebook.sh
+    --NotebookApp.notebook_dir=/data/VERSION/notebook
+    --NotebookApp.token=''''
+    --NotebookApp.allow_root=True'
+    environment:
+      - NB_UID=0
+    ports:
+      - '127.0.0.1:8001:8888'
+    volumes:
+      - 'choochoo-dataDEV:/data'
   pg:
     image: 'postgres:11.8-alpine'
     container_name: 'postgresql'
@@ -20,13 +33,13 @@ services:
     environment:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
     volumes:
-      - 'postgresql-data:/var/lib/postgresql/data'
-      - 'postgresql-log:/var/log'
+      - 'postgresql-dataDEV:/var/lib/postgresql/data'
+      - 'postgresql-logDEV:/var/log'
       - './postgres.conf:/etc/postgresql/postgresql.conf'
 volumes:
-  choochoo-data:
+  choochoo-dataDEV:
     external: true
-  postgresql-data:
+  postgresql-dataDEV:
     external: true
-  postgresql-log:
+  postgresql-logDEV:
     external: true

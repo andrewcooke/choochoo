@@ -34,4 +34,3 @@ class BaseConfig:
         # may need to be over-written by subclasses
         args = self.args._with(**kargs)
         return BaseConfig(args, self.__factory, args[VERSION])
-

@@ -7,6 +7,7 @@ SLOW=
 RESET=0
 PGCONF=postgres-default.conf
 DEV=
+DEV2=
 
 help () {
     echo -e "\n  Run choochoo + jupyter + postgres with named volumes"
@@ -35,7 +36,8 @@ while [ $# -gt 0 ]; do
     elif [ $1 == "--prof" ]; then
 	PGCONF=postgres-pgbadger.conf
     elif [ $1 == "--dev" ]; then
-        DEV=$1
+        DEV="-dev"
+        DEV2="--dev"
     elif [ $1 == "-h" ]; then
         help
     else
@@ -51,19 +53,16 @@ rm -f postgres.conf
 ln -s $PGCONF postgres.conf
 
 if (( RESET )); then
-    ./make-postgresql-data-volume.sh $DEV
-    ./make-postgresql-log-volume.sh $DEV
-    ./make-choochoo-data-volume.sh $DEV
+    ./make-postgresql-data-volume.sh $DEV2
+    ./make-postgresql-log-volume.sh $DEV2
+    ./make-choochoo-data-volume.sh $DEV2
     ./make-choochoo-image.sh $BIG $SLOW $JS
     ./make-jupyter-image.sh $SLOW
 fi
 
 rm -f docker-compose.yml
-if [ "$DEV" == "--dev" ]; then
-    cp docker-compose-ch2-jp-pg-persist-dev.yml docker-compose.yml
-else
-    cp docker-compose-ch2-jp-pg-persist.yml docker-compose.yml
-fi
+cp docker-compose-ch2-jp-pg-persist.yml docker-compose.yml
+sed -i s/DEV/$DEV/ docker-compose.yml 
 source version.sh
 sed -i s/VERSION/$VERSION/ docker-compose.yml 
-docker-compose up
+ID="$(id -u):$(id -g)" docker-compose up

@@ -129,6 +129,7 @@ class Database(DatabaseBase):
                 n_statistics = s.query(StatisticJournal).count()
                 return not (n_topics + n_activities + n_statistics)
         except:
+            # log_current_exception()
             log.debug('Discarding error which may contain password')
             return True
 
