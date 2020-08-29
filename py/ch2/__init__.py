@@ -33,7 +33,6 @@ from .commands.fit import fit
 from .commands.fix_fit import fix_fit
 from .commands.help import help
 from .commands.import_ import import_
-from .commands.jupyter import jupyter
 from .commands.kit import kit
 from .commands.package_fit_profile import package_fit_profile
 from .commands.search import search
@@ -64,7 +63,6 @@ COMMANDS = {CONSTANTS: constants,
             FIX_FIT: fix_fit,
             HELP: help,
             IMPORT: import_,
-            JUPYTER: jupyter,
             KIT: kit,
             NO_OP: no_op,
             PACKAGE_FIT_PROFILE: package_fit_profile,

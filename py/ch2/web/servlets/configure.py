@@ -5,7 +5,7 @@ from sqlalchemy import exists
 
 from ..worker import run_and_wait
 from ...commands.args import DB_VERSION, REMOVE, SCHEMA
-from ...commands.db import add_profile, remove_schema
+from ...commands.db import add_profile
 from ...commands.import_ import import_source
 from ...common.log import log_current_exception
 from ...common.md import HTML, parse, P, LI, PRE, filter_
@@ -17,7 +17,6 @@ from ...import_.constant import constant_imported
 from ...import_.diary import diary_imported
 from ...import_.kit import kit_imported
 from ...import_.segment import segment_imported
-from ...jupyter.server import JupyterServer
 from ...lib import time_to_local_time, local_time_to_time
 from ...lib.log import Record
 from ...sql import Constant, StatisticJournal, ActivityJournal
@@ -61,7 +60,7 @@ class Configure:
 
     def is_busy(self):
         try:
-            return self.__config.exists_any_process(excluding=[JupyterServer])
+            return self.__config.exists_any_process()
         except:  # various, including database having been deleted
             log_current_exception()
             return False

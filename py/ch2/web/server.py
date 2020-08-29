@@ -16,12 +16,10 @@ from .servlets.search import Search
 from .servlets.thumbnail import Thumbnail
 from .servlets.upload import Upload
 from .static import Static
-from ..commands.args import LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, JUPYTER, WARN, SECURE, THUMBNAIL_DIR, \
+from ..commands.args import LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, WARN, SECURE, THUMBNAIL_DIR, \
     NOTEBOOK_DIR
 from ..common.args import mm
-from ..common.log import log_current_exception
 from ..common.names import BASE
-from ..jupyter.server import JupyterController, JupyterServer
 from ..lib.server import BaseController
 from ..sql import SystemConstant
 
@@ -49,7 +47,6 @@ class WebController(BaseController):
         args = config.args
         self.__warn_data = args[WARN + '-' + DATA]
         self.__warn_secure = args[WARN + '-' + SECURE]
-        self.__jupyter = JupyterController(config)
         self.__notebook_dir = args[NOTEBOOK_DIR]
         self.__thumbnail_dir = args[THUMBNAIL_DIR]
 
@@ -57,7 +54,6 @@ class WebController(BaseController):
         log_name = 'web-service.log'
         cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._config.args[BASE]} ' \
               f'{WEB} {SERVICE} {mm(WEB + "-" + BIND)} {self._bind} {mm(WEB + "-" + PORT)} {self._port} ' \
-              f'{mm(JUPYTER + "-" + BIND)} {self.__jupyter._bind} {mm(JUPYTER + "-" + PORT)} {self.__jupyter._port} ' \
               f'{mm(THUMBNAIL_DIR)} {self.__thumbnail_dir} {mm(NOTEBOOK_DIR)} {self.__notebook_dir}'
         if self.__warn_data: cmd += f' {mm(WARN + "-" + DATA)}'
         if self.__warn_secure: cmd += f' {mm(WARN + "-" + SECURE)}'

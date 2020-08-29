@@ -375,31 +375,6 @@ def make_parser(with_noop=False):
                                      description='check (and optionally fix) data in the database')
     validate.add_argument(mm(FIX), action='store_true', help='correct errors when possible')
 
-    jupyter = commands.add_parser(JUPYTER, help='data analysis in jupyter',
-                                    description='data analysis in jupyter')
-    jupyter_cmds = jupyter.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    jupyter_cmds.add_parser(LIST, help='list available templates',
-                            description='list available templates and parameters for jupyter')
-    jupyter_show = jupyter_cmds.add_parser(SHOW, help='display a template (starting server if needed)',
-                                           description='display a template in jupyter (starting server if needed)')
-    jupyter_show.add_argument(NAME, metavar='NAME', help='the template name')
-    jupyter_show.add_argument(ARG, nargs='*', metavar='PARAM', help='template arguments')
-    add_server_args(jupyter_show, prefix=JUPYTER, default_port=JUPYTER_PORT)
-    add_server_args(jupyter_show, prefix=PROXY, default_port=None, default_address=None)
-    add_notebook_dir(jupyter_show)
-    jupyter_start = jupyter_cmds.add_parser(START, help='start a background service',
-                                            description='start jupyter as a background service')
-    add_server_args(jupyter_start, prefix=JUPYTER, default_port=JUPYTER_PORT)
-    add_server_args(jupyter_start, prefix=PROXY, default_port=None, default_address=None)
-    jupyter_cmds.add_parser(STOP, help='stop the background service',
-                            description='stop the jupyter background service')
-    jupyter_cmds.add_parser(STATUS, help='display status of background service')
-    jupyter_service = jupyter_cmds.add_parser(SERVICE, help='internal use only - use start/stop',
-                                              description='internal use only - use start/stop')
-    add_server_args(jupyter_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
-    add_server_args(jupyter_service, prefix=PROXY, default_port=None, default_address=None)
-    add_notebook_dir(jupyter_service)
-
     kit = commands.add_parser(KIT, help='manage kit',
                                 description='add, remove, modify and display kit details')
     kit_cmds = kit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)

@@ -12,7 +12,6 @@ import nbformat as nb
 import nbformat.v4 as nbv
 from nbformat.sign import NotebookNotary
 
-from .server import get_controller
 from ..commands.args import NOTEBOOKS, base_system_path, NOTEBOOK_DIR
 from ..common.names import BASE
 from ..common.args import mm
@@ -307,8 +306,8 @@ def create_notebook(config, template, args):
 def display_notebook(config, template, args):
     import pdb; pdb.set_trace()
     log.debug(f'Displaying {template} with {args}')
-    ctrl = get_controller()
     name = create_notebook(config, template, args)
-    url = f'{ctrl.connection_url()}tree/{name}'
+    # url = f'{ctrl.connection_url()}tree/{name}'
+    url = None  # TODO!
     log.info(f'Displaying {url}')
     web.open(url, autoraise=False)
