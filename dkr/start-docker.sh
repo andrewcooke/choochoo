@@ -12,7 +12,7 @@ echo "forcing database (will give errors if already exists)"
 $CH2 -v0 db add user
 $CH2 -v0 db add database
 
-CMD="$CH2 --dev web service --web-bind 0.0.0.0 --jupyter-bind 0.0.0.0 --proxy-bind 'localhost' --warn-data --warn-secure"
+CMD="$CH2 --dev web service --web-bind 0.0.0.0 --warn-data --warn-secure"
 echo -e "\nrunning $CMD\n"
 
 eval $CMD

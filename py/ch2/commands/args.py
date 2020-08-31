@@ -162,7 +162,6 @@ PROFILE = 'profile'
 PROFILES = 'profiles'
 PROFILE_VERSION = 'profile-version'
 PROTOCOL_VERSION = 'protocol-version'
-PROXY = 'proxy'
 PWD = 'pwd'
 QUERY = 'query'
 RAW = 'raw'
@@ -252,9 +251,9 @@ def make_parser(with_noop=False):
     parser.add_argument(mm(BASE), default='~/.ch2', metavar='DIR', type=clean_path,
                         help='the base directory for data (default ~/.ch2)')
     parser.add_argument(mm(DATA), metavar='DIR', default='{base}/permanent',
-                        help='the root directory for storing FIT data')
+                        help='the root directory for storing data on disk')
     parser.add_argument(mm(CPROFILE), metavar='DIR', nargs='?', action='append',
-                        help='save profile data to given file')
+                        help='file for profiling data (development)')
 
     commands = parser.add_subparsers(title='commands', dest=COMMAND)
 
@@ -279,10 +278,13 @@ def make_parser(with_noop=False):
         cmd.add_argument(mm(NOTEBOOK_DIR), metavar='DIR', default='{base}/{version}/notebook',
                          help='notebook cache')
 
+    def add_jupyter(cmd):
+        cmd.add_argument(mm(JUPYTER), metavar='URL', default=f'http://localhost:{JUPYTER_PORT}/tree',
+                         help='jupyter URL prefix')
+
     web_start = web_cmds.add_parser(START, help='start the web server', description='start the web server')
     add_server_args(web_start, prefix=WEB, default_port=WEB_PORT)
-    add_server_args(web_start, prefix=JUPYTER, default_port=JUPYTER_PORT)
-    add_server_args(web_start, prefix=PROXY, default_port=None, default_address=None)
+    add_jupyter(web_start)
     add_warning_args(web_start)
     add_thumbnail_dir(web_start)
     add_notebook_dir(web_start)
@@ -291,8 +293,7 @@ def make_parser(with_noop=False):
     web_service = web_cmds.add_parser(SERVICE, help='internal use only - use start/stop',
                                       description='internal use only - use start/stop')
     add_server_args(web_service, prefix=WEB, default_port=WEB_PORT)
-    add_server_args(web_service, prefix=JUPYTER, default_port=JUPYTER_PORT)
-    add_server_args(web_service, prefix=PROXY, default_port=None, default_address=None)
+    add_jupyter(web_service)
     add_warning_args(web_service)
     add_thumbnail_dir(web_service)
     add_notebook_dir(web_service)

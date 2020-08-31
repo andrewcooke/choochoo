@@ -13,7 +13,7 @@ import nbformat.v4 as nbv
 from nbformat.sign import NotebookNotary
 
 from ..commands.args import NOTEBOOKS, base_system_path, NOTEBOOK_DIR
-from ..common.names import BASE
+from ..common.names import BASE, URI
 from ..common.args import mm
 
 log = getLogger(__name__)
@@ -148,17 +148,22 @@ class Code(TextToken):
         m_session = r_session.match(self._text)
         if m_session:
             args = m_session.group(2).strip()
-            r_base = compile(r'(^|\s)--base\s*(\S+)')
-            m_base = r_base.search(args)
-            if m_base:
-                log.warning(f'Template session() includes base path {m_base.group(1)}')
-            elif BASE not in self._vars:
-                raise Exception('No database location available')
-            elif args:
-                args = args[:-1] + f' {mm(BASE)} {self._vars[BASE]}' + args[-1]
-            else:
-                args = f'"-f {self._vars[BASE]}"'
+            args = self._fix_session_var(args, BASE)
+            args = self._fix_session_var(args, URI)
             self._text = m_session.group(1) + args + m_session.group(3)
+
+    def _fix_session_var(self, args, name):
+        rx = compile(r'(^|\s)--' + name + r'\s*(\S+)')
+        match = rx.search(args)
+        if match:
+            log.warning(f'Template session() includes {name}: {match.group(1)}')
+        elif name not in self._vars:
+            raise Exception(f'No {name} available')
+        elif args:
+            args = args[:-1] + f' {mm(name)} {self._vars[name]}' + args[-1]
+        else:
+            args = f' {mm(name)} {self._vars[name]}'
+        return args
 
     def to_cell(self):
         return nbv.new_code_cell(self._text)
@@ -273,7 +278,8 @@ def create_notebook(config, template, args):
     all_args = sub(r'\s+', '-', all_args)
     all_args = sub(escape(sep), '-', all_args)
 
-    vars = {BASE: config.args[BASE]}
+    vars = {BASE: config.args[BASE],
+            URI: config.args._format(name=URI)}
     spec = getfullargspec(template)
     for name, value in zip_longest(spec.args, args):
         if name:
@@ -284,7 +290,8 @@ def create_notebook(config, template, args):
             vars[spec.varargs].append(value)
 
     template = template.__name__
-    root = join(config.args._format_path(NOTEBOOK_DIR), template)
+    notebook_dir = config.args._format_path(NOTEBOOK_DIR)
+    root = join(notebook_dir, template)
     all_args = all_args if all_args else template
     name = all_args + IPYNB
     path = join(root, name)
@@ -293,7 +300,8 @@ def create_notebook(config, template, args):
     log.info(f'Creating {template} at {path} with {vars}')
     notebook = load_notebook(template, vars)
     # https://testnb.readthedocs.io/en/latest/security.html
-    NotebookNotary().sign(notebook)
+    log.debug(f'Notary using DB at {notebook_dir}')
+    NotebookNotary(data_dir=notebook_dir).sign(notebook)
     if exists(path):
         log.debug(f'Deleting old version of {path}')
         unlink(path)

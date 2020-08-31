@@ -17,7 +17,7 @@ from .servlets.thumbnail import Thumbnail
 from .servlets.upload import Upload
 from .static import Static
 from ..commands.args import LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, WARN, SECURE, THUMBNAIL_DIR, \
-    NOTEBOOK_DIR
+    NOTEBOOK_DIR, JUPYTER
 from ..common.args import mm
 from ..common.names import BASE
 from ..lib.server import BaseController
@@ -49,11 +49,13 @@ class WebController(BaseController):
         self.__warn_secure = args[WARN + '-' + SECURE]
         self.__notebook_dir = args[NOTEBOOK_DIR]
         self.__thumbnail_dir = args[THUMBNAIL_DIR]
+        self.__jupyter = args[JUPYTER]
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'web-service.log'
         cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._config.args[BASE]} ' \
               f'{WEB} {SERVICE} {mm(WEB + "-" + BIND)} {self._bind} {mm(WEB + "-" + PORT)} {self._port} ' \
+              f'{mm(JUPYTER)} {self.__jupyter} ' \
               f'{mm(THUMBNAIL_DIR)} {self.__thumbnail_dir} {mm(NOTEBOOK_DIR)} {self.__notebook_dir}'
         if self.__warn_data: cmd += f' {mm(WARN + "-" + DATA)}'
         if self.__warn_secure: cmd += f' {mm(WARN + "-" + SECURE)}'
@@ -64,7 +66,7 @@ class WebController(BaseController):
         # self._config.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self._bind, self._port), force=True)
         log.debug(f'Binding to {self._bind}:{self._port}')
         run_simple(self._bind, self._port,
-                   WebServer(self._config, self.__jupyter, warn_data=self.__warn_data, warn_secure=self.__warn_secure),
+                   WebServer(self._config, warn_data=self.__warn_data, warn_secure=self.__warn_secure),
                    use_debugger=self._dev, use_reloader=self._dev)
 
     def _cleanup(self):
@@ -88,7 +90,7 @@ def error(exception):
 
 class WebServer:
 
-    def __init__(self, config, jcontrol, warn_data=False, warn_secure=False):
+    def __init__(self, config, warn_data=False, warn_secure=False):
         self.__config = config
         self.__warn_data = warn_data
         self.__warn_secure = warn_secure
@@ -96,7 +98,7 @@ class WebServer:
         analysis = Analysis()
         configure = Configure(config)
         diary = Diary()
-        jupyter = Jupyter(config, jcontrol)
+        jupyter = Jupyter(config, self.__config.args[JUPYTER])
         kit = Kit()
         static = Static('.static')
         upload = Upload(config)
