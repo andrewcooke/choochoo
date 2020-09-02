@@ -17,8 +17,8 @@ CH2_VERSION = '0.35.0'
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 
-URI_DEFAULT = 'postgresql://{user}:{passwd}@localhost/activity-{version}'
-URI_PREVIOUS = 'postgresql://{user}:{passwd}@localhost/activity-{version}?search_path={user}:previous'
+URI_DEFAULT = 'postgresql://{user}:{passwd}@{db-bind}:{db-port}/activity-{version}'
+URI_PREVIOUS = 'postgresql://{user}:{passwd}@{db-bind}:{db-port}/activity-{version}?search_path={user}:previous'
 
 PROGNAME = 'ch2'
 
@@ -247,6 +247,7 @@ def make_parser(with_noop=False):
                         help='output level for stderr (0: silent; 5:noisy)')
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
                         help='display version and exit')
+    add_server_args(parser, DB, default_port=5432, name='database')
     add_data_source_args(parser, URI_DEFAULT)
     parser.add_argument(mm(BASE), default='~/.ch2', metavar='DIR', type=clean_path,
                         help='the base directory for data (default ~/.ch2)')
@@ -283,7 +284,7 @@ def make_parser(with_noop=False):
                          help='jupyter URL prefix')
 
     web_start = web_cmds.add_parser(START, help='start the web server', description='start the web server')
-    add_server_args(web_start, prefix=WEB, default_port=WEB_PORT)
+    add_server_args(web_start, prefix=WEB, default_port=WEB_PORT, name='web server')
     add_jupyter(web_start)
     add_warning_args(web_start)
     add_thumbnail_dir(web_start)
@@ -292,7 +293,7 @@ def make_parser(with_noop=False):
     web_cmds.add_parser(STATUS, help='display status of web server', description='display status of web server')
     web_service = web_cmds.add_parser(SERVICE, help='internal use only - use start/stop',
                                       description='internal use only - use start/stop')
-    add_server_args(web_service, prefix=WEB, default_port=WEB_PORT)
+    add_server_args(web_service, prefix=WEB, default_port=WEB_PORT, name='web server')
     add_jupyter(web_service)
     add_warning_args(web_service)
     add_thumbnail_dir(web_service)

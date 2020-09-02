@@ -3,7 +3,7 @@
 # this is so matplotlib can write it's config (we're running as non-root)
 export MPLCONFIGDIR=/data/.config
 
-CH2="ch2 --base /data --uri postgresql://{user}:{passwd}@postgresql/activity-{version}"
+CH2="ch2 --base /data --db-bind postgresql"
 
 echo "waiting for database"
 sleep 5

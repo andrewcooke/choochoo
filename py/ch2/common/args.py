@@ -86,12 +86,13 @@ def m(name): return '-' + name
 def no(name): return 'no-%s' % name
 
 
-def add_server_args(cmd, prefix='', default_address='localhost', default_port=80):
+def add_server_args(cmd, prefix='', default_address='localhost', default_port=80, name=''):
     if prefix: prefix += '-'
+    if name: name += ' '
     cmd.add_argument(mm(prefix + BIND), default='localhost', metavar='ADDRESS',
-                     help='bind address' + f' (default {default_address})' if default_address else '')
+                     help=name + 'bind address' + f' (default {default_address})' if default_address else '')
     cmd.add_argument(mm(prefix + PORT), default=default_port, type=int, metavar='PORT',
-                     help=f'port' + f' (default {default_port})' if default_port else '')
+                     help=name + f'port' + f' (default {default_port})' if default_port else '')
 
 
 def add_data_source_args(parser, uri_default):

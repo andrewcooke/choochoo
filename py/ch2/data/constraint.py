@@ -132,10 +132,12 @@ def check_constraint(s, ast, attrs):
     qname, op, value = ast
     try:
         check_statistic_name(s, qname, value)
+        log.debug(f'{qname} is a statistic')
     except Exception as e1:
         try:
             check_source_property(qname, value)
             attrs.add(qname)
+            log.debug(f'{qname} is an attribute')
         except Exception as e2:
             log.error(e1)
             log.error(e2)

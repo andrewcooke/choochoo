@@ -5,7 +5,7 @@ from logging import getLogger
 from ..common.date import min_time, max_time
 from ..common.math import is_nan
 from ..names import simple_name
-from ..sql import StatisticName, Interval, Source
+from ..sql import StatisticName, Interval, Source, StatisticJournalTimestamp
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
 
 log = getLogger(__name__)
@@ -105,8 +105,12 @@ class Loader(ABC):
 
         # set statistic_name and source (as well as ids) so that we can correctly test in
         # Source for dirty intervals
-        instance = journal_class(statistic_name=statistic_name, statistic_name_id=statistic_name.id,
-                                 source=source, source_id=source.id, value=value, time=time, serial=self.__serial)
+        if journal_class == StatisticJournalTimestamp:
+            instance = journal_class(statistic_name=statistic_name, statistic_name_id=statistic_name.id,
+                                     source=source, source_id=source.id, time=value, serial=self.__serial)
+        else:
+            instance = journal_class(statistic_name=statistic_name, statistic_name_id=statistic_name.id,
+                                     source=source, source_id=source.id, value=value, time=time, serial=self.__serial)
 
         if instance.time in self.__by_name_then_time[statistic_name.name]:
             previous = self.__by_name_then_time[statistic_name.name][instance.time]
