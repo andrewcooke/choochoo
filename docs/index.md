@@ -1,30 +1,31 @@
 
 # Getting Started
 
+## Sorry
+
+See the [explanation](https://github.com/andrewcooke/choochoo) on the front
+page - currently this project is not easy to use and fixing that is not a
+high priority.
+
+If you want to continue anyway, the notes below point you in the right
+direction.  You need a unix machine and it's likely macos won't cut it.
+
 ## Docker
 
-The most reliable way to try Choochoo is via
-[Docker](https://docs.docker.com/get-docker/).  Once you have Docker
-installed run:
+The system runs within docker.  It requires three images and three virtual
+volumes.
 
-    > docker image pull andrewcooke/choochoo:latest
-    > docker run -p 127.0.0.1:8000:8000 -p 127.0.0.1:8001:8001 \
-      andrewcooke/choochoo:latest
+Clone the repo (the master branch is more likely to work, but the dev branch
+has the latest code).  In the dkr directory are some scripts:
 
-This will download and run the latest stable image.  Once running
-(download could take some time) you can see the web interface at
-[http://localhost:8000](http://localhost:8000).
+* make-choochoo-image.sh - use this to build the main image (the other images
+  run postgres and jupyter and are downloaded automatically).
 
-## Python Install
+* run-ch2-jp-pg-persist.sh - use this to start everything.  Use `-h` to see
+  options.  Use `--reset` to build disks for the first use.
 
-Alternatively you can do the traditional [Python
-install](python-install).  This is more likely to give problems,
-*especially on platforms other than Linux*.  For a first look, I
-recommend Docker.
-
-You can also build from
-[source](http://github.com/andrewcooke/choochoo), but then you're on
-your own (hint: look in the dev directory).
+The `run-ch2-jp-pg-persist.sh` script will start the web server on
+http://localhost:8000
 
 ## Initial Configuration
 

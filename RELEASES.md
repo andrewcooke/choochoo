@@ -1,6 +1,13 @@
 
 ## Latest Changes
 
+### v0.35.0
+
+Giving up (for a time) on user support as I transition to some kind of
+web-hosted solution.  See updated README.  Changes to code include more
+simplification (especially in loading data) and more consistent use of Docker
+images (including Jupyter and correct user IDs).
+
 ### v0.34.0
 
 Docker and PostgreSQL!  Plus bugfixes and web UI improvements.
