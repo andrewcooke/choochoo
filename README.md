@@ -17,7 +17,7 @@ startup instructions](https://andrewcooke.github.io/choochoo/).  So for a time
 (until plans change or I get web hosting working) this project will be more
 difficult to use.  I'm sorry about this, but it's clearly not sustainable in
 its current form.  Hopefully it will continue to evolve until it reaches a
-more useful form.
+more useful state.
 
 [![web diary](docs/teasers/web-diary-sq.png)](docs/teasers/web-diary.png)
 [![jupyter details](docs/teasers/jupyter-details-sq.png)](docs/teasers/jupyter-details.png)
