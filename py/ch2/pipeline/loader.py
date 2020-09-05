@@ -78,7 +78,7 @@ class Loader(ABC):
 
     def __add_internal(self, statistic_name, source, value, time):
 
-        if value is None or is_nan(value):
+        if is_nan(value):
             raise Exception(f'Bad value for {statistic_name.name}: {value}')
 
         journal_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]

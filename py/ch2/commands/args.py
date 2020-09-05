@@ -463,6 +463,9 @@ def make_parser(with_noop=False):
     import_.add_argument(mm(CONSTANTS), action='store_true', help='enable (or disable) import of constant data')
     import_.add_argument(mm(SEGMENTS), action='store_true', help='enable (or disable) import of segment data')
 
+    delete = commands.add_parser(DELETE, help='delete an activity')
+    delete.add_argument(DATE, help='date of activity to delete')
+
     fit = commands.add_parser(FIT, help='display contents of fit file')
     fit_cmds = fit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
     fit_grep = fit_cmds.add_parser(GREP, help='show matching entries')

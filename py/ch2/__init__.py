@@ -23,10 +23,11 @@ class FatalException(Exception):
 from .commands.args import COMMAND, make_parser, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DATABASE, CONSTANTS, SHOW_SCHEDULE, MONITOR, GARMIN, \
     UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, \
-    DB_VERSION, UPLOAD, PROCESS
+    DB_VERSION, UPLOAD, PROCESS, DELETE
 from .commands.process import process
 from .commands.upload import upload
 from .commands.constants import constants
+from .commands.delete import delete
 from .commands.validate import validate
 from .commands.db import db
 from .commands.fit import fit
@@ -59,6 +60,7 @@ at the command line.
 
 COMMANDS = {CONSTANTS: constants,
             DB: db,
+            DELETE: delete,
             FIT: fit,
             FIX_FIT: fix_fit,
             HELP: help,

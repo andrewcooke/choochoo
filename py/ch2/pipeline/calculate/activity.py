@@ -168,7 +168,7 @@ class ActivityCalculator(LoaderMixin, OwnerInMixin,
                 loader.add(title, units, summary, ajournal, stats[name], time, type, description=description)
             except:
                 log.warning(f'Failed to load {title}')
-                log_current_exception(traceback=False)
+                log_current_exception(traceback=True)
             del stats[name]
         else:
             log.warning(f'Did not calculate {title} '
