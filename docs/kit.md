@@ -61,11 +61,13 @@ automatically:
 First, I will add my Cotic bike:
 
     > ch2 kit start bike cotic --force
-    usage: ch2 [-h] [--base DIR] [--read-only] [--log FILE] [--color COLOR] [-v N]
-               [--dev] [-V]
-               {help,web,read,search,constants,validate,jupyter,kit,database,import,garmin,calculate,fit,fix-fit,thumbnail,package-fit-profile,show-schedule,unlock}
+    usage: ch2 [-h] [--dev] [--log FILE] [--log-dir DIR] [--color COLOR] [-v N]
+               [-V] [--db-bind ADDRESS] [--db-port PORT] [--user USER]
+               [--passwd PASS] [--admin-user USER] [--admin-passwd PASS]
+               [--uri URI] [--base DIR] [--data DIR] [--cprofile [DIR]]
+               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,package-fit-profile,show-schedule}
                ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'read', 'search', 'constants', 'validate', 'jupyter', 'kit', 'database', 'import', 'garmin', 'calculate', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'show-schedule', 'unlock')
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'show-schedule')
 
 
 We're introducing a completely new *group* (bike) and so the `--force`
@@ -75,22 +77,26 @@ this, because `bike` will already be known by the system..
 Now I have a bike I am going to add some inner tubes at various dates.
 
     > ch2 kit change cotic front-tube michelin 2019-01-01 --force
-    usage: ch2 [-h] [--base DIR] [--read-only] [--log FILE] [--color COLOR] [-v N]
-               [--dev] [-V]
-               {help,web,read,search,constants,validate,jupyter,kit,database,import,garmin,calculate,fit,fix-fit,thumbnail,package-fit-profile,show-schedule,unlock}
+    usage: ch2 [-h] [--dev] [--log FILE] [--log-dir DIR] [--color COLOR] [-v N]
+               [-V] [--db-bind ADDRESS] [--db-port PORT] [--user USER]
+               [--passwd PASS] [--admin-user USER] [--admin-passwd PASS]
+               [--uri URI] [--base DIR] [--data DIR] [--cprofile [DIR]]
+               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,package-fit-profile,show-schedule}
                ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'read', 'search', 'constants', 'validate', 'jupyter', 'kit', 'database', 'import', 'garmin', 'calculate', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'show-schedule', 'unlock')
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'show-schedule')
 
 
 Again the system catches the first use of `front-tube` so we flag that
 it is OK with `--force`.
 
     > ch2 kit change cotic front-tube michelin 2019-03-01
-    usage: ch2 [-h] [--base DIR] [--read-only] [--log FILE] [--color COLOR] [-v N]
-               [--dev] [-V]
-               {help,web,read,search,constants,validate,jupyter,kit,database,import,garmin,calculate,fit,fix-fit,thumbnail,package-fit-profile,show-schedule,unlock}
+    usage: ch2 [-h] [--dev] [--log FILE] [--log-dir DIR] [--color COLOR] [-v N]
+               [-V] [--db-bind ADDRESS] [--db-port PORT] [--user USER]
+               [--passwd PASS] [--admin-user USER] [--admin-passwd PASS]
+               [--uri URI] [--base DIR] [--data DIR] [--cprofile [DIR]]
+               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,package-fit-profile,show-schedule}
                ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'read', 'search', 'constants', 'validate', 'jupyter', 'kit', 'database', 'import', 'garmin', 'calculate', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'show-schedule', 'unlock')
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'show-schedule')
 
 
 Previous tubes are *retired* as new ones are added.  You don't need to
@@ -98,11 +104,13 @@ add the tubes in order - however they're added, the start and end
 times should align correctly.
 
     > ch2 kit change cotic front-tube vittoria
-    usage: ch2 [-h] [--base DIR] [--read-only] [--log FILE] [--color COLOR] [-v N]
-               [--dev] [-V]
-               {help,web,read,search,constants,validate,jupyter,kit,database,import,garmin,calculate,fit,fix-fit,thumbnail,package-fit-profile,show-schedule,unlock}
+    usage: ch2 [-h] [--dev] [--log FILE] [--log-dir DIR] [--color COLOR] [-v N]
+               [-V] [--db-bind ADDRESS] [--db-port PORT] [--user USER]
+               [--passwd PASS] [--admin-user USER] [--admin-passwd PASS]
+               [--uri URI] [--base DIR] [--data DIR] [--cprofile [DIR]]
+               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,package-fit-profile,show-schedule}
                ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'read', 'search', 'constants', 'validate', 'jupyter', 'kit', 'database', 'import', 'garmin', 'calculate', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'show-schedule', 'unlock')
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'show-schedule')
 
 
 That's three different inner tubes on the front.  The last uses
@@ -112,11 +120,13 @@ command line as you do the work.
 Now we can see the statistics:
 
     > ch2 kit statistics front-tube
-    usage: ch2 [-h] [--base DIR] [--read-only] [--log FILE] [--color COLOR] [-v N]
-               [--dev] [-V]
-               {help,web,read,search,constants,validate,jupyter,kit,database,import,garmin,calculate,fit,fix-fit,thumbnail,package-fit-profile,show-schedule,unlock}
+    usage: ch2 [-h] [--dev] [--log FILE] [--log-dir DIR] [--color COLOR] [-v N]
+               [-V] [--db-bind ADDRESS] [--db-port PORT] [--user USER]
+               [--passwd PASS] [--admin-user USER] [--admin-passwd PASS]
+               [--uri URI] [--base DIR] [--data DIR] [--cprofile [DIR]]
+               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,package-fit-profile,show-schedule}
                ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'read', 'search', 'constants', 'validate', 'jupyter', 'kit', 'database', 'import', 'garmin', 'calculate', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'show-schedule', 'unlock')
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'show-schedule')
 
 
 In this example (which is auto-generated from the commands) there were

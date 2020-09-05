@@ -31,7 +31,15 @@ default configuration (`ch2 default-config`) is sufficient.
 To check for errors in `myfile.fit`:
 
     > ch2 fix-fit myfile.fit --discard
-    CRITICAL: [Errno 2] No such file or directory: 'myfile.fit'
+        INFO: Logging to /home/andrew/.ch2/0-35/logs/fix-fit.log
+     WARNING: Could not connect to database
+    
+     Welcome to Choochoo.
+    
+     You must configure the database before use (no uri).
+    
+     Please use the ch2 database command.
+    
 
 
 If there are no warnings or errors (as above) then the file is OK (as
@@ -44,7 +52,13 @@ problems.  Note that using `-v 2` reduces the logging to `ERROR` level
 only (with `-v 0` we would see no logging, just the file names).
 
     > ch2 -v 2 fix-fit --name-bad *.fit
-    CRITICAL: [Errno 2] No such file or directory: '2013-02-06-12-11-14.fit'
+    
+     Welcome to Choochoo.
+    
+     You must configure the database before use (no uri).
+    
+     Please use the ch2 database command.
+    
 
 
 ## Check Timestamps in a FIT File
@@ -53,7 +67,15 @@ To check that the timestamp never increases by more than 60s between
 records:
 
     > ch2 fix-fit myfile.fit --max-delta-t 60 --discard
-    CRITICAL: [Errno 2] No such file or directory: 'myfile.fit'
+        INFO: Logging to /home/andrew/.ch2/0-35/logs/fix-fit.log
+     WARNING: Could not connect to database
+    
+     Welcome to Choochoo.
+    
+     You must configure the database before use (no uri).
+    
+     Please use the ch2 database command.
+    
 
 
 Here we can see that there was a jump of 273 seconds.
@@ -71,7 +93,15 @@ file (see below to understand what information is removed).
 The command to drop data is (see notes below):
 
     > ch2 fix-fit myfile.fit --max-delta-t 60 --drop --fix-header --fix-checksum --max-fwd-len 500 -o fixed.fit
-    CRITICAL: [Errno 2] No such file or directory: 'myfile.fit'
+        INFO: Logging to /home/andrew/.ch2/0-35/logs/fix-fit.log
+     WARNING: Could not connect to database
+    
+     Welcome to Choochoo.
+    
+     You must configure the database before use (no uri).
+    
+     Please use the ch2 database command.
+    
 
 
 Note that:
@@ -92,7 +122,15 @@ In the recipe above data were dropped after the first 4975 bytes.  We
 can see what records that affected as follows:
 
     > ch2 fit records --after-bytes 4975 myfile.fit
-    CRITICAL: [Errno 2] No such file or directory: 'myfile.fit'
+        INFO: Logging to /home/andrew/.ch2/0-35/logs/fit.log
+     WARNING: Could not connect to database
+    
+     Welcome to Choochoo.
+    
+     You must configure the database before use (no uri).
+    
+     Please use the ch2 database command.
+    
 
 
 That looks like metadata associated with ending an activity.  Probably
@@ -110,7 +148,15 @@ those are not consecutive there must be some internal messages also
 present.  We can display those too:
 
     > ch2 fit records --after-bytes 4975 --internal myfile.fit
-    CRITICAL: [Errno 2] No such file or directory: 'myfile.fit'
+        INFO: Logging to /home/andrew/.ch2/0-35/logs/fit.log
+     WARNING: Could not connect to database
+    
+     Welcome to Choochoo.
+    
+     You must configure the database before use (no uri).
+    
+     Please use the ch2 database command.
+    
 
 
 Hmm.  Some message defintions and the checksum.  Nothing very
@@ -119,7 +165,15 @@ exciting.
 We can also see the same data in binary form.  For example:
 
     > ch2 fit tokens --after-bytes 4975 myfile.fit
-    CRITICAL: [Errno 2] No such file or directory: 'myfile.fit'
+        INFO: Logging to /home/andrew/.ch2/0-35/logs/fit.log
+     WARNING: Could not connect to database
+    
+     Welcome to Choochoo.
+    
+     You must configure the database before use (no uri).
+    
+     Please use the ch2 database command.
+    
 
 
 ## Remove Arbitrary Data from a FIT File
@@ -134,7 +188,15 @@ First, we note from the `tokens` dump that the data extend from offset
 follows:
 
     > ch2 fix-fit myfile.fit --slices :05069,05317: --fix-header --fix-checksum -o sliced.fit
-    CRITICAL: [Errno 2] No such file or directory: 'myfile.fit'
+        INFO: Logging to /home/andrew/.ch2/0-35/logs/fix-fit.log
+     WARNING: Could not connect to database
+    
+     Welcome to Choochoo.
+    
+     You must configure the database before use (no uri).
+    
+     Please use the ch2 database command.
+    
 
 
 Note that `fix-fit` won't let you remove data that would corrupt the
@@ -143,7 +205,15 @@ file (to the best of its ability).
 ## Change the Times in a FIT File
 
     > ch2 fix-fit myfile.fit --start '2018-01-01 12:00:00' --fix-checksum -o fixed.fit
-    CRITICAL: [Errno 2] No such file or directory: 'myfile'
+        INFO: Logging to /home/andrew/.ch2/0-35/logs/fix-fit.log
+     WARNING: Could not connect to database
+    
+     Welcome to Choochoo.
+    
+     You must configure the database before use (no uri).
+    
+     Please use the ch2 database command.
+    
 
 
 The `--start` value sets the first timestamp in the file.  Subsequent
@@ -155,7 +225,13 @@ For some reason we want to know if a file contains any speed values
 over 7 m/s:
 
     > ch2 fit grep -p '.*speed>7' --compact myfile.fit
-    CRITICAL: [Errno 2] No such file or directory: 'myfile.fit'
+    usage: ch2 fit grep [-h] [--after-records N] [--limit-records N]
+                        [--after-bytes N] [--limit-bytes N] [-w] [--no-validate]
+                        [--max-delta-t S] [--name] [--not] [--match MATCH]
+                        [--compact] [--context] --pattern MSG:FLD[=VAL]
+                        [MSG:FLD[=VAL] ...] [--width WIDTH]
+                        PATH [PATH ...]
+    ch2 fit grep: error: the following arguments are required: --pattern
 
 
 ## Search for Values in a FIT File with Context
@@ -164,7 +240,13 @@ Seeing the results above we'd like to know more about the records
 where we were over 7.5m/s:
 
     > ch2 fit grep -p 'record:enhanced_speed>7' --context myfile.fit
-    CRITICAL: [Errno 2] No such file or directory: 'myfile.fit'
+    usage: ch2 fit grep [-h] [--after-records N] [--limit-records N]
+                        [--after-bytes N] [--limit-bytes N] [-w] [--no-validate]
+                        [--max-delta-t S] [--name] [--not] [--match MATCH]
+                        [--compact] [--context] --pattern MSG:FLD[=VAL]
+                        [MSG:FLD[=VAL] ...] [--width WIDTH]
+                        PATH [PATH ...]
+    ch2 fit grep: error: the following arguments are required: --pattern
 
 
 The search expression has the form `record:field=value` where `record`
@@ -177,12 +259,13 @@ the last of these is for regular expression matching on the value.
 This has made us curious.  Do we have any rides where we exceed 17m/s?
 
     > ch2 fit grep -p 'record:enhanced_speed>17' --match 0 --name *.fit
-    2017-01-31-lad.fit
-    2017-06-11-sp2.fit
-    2017-06-28-jp2.fit
-    2017-07-03-ayn.fit
-    2017-07-07-jp2.fit
-    2017-09-17-jp2.fit
+    usage: ch2 fit grep [-h] [--after-records N] [--limit-records N]
+                        [--after-bytes N] [--limit-bytes N] [-w] [--no-validate]
+                        [--max-delta-t S] [--name] [--not] [--match MATCH]
+                        [--compact] [--context] --pattern MSG:FLD[=VAL]
+                        [MSG:FLD[=VAL] ...] [--width WIDTH]
+                        PATH [PATH ...]
+    ch2 fit grep: error: the following arguments are required: --pattern
 
 
 The `--name` flag displays filenames on matching, while `--match 0`
@@ -195,37 +278,13 @@ bytes, but not timestamps (or any other field).  But we can work
 around this by using `--grep`:
 
     > ch2 fit grep -p '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- myfile.fit
-    
-    record:enhanced_speed=2.883
-    record:timestamp=2018-03-04 11:56:46+00:00
-    
-    record:enhanced_speed=2.902
-    record:timestamp=2018-03-04 11:57:07+00:00
-    
-    record:enhanced_speed=2.874
-    record:timestamp=2018-03-04 11:57:29+00:00
-    
-    record:enhanced_speed=2.762
-    record:timestamp=2018-03-04 11:57:51+00:00
-    
-    record:enhanced_speed=2.93
-    record:timestamp=2018-03-04 11:58:07+00:00
-    
-    record:enhanced_speed=2.79
-    record:timestamp=2018-03-04 11:58:29+00:00
-    
-    record:enhanced_speed=3.219
-    record:timestamp=2018-03-04 11:58:50+00:00
-    
-    record:enhanced_speed=3.172
-    record:timestamp=2018-03-04 11:59:06+00:00
-    
-    record:enhanced_speed=3.266
-    record:timestamp=2018-03-04 11:59:25+00:00
-    
-    record:enhanced_speed=3.2
-    record:timestamp=2018-03-04 11:59:44+00:00
-    
+    usage: ch2 fit grep [-h] [--after-records N] [--limit-records N]
+                        [--after-bytes N] [--limit-bytes N] [-w] [--no-validate]
+                        [--max-delta-t S] [--name] [--not] [--match MATCH]
+                        [--compact] [--context] --pattern MSG:FLD[=VAL]
+                        [MSG:FLD[=VAL] ...] [--width WIDTH]
+                        PATH [PATH ...]
+    ch2 fit grep: error: the following arguments are required: --pattern
 
 
 Note that we needed to explicitly include a wildcard record for the
@@ -268,4 +327,7 @@ need to write some code to do that...
     print('Maximum speed: %.2f' % max_speed)
 
 Giving the output
+
+    Maximum speed: 7.80
+
 
