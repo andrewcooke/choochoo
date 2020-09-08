@@ -312,7 +312,6 @@ def create_notebook(config, template, args):
 
 
 def display_notebook(config, template, args):
-    import pdb; pdb.set_trace()
     log.debug(f'Displaying {template} with {args}')
     name = create_notebook(config, template, args)
     # url = f'{ctrl.connection_url()}tree/{name}'

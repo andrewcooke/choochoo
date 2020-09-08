@@ -16,7 +16,7 @@ from ..utils import add
 from ...common.date import format_seconds, local_date_to_time, time_to_local_time
 from ...diary.model import TYPE, MEASURES, SCHEDULES
 from ...lib.utils import sigfig
-from ...names import Units, simple_name
+from ...names import U, simple_name
 
 log = getLogger(__name__)
 
@@ -199,16 +199,16 @@ class StatisticJournal(Base):
         units = self.statistic_name.units
         if not units:
             return '%d' % self.value
-        elif units == Units.M:
+        elif units == U.M:
             if self.value > 2000:
                 return '%d km' % (self.value / 1000)
             else:
                 return '%d m' % self.value
-        elif units == Units.S:
+        elif units == U.S:
             return format_seconds(self.value)
-        elif units in (Units.KMH, Units.PC, Units.BPM, Units.STEPS_UNITS, Units.W, Units.KJ):
+        elif units in (U.KMH, U.PC, U.BPM, U.STEPS_UNITS, U.W, U.KJ):
             return '%d %s' % (self.value, units)
-        elif units == Units.KCAL:
+        elif units == U.KCAL:
             return '%s %s' % (sigfig(self.value, 2), units)
         else:
             return '%d %s' % (self.value, units)
@@ -378,25 +378,25 @@ class StatisticJournalFloat(StatisticJournal):
         units = self.statistic_name.units
         if not units:
             return '%f' % self.value
-        elif units == Units.M:
+        elif units == U.M:
             if self.value > 2000:
                 return '%.1f km' % (self.value / 1000)
             else:
                 return '%d m' % int(self.value)
-        elif units == Units.KM:
+        elif units == U.KM:
             if self.value > 2:
                 return '%.1f km' % self.value
             else:
                 return '%d m' % int(self.value * 1000)
-        elif units == Units.S:
+        elif units == U.S:
             return format_seconds(self.value)
-        elif units in (Units.KMH, Units.PC, Units.KG, Units.W, Units.KJ):
+        elif units in (U.KMH, U.PC, U.KG, U.W, U.KJ):
             return '%.1f %s' % (self.value, units)
-        elif units == Units.KCAL:
+        elif units == U.KCAL:
             return '%s %s' % (sigfig(self.value, 2), units)
-        elif units in (Units.BPM, Units.STEPS_UNITS):
+        elif units in (U.BPM, U.STEPS_UNITS):
             return '%d %s' % (int(self.value), units)
-        elif units == Units.FF:
+        elif units == U.FF:
             return '%d' % int(self.value)
         else:
             return '%s %s' % (self.value, units)

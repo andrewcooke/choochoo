@@ -4,8 +4,8 @@ from logging import getLogger
 from .utils import ProcessCalculator, SegmentJournalCalculatorMixin, DataFrameCalculatorMixin
 from ..pipeline import OwnerInMixin, LoaderMixin
 from ...data import present, linear_resample_time, Statistics
-from ...names import N, Titles, Summaries as S, Units
-from ...sql import SegmentJournal, StatisticJournalFloat
+from ...names import N, T, S, U
+from ...sql import StatisticJournalType
 
 log = getLogger(__name__)
 
@@ -14,6 +14,13 @@ SJOURNAL = 'sjournal'
 
 class SegmentCalculator(LoaderMixin, OwnerInMixin,
                         SegmentJournalCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator):
+
+    def _startup(self, s):
+        super()._startup(s)
+        self._provides(s, T.SEGMENT_TIME, StatisticJournalType.TIMESTAMP, U.S, S.join(S.MIN, S.CNT, S.MSR),
+                       'The time to complete the segment.')
+        self._provides(s, T.SEGMENT_HEART_RATE, StatisticJournalType.TIMESTAMP, U.S, S.join(S.MAX, S.CNT, S.MSR),
+                       'The average heart rate for the segment.')
 
     def _read_dataframe(self, s, sjournal):
         from ch2.pipeline.read.segment import SegmentReader
@@ -30,8 +37,5 @@ class SegmentCalculator(LoaderMixin, OwnerInMixin,
 
     def _copy_results(self, s, ajournal, loader, stats):
         sjournal = stats[SJOURNAL]
-        loader.add(Titles.SEGMENT_TIME, Units.S, S.join(S.MIN, S.CNT, S.MSR), sjournal,
-                   stats[N.SEGMENT_TIME], sjournal.start, StatisticJournalFloat)
-        if N.SEGMENT_HEART_RATE in stats:
-            loader.add(Titles.SEGMENT_HEART_RATE, Units.BPM, S.join(S.MAX, S.CNT, S.MSR),
-                       sjournal, stats[N.SEGMENT_HEART_RATE], sjournal.start, StatisticJournalFloat)
+        for name in stats:
+            loader.add_data_only(name, sjournal, stats[name], sjournal.start)

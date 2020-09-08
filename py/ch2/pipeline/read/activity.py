@@ -13,11 +13,11 @@ from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
 from ...lib.io import split_fit_path
-from ...names import N, T, Units, Sports, Summaries as S
-from ...sql.database import Timestamp, StatisticJournalText
+from ...names import N, T, U, Sports, S
+from ...sql.database import StatisticJournalText
 from ...sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES, StatisticName, \
-    StatisticJournalType, StatisticJournal
+    StatisticJournalType, StatisticJournal, STATISTIC_JOURNAL_TYPES
 from ...sql.tables.topic import ActivityTopicField, ActivityTopic, ActivityTopicJournal
 from ...sql.utils import add
 from ...srtm.bilinear import bilinear_elevation_from_constant
@@ -46,6 +46,16 @@ class ActivityReader(ProcessFitReader):
     def _startup(self, s):
         self.__oracle = bilinear_elevation_from_constant(s)
         super()._startup(s)
+        for field, title, units, cls in self.record_to_db:
+            self._provides(s, title, STATISTIC_JOURNAL_TYPES[cls], units, None,
+                           f'The value of field {field} in the FIT record.')
+        self._provides(s, T.SPHERICAL_MERCATOR_X, StatisticJournalType.FLOAT, U.M, None,
+                       'The Web Mercator EPSG:3857 X coordinate')
+        self._provides(s, T.SPHERICAL_MERCATOR_Y, StatisticJournalType.FLOAT, U.M, None,
+                       'The Web Mercator EPSG:3857 Y coordinate')
+        self._provides(s, T.RAW_ELEVATION, StatisticJournalType.FLOAT, U.M, None,
+                       'The elevation from SRTM1 at this location')
+        # also coverages - see _read
 
     def _build_define(self, path):
         define = dict(self.define)
@@ -262,10 +272,9 @@ class ActivityReader(ProcessFitReader):
                             log.debug(f'{title} = {value}')
                         if value is not None:
                             value = value[0][0]
-                            if units == Units.KM:  # internally everything uses M
+                            if units == U.KM:  # internally everything uses M
                                 value /= 1000
-                            loader.add(title, units, None, ajournal, value, timestamp, type,
-                                       description=f'The value of field {field} in the FIT record.')
+                            loader.add_data_only(title, ajournal, value, timestamp)
                             if title == T.LATITUDE:
                                 lat = value
                             elif title == T.LONGITUDE:
@@ -274,16 +283,12 @@ class ActivityReader(ProcessFitReader):
                     # values derived from lat/lon
                     if lat is not None and lon is not None:
                         x, y = Point.from_latitude_longitude(lat, lon).meters
-                        loader.add(T.SPHERICAL_MERCATOR_X, Units.M, None, ajournal, x, timestamp,
-                                   StatisticJournalFloat, description='The WGS84 X coordinate')
-                        loader.add(T.SPHERICAL_MERCATOR_Y, Units.M, None, ajournal, y, timestamp,
-                                   StatisticJournalFloat, description='The WGS84 Y coordinate')
+                        loader.add_data_only(N.SPHERICAL_MERCATOR_X, ajournal, x, timestamp)
+                        loader.add_data_only(N.SPHERICAL_MERCATOR_Y, ajournal, x, timestamp)
                         if self.add_elevation:
                             elevation = self.__oracle.elevation(lat, lon)
                             if elevation:
-                                loader.add(T.RAW_ELEVATION, Units.M, None, ajournal, elevation,
-                                           timestamp, StatisticJournalFloat,
-                                           description='The elevation from SRTM1 at this location')
+                                loader.add_data_only(s, N.RAW_ELEVATION, ajournal, elevation, timestamp)
                 else:
                     log.warning('Ignoring duplicate record data for %s at %s - some data may be missing' %
                                 (file_scan.path, record.value.timestamp))
@@ -306,7 +311,7 @@ class ActivityReader(ProcessFitReader):
     def _read(self, s, path):
         loader = super()._read(s, path)
         for title, percent in loader.coverage_percentages():
-            StatisticJournalFloat.add(s, T._cov(title), Units.PC, S.join(S.MIN, S.AVG), self.owner_out,
+            StatisticJournalFloat.add(s, T._cov(title), U.PC, S.join(S.MIN, S.AVG), self.owner_out,
                                       self.__ajournal, percent, self.__ajournal.start,
                                       description=f'Coverage (% of FIT records with data) for {title}.')
         s.commit()

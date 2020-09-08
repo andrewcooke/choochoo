@@ -9,7 +9,7 @@ from .impulse import add_responses, add_impulse
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.inspect import read_package
 from ..lib.schedule import Schedule
-from ..names import N, Titles, Sports, Units, Summaries as S
+from ..names import N, T, Sports, U, S
 from ..pipeline.calculate import ImpulseCalculator
 from ..pipeline.calculate.achievement import AchievementCalculator
 from ..pipeline.calculate.activity import ActivityCalculator
@@ -103,13 +103,13 @@ class Profile:
         # the mapping from FIT fields to database entries
         # you really don't want to alter this unless you know what you are doing...
         # todo - should this depend on activity group?
-        return {'position_lat': (Titles.LATITUDE, Units.DEG, StatisticJournalType.FLOAT),
-                'position_long': (Titles.LONGITUDE, Units.DEG, StatisticJournalType.FLOAT),
-                'heart_rate': (Titles.HEART_RATE, Units.BPM, StatisticJournalType.INTEGER),
-                'enhanced_speed': (Titles.SPEED, Units.MS, StatisticJournalType.FLOAT),
-                'distance': (Titles.DISTANCE, Units.KM, StatisticJournalType.FLOAT),
-                'enhanced_altitude': (Titles.ALTITUDE, Units.M, StatisticJournalType.FLOAT),
-                'cadence': (Titles.CADENCE, Units.RPM, StatisticJournalType.INTEGER)}
+        return {'position_lat': (T.LATITUDE, U.DEG, StatisticJournalType.FLOAT),
+                'position_long': (T.LONGITUDE, U.DEG, StatisticJournalType.FLOAT),
+                'heart_rate': (T.HEART_RATE, U.BPM, StatisticJournalType.INTEGER),
+                'enhanced_speed': (T.SPEED, U.MS, StatisticJournalType.FLOAT),
+                'distance': (T.DISTANCE, U.KM, StatisticJournalType.FLOAT),
+                'enhanced_altitude': (T.ALTITUDE, U.M, StatisticJournalType.FLOAT),
+                'cadence': (T.CADENCE, U.RPM, StatisticJournalType.INTEGER)}
 
     def _load_read_pipeline(self, s):
         sport_to_activity = self._sport_to_activity()
@@ -119,8 +119,8 @@ class Profile:
         add_read_and_calculate(s, MonitorReader)
 
     def _ff_parameters(self):
-        return ((42, 1, 1, Titles.FITNESS_D % 42, 'fitness'),
-                (7, 1, 5, Titles.FATIGUE_D % 7, 'fatigue'))
+        return ((42, 1, 1, T.FITNESS_D % 42, 'fitness'),
+                (7, 1, 5, T.FATIGUE_D % 7, 'fatigue'))
 
     def _load_power_statistics(self, s):
         # after elevation and before ff etc
@@ -131,7 +131,7 @@ class Profile:
         for activity_group in self._activity_groups.values():
             add_impulse(s, activity_group)
             # we need a value here for various UI reasons.  might as well use my own value...
-            add_constant(s, Titles.FTHR, default_fthr,
+            add_constant(s, T.FTHR, default_fthr,
                          description=f'''
 Heart rate (in bpm) at functional threshold.
 
@@ -139,7 +139,7 @@ Your FTHR is the highest sustained heart rate you can maintain for long periods 
 It is used to calculate how hard you are working (the Impulse) and, from that, 
 your FF-model parameters (fitness and fatigue).
 ''',
-                         activity_group=activity_group, units=Units.BPM,
+                         activity_group=activity_group, units=U.BPM,
                          statistic_journal_type=StatisticJournalType.INTEGER)
         add_climb(s)  # default climb calculator
         add_responses(s, self._ff_parameters(), prefix=N.DEFAULT)

@@ -237,6 +237,10 @@ class Summaries:
     def join(*args): return ','.join(args)
 
 
+def any_to_fmt(pattern, fmt='%s'):
+    return pattern.replace('%', fmt)
+
+
 def like(pattern, names):
     return list(_like(pattern, names))
 
@@ -279,7 +283,7 @@ class NamesMeta(type):
 class Names(Titles, metaclass=NamesMeta): pass
 
 
-T, N = Titles, Names
+T, N, U, S = Titles, Names, Units, Summaries
 
 
 def simple_name(name, none=True, strip=True):

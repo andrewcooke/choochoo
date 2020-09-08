@@ -7,8 +7,8 @@ from ...common.math import is_nan
 from ...data import Statistics
 from ...data.elevation import smooth_elevation
 from ...data.frame import present
-from ...names import N, Titles, Units
-from ...sql import StatisticJournalFloat
+from ...names import N, T, U
+from ...sql import StatisticJournalFloat, StatisticJournalType
 
 log = getLogger(__name__)
 
@@ -18,6 +18,13 @@ class ElevationCalculator(LoaderMixin, ActivityJournalCalculatorMixin, DataFrame
     def __init__(self, *args, smooth=3, **kargs):
         self.smooth = smooth
         super().__init__(*args, **kargs)
+
+    def _startup(self, s):
+        super()._startup(s)
+        self._provides(s, T.ELEVATION, StatisticJournalType.FLOAT, U.M, None,
+                       'An estimate of elevation (may come from various sources).')
+        self._provides(s, T.GRADE, StatisticJournalType.FLOAT, U.PC, None,
+                       'The gradient of the smoothed SRTM1 elevation.')
 
     def _read_dataframe(self, s, ajournal):
         from ..owners import SegmentReader
@@ -42,10 +49,6 @@ class ElevationCalculator(LoaderMixin, ActivityJournalCalculatorMixin, DataFrame
     def _copy_results(self, s, ajournal, loader, df):
         for time, row in df.iterrows():
             if N.ELEVATION in row and not is_nan(row[N.ELEVATION]):
-                loader.add(Titles.ELEVATION, Units.M, None, ajournal, row[N.ELEVATION],
-                           time, StatisticJournalFloat,
-                           description='An estimate of elevation (may come from various sources).')
+                loader.add_data_only(N.ELEVATION, ajournal, row[N.ELEVATION], time)
             if N.GRADE in row and not is_nan(row[N.GRADE]):
-                loader.add(Titles.GRADE, Units.PC, None, ajournal, row[N.GRADE],
-                           time, StatisticJournalFloat,
-                           description='The gradient of the smoothed SRTM1 elevation.')
+                loader.add_data_only(N.GRADE, ajournal, row[N.GRADE], time)

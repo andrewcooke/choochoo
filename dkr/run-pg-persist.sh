@@ -51,5 +51,6 @@ docker run --rm -p 127.0.0.1:5432:5432 \
        -v `pwd`/postgres.conf:/etc/postgresql/postgresql.conf \
        --shm-size=1g \
        --name=postgresql \
-       postgres:11.8-alpine -c 'config_file=/etc/postgresql/postgresql.conf'
+       postgis/postgis:13-3.0-alpine \
+       -c 'config_file=/etc/postgresql/postgresql.conf'
 

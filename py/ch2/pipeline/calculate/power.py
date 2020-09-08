@@ -14,7 +14,7 @@ from ...data.frame import median_dt
 from ...data.lib import interpolate_to_index
 from ...data.power import add_differentials, add_energy_budget, add_loss_estimate, add_power_estimate
 from ...lib.data import reftuple, MissingReference
-from ...names import N, Units, Summaries, T
+from ...names import N, U, S, T
 from ...sql import Constant, StatisticJournalType
 
 log = getLogger(__name__)
@@ -42,13 +42,13 @@ class PowerCalculator(LoaderMixin, ActivityGroupCalculatorMixin, DataFrameCalcul
 
     def _startup(self, s):
         super()._startup(s)
-        self._provides(s, T.POWER_ESTIMATE, StatisticJournalType.FLOAT, Units.W, Summaries.AVG,
+        self._provides(s, T.POWER_ESTIMATE, StatisticJournalType.FLOAT, U.W, S.AVG,
                        'The estimated power.')
-        self._provides(s, T.HEADING, StatisticJournalType.FLOAT, Units.DEG, None,
+        self._provides(s, T.HEADING, StatisticJournalType.FLOAT, U.DEG, None,
                        'The current heading.')
-        self._provides(s, T.ENERGY_ESTIMATE, StatisticJournalType.FLOAT, Units.KJ, Summaries.MAX,
+        self._provides(s, T.ENERGY_ESTIMATE, StatisticJournalType.FLOAT, U.KJ, S.MAX,
                        'The estimated total energy expended.')
-        self._provides(s, T.CALORIE_ESTIMATE, StatisticJournalType.FLOAT, Units.KCAL, Summaries.MAX,
+        self._provides(s, T.CALORIE_ESTIMATE, StatisticJournalType.FLOAT, U.KCAL, S.MAX,
                        'The estimated calories burnt.')
 
     def _set_power(self, s, ajournal):

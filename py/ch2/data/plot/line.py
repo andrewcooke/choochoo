@@ -16,7 +16,7 @@ from sklearn.preprocessing import PolynomialFeatures
 
 from .utils import tooltip, make_range
 from ..frame import present
-from ...names import Names
+from ...names import N
 
 log = getLogger(__name__)
 
@@ -46,7 +46,7 @@ def patches(x, y, diff):
 
 
 def add_tsid_line(f, x, y, source, color='black', line_dash='solid'):
-    for _, s in source.groupby(Names.TIMESPAN_ID):
+    for _, s in source.groupby(N.TIMESPAN_ID):
         f.line(x=x, y=y, source=s, line_color=color, line_dash=line_dash, name='with_hover')
 
 
@@ -57,9 +57,9 @@ def comparison_line_plot(nx, ny, x, y, source, other=None, ylo=None, yhi=None, x
              ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),
              ResetTool(),
              HoverTool(tooltips=[tooltip(x)
-                                 for x in (y, Names.DISTANCE_KM, Names.LOCAL_TIME)], names=['with_hover'])]
+                                 for x in (y, N.DISTANCE_KM, N.LOCAL_TIME)], names=['with_hover'])]
     f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny,
-               x_axis_type='datetime' if Names.TIME in x else 'linear', tools=tools)
+               x_axis_type='datetime' if N.TIME in x else 'linear', tools=tools)
     f.y_range = make_range(source[y], lo=ylo, hi=yhi)  # was this ignored previously?
     add_tsid_line(f, x, y, source)
     if present(other, y):
@@ -111,24 +111,24 @@ def cumulative_plot(nx, ny, y, source, other=None, ylo=None, yhi=None, output_ba
 
 
 def add_climbs(f, climbs, source):
-    if f is not None and present(climbs, Names.CLIMB_DISTANCE):
-        for time, climb in climbs.loc[~pd.isna(climbs[Names.CLIMB_DISTANCE])].iterrows():
+    if f is not None and present(climbs, N.CLIMB_DISTANCE):
+        for time, climb in climbs.loc[~pd.isna(climbs[N.CLIMB_DISTANCE])].iterrows():
             i = source.index.get_loc(time, method='nearest')
-            x = source[Names.DISTANCE_KM].iloc[i]
-            x = (x - climb[Names.CLIMB_DISTANCE], x)
-            y = source[Names.ELEVATION_M].iloc[i]
-            y = (y - climb[Names.CLIMB_ELEVATION], y)
+            x = source[N.DISTANCE_KM].iloc[i]
+            x = (x - climb[N.CLIMB_DISTANCE], x)
+            y = source[N.ELEVATION_M].iloc[i]
+            y = (y - climb[N.CLIMB_ELEVATION], y)
             f.line(x=x, y=y, color='red', line_width=5, alpha=0.2)
             for xx, yy in zip(x, y):
                 f.circle(x=xx, y=yy, color='red', size=8, alpha=0.2)
 
 
 def add_climb_zones(f, climbs, source):
-    if f is not None and present(climbs, Names.CLIMB_DISTANCE):
-        for time, climb in climbs.loc[~pd.isna(climbs[Names.CLIMB_DISTANCE])].iterrows():
+    if f is not None and present(climbs, N.CLIMB_DISTANCE):
+        for time, climb in climbs.loc[~pd.isna(climbs[N.CLIMB_DISTANCE])].iterrows():
             i = source.index.get_loc(time, method='nearest')
-            right = source[Names.DISTANCE_KM].iloc[i]
-            left = right - climb[Names.CLIMB_DISTANCE]
+            right = source[N.DISTANCE_KM].iloc[i]
+            left = right - climb[N.CLIMB_DISTANCE]
             top = f.y_range.end
             bottom = f.y_range.start
             f.quad(top=top, bottom=bottom, left=left, right=right, color='red', alpha=0.05)
@@ -151,16 +151,16 @@ def histogram_plot(nx, ny, x, source, xlo=None, xhi=None, nsub=5, output_backend
 
 
 def add_route(f, source, color='black', line_dash='solid'):
-    return f.line(x=Names.SPHERICAL_MERCATOR_X, y=Names.SPHERICAL_MERCATOR_Y, source=source,
+    return f.line(x=N.SPHERICAL_MERCATOR_X, y=N.SPHERICAL_MERCATOR_Y, source=source,
                   color=color, line_dash=line_dash)
 
 
 def add_start_finish(f, source, start='green', finish='red'):
     source = source.iloc[[0, -1]]
     source = source.reset_index(drop=True)
-    source.loc[0, Names.COLOR] = start
-    source.loc[1, Names.COLOR] = finish
-    return f.circle(x=Names.SPHERICAL_MERCATOR_X, y=Names.SPHERICAL_MERCATOR_Y, source=source, color=Names.COLOR)
+    source.loc[0, N.COLOR] = start
+    source.loc[1, N.COLOR] = finish
+    return f.circle(x=N.SPHERICAL_MERCATOR_X, y=N.SPHERICAL_MERCATOR_Y, source=source, color=N.COLOR)
 
 
 def map_plot(nx, ny, source, other=None, output_backend=MAP_BACKEND):
@@ -168,11 +168,11 @@ def map_plot(nx, ny, source, other=None, output_backend=MAP_BACKEND):
              ZoomInTool(dimensions='both'), ZoomOutTool(dimensions='both'),
              ResetTool(),
              HoverTool(tooltips=[tooltip(x)
-                                 for x in (Names.LATITUDE, Names.LONGITUDE, Names.DISTANCE_KM, Names.LOCAL_TIME)])]
+                                 for x in (N.LATITUDE, N.LONGITUDE, N.DISTANCE_KM, N.LOCAL_TIME)])]
     f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny,
                x_axis_type='mercator', y_axis_type='mercator', match_aspect=True, tools=tools)
     add_route(f, source)
-    if present(other, Names.SPHERICAL_MERCATOR_X, Names.SPHERICAL_MERCATOR_Y):
+    if present(other, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y):
         add_route(f, other, color='black', line_dash='dotted')
     f.add_tile(STAMEN_TERRAIN, alpha=0.3)
     f.axis.visible = False
@@ -185,13 +185,13 @@ def map_intensity(nx, ny, source, z, power=1.0, color='red', alpha=0.01, ranges=
     tools = [PanTool(dimensions='both'),
              ZoomInTool(dimensions='both'), ZoomOutTool(dimensions='both'),
              ResetTool(),
-             HoverTool(tooltips=[tooltip(x) for x in (z, Names.DISTANCE_KM, Names.LOCAL_TIME)])]
+             HoverTool(tooltips=[tooltip(x) for x in (z, N.DISTANCE_KM, N.LOCAL_TIME)])]
     f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny,
                x_axis_type='mercator', y_axis_type='mercator', title=z, match_aspect=True, tools=tools)
     tools[-1].renderers = [add_route(f, source)]
     mn, mx = source[z].min(), source[z].max()
     source['size'] = sqrt(nx * ny) * ((source[z] - mn) / (mx - mn)) ** power / 10
-    f.circle(x=Names.SPHERICAL_MERCATOR_X, y=Names.SPHERICAL_MERCATOR_Y, size='size', source=source, color=color, alpha=alpha)
+    f.circle(x=N.SPHERICAL_MERCATOR_X, y=N.SPHERICAL_MERCATOR_Y, size='size', source=source, color=color, alpha=alpha)
     f.axis.visible = False
     f.toolbar.logo = None
     if ranges is not None:
@@ -206,7 +206,7 @@ def map_intensity_signed(nx, ny, source, z, power=1.0, color='red', color_neg='b
     tools = [PanTool(dimensions='both'),
              ZoomInTool(dimensions='both'), ZoomOutTool(dimensions='both'),
              ResetTool(),
-             HoverTool(tooltips=[tooltip(x) for x in (z, Names.DISTANCE_KM, Names.LOCAL_TIME)])]
+             HoverTool(tooltips=[tooltip(x) for x in (z, N.DISTANCE_KM, N.LOCAL_TIME)])]
     f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny,
                x_axis_type='mercator', y_axis_type='mercator', title=z, match_aspect=True, tools=tools)
     tools[-1].renderers = [add_route(f, source)]
@@ -215,12 +215,12 @@ def map_intensity_signed(nx, ny, source, z, power=1.0, color='red', color_neg='b
     if mx > 0:
         source['size'] = np.sign(source[z]) * sqrt(nx * ny) * (np.abs(source[z]) / scale) ** power / 10
         source['size'].clip(lower=0, inplace=True)
-        f.circle(x=Names.SPHERICAL_MERCATOR_X, y=Names.SPHERICAL_MERCATOR_Y, size='size', source=source,
+        f.circle(x=N.SPHERICAL_MERCATOR_X, y=N.SPHERICAL_MERCATOR_Y, size='size', source=source,
                  color=color, alpha=alpha)
     if mn < 0:
         source['size'] = -np.sign(source[z]) * sqrt(nx * ny) * (np.abs(source[z]) / scale) ** power / 10
         source['size'].clip(lower=0, inplace=True)
-        f.circle(x=Names.SPHERICAL_MERCATOR_X, y=Names.SPHERICAL_MERCATOR_Y, size='size', source=source,
+        f.circle(x=N.SPHERICAL_MERCATOR_X, y=N.SPHERICAL_MERCATOR_Y, size='size', source=source,
                  color=color_neg, alpha=alpha)
     f.axis.visible = False
     f.toolbar.logo = None
@@ -234,8 +234,8 @@ def map_thumbnail(nx, ny, source, sample='1min', caption=True, title=True, outpu
     f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny,
                x_axis_type='mercator', y_axis_type='mercator', match_aspect=True,
                title=(source.index[0].strftime('%Y-%m-%d') if title else None))
-    xy = source.loc[source[Names.SPHERICAL_MERCATOR_X].notna() & source[Names.SPHERICAL_MERCATOR_Y].notna(),
-                    [Names.SPHERICAL_MERCATOR_X, Names.SPHERICAL_MERCATOR_Y]].resample(sample).mean()
+    xy = source.loc[source[N.SPHERICAL_MERCATOR_X].notna() & source[N.SPHERICAL_MERCATOR_Y].notna(),
+                    [N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y]].resample(sample).mean()
     add_route(f, xy)
     add_start_finish(f, xy)
     f.axis.visible = False
@@ -250,14 +250,14 @@ def first_value(df, name):
 
 def add_map_caption(f, df):
     caption = ''
-    if present(df, Names.ACTIVE_DISTANCE):
-        caption += '%dkm' % int(0.5 + first_value(df, Names.ACTIVE_DISTANCE) / 1000)
-    if present(df, Names.ACTIVE_TIME):
+    if present(df, N.ACTIVE_DISTANCE):
+        caption += '%dkm' % int(0.5 + first_value(df, N.ACTIVE_DISTANCE) / 1000)
+    if present(df, N.ACTIVE_TIME):
         if caption: caption += '/'
-        caption += '%.1fhr' % (first_value(df, Names.ACTIVE_TIME) / 3600)
-    if present(df, Names.TOTAL_CLIMB):
+        caption += '%.1fhr' % (first_value(df, N.ACTIVE_TIME) / 3600)
+    if present(df, N.TOTAL_CLIMB):
         if caption: caption += '/'
-        caption += '%dm' % int(first_value(df, Names.TOTAL_CLIMB))
+        caption += '%dm' % int(first_value(df, N.TOTAL_CLIMB))
     if caption:
         f.add_layout(Title(text=caption, align="left"), "below")
 
@@ -310,9 +310,9 @@ def multi_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label
     tools = [PanTool(dimensions='width'),
              ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),
              ResetTool(),
-             HoverTool(tooltips=[tooltip(x) for x in ys + [Names.LOCAL_TIME]], names=['with_hover'])]
+             HoverTool(tooltips=[tooltip(x) for x in ys + [N.LOCAL_TIME]], names=['with_hover'])]
     f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny,
-               x_axis_type='datetime' if Names.TIME in x else 'linear', tools=tools)
+               x_axis_type='datetime' if N.TIME in x else 'linear', tools=tools)
     if y_label:
         f.yaxis.axis_label = y_label
     elif rescale:

@@ -8,8 +8,8 @@ from .utils import ProcessCalculator, IntervalCalculatorMixin
 from ..pipeline import OwnerInMixin, LoaderMixin
 from ...data import Statistics
 from ...lib import format_date, local_date_to_time
-from ...names import Titles, Summaries as S, Units, Names
-from ...sql import StatisticJournalInteger
+from ...names import Titles as T, Summaries as S, Units as U, Names as N
+from ...sql import StatisticJournalInteger, StatisticJournalType
 
 log = getLogger(__name__)
 
@@ -27,14 +27,19 @@ class RestHRCalculator(LoaderMixin, OwnerInMixin, IntervalCalculatorMixin, Proce
         # permanent blocks clearing of dirty values - cleared explicitly by
         super().__init__(*args, schedule=schedule, permanent=True, **kargs)
 
+    def _startup(self, s):
+        super()._startup(s)
+        self._provides(s, T.REST_HR, StatisticJournalType.INTEGER, U.BPM, S.join(S.MIN, S.MSR),
+                       'The rest heart rate.')
+
     def _read_data(self, s, interval):
         return Statistics(s, start=local_date_to_time(interval.start),
                           finish=local_date_to_time(interval.finish)). \
-            by_name(self.owner_in, Names.HEART_RATE).df
+            by_name(self.owner_in, N.HEART_RATE).df
 
     def _calculate_results(self, s, interval, df, loader):
         if not df.empty:
-            hist = pd.cut(df[Names.HEART_RATE], np.arange(30, 90), right=False).value_counts(sort=False)
+            hist = pd.cut(df[N.HEART_RATE], np.arange(30, 90), right=False).value_counts(sort=False)
             peaks, _ = find_peaks(hist)
             for peak in peaks:
                 rest_hr = hist.index[peak].left
@@ -42,9 +47,7 @@ class RestHRCalculator(LoaderMixin, OwnerInMixin, IntervalCalculatorMixin, Proce
                 if measurements > len(df) * 0.01:
                     log.debug(f'Rest HR for {format_date(interval.start)} is {rest_hr} with {measurements} values')
                     # conversion to int as value above is numpy int64
-                    loader.add(Titles.REST_HR, Units.BPM, S.join(S.MIN, S.MSR), interval,
-                               int(rest_hr), local_date_to_time(interval.start), StatisticJournalInteger,
-                               'The rest heart rate')
+                    loader.add_data_only(N.REST_HR, interval, int(rest_hr), local_date_to_time(interval.start))
                     return
                 else:
                     log.debug(f'Skipping rest HR at {format_date(interval.start)} because too few measurements '

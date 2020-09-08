@@ -26,7 +26,8 @@ services:
     volumes:
       - 'choochoo-dataDEV:/data'
   pg:
-    image: 'postgres:11.8-alpine'
+#    image: 'postgres:11.8-alpine'
+    image: 'postgis/postgis:13-3.0-alpine'
     container_name: 'postgresql'
     shm_size: '1g'
     command: '-c config_file=/etc/postgresql/postgresql.conf'

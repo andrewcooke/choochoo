@@ -8,8 +8,8 @@ from ..pipeline import OwnerInMixin, LoaderMixin
 from ...common.math import is_nan
 from ...data import Statistics
 from ...data.impulse import hr_zone, impulse_10
-from ...names import N, Titles, SPACE
-from ...sql import Constant, StatisticJournalFloat
+from ...names import N, T, SPACE
+from ...sql import Constant, StatisticJournalType
 
 log = getLogger(__name__)
 
@@ -30,6 +30,11 @@ class ImpulseCalculator(LoaderMixin, OwnerInMixin,
         self.impulse_constant = Constant.from_name(s, self.impulse_constant_ref)
         self.impulse = HRImpulse(**loads(self.impulse_constant.at(s).value))
         log.debug('%s: %s' % (self.impulse_constant, self.impulse))
+        self._provides(s, T.HR_ZONE, StatisticJournalType.FLOAT, None, None,
+                       'The SHRIMP HR zone.')
+        name_group = self.prefix + SPACE + self.impulse_constant.short_name
+        self._provides(s, name_group, StatisticJournalType.FLOAT, None, None,
+                       'The SHRIMP HR impulse over 10 seconds.', title=self.impulse.title)
 
     def _read_dataframe(self, s, ajournal):
         try:
@@ -52,18 +57,12 @@ class ImpulseCalculator(LoaderMixin, OwnerInMixin,
         return stats
 
     def _copy_results(self, s, ajournal, loader, stats):
-        hr_description = 'The SHRIMP HR zone.'
-        impulse_description = 'The SHRIMP HR impulse over 10 seconds.'
-        title = self.impulse.title
         name_group = self.prefix + SPACE + self.impulse_constant.short_name  # drop activity group as present elsewhere
         for time, row in stats.iterrows():
             if N.HR_ZONE in row and not is_nan(row[N.HR_ZONE]):
-                loader.add(Titles.HR_ZONE, None, None, ajournal, row[N.HR_ZONE], time,
-                           StatisticJournalFloat, description=hr_description)
+                loader.add_data_only(N.HR_ZONE, ajournal, row[N.HR_ZONE], time)
             if N.HR_IMPULSE_10 in row and not is_nan(row[N.HR_IMPULSE_10]):
-                loader.add(name_group, None, None, ajournal, row[N.HR_IMPULSE_10], time,
-                           StatisticJournalFloat, description=impulse_description, title=title)
+                loader.add_data_only(name_group,  ajournal, row[N.HR_IMPULSE_10], time)
         # if there are no values, add a single 1 so we don't re-process
         if not loader:
-            loader.add(Titles.HR_ZONE, None, None, ajournal, 1, ajournal.start,
-                       StatisticJournalFloat, description=hr_description)
+            loader.add_data_only(N.HR_ZONE, ajournal, 1, ajournal.start)

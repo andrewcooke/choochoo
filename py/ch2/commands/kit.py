@@ -9,7 +9,7 @@ from ..diary.model import TYPE, UNITS
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_km, \
     is_local_time
 from ..lib.tree import to_tree, to_csv
-from ..names import Units, Names
+from ..names import U, N
 from ..pipeline.calculate.kit import KitCalculator
 from ..pipeline.pipeline import run_pipeline
 from ..sql import PipelineType
@@ -178,9 +178,9 @@ def show(s, name, date, csv=None, output=stdout):
             print(line, file=output)
 
 
-CHILDREN = {KitGroup.SIMPLE_NAME: Names._s(KitItem.SIMPLE_NAME),
-            KitItem.SIMPLE_NAME: Names._s(KitComponent.SIMPLE_NAME),
-            KitComponent.SIMPLE_NAME: Names._s(KitModel.SIMPLE_NAME)}
+CHILDREN = {KitGroup.SIMPLE_NAME: N._s(KitItem.SIMPLE_NAME),
+            KitItem.SIMPLE_NAME: N._s(KitComponent.SIMPLE_NAME),
+            KitComponent.SIMPLE_NAME: N._s(KitModel.SIMPLE_NAME)}
 
 
 def model_children(model):
@@ -221,9 +221,9 @@ def statistics(s, name, csv=False, output=stdout):
 
 def stats_children(model):
     names = [key for key in model.keys() if key not in (NAME, UNITS)]
-    if model[UNITS] == Units.KM:
+    if model[UNITS] == U.KM:
         format = format_km
-    elif model[UNITS] == Units.S:
+    elif model[UNITS] == U.S:
         format = lambda s: format_minutes(int(s))
     else:
         format = lambda x: x

@@ -3,7 +3,7 @@ from re import sub
 
 from ..utils import ActivityJournalDelegate
 from ...calculate.segment import SegmentCalculator
-from ....names import Names
+from ....names import N
 from ....diary.database import summary_column
 from ....diary.model import value, text, optional_text
 from ....sql.tables import SegmentJournal, Segment, StatisticJournal, StatisticName
@@ -27,7 +27,7 @@ class SegmentDelegate(ActivityJournalDelegate):
             stats = [value(sub('^segment ', '', field.statistic_name.name), field.value,
                            units=field.statistic_name.units, measures=field.measures_as_model(date))
                      for field in (self.__field(s, date, sjournal, name)
-                                   for name in (Names.SEGMENT_TIME, Names.SEGMENT_HEART_RATE))
+                                   for name in (N.SEGMENT_TIME, N.SEGMENT_HEART_RATE))
                      if field]
             if stats:
                 yield [text(sjournal.segment.title, tag='segment')] + stats
@@ -40,7 +40,7 @@ class SegmentDelegate(ActivityJournalDelegate):
     def read_interval(self, s, interval):
         for segment in s.query(Segment).all():
             segment_rows = [list(summary_column(s, interval.schedule, interval.start, name))
-                            for name in self.__names(s, Names.SEGMENT_TIME, Names.SEGMENT_HEART_RATE)]
+                            for name in self.__names(s, N.SEGMENT_TIME, N.SEGMENT_HEART_RATE)]
             segment_rows = list(filter(bool, segment_rows))
             if segment_rows:
                 yield [text(segment.title)] + segment_rows

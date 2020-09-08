@@ -7,7 +7,7 @@ from math import atan2, cos, sin, sqrt, pi
 
 from .frame import linear_resample, median_dt, present, linear_resample_time
 from ..lib.data import safe_dict
-from ..names import Names
+from ..names import N
 
 log = getLogger(__name__)
 
@@ -23,60 +23,60 @@ def round_km():
 
 @safe_dict
 def active_stats(df):
-    stats = {Names.ACTIVE_DISTANCE: 0, Names.ACTIVE_TIME: 0, Names.ACTIVE_SPEED: 0}
-    for timespan in df[Names.TIMESPAN_ID].dropna().unique():
-        slice = df.loc[df[Names.TIMESPAN_ID] == timespan]
-        stats[Names.ACTIVE_DISTANCE] += slice[Names.DISTANCE].max() - slice[Names.DISTANCE].min()
-        stats[Names.ACTIVE_TIME] += (slice.index.max() - slice.index.min()).total_seconds()
-    stats[Names.ACTIVE_SPEED] = 3600 * stats[Names.ACTIVE_DISTANCE] / stats[Names.ACTIVE_TIME]
+    stats = {N.ACTIVE_DISTANCE: 0, N.ACTIVE_TIME: 0, N.ACTIVE_SPEED: 0}
+    for timespan in df[N.TIMESPAN_ID].dropna().unique():
+        slice = df.loc[df[N.TIMESPAN_ID] == timespan]
+        stats[N.ACTIVE_DISTANCE] += slice[N.DISTANCE].max() - slice[N.DISTANCE].min()
+        stats[N.ACTIVE_TIME] += (slice.index.max() - slice.index.min()).total_seconds()
+    stats[N.ACTIVE_SPEED] = 3600 * stats[N.ACTIVE_DISTANCE] / stats[N.ACTIVE_TIME]
     return stats
 
 
 @safe_dict
 def copy_times(ajournal):
-    return {Names.START: ajournal.start,
-            Names.FINISH: ajournal.finish,
-            Names.TIME: (ajournal.finish - ajournal.start).total_seconds()}
+    return {N.START: ajournal.start,
+            N.FINISH: ajournal.finish,
+            N.TIME: (ajournal.finish - ajournal.start).total_seconds()}
 
 
 @safe_dict
-def times_for_distance(df, km=None, delta=0.01):  # all units of km
-    stats, km = {}, km or round_km()
-    tmp = pd.DataFrame({Names.TIME: df.index}, index=df[Names.DISTANCE])
+def times_for_distance(df, delta=0.01):  # all units of km
+    stats, km = {}, round_km()
+    tmp = pd.DataFrame({N.TIME: df.index}, index=df[N.DISTANCE])
     tmp = tmp[~tmp.index.duplicated(keep='last')]
-    t4d = pd.DataFrame({Names.TIME: (tmp[Names.TIME] - tmp[Names.TIME].iloc[0]).astype(np.int64) / 1e9},
-                       index=df[Names.DISTANCE])
+    t4d = pd.DataFrame({N.TIME: (tmp[N.TIME] - tmp[N.TIME].iloc[0]).astype(np.int64) / 1e9},
+                       index=df[N.DISTANCE])
     lt4d = linear_resample(t4d, d=delta)
     for target in km:
         n = target / delta
         dlt4d = lt4d.diff(periods=n).dropna()
-        if present(dlt4d, Names.TIME):
-            stats[Names.MIN_KM_TIME % target] = dlt4d[Names.TIME].min()
-            stats[Names.MED_KM_TIME % target] = dlt4d[Names.TIME].median()
+        if present(dlt4d, N.TIME):
+            stats[N.MIN_KM_TIME % target] = dlt4d[N.TIME].min()
+            stats[N.MED_KM_TIME % target] = dlt4d[N.TIME].median()
     return stats
 
 
 @safe_dict
-def hrz_stats(df, zones=None):
-    stats, zones = {}, zones or range(1, 8)
-    if present(df, Names.HR_ZONE):
+def hrz_stats(df):
+    stats, zones = {}, range(1, 8)
+    if present(df, N.HR_ZONE):
         ldf = linear_resample_time(df, with_timespan=True)
-        hrz = pd.cut(ldf[Names.HR_ZONE], bins=zones, right=False).value_counts()
+        hrz = pd.cut(ldf[N.HR_ZONE], bins=zones, right=False).value_counts()
         dt, total = median_dt(ldf), hrz.sum()
         for interval, count in hrz.iteritems():
             zone = interval.left
-            stats[Names.PERCENT_IN_Z % zone] = 100 * count / total
-            stats[Names.TIME_IN_Z % zone] = dt * count
+            stats[N.PERCENT_IN_Z % zone] = 100 * count / total
+            stats[N.TIME_IN_Z % zone] = dt * count
     return stats
 
 
 @safe_dict
-def max_mean_stats(df, params=((Names.POWER_ESTIMATE, Names.MAX_MEAN_PE_M),), mins=None, delta=10, zero=0):
-    stats, mins = {}, mins or MAX_MINUTES
+def max_mean_stats(df, params=((N.POWER_ESTIMATE, N.MAX_MEAN_PE_M),),delta=10, zero=0):
+    stats, mins = {}, MAX_MINUTES
     ldf = linear_resample_time(df, dt=delta, with_timespan=True, keep_nan=True)
     for name, template in params:
         if name in ldf.columns:
-            ldf.loc[ldf[Names.TIMESPAN_ID].isnull(), [name]] = zero
+            ldf.loc[ldf[N.TIMESPAN_ID].isnull(), [name]] = zero
             cumsum = ldf[name].cumsum()
             for target in mins:
                 n = (target * 60) // delta
@@ -89,11 +89,11 @@ def max_mean_stats(df, params=((Names.POWER_ESTIMATE, Names.MAX_MEAN_PE_M),), mi
 
 
 @safe_dict
-def max_med_stats(df, params=((Names.HEART_RATE, Names.MAX_MED_HR_M),), mins=None, delta=10, gap=0.01):
+def max_med_stats(df, params=((N.HEART_RATE, N.MAX_MED_HR_M),), mins=None, delta=10, gap=0.01):
     stats, mins = {}, mins or MAX_MINUTES
     ldf_all = linear_resample_time(df, dt=delta, with_timespan=False, add_time=False)
     ldf_all.interpolate('nearest')
-    ldf_tstamp = ldf_all.loc[ldf_all[Names.TIMESPAN_ID].isin(df[Names.TIMESPAN_ID].unique())].copy()
+    ldf_tstamp = ldf_all.loc[ldf_all[N.TIMESPAN_ID].isin(df[N.TIMESPAN_ID].unique())].copy()
     ldf_tstamp.loc[:, 'gap'] = ldf_tstamp.index.astype(np.int64) / 1e9
     ldf_tstamp.loc[:, 'gap'] = ldf_tstamp['gap'].diff()
     log.debug(f'Largest gap is {ldf_tstamp["gap"].max()}s')
@@ -124,22 +124,22 @@ def max_med_stats(df, params=((Names.HEART_RATE, Names.MAX_MED_HR_M),), mins=Non
 @safe_dict
 def direction_stats(df):
     stats = {}
-    if all(name in df.columns for name in (Names.SPHERICAL_MERCATOR_X, Names.SPHERICAL_MERCATOR_Y)):
-        df = df.dropna(subset=[Names.SPHERICAL_MERCATOR_X, Names.SPHERICAL_MERCATOR_Y]).copy()
+    if all(name in df.columns for name in (N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y)):
+        df = df.dropna(subset=[N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y]).copy()
         if not df.empty:
-            x0, y0 = df.iloc[0][Names.SPHERICAL_MERCATOR_X], df.iloc[0][Names.SPHERICAL_MERCATOR_Y]
-            df.loc[:, 'dx'] = df[Names.SPHERICAL_MERCATOR_X] - x0
-            df.loc[:, 'dy'] = df[Names.SPHERICAL_MERCATOR_Y] - y0
+            x0, y0 = df.iloc[0][N.SPHERICAL_MERCATOR_X], df.iloc[0][N.SPHERICAL_MERCATOR_Y]
+            df.loc[:, 'dx'] = df[N.SPHERICAL_MERCATOR_X] - x0
+            df.loc[:, 'dy'] = df[N.SPHERICAL_MERCATOR_Y] - y0
             # average position
             dx, dy = df['dx'].mean(), df['dy'].mean()
             x1, y1, d = x0 + dx, y0 + dy, sqrt(dx ** 2 + dy ** 2)
             theta = atan2(dy, dx)
             # change coords to centred on average position and perp / parallel to line to start
-            df.loc[:, 'dx'] = df[Names.SPHERICAL_MERCATOR_X] - x1
-            df.loc[:, 'dy'] = df[Names.SPHERICAL_MERCATOR_Y] - y1
+            df.loc[:, 'dx'] = df[N.SPHERICAL_MERCATOR_X] - x1
+            df.loc[:, 'dy'] = df[N.SPHERICAL_MERCATOR_Y] - y1
             df.loc[:, 'u'] = df['dx'] * cos(theta) + df['dy'] * sin(theta)
             df.loc[:, 'v'] = df['dy'] * cos(theta) - df['dx'] * sin(theta)
             # convert from angle anti-clock from x axis to bearing
-            stats[Names.DIRECTION] = 90 - 180 * theta / pi
-            stats[Names.ASPECT_RATIO] = df['v'].std() / df['u'].std()
+            stats[N.DIRECTION] = 90 - 180 * theta / pi
+            stats[N.ASPECT_RATIO] = df['v'].std() / df['u'].std()
     return stats

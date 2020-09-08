@@ -13,7 +13,7 @@ from psutil import Process
 
 from ..common.date import now
 from ..common.names import UNDEF
-from ..names import Units
+from ..names import U
 
 log = getLogger(__name__)
 
@@ -135,24 +135,24 @@ def short_str(x):
 
 def format_metres(dist):
     if dist < 1000:
-        return str(int(dist)) + Units.M
+        return str(int(dist)) + U.M
     else:
         return format_km(dist / 1000)
 
 
 def format_km(dist):
-    return f'{dist:.1f}{Units.KM}'
+    return f'{dist:.1f}{U.KM}'
 
 
 def format_percent(pc):
     if pc > 0.5:
-        return f'{pc:.1f}{Units.PC}'
+        return f'{pc:.1f}{U.PC}'
     else:
-        return f'{pc:.2f}{Units.PC}'
+        return f'{pc:.2f}{U.PC}'
 
 
 def format_watts(power):
-    return str(int(power)) + Units.W
+    return str(int(power)) + U.W
 
 
 def groupby_tuple(iterable, key=None):
