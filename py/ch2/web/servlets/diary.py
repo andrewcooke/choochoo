@@ -61,7 +61,7 @@ class Diary:
             try:
                 id = int(key)
                 journal = s.query(StatisticJournal).filter(StatisticJournal.id == id).one()
-                journal.set(value)
+                journal.value = value
                 n += 1
             except Exception as e:
                 log.error(f'Could not save {key}:{value}: {e}')

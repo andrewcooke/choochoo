@@ -96,7 +96,8 @@ def backup_schema(config):
     q_previous = quote(cnxn, previous)
     # https://wiki.postgresql.org/wiki/Clone_schema
     with with_log(f'Copying tables to {previous}'):
-        for row1 in execute(cnxn, 'select table_name from information_schema.tables WHERE table_schema = :schema',
+        for row1 in execute(cnxn, "select table_name from information_schema.tables "
+                                  "where table_schema = :schema and table_type = 'BASE TABLE'",
                             schema=user).fetchall():
             table = row1[0]
             src = f'{q_user}.{quote(cnxn, table)}'

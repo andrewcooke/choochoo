@@ -18,6 +18,8 @@ IMPULSE_3600 = 'Impulse / 3600s'
 RESPONSE = 'Response'
 LOG10_PERIOD, LOG10_START = 0, 1
 
+DIGITS = re.compile(r'(\d+)')
+
 
 # Almost everything below uses Series, not DataFrame
 # Currently model params are log10_period (hours) and log10_start (initial FF value)
@@ -158,11 +160,10 @@ def fit_ff_params(data, params, performances, method='L1', max_reject=0, thresho
 @safe_dict
 def response_stats(df, prev_secs):
     from math import log
-    digits = re.compile(r'(\d+)')
     stats = {}
     for pattern in (N.FITNESS_ANY, N.FATIGUE_ANY):
         for name in like(pattern, df.columns):
-            days = int(digits.search(name).group(1))
+            days = int(DIGITS.search(name).group(1))
             lower, higher = df[name][0], df[name][-1]
             delta = higher - lower
             stats[N._delta(name)] = delta

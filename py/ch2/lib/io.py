@@ -29,7 +29,8 @@ def modified_file_scans(s, paths, owner):
         # get last scan and make sure it's up-to-date
         if file_scan_from_path:
             if hash != file_scan_from_path.file_hash.hash:
-                log.warning('File at %s appears to have changed since last read on %s')
+                log.warning(f'File at {path} appears to have changed since last read on '
+                            f'{file_scan_from_path.last_scan}')
                 file_scan_from_path.file_hash = FileHash.get_or_add(s, hash)
                 file_scan_from_path.last_scan = TIME_ZERO
         else:
@@ -38,6 +39,9 @@ def modified_file_scans(s, paths, owner):
 
         # only look at hash if we are going to process anyway
         if last_modified > file_scan_from_path.last_scan:
+
+            log.debug(f'File at {path} was modified on {last_modified} '
+                      f'which is after last read on {file_scan_from_path.last_scan}')
 
             file_scan_from_hash = s.query(FileScan).\
                 join(FileHash).\

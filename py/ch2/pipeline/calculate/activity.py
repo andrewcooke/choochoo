@@ -5,6 +5,7 @@ from logging import getLogger
 
 from sqlalchemy import desc
 
+from .response import ResponseCalculator
 from .elevation import ElevationCalculator
 from .impulse import ImpulseCalculator
 from .power import PowerCalculator
@@ -16,10 +17,10 @@ from ...data.activity import active_stats, times_for_distance, hrz_stats, max_me
     direction_stats, copy_times, round_km, MAX_MINUTES
 from ...data.climb import find_climbs, Climb, add_climb_stats
 from ...data.frame import present
-from ...data.response import response_stats
+from ...data.response import response_stats, DIGITS
 from ...lib.data import safe_dict
 from ...names import N, T, S, U, SPACE
-from ...sql import Constant, ActivityJournal, StatisticJournal, StatisticJournalType
+from ...sql import Constant, ActivityJournal, StatisticJournal, StatisticJournalType, StatisticName
 
 log = getLogger(__name__)
 
@@ -52,29 +53,18 @@ class ActivityCalculator(LoaderMixin, OwnerInMixin,
                        'The angular direction (clockwise from North) of the mid-point of the activity relative to the start.')
         self._provides(s, T.ASPECT_RATIO, StatisticJournalType.FLOAT, None, None,
                        'The relative extent of the activity along and across the {T.DIRECTION}.')
-        self._provides(s, T.MIN_KM_TIME_ANY, StatisticJournalType.FLOAT, U.S, S.join(S.MIN, S.MSR),
-                       'The shortest time required to cover the given distance.', any=round_km())
-        self._provides(s, T.MED_KM_TIME_ANY, StatisticJournalType.FLOAT, U.S, S.join(S.MIN, S.MSR),
-                       'The median (typical) time required to cover the given distance.', any=round_km())
-        self._provides(s, T.PERCENT_IN_Z_ANY, StatisticJournalType.FLOAT, U.PC, None,
-                       'The percentage of time in the given HR zone.', any=range(1, 6))
-        self._provides(s, T.TIME_IN_Z_ANY, StatisticJournalType.FLOAT, U.S, None,
-                       'The total time in the given HR zone.', any=range(1, 6))
-        self._provides(s, T.MAX_MED_HR_M_ANY, StatisticJournalType.FLOAT, U.BPM, S.join(S.MAX, S.MSR),
-                       'The highest median HR in the given interval.', any=MAX_MINUTES)
-        self._provides(s, T.MAX_MEAN_PE_M_ANY, StatisticJournalType.FLOAT, U.W, S.join(S.MAX, S.MSR),
-                       'The highest average power estimate in the given interval.', any=MAX_MINUTES)
-        # TODO - probably need to match statistic names with response_prefix
-        # self._provides(s, T._delta(T.FITNESS_ANY), StatisticJournalType.FLOAT, U.FF, S.join(S.MAX, S.MSR),
-        #                'The change (over the activity) in the SHRIMP Fitness parameter.')
-        # self._provides(s, T._delta(T.FATIGUE_ANY), StatisticJournalType.FLOAT, U.FF, S.join(S.MAX, S.MSR),
-        #                'The change (over the activity) in the SHRIMP Fatigue parameter.')
-        # self._provides(s, T.EARNED_D_ANY, StatisticJournalType.FLOAT, U.S, S.join(S.MAX, S.MSR),
-        #                'The time before Fitness returns to the value before the activity.')
-        # self._provides(s, T.RECOVERY_D_ANY, StatisticJournalType.FLOAT, U.S, S.join(S.MAX, S.MSR),
-        #                'The time before Fatigue returns to the value before the activity.')
-        # self._provides(s, T.PLATEAU_D_ANY, StatisticJournalType.FLOAT, U.FF, None,
-        #                'The maximum Fitness achieved if this activity was repeated (with the same time gap to the previous).')
+        self._provides(s, T.MIN_KM_TIME, StatisticJournalType.FLOAT, U.S, S.join(S.MIN, S.MSR),
+                       'The shortest time required to cover the given distance.', values=round_km())
+        self._provides(s, T.MED_KM_TIME, StatisticJournalType.FLOAT, U.S, S.join(S.MIN, S.MSR),
+                       'The median (typical) time required to cover the given distance.', values=round_km())
+        self._provides(s, T.PERCENT_IN_Z, StatisticJournalType.FLOAT, U.PC, None,
+                       'The percentage of time in the given HR zone.', values=range(1, 7))
+        self._provides(s, T.TIME_IN_Z, StatisticJournalType.FLOAT, U.S, None,
+                       'The total time in the given HR zone.', values=range(1, 7))
+        self._provides(s, T.MAX_MED_HR_M, StatisticJournalType.FLOAT, U.BPM, S.join(S.MAX, S.MSR),
+                       'The highest median HR in the given interval.', values=MAX_MINUTES)
+        self._provides(s, T.MAX_MEAN_PE_M, StatisticJournalType.FLOAT, U.W, S.join(S.MAX, S.MSR),
+                       'The highest average power estimate in the given interval.', values=MAX_MINUTES)
         self._provides(s, T.TOTAL_CLIMB, StatisticJournalType.FLOAT, U.M, S.join(S.MAX, S.MSR),
                        'The total height climbed in the detected climbs (only).')
         self._provides(s, T.CLIMB_ELEVATION, StatisticJournalType.FLOAT, U.M, S.join(S.MAX, S.SUM, S.MSR),
@@ -89,6 +79,27 @@ class ActivityCalculator(LoaderMixin, OwnerInMixin,
                        'The average estimated power during the climb.')
         self._provides(s, T.CLIMB_CATEGORY, StatisticJournalType.TEXT, None, None,
                        'The climb category (text, "4" to "1" and "HC").')
+        # these are complicated :( because exact names are calculated elsewhere
+        for statistic_name in s.query(StatisticName). \
+                filter(StatisticName.name.like('%' + N.FITNESS_ANY),
+                       StatisticName.owner == ResponseCalculator).all():
+            self._provides(s, T._delta(statistic_name.title), StatisticJournalType.FLOAT, U.FF, S.join(S.MAX, S.MSR),
+                           'The change (over the activity) in the SHRIMP Fitness parameter.')
+            days = int(DIGITS.search(statistic_name.name).group(1))
+            # there may be a bug here with the name prefix not being propagated
+            self._provides(s, T.EARNED_D % days, StatisticJournalType.FLOAT, U.S, S.join(S.MAX, S.MSR),
+                           'The time before Fitness returns to the value before the activity.')
+            self._provides(s, T.PLATEAU_D % days, StatisticJournalType.FLOAT, U.S, S.join(S.MAX, S.MSR),
+                           'The maximum Fitness achieved if this activity was repeated (with the same time gap to the previous).')
+        for statistic_name in s.query(StatisticName). \
+                filter(StatisticName.name.like('%' + N.FATIGUE_ANY),
+                       StatisticName.owner == ResponseCalculator).all():
+            self._provides(s, T._delta(statistic_name.title), StatisticJournalType.FLOAT, U.FF, S.join(S.MAX, S.MSR),
+                           'The change (over the activity) in the SHRIMP Fatigue parameter.')
+            days = int(DIGITS.search(statistic_name.name).group(1))
+            # there may be a bug here with the name prefix not being propagated
+            self._provides(s, T.RECOVERY_D % days, StatisticJournalType.FLOAT, U.S, S.join(S.MAX, S.MSR),
+                           'The time before Fatigue returns to the value before the activity.')
 
     def _read_dataframe(self, s, ajournal):
         try:

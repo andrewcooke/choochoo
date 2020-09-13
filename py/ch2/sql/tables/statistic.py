@@ -343,9 +343,6 @@ class StatisticJournalInteger(StatisticJournal):
         'polymorphic_identity': StatisticJournalType.INTEGER
     }
 
-    def set(self, value):
-        self.value = value if value is None else int(value)
-
     @classmethod
     def add(cls, s, name, units, summary, owner, source, value, time, serial=None, description=None):
         return super().add(s, name, units, summary, owner, source, value, time, serial,
@@ -359,9 +356,6 @@ class StatisticJournalFloat(StatisticJournal):
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Float, nullable=False)
-
-    def set(self, value):
-        self.value = value if value is None else float(value)
 
     @classmethod
     def add(cls, s, name, units, summary, owner, source, value, time, serial=None, description=None):
@@ -410,9 +404,6 @@ class StatisticJournalText(StatisticJournal):
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Text, nullable=False)
 
-    def set(self, value):
-        self.value = value if value is None else str(value)
-
     @classmethod
     def add(cls, s, name, units, summary, owner, source, value, time, serial=None, description=None):
         return super().add(s, name, units, summary, owner, source, value, time, serial,
@@ -438,19 +429,16 @@ class StatisticJournalTimestamp(StatisticJournal):
     __tablename__ = 'statistic_journal_timestamp'
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
-    value = synonym('time')
+    value = Column(DateTime(timezone=True), nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.TIMESTAMP
     }
 
     @classmethod
-    def add(cls, s, name, units, summary, owner, source, time, serial=None, description=None):
-        statistic_name = StatisticName.add_if_missing(s, name, StatisticJournalType.TIMESTAMP,
-                                                      units, summary, owner, description=description)
-        journal = StatisticJournalTimestamp(statistic_name=statistic_name, source=source, time=time, serial=serial)
-        s.add(journal)
-        return journal
+    def add(cls, s, name, units, summary, owner, source, value, time, serial=None, description=None):
+        return super().add(s, name, units, summary, owner, source, value, time, serial,
+                           StatisticJournalType.TIMESTAMP, description=description)
 
     def formatted(self):
         return time_to_local_time(self.value)

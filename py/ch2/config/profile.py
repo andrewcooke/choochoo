@@ -78,6 +78,7 @@ class Profile:
 
     def _post(self, s):
         self._load_sys(s)
+        self._views(s)
 
     def _load_specific_activity_groups(self, s):
         # statistic rankings (best of month etc) are calculated per group
@@ -268,6 +269,19 @@ so do not use an important password that applies to many accounts.
     def _load_sys(self, s):
         # finally, update the timezone
         DiaryTopicJournal.check_tz(self._config, s)
+
+    def _views(self, s):
+        s.execute('''
+create view statistics as
+select n.name, n.owner,
+       j.id as statistic_journal_id, j.time, j.source_id,
+       coalesce(i.value::text, f.value::text, t.value, x.value::text) as value
+  from statistic_name as n
+  join statistic_journal as j on n.id = j.statistic_name_id
+  left join statistic_journal_integer as i on i.id = j.id
+  left join statistic_journal_float as f on f.id = j.id
+  left join statistic_journal_text as t on t.id = j.id
+  left join statistic_journal_timestamp as x on x.id = j.id;''')
 
 
 def get_profiles():

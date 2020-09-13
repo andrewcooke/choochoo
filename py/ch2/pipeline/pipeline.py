@@ -148,14 +148,13 @@ class ProcessPipeline(BasePipeline):
     def __str__(self):
         return str(short_cls(self.__class__))
 
-    def _provides(self, s, name, type_, units, summary, description, owner=UNDEF, title=None, any=None):
+    def _provides(self, s, name, type_, units, summary, description, owner=UNDEF, title=None, values=None):
         if owner is UNDEF:
             owner = self.owner_out
-        if any:
+        if values:
             if title: raise Exception('Cannot have title with template name')
-            fmt = any_to_fmt(name)
-            for value in any:
-                StatisticName.add_if_missing(s, fmt % value, type_, units, summary, owner,
+            for value in values:
+                StatisticName.add_if_missing(s, name % value, type_, units, summary, owner,
                                              description=description)
         else:
             StatisticName.add_if_missing(s, name, type_, units, summary, owner, description=description, title=title)

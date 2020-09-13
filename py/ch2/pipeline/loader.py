@@ -105,12 +105,8 @@ class Loader(ABC):
 
         # set statistic_name and source (as well as ids) so that we can correctly test in
         # Source for dirty intervals
-        if journal_class == StatisticJournalTimestamp:
-            instance = journal_class(statistic_name=statistic_name, statistic_name_id=statistic_name.id,
-                                     source=source, source_id=source.id, time=value, serial=self.__serial)
-        else:
-            instance = journal_class(statistic_name=statistic_name, statistic_name_id=statistic_name.id,
-                                     source=source, source_id=source.id, value=value, time=time, serial=self.__serial)
+        instance = journal_class(statistic_name=statistic_name, statistic_name_id=statistic_name.id,
+                                 source=source, source_id=source.id, value=value, time=time, serial=self.__serial)
 
         if instance.time in self.__by_name_then_time[statistic_name.name]:
             previous = self.__by_name_then_time[statistic_name.name][instance.time]

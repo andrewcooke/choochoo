@@ -284,11 +284,11 @@ class ActivityReader(ProcessFitReader):
                     if lat is not None and lon is not None:
                         x, y = Point.from_latitude_longitude(lat, lon).meters
                         loader.add_data_only(N.SPHERICAL_MERCATOR_X, ajournal, x, timestamp)
-                        loader.add_data_only(N.SPHERICAL_MERCATOR_Y, ajournal, x, timestamp)
+                        loader.add_data_only(N.SPHERICAL_MERCATOR_Y, ajournal, y, timestamp)
                         if self.add_elevation:
                             elevation = self.__oracle.elevation(lat, lon)
                             if elevation:
-                                loader.add_data_only(s, N.RAW_ELEVATION, ajournal, elevation, timestamp)
+                                loader.add_data_only(N.RAW_ELEVATION, ajournal, elevation, timestamp)
                 else:
                     log.warning('Ignoring duplicate record data for %s at %s - some data may be missing' %
                                 (file_scan.path, record.value.timestamp))
