@@ -70,7 +70,7 @@ class SummaryCalculator(LoaderMixin, IntervalCalculatorMixin, ProcessCalculator)
                     new_type = STATISTIC_JOURNAL_TYPES[new_type]
                     StatisticName.add_if_missing(s, title, new_type, units, None, self.owner_out,
                                                  self._describe(statistic_name, summary, interval))
-                    loader.add_data_only(simple_name(title), interval, value, start)
+                    loader.add_data(simple_name(title), interval, value, start)
         # add and commit these here - what else can we do?
         log.debug(f'Adding {len(measures)} measures')
         for measure in measures:

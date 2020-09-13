@@ -47,7 +47,7 @@ class RestHRCalculator(LoaderMixin, OwnerInMixin, IntervalCalculatorMixin, Proce
                 if measurements > len(df) * 0.01:
                     log.debug(f'Rest HR for {format_date(interval.start)} is {rest_hr} with {measurements} values')
                     # conversion to int as value above is numpy int64
-                    loader.add_data_only(N.REST_HR, interval, int(rest_hr), local_date_to_time(interval.start))
+                    loader.add_data(N.REST_HR, interval, int(rest_hr), local_date_to_time(interval.start))
                     return
                 else:
                     log.debug(f'Skipping rest HR at {format_date(interval.start)} because too few measurements '

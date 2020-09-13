@@ -38,4 +38,4 @@ class SegmentCalculator(LoaderMixin, OwnerInMixin,
     def _copy_results(self, s, ajournal, loader, stats):
         sjournal = stats[SJOURNAL]
         for name in stats:
-            loader.add_data_only(name, sjournal, stats[name], sjournal.start)
+            loader.add_data(name, sjournal, stats[name], sjournal.start)

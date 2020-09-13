@@ -163,6 +163,6 @@ class ActivityCalculator(LoaderMixin, OwnerInMixin,
             for climb in sorted(climbs, key=lambda climb: climb[N.TIME]):
                 time = climb.pop(N.TIME)
                 for name in climb.keys():
-                    loader.add_data_only(name, ajournal, climb[name], time)
+                    loader.add_data(name, ajournal, climb[name], time)
         for name in stats.keys():
-            loader.add_data_only(name, ajournal, stats[name], ajournal.start)
+            loader.add_data(name, ajournal, stats[name], ajournal.start)

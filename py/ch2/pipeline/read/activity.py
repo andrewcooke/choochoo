@@ -274,7 +274,7 @@ class ActivityReader(ProcessFitReader):
                             value = value[0][0]
                             if units == U.KM:  # internally everything uses M
                                 value /= 1000
-                            loader.add_data_only(title, ajournal, value, timestamp)
+                            loader.add_data(title, ajournal, value, timestamp)
                             if title == T.LATITUDE:
                                 lat = value
                             elif title == T.LONGITUDE:
@@ -283,12 +283,12 @@ class ActivityReader(ProcessFitReader):
                     # values derived from lat/lon
                     if lat is not None and lon is not None:
                         x, y = Point.from_latitude_longitude(lat, lon).meters
-                        loader.add_data_only(N.SPHERICAL_MERCATOR_X, ajournal, x, timestamp)
-                        loader.add_data_only(N.SPHERICAL_MERCATOR_Y, ajournal, y, timestamp)
+                        loader.add_data(N.SPHERICAL_MERCATOR_X, ajournal, x, timestamp)
+                        loader.add_data(N.SPHERICAL_MERCATOR_Y, ajournal, y, timestamp)
                         if self.add_elevation:
                             elevation = self.__oracle.elevation(lat, lon)
                             if elevation:
-                                loader.add_data_only(N.RAW_ELEVATION, ajournal, elevation, timestamp)
+                                loader.add_data(N.RAW_ELEVATION, ajournal, elevation, timestamp)
                 else:
                     log.warning('Ignoring duplicate record data for %s at %s - some data may be missing' %
                                 (file_scan.path, record.value.timestamp))

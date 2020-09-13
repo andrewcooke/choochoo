@@ -99,7 +99,7 @@ class StepsCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
                     s.add(CompositeComponent(input_source_id=input_source_id, output_source=output_source))
                 s.commit()
                 loader = self._get_loader(s, add_serial=False, clear_timestamp=False)
-                loader.add_data_only(N.DAILY_STEPS, output_source, daily_steps, start)
+                loader.add_data(N.DAILY_STEPS, output_source, daily_steps, start)
                 loader.load()
                 self._prev_loader = loader
             except Exception as e:

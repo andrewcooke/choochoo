@@ -159,7 +159,7 @@ class ResponseCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
                             skipped += 1
                             if skipped > 1:
                                 log.warning(f'Skipping multiple sources at {time}')
-                        loader.add_data_only(name, source, value, time)
+                        loader.add_data(name, source, value, time)
                     loader.load()
 
     def __read_data(self, s):

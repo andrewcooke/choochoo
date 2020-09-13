@@ -49,6 +49,6 @@ class ElevationCalculator(LoaderMixin, ActivityJournalCalculatorMixin, DataFrame
     def _copy_results(self, s, ajournal, loader, df):
         for time, row in df.iterrows():
             if N.ELEVATION in row and not is_nan(row[N.ELEVATION]):
-                loader.add_data_only(N.ELEVATION, ajournal, row[N.ELEVATION], time)
+                loader.add_data(N.ELEVATION, ajournal, row[N.ELEVATION], time)
             if N.GRADE in row and not is_nan(row[N.GRADE]):
-                loader.add_data_only(N.GRADE, ajournal, row[N.GRADE], time)
+                loader.add_data(N.GRADE, ajournal, row[N.GRADE], time)

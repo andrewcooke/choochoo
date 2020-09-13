@@ -89,13 +89,13 @@ class PowerCalculator(LoaderMixin, ActivityGroupCalculatorMixin, DataFrameCalcul
         for time, row in df.iterrows():
             for name in fields:
                 if name in row and not pd.isnull(row[name]):
-                    loader.add_data_only(name, ajournal, row[name], time)
+                    loader.add_data(name, ajournal, row[name], time)
 
     def __add_total_energy(self, s, ajournal, loader, ldf):
         if present(ldf, N.POWER_ESTIMATE):
             ldf['tmp'] = ldf[N.POWER_ESTIMATE]
             ldf.loc[ldf['tmp'].isna(), ['tmp']] = 0
             energy = np.trapz(y=ldf['tmp'], x=ldf.index.astype(np.int64) / 1e12)
-            loader.add_data_only(N.ENERGY_ESTIMATE, ajournal, energy, ajournal.start)
-            loader.add_data_only(N.CALORIE_ESTIMATE, ajournal, energy * 0.239006 / self.caloric_eff, ajournal.start)
+            loader.add_data(N.ENERGY_ESTIMATE, ajournal, energy, ajournal.start)
+            loader.add_data(N.CALORIE_ESTIMATE, ajournal, energy * 0.239006 / self.caloric_eff, ajournal.start)
             ldf.drop(columns=['tmp'], inplace=True)

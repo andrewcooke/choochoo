@@ -60,9 +60,9 @@ class ImpulseCalculator(LoaderMixin, OwnerInMixin,
         name_group = self.prefix + SPACE + self.impulse_constant.short_name  # drop activity group as present elsewhere
         for time, row in stats.iterrows():
             if N.HR_ZONE in row and not is_nan(row[N.HR_ZONE]):
-                loader.add_data_only(N.HR_ZONE, ajournal, row[N.HR_ZONE], time)
+                loader.add_data(N.HR_ZONE, ajournal, row[N.HR_ZONE], time)
             if N.HR_IMPULSE_10 in row and not is_nan(row[N.HR_IMPULSE_10]):
-                loader.add_data_only(name_group,  ajournal, row[N.HR_IMPULSE_10], time)
+                loader.add_data(name_group, ajournal, row[N.HR_IMPULSE_10], time)
         # if there are no values, add a single 1 so we don't re-process
         if not loader:
-            loader.add_data_only(N.HR_ZONE, ajournal, 1, ajournal.start)
+            loader.add_data(N.HR_ZONE, ajournal, 1, ajournal.start)

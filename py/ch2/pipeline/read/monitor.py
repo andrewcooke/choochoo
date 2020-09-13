@@ -122,7 +122,7 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
         steps_by_activity = defaultdict(lambda: 0)
         for record in records:
             if HEART_RATE_ATTR in record.data and record.data[HEART_RATE_ATTR][0][0]:
-                loader.add_data_only(N.HEART_RATE, mjournal, record.data[HEART_RATE_ATTR][0][0], record.timestamp)
+                loader.add_data(N.HEART_RATE, mjournal, record.data[HEART_RATE_ATTR][0][0], record.timestamp)
             if STEPS_ATTR in record.data:
                 # we ignore activity type here (used to store it when activity group and statistic name
                 # were mixed together, but never used it anywhere)
@@ -133,7 +133,7 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
                 for activity, steps in zip(record.data[ACTIVITY_TYPE_ATTR][0], record.data[STEPS_ATTR][0]):
                     steps_by_activity[activity] = steps
                 total = sum(steps_by_activity.values())
-                loader.add_data_only(N.CUMULATIVE_STEPS, mjournal, total, record.timestamp)
+                loader.add_data(N.CUMULATIVE_STEPS, mjournal, total, record.timestamp)
 
     def _shutdown(self, s):
         super()._shutdown(s)
@@ -239,7 +239,7 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
                        StatisticJournal.statistic_name == steps).delete(synchronize_session=False)
         loader = self._get_loader(s, owner=self.owner_out, add_serial=False)
         for time, row in df.loc[(df[NEW_STEPS] != df[N.STEPS]) & ~df[NEW_STEPS].isna()].iterrows():
-            loader.add_data_only(N.STEPS, row[N.SOURCE], int(row[NEW_STEPS]), time)
+            loader.add_data(N.STEPS, row[N.SOURCE], int(row[NEW_STEPS]), time)
         loader.load()
 
 
