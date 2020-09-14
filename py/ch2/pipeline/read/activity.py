@@ -324,7 +324,10 @@ class ActivityReader(ProcessFitReader):
         # doesn't support aggregate function oin updates.
         log.debug('Setting route')
         points = [f'ST_MakePoint({lon}, {lat})' for lon, lat in self.__lon_lat(s)]
-        line = f'ST_MakeLine(ARRAY[{", ".join(points)}])'
+        if points:
+            line = f'ST_MakeLine(ARRAY[{", ".join(points)}])'
+        else:
+            line = "'LINESTRING EMPTY'::geography"
         ajournal = ActivityJournal.__table__
         update = ajournal.update().values(route=text(line)).where(ajournal.c.id == self.__ajournal.id)
         s.execute(update)
