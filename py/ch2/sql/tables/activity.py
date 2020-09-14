@@ -2,6 +2,7 @@
 import datetime as dt
 from logging import getLogger
 
+from geoalchemy2 import Geometry
 from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint, desc, DateTime
 from sqlalchemy.orm import relationship, backref
 
@@ -54,6 +55,7 @@ class ActivityJournal(GroupedSource):
     file_hash = relationship('FileHash', backref=backref('activity_journal', uselist=False))
     start = Column(DateTime(timezone=True), nullable=False, index=True, unique=True)
     finish = Column(DateTime(timezone=True), nullable=False)
+    route = Column(Geometry('linestring'))  # nullable because created later
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ACTIVITY

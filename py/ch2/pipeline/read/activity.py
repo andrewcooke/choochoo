@@ -2,7 +2,9 @@ from logging import getLogger
 from os.path import splitext, basename
 
 from pygeotile.point import Point
-from sqlalchemy.sql.functions import count
+from sqlalchemy import text
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql.functions import count, func
 
 from .utils import AbortImportButMarkScanned, ProcessFitReader
 from ... import FatalException
@@ -314,4 +316,29 @@ class ActivityReader(ProcessFitReader):
             StatisticJournalFloat.add(s, T._cov(title), U.PC, S.join(S.MIN, S.AVG), self.owner_out,
                                       self.__ajournal, percent, self.__ajournal.start,
                                       description=f'Coverage (% of FIT records with data) for {title}.')
+        self.__create_lat_lon(s)
         s.commit()
+
+    def __create_lat_lon(self, s):
+        # tried to do this in pure sql but sqlalchemy doesn't support ctes in update and postgres
+        # doesn't support aggregate function oin updates.
+        log.debug('Setting route')
+        points = [f'ST_MakePoint({lon}, {lat})' for lon, lat in self.__lon_lat(s)]
+        line = f'ST_MakeLine(ARRAY[{", ".join(points)}])'
+        ajournal = ActivityJournal.__table__
+        update = ajournal.update().values(route=text(line)).where(ajournal.c.id == self.__ajournal.id)
+        s.execute(update)
+
+    def __lon_lat(self, s):
+        lon, lat = aliased(StatisticJournalFloat, name='lon'), aliased(StatisticJournalFloat, name='lat')
+        nlon, nlat = aliased(StatisticName, name='nlon'), aliased(StatisticName, name='nlat')
+        for row in s.query(lon.value, lat.value). \
+                filter(lon.statistic_name_id == nlon.id,
+                       nlon.name == N.LONGITUDE,
+                       lat.statistic_name_id == nlat.id,
+                       nlat.name == N.LATITUDE,
+                       lon.source_id == self.__ajournal.id,
+                       lat.source_id == self.__ajournal.id,
+                       lon.time == lat.time). \
+                order_by(lat.time).all():
+            yield row[0], row[1]

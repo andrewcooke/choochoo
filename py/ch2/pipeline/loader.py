@@ -4,9 +4,8 @@ from logging import getLogger
 
 from ..common.date import min_time, max_time
 from ..common.math import is_nan
-from ..names import simple_name
-from ..sql import StatisticName, Interval, Source, StatisticJournalTimestamp
-from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
+from ..sql import StatisticName, Interval, Source
+from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 
 log = getLogger(__name__)
 

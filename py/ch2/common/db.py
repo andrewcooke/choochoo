@@ -57,12 +57,16 @@ def quote(cnxn, name):
     return cnxn.engine.dialect.identifier_preparer.quote_identifier(name)
 
 
+def execute(cnxn, stmt, **kargs):
+    log.debug(f'Executing {stmt} with {kargs}')
+    return cnxn.execute(text(stmt), **kargs)
+
+
 def remove(cnxn, part, name, extra='', extended=False):
     name = assert_name(name, extended=extended)
     with with_log(f'Removing {part} {name}'):
         stmt = f'drop {part} {quote(cnxn, name)}' + extra
-        log.debug(stmt)
-        cnxn.execute(text(stmt))
+        execute(cnxn, stmt)
 
 
 def remove_user(config):
@@ -73,11 +77,6 @@ def remove_database(config):
     remove(get_postgres_cnxn(config).execution_options(isolation_level='AUTOCOMMIT'),
            'database',
            urlsplit(config.args._format(URI)).path[1:])
-
-
-def execute(cnxn, stmt, **kargs):
-    log.debug(f'Executing {stmt} with {kargs}')
-    return cnxn.execute(text(stmt), **kargs)
 
 
 def test_schema(cnxn, schema):
@@ -132,12 +131,12 @@ def add(cnxn, part, name, stmt, extended=False, **kargs):
     assert_name(name, extended=extended)
     with with_log(f'Adding {part} {name}'):
         stmt = stmt.format(name=quote(cnxn, name))
-        log.debug(stmt)
-        cnxn.execute(text(stmt), **kargs)
+        execute(cnxn, stmt, **kargs)
 
 
 def add_user(config):
-    add(get_postgres_cnxn(config), 'user', config.args[USER],
+    cnxn = get_postgres_cnxn(config)
+    add(cnxn, 'user', config.args[USER],
         # note that :xxx invokes sqlalchemy's substitution of parameters in text()
         'create role {name} with login password :passwd',
         passwd=config.args[PASSWD])
@@ -147,6 +146,15 @@ def add_database(config):
     cnxn = get_postgres_cnxn(config).execution_options(isolation_level='AUTOCOMMIT')
     add(cnxn, 'database', urlsplit(config.args._format(URI)).path[1:],
         f'create database {{name}} with owner {quote(cnxn, config.args[USER])}')
+    cnxn = get_cnxn(config)
+    execute(cnxn, 'create extension if not exists postgis')
+    execute(cnxn, 'create role postgis_reader inherit')
+    execute(cnxn, 'grant select on geometry_columns to postgis_reader')
+    execute(cnxn, 'grant select on geography_columns to postgis_reader')
+    execute(cnxn, 'grant select on spatial_ref_sys to postgis_reader')
+    execute(cnxn, 'create role postgis_writer inherit')
+    execute(cnxn, 'grant postgis_reader to postgis_writer')
+    execute(cnxn, 'grant insert, update, delete on spatial_ref_sys to postgis_writer')
 
 
 def set(cnxn, part, schema, user, stmt, extended=False):
@@ -175,4 +183,6 @@ def add_schema(config, schema=None, extended=False, set_search_path=True):
         'alter default privileges in schema {schema} grant insert, select, update, delete on tables to {user}',
         extended=extended)
     if set_search_path:
-        set(cnxn, 'search_path', schema, user, 'alter role {user} set search_path to {schema}')
+        set(cnxn, 'search_path', schema, user, 'alter role {user} set search_path to {schema}, public',
+            extended=extended)
+    add(cnxn, 'postgis_writer', user, 'grant postgis_writer to {name}')
