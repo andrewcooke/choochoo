@@ -24,6 +24,12 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+if [ -z "$DEV" ]; then
+    # delete this is you really want to
+    echo "refusing to delete existing database"
+    exit 2
+fi
+
 ./prune.sh
 docker volume rm -f "postgresql-data$DEV"
 docker volume create "postgresql-data$DEV"

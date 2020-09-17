@@ -31,7 +31,7 @@ Stop the server.
     if cmd == SERVICE:
         controller.service()  # uri only used for initial config
     elif cmd == STATUS:
-        controller.status()
+        controller.status()  # TODO - broken
     elif cmd == START:
         controller.start(restart=True)
         webbrowser.open(controller.connection_url(), autoraise=False)

@@ -22,6 +22,10 @@ def modified_file_scans(s, paths, owner):
         # log.debug(f'Scanning {path}')
         last_modified = to_time(stat(path).st_mtime)
         hash = file_hash(path)
+        file_scan_from_hash = s.query(FileScan).\
+            join(FileHash).\
+            filter(FileHash.hash == hash,
+                   FileScan.owner == owner).one_or_none()
         file_scan_from_path = s.query(FileScan). \
             filter(FileScan.path == path,
                    FileScan.owner == owner).one_or_none()
@@ -33,6 +37,9 @@ def modified_file_scans(s, paths, owner):
                             f'{file_scan_from_path.last_scan}')
                 file_scan_from_path.file_hash = FileHash.get_or_add(s, hash)
                 file_scan_from_path.last_scan = TIME_ZERO
+        elif file_scan_from_hash:
+            log.warning(f'File at {path} already exists at {file_scan_from_hash} - skipping')
+            continue
         else:
             file_scan_from_path = FileScan.add(s, path, owner, hash)
             s.flush()  # want this to appear in queries below

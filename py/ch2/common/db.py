@@ -90,7 +90,7 @@ def backup_schema(config):
     cnxn = get_cnxn(config)
     if test_schema(cnxn, previous):
         remove(cnxn, 'schema', previous, ' cascade', extended=True)
-    add_schema(config, schema=previous, extended=True, set_search_path=False)
+    add_schema(config, schema=previous, extended=True, set_search_path=False, postgis_writer=False)
     q_user = quote(cnxn, user)
     q_previous = quote(cnxn, previous)
     # https://wiki.postgresql.org/wiki/Clone_schema
@@ -166,7 +166,7 @@ def set(cnxn, part, schema, user, stmt, extended=False):
         cnxn.execute(text(stmt))
 
 
-def add_schema(config, schema=None, extended=False, set_search_path=True):
+def add_schema(config, schema=None, extended=False, set_search_path=True, postgis_writer=True):
     user = config.args[USER]
     assert_name(user)
     schema = schema or user
@@ -185,4 +185,5 @@ def add_schema(config, schema=None, extended=False, set_search_path=True):
     if set_search_path:
         set(cnxn, 'search_path', schema, user, 'alter role {user} set search_path to {schema}, public',
             extended=extended)
-    add(cnxn, 'postgis_writer', user, 'grant postgis_writer to {name}')
+    if postgis_writer:
+        add(cnxn, 'postgis_writer', user, 'grant postgis_writer to {name}')

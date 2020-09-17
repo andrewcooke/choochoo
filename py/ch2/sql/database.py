@@ -125,12 +125,12 @@ class Database(DatabaseBase):
         try:
             with self.session_context() as s:
                 n_topics = s.query(DiaryTopicJournal.id).count()
-                n_activities = s.query(ActivityJournal).count()
-                n_statistics = s.query(StatisticJournal).count()
+                n_activities = s.query(ActivityJournal.id).count()
+                n_statistics = s.query(StatisticJournal.id).count()
                 return not (n_topics + n_activities + n_statistics)
         except:
-            # log_current_exception()
-            log.debug('Discarding error which may contain password')
+            log_current_exception()
+            # log.debug('Discarding error which may contain password')
             return True
 
     def no_schema(self, table=Constant):
