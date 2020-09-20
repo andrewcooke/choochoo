@@ -25,6 +25,19 @@ Nearby = namedtuple('Nearby', 'constraint, activity_group, border, start, finish
 
 
 class SimilarityCalculator(OwnerInMixin, ProcessCalculator):
+    '''
+    this seems to be more efficient than
+
+    select lo.id, hi.id,
+           ST_HausdorffDistance(st_transform(lo.route::geometry, lo.utm_srid),
+                                st_transform(hi.route::geometry, lo.utm_srid))
+      from activity_journal as lo,
+           activity_journal as hi
+     where lo.id < hi.id
+     order by st_distance(lo.centre, hi.centre)
+
+     (caching st_transform(lo.route::geometry, lo.utm_srid) as utm_route doesn't help)
+    '''
 
     def __init__(self, *args, fraction=0.01, border=150, **kargs):
         self.fraction = fraction

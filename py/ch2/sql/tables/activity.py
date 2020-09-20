@@ -2,13 +2,13 @@
 import datetime as dt
 from logging import getLogger
 
-from geoalchemy2 import Geography
-from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint, desc, DateTime
+from geoalchemy2 import Geography, Geometry
+from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint, desc, DateTime, Index
 from sqlalchemy.orm import relationship, backref
 
 from .source import SourceType, GroupedSource, Source
 from ..support import Base
-from ..triggers import add_child_ddl
+from ..triggers import add_child_ddl, add_text
 from ..types import Sort, ShortCls, NullText, Name, name_and_title
 from ...common.date import format_time, local_date_to_time, local_time_to_time
 from ...lib.utils import timing
@@ -46,6 +46,11 @@ class ActivityGroup(Base):
 
 
 @add_child_ddl(Source)
+@add_text('''
+alter table %(table)s
+  add constraint no_activity_overlap
+  exclude using gist (tstzrange(start, finish) with &&);
+''')
 class ActivityJournal(GroupedSource):
 
     __tablename__ = 'activity_journal'
@@ -55,7 +60,10 @@ class ActivityJournal(GroupedSource):
     file_hash = relationship('FileHash', backref=backref('activity_journal', uselist=False))
     start = Column(DateTime(timezone=True), nullable=False, index=True, unique=True)
     finish = Column(DateTime(timezone=True), nullable=False)
-    route = Column(Geography('linestring'))  # nullable because created later
+    # nullable because created later
+    route = Column(Geography('linestring'))
+    centre = Column(Geography('point'))
+    utm_srid = Column(Integer)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ACTIVITY

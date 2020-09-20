@@ -17,9 +17,9 @@ class SegmentCalculator(LoaderMixin, OwnerInMixin,
 
     def _startup(self, s):
         super()._startup(s)
-        self._provides(s, T.SEGMENT_TIME, StatisticJournalType.TIMESTAMP, U.S, S.join(S.MIN, S.CNT, S.MSR),
+        self._provides(s, T.SEGMENT_TIME, StatisticJournalType.FLOAT, U.S, S.join(S.MIN, S.CNT, S.MSR),
                        'The time to complete the segment.')
-        self._provides(s, T.SEGMENT_HEART_RATE, StatisticJournalType.TIMESTAMP, U.S, S.join(S.MAX, S.CNT, S.MSR),
+        self._provides(s, T.SEGMENT_HEART_RATE, StatisticJournalType.FLOAT, U.S, S.join(S.MAX, S.CNT, S.MSR),
                        'The average heart rate for the segment.')
 
     def _read_dataframe(self, s, sjournal):
@@ -36,6 +36,6 @@ class SegmentCalculator(LoaderMixin, OwnerInMixin,
         return stats
 
     def _copy_results(self, s, ajournal, loader, stats):
-        sjournal = stats[SJOURNAL]
+        sjournal = stats.pop(SJOURNAL)
         for name in stats:
             loader.add_data(name, sjournal, stats[name], sjournal.start)
