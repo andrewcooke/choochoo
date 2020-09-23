@@ -1,13 +1,13 @@
 version: '3'
 services:
   ch2:
-    image: 'andrewcooke/choochoo:latest-local'
+    image: 'andrewcooke/choochoo:latest-localDEV'
     container_name: 'choochoo'
     user: '${ID}'
     ports:
       - '127.0.0.1:8000:8000'
     volumes:
-      - 'choochoo-dataDEV:/data'
+      - 'choochoo-data:/data'
     depends_on:
       - 'pg'
       - 'jp'
@@ -24,7 +24,7 @@ services:
     ports:
       - '127.0.0.1:8001:8888'
     volumes:
-      - 'choochoo-dataDEV:/data'
+      - 'choochoo-data:/data'
   pg:
     image: 'postgis/postgis:13-3.0-alpine'
     container_name: 'postgresql'
@@ -37,7 +37,7 @@ services:
       - 'postgresql-logDEV:/var/log'
       - './postgres.conf:/etc/postgresql/postgresql.conf'
 volumes:
-  choochoo-dataDEV:
+  choochoo-data:
     external: true
   postgresql-dataDEV:
     external: true

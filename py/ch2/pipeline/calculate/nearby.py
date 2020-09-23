@@ -36,7 +36,7 @@ class SimilarityCalculator(OwnerInMixin, ProcessCalculator):
      where lo.id < hi.id
      order by st_distance(lo.centre, hi.centre)
 
-     (caching st_transform(lo.route::geometry, lo.utm_srid) as utm_route doesn't help)
+    (caching st_transform(lo.route::geometry, lo.utm_srid) as utm_route doesn't help)
     '''
 
     def __init__(self, *args, fraction=0.01, border=150, **kargs):

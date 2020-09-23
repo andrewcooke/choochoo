@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship, backref
 from .source import SourceType, GroupedSource, Source
 from ..support import Base
 from ..triggers import add_child_ddl, add_text
-from ..types import Sort, ShortCls, NullText, Name, name_and_title
+from ..types import Sort, ShortCls, NullText, Name, name_and_title, Point
 from ...common.date import format_time, local_date_to_time, local_time_to_time
 from ...lib.utils import timing
 
@@ -61,8 +61,8 @@ class ActivityJournal(GroupedSource):
     start = Column(DateTime(timezone=True), nullable=False, index=True, unique=True)
     finish = Column(DateTime(timezone=True), nullable=False)
     # nullable because created later
-    route = Column(Geography('linestring'))
-    centre = Column(Geography('point'))
+    route = Column(Geography('linestring', srid=4326))
+    centre = Column(Geography('point', srid=4326))
     utm_srid = Column(Integer)
 
     __mapper_args__ = {

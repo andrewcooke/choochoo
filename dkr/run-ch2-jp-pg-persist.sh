@@ -55,8 +55,8 @@ ln -s $PGCONF postgres.conf
 if (( RESET )); then
     ./make-postgresql-data-volume.sh $DEV2
     ./make-postgresql-log-volume.sh $DEV2
-    ./make-choochoo-data-volume.sh $DEV2
-    ./make-choochoo-image.sh $BIG $SLOW $JS
+    ./make-choochoo-data-volume.sh
+    ./make-choochoo-image.sh $BIG $SLOW $JS $DEV2
     ./make-jupyter-image.sh $SLOW
 fi
 

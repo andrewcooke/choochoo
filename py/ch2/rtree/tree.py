@@ -581,7 +581,7 @@ class BaseTree(ABC):
 
 class CartesianMixin:
     '''
-    Basic support for (x,y) points..
+    Basic support for (x,y) points.
     '''
 
     def _normalize_point(self, point):
@@ -592,7 +592,7 @@ class CartesianMixin:
 
     def _mbr_of_points(self, points, border=0):
         '''
-        Find the MBR of a set of points,
+        Find the MBR of a set of points.
         '''
         xs, ys = zip(*points)
         return min(xs) - border, min(ys) - border, max(xs) + border, max(ys) + border

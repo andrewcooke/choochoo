@@ -1,23 +1,22 @@
 from logging import getLogger
-from math import floor
 from os.path import splitext, basename
 
+from math import floor
 from pygeotile.point import Point
 from sqlalchemy import text, select
 from sqlalchemy.orm import aliased
-from sqlalchemy.sql.functions import count, func
 
 from .utils import AbortImportButMarkScanned, ProcessFitReader
 from ... import FatalException
 from ...commands.args import DEFAULT
 from ...commands.upload import ACTIVITY
-from ...common.date import to_time, time_to_local_time
+from ...common.date import to_time
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
 from ...lib.io import split_fit_path
 from ...names import N, T, U, Sports, S
-from ...sql.database import StatisticJournalText, Source
+from ...sql.database import StatisticJournalText
 from ...sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES, StatisticName, \
     StatisticJournalType, StatisticJournal, STATISTIC_JOURNAL_TYPES
@@ -36,8 +35,7 @@ class ActivityReader(ProcessFitReader):
 
     KIT = 'kit'
 
-    def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, **kargs):
-        self.define = define if define else {}
+    def __init__(self, *args, sport_to_activity=None, record_to_db=None, **kargs):
         self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
         self.record_to_db = [(field, title, units, STATISTIC_JOURNAL_CLASSES[type])
                              for field, (title, units, type)
@@ -58,27 +56,26 @@ class ActivityReader(ProcessFitReader):
                        'The Web Mercator EPSG:3857 Y coordinate')
         self._provides(s, T.RAW_ELEVATION, StatisticJournalType.FLOAT, U.M, None,
                        'The elevation from SRTM1 at this location')
+        self._provides(s, T.LON_LAT, StatisticJournalType.POINT, U.DEG, None,
+                       'The WGS84 longitude and latitude')
+        self._provides(s, T.KIT, StatisticJournalType.TEXT, None, None,
+                       'The kit used in the activity')
         # also coverages - see _read
 
-    def _build_define(self, path):
-        define = dict(self.define)
+    def _read_kit(self, path):
         _, kit = split_fit_path(path)
         if kit:
-            if ActivityReader.KIT in define and define[ActivityReader.KIT] != kit:
-                log.warning(f'Ignoring {kit} from filename since value given '
-                            f'({define[ActivityReader.KIT]}) on command line')
-            else:
-                define[ActivityReader.KIT] = kit
+            return kit
         else:
-            log.debug(f'No {ActivityReader.KIT} in {path}')
-        return define
+            log.debug(f'No {N.KIT} in {path}')
+            return None
 
     def _read_data(self, s, file_scan):
         log.info('Reading activity data from %s' % file_scan)
         records = self.parse_records(read_fit(file_scan.path))
-        define = self._build_define(file_scan.path)
-        ajournal, activity_group, first_timestamp = self._create_activity(s, file_scan, define, records)
-        return ajournal, (ajournal, activity_group, first_timestamp, file_scan, define, records)
+        kit = self._read_kit(file_scan.path)
+        ajournal, activity_group, first_timestamp = self._create_activity(s, file_scan, kit, records)
+        return ajournal, (ajournal, activity_group, first_timestamp, file_scan, kit, records)
 
     @staticmethod
     def parse_records(data):
@@ -103,30 +100,28 @@ class ActivityReader(ProcessFitReader):
     def read_last_timestamp(path, records):
         return ActivityReader._last(path, records, 'event', 'record').value.timestamp
 
-    def _create_activity(self, s, file_scan, define, records):
+    def _create_activity(self, s, file_scan, kit, records):
         first_timestamp = self.read_first_timestamp(file_scan.path, records)
         last_timestamp = self.read_last_timestamp(file_scan.path, records)
         log.debug(f'Time range: {first_timestamp.timestamp()} - {last_timestamp.timestamp()}')
         sport = self.read_sport(file_scan.path, records)
-        activity_group = self._activity_group(s, file_scan.path, sport, self.sport_to_activity, define)
-        log.info(f'{activity_group} from {sport} / {define}')
+        activity_group = self._activity_group(s, file_scan.path, sport, self.sport_to_activity, kit)
+        log.info(f'{activity_group} from {sport} / {kit}')
         ajournal = add(s, ActivityJournal(activity_group=activity_group,
                                           start=first_timestamp, finish=first_timestamp,  # will be over-written later
                                           file_hash_id=file_scan.file_hash_id))
         return ajournal, activity_group, first_timestamp
 
-    def _activity_group(self, s, path, sport, lookup, define):
-        log.debug(f'Current lookup: {lookup}; sport: {sport}; define: {define}')
+    def _activity_group(self, s, path, sport, lookup, kit):
+        log.debug(f'Current lookup: {lookup}; sport: {sport}; kit: {kit}')
         if isinstance(lookup, str):
             return self._lookup_activity_group(s, lookup)
         if sport in lookup:
-            return self._activity_group(s, path, sport, lookup[sport], define)
-        for key, values in define.items():
-            for value in values.split(','):
-                if key in lookup and value in lookup[key]:
-                    return self._activity_group(s, path, sport, lookup[key][value], define)
+            return self._activity_group(s, path, sport, lookup[sport], kit)
+        if N.KIT in lookup and kit in lookup[N.KIT]:
+            return self._activity_group(s, path, sport, lookup[N.KIT][kit], kit)
         if DEFAULT in lookup:
-            return self._activity_group(s, path, sport, lookup[DEFAULT], define)
+            return self._activity_group(s, path, sport, lookup[DEFAULT], kit)
         log.warning('Unrecognised sport: "%s" in %s' % (sport, path))
         if sport in (Sports.SPORT_GENERIC,):
             raise Exception(f'Ignoring {sport} entry')
@@ -145,16 +140,6 @@ class ActivityReader(ProcessFitReader):
                 log.error('No activity groups defined - configure system correctly')
             raise Exception('ActivityGroup "%s" is not defined' % name)
         return activity_group
-
-    def _load_define(self, s, define, ajournal):
-        for name, value in define.items():
-            log.debug(f'Setting {name} = {value}')
-            if name == ActivityReader.KIT:
-                description = 'Kit used in activity.'
-            else:
-                description = 'Attribute defined on reading activity.'
-            StatisticJournalText.add(s, name, None, None, self.owner_out,
-                                     ajournal, value, ajournal.start, description=description)
 
     @staticmethod
     def _save_name(s, ajournal, file_scan):
@@ -195,7 +180,7 @@ class ActivityReader(ProcessFitReader):
 
     def _load_data(self, s, loader, data):
 
-        ajournal, activity_group, first_timestamp, file_scan, define, records = data
+        ajournal, activity_group, first_timestamp, file_scan, kit, records = data
         timespan, warned, logged, last_timestamp = None, 0, 0, to_time(0.0)
 
         log.debug(f'Loading {self.record_to_db}')
@@ -211,7 +196,8 @@ class ActivityReader(ProcessFitReader):
         only_records = list(filter(lambda x: x.name == 'record', records))
         final_timestamp = only_records[-1].timestamp
 
-        self._load_define(s, define, ajournal)
+        if kit: loader.add_data(N.KIT, ajournal, kit, ajournal.start)
+
         self._save_name(s, ajournal, file_scan)
         self.__ajournal = ajournal
 
@@ -250,6 +236,7 @@ class ActivityReader(ProcessFitReader):
                     logged += 1
                     # values derived from lat/lon
                     if lat is not None and lon is not None:
+                        loader.add_data(N.LON_LAT, ajournal, (lon, lat), timestamp)
                         x, y = Point.from_latitude_longitude(lat, lon).meters
                         loader.add_data(N.SPHERICAL_MERCATOR_X, ajournal, x, timestamp)
                         loader.add_data(N.SPHERICAL_MERCATOR_Y, ajournal, y, timestamp)
