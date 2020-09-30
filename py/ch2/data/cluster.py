@@ -5,7 +5,8 @@ from sqlalchemy import desc, text
 
 # absolute imports to allow invocation from non-root
 from ch2.data import session
-from ch2.sql import ActivityJournal, ClusterParameters, ClusterInputScratch
+from ch2.sql import ActivityJournal, ClusterParameters, ClusterInputScratch, ClusterHull, ClusterFragmentScratch, \
+    ClusterArchetype, ClusterMember
 from ch2.sql.utils import add
 
 log = getLogger(__name__)
@@ -39,16 +40,16 @@ once we have local clusters, find 'typical' routes and then group by those?
 '''
 
 
-def cluster_from_last_activity(s, radius):
+def hulls_from_last_activity(s, radius, delete=True):
     activity_journal = s.query(ActivityJournal).order_by(desc(ActivityJournal.start)).first()
-    return cluster_from_activity(s, activity_journal, radius)
+    return hulls_from_activity(s, activity_journal, radius, delete=delete)
 
 
-def cluster_from_activity(s, activity_journal, radius):
-    return cluster_from_point(s, activity_journal.centre, activity_journal.utm_srid, radius)
+def hulls_from_activity(s, activity_journal, radius, delete=True):
+    return hulls_from_point(s, activity_journal.centre, activity_journal.utm_srid, radius, delete=delete)
 
 
-def cluster_from_point(s, point, srid, radius):
+def hulls_from_point(s, point, srid, radius, delete=True):
     start = 1000
     exp = 2.0
     min_dbscan = 2
@@ -57,6 +58,13 @@ def cluster_from_point(s, point, srid, radius):
     buffer = 10
     indep = 4
     overlap = 0
+    if delete:
+        log.warning('Deleting any previous similar cluster')
+        s.query(ClusterParameters). \
+            filter(ClusterParameters.srid == srid,
+                   ClusterParameters.centre == point,
+                   ClusterParameters.radius == radius). \
+            delete(synchronize_session=False)
     note = f'{start} {exp} auto {min_dbscan} {min_total} {target} {buffer} runs {indep}/{overlap}'
     parameters = add(s, ClusterParameters(srid=srid, centre=point, radius=radius, note=note))
     populate_tmp_lines(s, parameters, point, srid, radius, indep=indep, overlap=overlap)
@@ -69,7 +77,7 @@ def cluster_from_point(s, point, srid, radius):
         eps = 10 * 2 ** nth
         cluster_remaining(s, parameters, -1 * nth, eps, min_dbscan, min_total, target, buffer)
     log.info(f'Finished {note}')
-    return note
+    return parameters.id
 
 
 def cluster_remaining(s, parameters, nth, eps, min_dbscan, min_total, target, buffer):
@@ -178,6 +186,138 @@ select pair, :cluster_parameters_id
     s.commit()
 
 
+def fragments_from_hulls(s, parameters_id):
+    cluster_hull_ids = s.query(ClusterHull.id). \
+        filter(ClusterHull.cluster_parameters_id == parameters_id)
+    s.query(ClusterFragmentScratch). \
+        filter(ClusterFragmentScratch.cluster_hull_id.in_(cluster_hull_ids)). \
+        delete(synchronize_session=False)
+    sql = text('''
+  with route as (select st_transform(route::geometry, cp.srid) as route,
+                        aj.id as activity_journal_id
+                   from activity_journal as aj,
+                        cluster_parameters as cp
+                  where cp.id = :parameters_id
+                    and st_distance(aj.centre, cp.centre::geography) < cp.radius),
+       fragment as (select activity_journal_id,
+                           cluster_hull_id,
+                           geom as fragment,
+                           st_length(geom) as length
+                      from (select (st_dump(st_intersection(r.route, c.hull))).geom,
+                                   r.activity_journal_id,
+                                   c.id as cluster_hull_id
+                              from route as r,
+                                   cluster_hull as c
+                             where st_intersects(r.route, c.hull)
+                               and c.cluster_parameters_id = :parameters_id) as _)
+insert into cluster_fragment_scratch (cluster_hull_id, activity_journal_id,
+                                      fragment, length)
+select cluster_hull_id, activity_journal_id, fragment, length
+  from fragment;
+    ''')
+    log.debug(sql)
+    s.connection().execute(sql, parameters_id=parameters_id)
+    s.commit()
+
+
+def delete_archetypes(s, parameters_id):
+    cluster_hull_ids = s.query(ClusterHull.id). \
+        filter(ClusterHull.cluster_parameters_id == parameters_id)
+    s.query(ClusterArchetype). \
+        filter(ClusterArchetype.cluster_hull_id.in_(cluster_hull_ids)). \
+        delete(synchronize_session=False)
+
+
+def identify_archetypes(s, parameters_id):
+    sql = text('''
+  with median as (select cfs.cluster_hull_id,
+                         percentile_disc(0.75) within group (order by cfs.length) as length,
+                         count(cfs.id) as n
+                    from cluster_fragment_scratch as cfs,
+                         cluster_hull as ch
+                   where cfs.cluster_hull_id = ch.id
+                     and ch.cluster_parameters_id = :parameters_id
+                   group by cluster_hull_id),
+       typical as (select f.activity_journal_id as activity_journal_id,
+                          m.cluster_hull_id,
+                          m.length,
+                          f.fragment
+                     from median as m,
+                          cluster_fragment_scratch as f
+                    where m.cluster_hull_id = f.cluster_hull_id
+                      and m.length = f.length
+                      and n > 2
+                      and m.length > 500)
+insert into cluster_archetype (cluster_hull_id, activity_journal_id,
+                               fragment, length)
+select cluster_hull_id, activity_journal_id, fragment, length
+  from typical;
+''')
+    log.debug(sql)
+    s.connection().execute(sql, parameters_id=parameters_id)
+    s.commit()
+
+
+def delete_members(s, parameters_id):
+    cluster_archetype_ids = s.query(ClusterArchetype.id). \
+        join(ClusterHull). \
+        filter(ClusterHull.cluster_parameters_id == parameters_id)
+    s.query(ClusterMember). \
+        filter(ClusterMember.cluster_archetype_id.in_(cluster_archetype_ids)). \
+        delete(synchronize_session=False)
+
+
+def identify_members(s, parameters_id):
+    ctes = '''
+  with angle as (select cfs.id as cluster_fragment_scratch_id,
+                        ca.id as cluster_archetype_id,
+                        cfs.cluster_hull_id,
+                        cos(st_angle(ca.fragment, cfs.fragment)) as similarity
+                   from cluster_archetype as ca,
+                        cluster_fragment_scratch as cfs,
+                        cluster_hull as ch
+                  where ca.cluster_hull_id = cfs.cluster_hull_id
+                    and ca.cluster_hull_id = ch.id
+                    and ch.cluster_parameters_id = :parameters_id),
+       match as (select ca.id as cluster_archetype_id,
+                        ca.cluster_hull_id,
+                        cfs.activity_journal_id,
+                        cfs.fragment,
+                        cfs.length
+                   from cluster_archetype as ca,
+                        cluster_fragment_scratch as cfs,
+                        angle as a
+                  where ca.cluster_hull_id = cfs.cluster_hull_id
+                    and a.cluster_hull_id = cfs.cluster_hull_id
+                    and a.cluster_fragment_scratch_id = cfs.id
+                    and cfs.length < 1.1 * ca.length
+                    and cfs.length > 0.9 * ca.length
+                    and a.similarity > 0.9)
+'''
+    sql = text(ctes + '''
+insert into cluster_member (cluster_archetype_id, activity_journal_id, fragment)
+select cluster_archetype_id, activity_journal_id, fragment
+  from match;
+''')
+    log.debug(sql)
+    s.connection().execute(sql, parameters_id=parameters_id)
+    sql = text(ctes + '''
+delete from cluster_fragment_scratch
+ using match
+ where match.activity_journal_id = cluster_fragment_scratch.activity_journal_id
+   and match.cluster_hull_id = cluster_fragment_scratch.cluster_hull_id
+   and match.length = cluster_fragment_scratch.length;
+''')
+    log.debug(sql)
+    s.connection().execute(sql, parameters_id=parameters_id)
+    s.commit()
+
+
 if __name__ == '__main__':
     s = session('-v5')
-    cluster_from_last_activity(s, 200000)
+    parameters_id = hulls_from_last_activity(s, 200000)
+    fragments_from_hulls(s, parameters_id)
+    delete_archetypes(s, parameters_id)  # also deletes members
+    identify_archetypes(s, parameters_id)
+    identify_members(s, parameters_id)
+

@@ -69,6 +69,4 @@ class ClusterMember(Base):
     cluster_archetype_id = Column(Integer, ForeignKey('cluster_archetype.id', ondelete='cascade'), nullable=False)
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'), nullable=False)
     fragment = Column(Geometry('LineString'), nullable=False)
-    length = Column(Float, nullable=False)
-    similarity = Column(Float, nullable=False)
     # todo - maybe duration?  offsets into activity?

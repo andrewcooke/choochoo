@@ -1,7 +1,7 @@
 
 To contribute please send an email to andrew@acooke.org confirming that you
-have read, understood and agree to the following (this is the standard Harmony
-CLA, Sep 29 2020).
+have read, understood and agree to the following (this is based on the
+standard Harmony CLA, Sep 29 2020).
 
 Note: You must own the copyright to the contribution you are making.
 
