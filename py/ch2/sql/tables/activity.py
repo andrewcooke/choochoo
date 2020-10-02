@@ -61,8 +61,8 @@ class ActivityJournal(GroupedSource):
     start = Column(DateTime(timezone=True), nullable=False, index=True, unique=True)
     finish = Column(DateTime(timezone=True), nullable=False)
     # nullable because created later
-    route = Column(Geography('linestring', srid=4326))
-    centre = Column(Geography('point', srid=4326))
+    route = Column(Geography('LineStringM', srid=4326))
+    centre = Column(Geography('Point', srid=4326))
     utm_srid = Column(Integer)
 
     __mapper_args__ = {

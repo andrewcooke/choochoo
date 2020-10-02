@@ -199,21 +199,43 @@ def fragments_from_hulls(s, parameters_id):
                         cluster_parameters as cp
                   where cp.id = :parameters_id
                     and st_distance(aj.centre, cp.centre::geography) < cp.radius),
-       fragment as (select activity_journal_id,
+       fragment2d as (select activity_journal_id,
+                             cluster_hull_id,
+                             geom as fragment,
+                             route
+                        from (select (st_dump(st_intersection(r.route, c.hull))).geom,
+                                     r.activity_journal_id,
+                                     c.id as cluster_hull_id,
+                                     st_transform(aj.route::geometry, cp.srid) as route
+                                from route as r,
+                                     cluster_hull as c,
+                                     activity_journal as aj,
+                                     cluster_parameters as cp
+                               where st_intersects(r.route, c.hull)
+                                 and c.cluster_parameters_id = :parameters_id
+                                 and aj.id = r.activity_journal_id
+                                 and cp.id = 1) as _),
+       startend as (select activity_journal_id,
                            cluster_hull_id,
-                           geom as fragment,
-                           st_length(geom) as length
-                      from (select (st_dump(st_intersection(r.route, c.hull))).geom,
-                                   r.activity_journal_id,
-                                   c.id as cluster_hull_id
-                              from route as r,
-                                   cluster_hull as c
-                             where st_intersects(r.route, c.hull)
-                               and c.cluster_parameters_id = :parameters_id) as _)
-insert into cluster_fragment_scratch (cluster_hull_id, activity_journal_id,
-                                      fragment, length)
-select cluster_hull_id, activity_journal_id, fragment, length
-  from fragment;
+                           route,
+                           fragment,
+                           st_linelocatepoint(route, st_startpoint(fragment)) as a,
+                           st_linelocatepoint(route, st_endpoint(fragment)) as b
+                      from fragment2d),
+       fragment3d as (select activity_journal_id,
+                             cluster_hull_id,
+                             st_linesubstring(route,
+                                              least(1, greatest(0, least(a, b))),
+                                              least(1, greatest(0, greatest(a, b)))) as fragment
+                        from startend),
+       lines3d as (select activity_journal_id,
+                          cluster_hull_id,
+                          fragment
+                     from fragment3d
+                    where st_geometrytype(fragment) = 'ST_LineString')
+insert into cluster_fragment_scratch (cluster_hull_id, activity_journal_id, fragment, length)
+select cluster_hull_id, activity_journal_id, fragment, st_length(fragment)
+  from lines3d;
     ''')
     log.debug(sql)
     s.connection().execute(sql, parameters_id=parameters_id)
@@ -248,9 +270,8 @@ def identify_archetypes(s, parameters_id):
                       and m.length = f.length
                       and n > 2
                       and m.length > 500)
-insert into cluster_archetype (cluster_hull_id, activity_journal_id,
-                               fragment, length)
-select cluster_hull_id, activity_journal_id, fragment, length
+insert into cluster_archetype (cluster_hull_id, activity_journal_id, fragment, length)
+select cluster_hull_id, activity_journal_id, st_force2d(fragment), length
   from typical;
 ''')
     log.debug(sql)

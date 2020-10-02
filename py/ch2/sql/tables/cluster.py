@@ -21,7 +21,7 @@ class ClusterInputScratch(Base):
 
     id = Column(Integer, primary_key=True)
     cluster_parameters_id = Column(Integer, ForeignKey('cluster_parameters.id', ondelete='cascade'), nullable=False)
-    geom = Column(Geometry(), nullable=False)  # some fragment of a route
+    geom = Column(Geometry(geometry_type='GeometryM', dimension=3), nullable=False)  # some fragment of a route
     level = Column(Integer)
     group = Column(Integer)
     Index('natural_cluster_input_scratch_ix', 'parameters', 'level', 'group')
@@ -46,7 +46,7 @@ class ClusterFragmentScratch(Base):
     id = Column(Integer, primary_key=True)
     cluster_hull_id = Column(Integer, ForeignKey('cluster_hull.id', ondelete='cascade'), nullable=False)
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'), nullable=False)
-    fragment = Column(Geometry('LineString'), nullable=False)
+    fragment = Column(Geometry('LineStringM'), nullable=False)
     length = Column(Float, nullable=False)
 
 
@@ -68,5 +68,5 @@ class ClusterMember(Base):
     id = Column(Integer, primary_key=True)
     cluster_archetype_id = Column(Integer, ForeignKey('cluster_archetype.id', ondelete='cascade'), nullable=False)
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'), nullable=False)
-    fragment = Column(Geometry('LineString'), nullable=False)
+    fragment = Column(Geometry('LineStringM'), nullable=False)
     # todo - maybe duration?  offsets into activity?

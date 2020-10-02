@@ -10,7 +10,7 @@ from .utils import AbortImportButMarkScanned, ProcessFitReader
 from ... import FatalException
 from ...commands.args import DEFAULT
 from ...commands.upload import ACTIVITY
-from ...common.date import to_time
+from ...common.date import to_time, datetime_to_epoch
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
@@ -151,7 +151,7 @@ class ActivityReader(ProcessFitReader):
             filter(ActivityTopic.title == ActivityTopic.ROOT,
                    ActivityTopic.activity_group == ajournal.activity_group).one_or_none()
         if not root:
-            root = add(s, ActivityTopic(name=ActivityTopic.ROOT, description=ActivityTopic.ROOT_DESCRIPTION,
+            root = add(s, ActivityTopic(title=ActivityTopic.ROOT, description=ActivityTopic.ROOT_DESCRIPTION,
                                         activity_group=ajournal.activity_group))
         if not s.query(ActivityTopicField). \
                 join(StatisticName). \
@@ -297,21 +297,22 @@ class ActivityReader(ProcessFitReader):
 
     def __create_route(self, s, ajournal):
         log.debug('Setting route')
-        lon_lat = list(self.__lon_lat(s))
-        if lon_lat:
-            points = [f'ST_MakePoint({lon}, {lat})' for lon, lat in lon_lat]
+        lon_lat_epoch = list(self.__lon_lat_epoch(s))
+        if lon_lat_epoch:
+            points = [f'ST_MakePointM({lon}, {lat}, {epoch})' for lon, lat, epoch in lon_lat_epoch]
             line = f'ST_MakeLine(ARRAY[{", ".join(points)}])'
         else:
-            line = "'LINESTRING EMPTY'::geography"
+            log.warning('Empty route?!')
+            line = "'LINESTRINGM EMPTY'::geography"
         update = ajournal.update().values(route=text(line)).where(ajournal.c.id == self.__ajournal.id)
         log.debug(update)
         s.execute(update)
-        return bool(lon_lat)
+        return bool(lon_lat_epoch)
 
-    def __lon_lat(self, s):
+    def __lon_lat_epoch(self, s):
         lon, lat = aliased(StatisticJournalFloat, name='lon'), aliased(StatisticJournalFloat, name='lat')
         nlon, nlat = aliased(StatisticName, name='nlon'), aliased(StatisticName, name='nlat')
-        for row in s.query(lon.value, lat.value). \
+        for row in s.query(lon.value, lat.value, lon.time). \
                 filter(lon.statistic_name_id == nlon.id,
                        nlon.name == N.LONGITUDE,
                        lat.statistic_name_id == nlat.id,
@@ -320,4 +321,4 @@ class ActivityReader(ProcessFitReader):
                        lat.source_id == self.__ajournal.id,
                        lon.time == lat.time). \
                 order_by(lat.time).all():
-            yield row[0], row[1]
+            yield row[0], row[1], datetime_to_epoch(row[2])
