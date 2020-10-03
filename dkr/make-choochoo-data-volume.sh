@@ -22,8 +22,10 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-# delete this is you really want to
-echo "refusing to delete existing data"
+if [ -z "FORCE_NEW_DISK" ]; then
+    echo "refusing to delete existing data (set FORCE_NEW_DISK=1)"
+    exit 2
+fi
 
 ./prune.sh
 

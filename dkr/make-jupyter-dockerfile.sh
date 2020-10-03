@@ -38,7 +38,8 @@ done
 
 source ../py/env/bin/activate
 
-pip freeze | grep -v choochoo > requirements.txt
+# https://stackoverflow.com/a/40167445
+pip freeze | grep -v choochoo | grep -v pkg-resources > requirements.txt
 
 # basic image and support
 # (we need to install db libs whatever db we are using because of python deps)

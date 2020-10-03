@@ -1,0 +1,26 @@
+
+git clone https://github.com/andrewcooke/choochoo.git
+cd choochoo
+git checkout dev --
+sudo apt-get install python3.8-venv libpq-dev python3.8-dev
+dev/make-env-py.sh
+sudo apt-get install npm
+dev/make-env-js.sh
+sudo apt-get install apt-transport-https ca-certificates curl \
+     gnupg-agent software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository \
+     "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+     $(lsb_release -cs) stable"
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose
+sudo usermod -aG docker $USER
+
+[reboot]
+
+cd choochoo
+dkr/run-pg-persist.sh --reset
+[ctrl-c]
+FORCE_NEW_DISK=1 dkr/run-ch2-jp-pg-persist.sh --reset
+
+visible at http://0.0.0.0:8000/
