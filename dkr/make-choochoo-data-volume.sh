@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "${BASH_SOURCE%/*}/" || exit
+
 CMD=$0
 
 help () {

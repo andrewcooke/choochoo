@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "${BASH_SOURCE%/*}/" || exit
+
 # 'experimental' and DOCKER_BUILDKIT is related to the pip cache
 # https://stackoverflow.com/a/57282479
 

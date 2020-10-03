@@ -24,7 +24,7 @@ class ClusterInputScratch(Base):
     geom = Column(Geometry(geometry_type='GeometryM', dimension=3), nullable=False)  # some fragment of a route
     level = Column(Integer)
     group = Column(Integer)
-    Index('natural_cluster_input_scratch_ix', 'parameters', 'level', 'group')
+    UniqueConstraint(cluster_parameters_id, level, group)
 
 
 class ClusterHull(Base):
@@ -44,10 +44,11 @@ class ClusterFragmentScratch(Base):
     __tablename__ = 'cluster_fragment_scratch'
 
     id = Column(Integer, primary_key=True)
-    cluster_hull_id = Column(Integer, ForeignKey('cluster_hull.id', ondelete='cascade'), nullable=False)
-    activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'), nullable=False)
+    cluster_hull_id = Column(Integer, ForeignKey('cluster_hull.id', ondelete='cascade'), nullable=False, index=True)
+    activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'), nullable=False, index=True)
     fragment = Column(Geometry('LineStringM'), nullable=False)
     length = Column(Float, nullable=False)
+    Index('cluster_fragment_scratch_access_ix', cluster_hull_id, activity_journal_id, length)
 
 
 class ClusterArchetype(Base):
@@ -59,6 +60,7 @@ class ClusterArchetype(Base):
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'), nullable=False)
     fragment = Column(Geometry('LineString'), nullable=False)
     length = Column(Float, nullable=False)
+    Index('cluster_archetype_access_ix', cluster_hull_id, activity_journal_id, length)
 
 
 class ClusterMember(Base):
@@ -69,4 +71,4 @@ class ClusterMember(Base):
     cluster_archetype_id = Column(Integer, ForeignKey('cluster_archetype.id', ondelete='cascade'), nullable=False)
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'), nullable=False)
     fragment = Column(Geometry('LineStringM'), nullable=False)
-    # todo - maybe duration?  offsets into activity?
+    Index('cluster_member_access_ix', cluster_archetype_id, activity_journal_id)

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "${BASH_SOURCE%/*}/" || exit
+
 CMD=$0
 DEV="-dev"
 DEV2="--dev"
@@ -9,7 +11,7 @@ PGCONF=postgres-default.conf
 help () {
     echo -e "\n  Run the postgres image (only)"
     echo -e "\n  Usage:"
-    echo -e "\n   $CMD [--reset] [--prof] [--dev] [-h]"
+    echo -e "\n   $CMD [--reset] [--prof] [--no-dev] [-h]"
     echo -e "\n  --reset:     re-create the disks"
     echo -e "  --prof:      use the pgbadger conf for postgres (profiling)"
     echo -e "  --no-dev:    don't use dev-specific disks"
@@ -18,7 +20,7 @@ help () {
 }
 
 while [ $# -gt 0 ]; do
-    if [ $1 == "--dev" ]; then
+    if [ $1 == "--no-dev" ]; then
         DEV=
         DEV2=
     elif [ $1 == "--prof" ]; then

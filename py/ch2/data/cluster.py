@@ -214,7 +214,7 @@ def fragments_from_hulls(s, parameters_id):
                                where st_intersects(r.route, c.hull)
                                  and c.cluster_parameters_id = :parameters_id
                                  and aj.id = r.activity_journal_id
-                                 and cp.id = 1) as _),
+                                 and cp.id = c.cluster_parameters_id) as _),
        startend as (select activity_journal_id,
                            cluster_hull_id,
                            route,
