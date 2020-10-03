@@ -13,7 +13,7 @@ from ..pipeline import OwnerInMixin
 from ...common.log import log_current_exception
 from ...lib.dbscan import DBSCAN
 from ...lib.optimizn import expand_max
-from ...names import Names
+from ...names import N
 from ...rtree import MatchType
 from ...rtree.spherical import SQRTree
 from ...sql import ActivityJournal, ActivityGroup, ActivitySimilarity, ActivityNearby, StatisticName, \
@@ -25,6 +25,19 @@ Nearby = namedtuple('Nearby', 'constraint, activity_group, border, start, finish
 
 
 class SimilarityCalculator(OwnerInMixin, ProcessCalculator):
+    '''
+    this seems to be more efficient than
+
+    select lo.id, hi.id,
+           ST_HausdorffDistance(st_transform(lo.route::geometry, lo.utm_srid),
+                                st_transform(hi.route::geometry, lo.utm_srid))
+      from activity_journal as lo,
+           activity_journal as hi
+     where lo.id < hi.id
+     order by st_distance(lo.centre, hi.centre)
+
+    (caching st_transform(lo.route::geometry, lo.utm_srid) as utm_route doesn't help)
+    '''
 
     def __init__(self, *args, fraction=0.01, border=150, **kargs):
         self.fraction = fraction
@@ -111,13 +124,13 @@ class SimilarityCalculator(OwnerInMixin, ProcessCalculator):
     def _aj_lon_lat(self, s, new=True):
         from ..owners import SegmentReader
         lat = s.query(StatisticName.id). \
-            filter(StatisticName.name == Names.LATITUDE,
+            filter(StatisticName.name == N.LATITUDE,
                    StatisticName.owner == SegmentReader).scalar()
         lon = s.query(StatisticName.id). \
-            filter(StatisticName.name == Names.LONGITUDE,
+            filter(StatisticName.name == N.LONGITUDE,
                    StatisticName.owner == SegmentReader).scalar()
         if not lat or not lon:
-            log.warning(f'No {Names.LATITUDE} or {Names.LONGITUDE} in database')
+            log.warning(f'No {N.LATITUDE} or {N.LONGITUDE} in database')
             return
 
         # todo - use tables() instead
@@ -154,7 +167,7 @@ class SimilarityCalculator(OwnerInMixin, ProcessCalculator):
         distances = dict((s.source.id, s.value)
                          for s in s.query(StatisticJournalFloat).
                          join(StatisticName).
-                         filter(StatisticName.name == Names.ACTIVE_DISTANCE,
+                         filter(StatisticName.name == N.ACTIVE_DISTANCE,
                                 StatisticName.owner == self.owner_in).all())  # todo - another owner
         n = 0
         for lo in affected_ids:

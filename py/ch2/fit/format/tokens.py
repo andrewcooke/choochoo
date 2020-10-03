@@ -8,7 +8,7 @@ from struct import unpack, pack
 from .records import LazyRecord, merge_duplicates
 from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField, CompositeField
 from ..profile.types import timestamp_to_time, time_to_timestamp
-from ...names import Units
+from ...names import U
 from ...lib.data import WarnDict, tohex
 
 log = getLogger(__name__)
@@ -310,7 +310,7 @@ class CompressedTimestamp(Defined):
         if self.definition.timestamp_field:
             extra = {}
         else:
-            extra = {'timestamp': ((timestamp,), Units.S)}
+            extra = {'timestamp': ((timestamp,), U.S)}
         return self.definition.message.parse_message(self.data, self.definition, self.timestamp,
                                                      extra=extra, raw_time=raw_time,
                                                      accumulators=self._accumulators, **options)

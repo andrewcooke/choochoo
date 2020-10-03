@@ -12,6 +12,7 @@ from ..common.names import BASE, UNDEF
 from ..common.names import VERBOSITY, URI
 from ..lib.utils import timing
 from ..lib.workers import command_root
+from ..names import any_to_fmt
 from ..sql import Pipeline, Interval, PipelineType, StatisticJournal, StatisticName
 from ..sql.types import short_cls
 
@@ -147,10 +148,16 @@ class ProcessPipeline(BasePipeline):
     def __str__(self):
         return str(short_cls(self.__class__))
 
-    def _provides(self, s, name, type_, units, summary, description, owner=UNDEF, title=None):
+    def _provides(self, s, name, type_, units, summary, description, owner=UNDEF, title=None, values=None):
         if owner is UNDEF:
             owner = self.owner_out
-        StatisticName.add_if_missing(s, name, type_, units, summary, owner, description=description, title=title)
+        if values:
+            if title: raise Exception('Cannot have title with template name')
+            for value in values:
+                StatisticName.add_if_missing(s, name % value, type_, units, summary, owner,
+                                             description=description)
+        else:
+            StatisticName.add_if_missing(s, name, type_, units, summary, owner, description=description, title=title)
 
 
 class LoaderMixin:

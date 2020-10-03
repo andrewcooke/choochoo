@@ -73,6 +73,7 @@ class Process(Base):
         from ...pipeline.process import fmt_cmd
         popen = ps.Popen(args=cmd, shell=True)
         log.debug(f'Adding command [{fmt_cmd(cmd)}]; pid {popen.pid}')
+        s.query(Process).filter(Process.pid == popen.pid).delete(synchronize_session=False)
         s.add(Process(command=cmd, owner=owner, pid=popen.pid, log=log_name))
         s.commit()
         return popen

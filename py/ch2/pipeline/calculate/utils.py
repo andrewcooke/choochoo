@@ -2,16 +2,13 @@ from abc import abstractmethod
 from logging import getLogger
 
 from sqlalchemy import not_
-from sqlalchemy.sql.functions import count
 
 from ..pipeline import ProcessPipeline
 from ...common.date import time_to_local_timeq, format_dateq
 from ...common.log import log_current_exception, log_query
 from ...lib import local_time_to_time, to_date
 from ...lib.schedule import Schedule
-from ...sql import Timestamp, StatisticName, StatisticJournal, ActivityJournal, ActivityGroup, SegmentJournal, Interval, \
-    Source
-from ...sql.types import short_cls
+from ...sql import Timestamp, ActivityJournal, ActivityGroup, SegmentJournal, Interval
 from ...sql.utils import add
 
 log = getLogger(__name__)

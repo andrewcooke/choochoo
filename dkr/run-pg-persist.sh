@@ -1,26 +1,28 @@
 #!/bin/bash
 
+cd "${BASH_SOURCE%/*}/" || exit
+
 CMD=$0
-DEV=
-DEV2=
+DEV="-dev"
+DEV2="--dev"
 RESET=0
 PGCONF=postgres-default.conf
 
 help () {
     echo -e "\n  Run the postgres image (only)"
     echo -e "\n  Usage:"
-    echo -e "\n   $CMD [--reset] [--prof] [--dev] [-h]"
+    echo -e "\n   $CMD [--reset] [--prof] [--no-dev] [-h]"
     echo -e "\n  --reset:     re-create the disks"
     echo -e "  --prof:      use the pgbadger conf for postgres (profiling)"
-    echo -e "  --dev:       use dev-specific disks"
+    echo -e "  --no-dev:    don't use dev-specific disks"
     echo -e "   -h:         show this message\n"
     exit 1
 }
 
 while [ $# -gt 0 ]; do
-    if [ $1 == "--dev" ]; then
-        DEV="-dev"
-        DEV2="--dev"
+    if [ $1 == "--no-dev" ]; then
+        DEV=
+        DEV2=
     elif [ $1 == "--prof" ]; then
 	PGCONF=postgres-pgbadger.conf
     elif [ $1 == "--reset" ]; then
@@ -51,5 +53,6 @@ docker run --rm -p 127.0.0.1:5432:5432 \
        -v `pwd`/postgres.conf:/etc/postgresql/postgresql.conf \
        --shm-size=1g \
        --name=postgresql \
-       postgres:11.8-alpine -c 'config_file=/etc/postgresql/postgresql.conf'
+       postgis/postgis:13-3.0-alpine \
+       -c 'config_file=/etc/postgresql/postgresql.conf'
 

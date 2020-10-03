@@ -45,3 +45,12 @@ def add_child_ddl(parent_table):
         return child_table
 
     return decorator
+
+
+def add_text(ddl):
+
+    def decorator(table_cls):
+        listen(table_cls.__table__, 'after_create', DDL(ddl).execute_if(dialect='postgresql'))
+        return table_cls
+
+    return decorator

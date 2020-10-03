@@ -18,7 +18,7 @@ from ...data import Statistics, present
 from ...data.response import sum_to_hour, calc_response
 from ...names import Names as N, SPACE
 from ...sql import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
-    StatisticJournalFloat
+    StatisticJournalFloat, StatisticJournalType
 from ...sql.tables.source import SourceType
 from ...sql.utils import add
 
@@ -51,6 +51,10 @@ class ResponseCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
         self.response_constants = [Constant.from_name(s, name) for name in self.response_constant_names]
         self.responses = [Response(**loads(constant.at(s).value)) for constant in self.response_constants]
         super()._startup(s)
+        for constant, response in zip(self.response_constants, self.responses):
+            name = self.prefix + SPACE + constant.short_name
+            self._provides(s, name, StatisticJournalType.FLOAT, None, None,
+                           f'The SHRIMP response for a decay of {response.tau_days} days', title=response.title)
 
     def _delete(self, s):
         composite_ids = s.query(Composite.id). \
@@ -155,9 +159,7 @@ class ResponseCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
                             skipped += 1
                             if skipped > 1:
                                 log.warning(f'Skipping multiple sources at {time}')
-                        loader.add(name, None, None, source, value, time,
-                                   StatisticJournalFloat, title=response.title,
-                                   description=f'The SHRIMP response for a decay of {response.tau_days} days')
+                        loader.add_data(name, source, value, time)
                     loader.load()
 
     def __read_data(self, s):

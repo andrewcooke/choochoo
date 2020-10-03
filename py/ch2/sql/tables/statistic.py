@@ -5,18 +5,18 @@ from logging import getLogger
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, Index, DateTime
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship, backref, synonym
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.orm.exc import NoResultFound
 
 from .source import Interval
 from ..support import Base
-from ..triggers import add_child_ddl
-from ..types import ShortCls, Name, name_and_title
+from ..triggers import add_child_ddl, add_text
+from ..types import ShortCls, Name, name_and_title, Point
 from ..utils import add
 from ...common.date import format_seconds, local_date_to_time, time_to_local_time
 from ...diary.model import TYPE, MEASURES, SCHEDULES
 from ...lib.utils import sigfig
-from ...names import Units, simple_name
+from ...names import U, simple_name
 
 log = getLogger(__name__)
 
@@ -137,6 +137,7 @@ class StatisticJournalType(IntEnum):
     FLOAT = 2
     TEXT = 3
     TIMESTAMP = 4
+    POINT = 5
 
 
 class StatisticJournal(Base):
@@ -199,16 +200,16 @@ class StatisticJournal(Base):
         units = self.statistic_name.units
         if not units:
             return '%d' % self.value
-        elif units == Units.M:
+        elif units == U.M:
             if self.value > 2000:
                 return '%d km' % (self.value / 1000)
             else:
                 return '%d m' % self.value
-        elif units == Units.S:
+        elif units == U.S:
             return format_seconds(self.value)
-        elif units in (Units.KMH, Units.PC, Units.BPM, Units.STEPS_UNITS, Units.W, Units.KJ):
+        elif units in (U.KMH, U.PC, U.BPM, U.STEPS_UNITS, U.W, U.KJ):
             return '%d %s' % (self.value, units)
-        elif units == Units.KCAL:
+        elif units == U.KCAL:
             return '%s %s' % (sigfig(self.value, 2), units)
         else:
             return '%d %s' % (self.value, units)
@@ -343,9 +344,6 @@ class StatisticJournalInteger(StatisticJournal):
         'polymorphic_identity': StatisticJournalType.INTEGER
     }
 
-    def set(self, value):
-        self.value = value if value is None else int(value)
-
     @classmethod
     def add(cls, s, name, units, summary, owner, source, value, time, serial=None, description=None):
         return super().add(s, name, units, summary, owner, source, value, time, serial,
@@ -359,9 +357,6 @@ class StatisticJournalFloat(StatisticJournal):
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Float, nullable=False)
-
-    def set(self, value):
-        self.value = value if value is None else float(value)
 
     @classmethod
     def add(cls, s, name, units, summary, owner, source, value, time, serial=None, description=None):
@@ -378,25 +373,25 @@ class StatisticJournalFloat(StatisticJournal):
         units = self.statistic_name.units
         if not units:
             return '%f' % self.value
-        elif units == Units.M:
+        elif units == U.M:
             if self.value > 2000:
                 return '%.1f km' % (self.value / 1000)
             else:
                 return '%d m' % int(self.value)
-        elif units == Units.KM:
+        elif units == U.KM:
             if self.value > 2:
                 return '%.1f km' % self.value
             else:
                 return '%d m' % int(self.value * 1000)
-        elif units == Units.S:
+        elif units == U.S:
             return format_seconds(self.value)
-        elif units in (Units.KMH, Units.PC, Units.KG, Units.W, Units.KJ):
+        elif units in (U.KMH, U.PC, U.KG, U.W, U.KJ):
             return '%.1f %s' % (self.value, units)
-        elif units == Units.KCAL:
+        elif units == U.KCAL:
             return '%s %s' % (sigfig(self.value, 2), units)
-        elif units in (Units.BPM, Units.STEPS_UNITS):
+        elif units in (U.BPM, U.STEPS_UNITS):
             return '%d %s' % (int(self.value), units)
-        elif units == Units.FF:
+        elif units == U.FF:
             return '%d' % int(self.value)
         else:
             return '%s %s' % (self.value, units)
@@ -409,9 +404,6 @@ class StatisticJournalText(StatisticJournal):
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Text, nullable=False)
-
-    def set(self, value):
-        self.value = value if value is None else str(value)
 
     @classmethod
     def add(cls, s, name, units, summary, owner, source, value, time, serial=None, description=None):
@@ -438,19 +430,41 @@ class StatisticJournalTimestamp(StatisticJournal):
     __tablename__ = 'statistic_journal_timestamp'
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
-    value = synonym('time')
+    value = Column(DateTime(timezone=True), nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.TIMESTAMP
     }
 
     @classmethod
-    def add(cls, s, name, units, summary, owner, source, time, serial=None, description=None):
-        statistic_name = StatisticName.add_if_missing(s, name, StatisticJournalType.TIMESTAMP,
-                                                      units, summary, owner, description=description)
-        journal = StatisticJournalTimestamp(statistic_name=statistic_name, source=source, time=time, serial=serial)
-        s.add(journal)
-        return journal
+    def add(cls, s, name, units, summary, owner, source, value, time, serial=None, description=None):
+        return super().add(s, name, units, summary, owner, source, value, time, serial,
+                           StatisticJournalType.TIMESTAMP, description=description)
+
+    def formatted(self):
+        return time_to_local_time(self.value)
+
+
+@add_child_ddl(StatisticJournal)
+@add_text('''
+create index idx_%(table)s_value on %(table)s using gist (value);
+''')
+class StatisticJournalPoint(StatisticJournal):
+
+    __tablename__ = 'statistic_journal_point'
+
+    id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
+    # value = Column(Geography('point', srid=4326), nullable=False)
+    value = Column(Point, nullable=False)
+
+    __mapper_args__ = {
+        'polymorphic_identity': StatisticJournalType.POINT
+    }
+
+    @classmethod
+    def add(cls, s, name, units, summary, owner, source, value, time, serial=None, description=None):
+        return super().add(s, name, units, summary, owner, source, value, time, serial,
+                           StatisticJournalType.POINT, description=description)
 
     def formatted(self):
         return time_to_local_time(self.value)
@@ -479,19 +493,22 @@ STATISTIC_JOURNAL_CLASSES = {
     StatisticJournalType.INTEGER: StatisticJournalInteger,
     StatisticJournalType.FLOAT: StatisticJournalFloat,
     StatisticJournalType.TEXT: StatisticJournalText,
-    StatisticJournalType.TIMESTAMP: StatisticJournalTimestamp
+    StatisticJournalType.TIMESTAMP: StatisticJournalTimestamp,
+    StatisticJournalType.POINT: StatisticJournalPoint
 }
 
 STATISTIC_JOURNAL_TYPES = {
     StatisticJournalInteger: StatisticJournalType.INTEGER,
     StatisticJournalFloat: StatisticJournalType.FLOAT,
     StatisticJournalText: StatisticJournalType.TEXT,
-    StatisticJournalTimestamp: StatisticJournalType.TIMESTAMP
+    StatisticJournalTimestamp: StatisticJournalType.TIMESTAMP,
+    StatisticJournalPoint: StatisticJournalType.POINT
 }
 
 TYPE_TO_JOURNAL_CLASS = {
     int: StatisticJournalInteger,
     float: StatisticJournalFloat,
     str: StatisticJournalText,
-    dt.datetime: StatisticJournalTimestamp
+    dt.datetime: StatisticJournalTimestamp,
+    tuple: StatisticJournalPoint
 }

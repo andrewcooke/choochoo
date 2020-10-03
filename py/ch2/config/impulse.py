@@ -1,7 +1,7 @@
 from logging import getLogger
 
 from .database import add_enum_constant, add_read_and_calculate
-from ..names import Titles, Names
+from ..names import T, N
 from ..pipeline.calculate.impulse import HRImpulse, ImpulseCalculator
 from ..pipeline.calculate.response import Response, ResponseCalculator
 from ..pipeline.read.segment import SegmentReader
@@ -30,7 +30,7 @@ log = getLogger(__name__)
 
 
 def add_impulse(s, activity_group, gamma=2, zero=1, one=6, max_secs=60,
-                title=Titles.HR_IMPULSE_10, prefix=Names.DEFAULT):
+                title=T.HR_IMPULSE_10, prefix=N.DEFAULT):
     '''
     Add configuration for a fitness/fatigue impulse model based on HR zones.
     '''
@@ -55,9 +55,9 @@ Once the impulse is calculated it is summed with a decay to find fitness and fat
                            activity_group=activity_group)
 
 
-def add_responses(s, responses=((42, 1, 1, Titles.FITNESS_D % 42, 'fitness'),
-                                (7, 1, 5, Titles.FATIGUE_D % 7, 'fatigue')),
-                  owner_in=ImpulseCalculator, prefix=Names.DEFAULT):
+def add_responses(s, responses=((42, 1, 1, T.FITNESS_D % 42, 'fitness'),
+                                (7, 1, 5, T.FATIGUE_D % 7, 'fatigue')),
+                  owner_in=ImpulseCalculator, prefix=N.DEFAULT):
     '''
     Add configuration for a fitness/fatigue response model based on pre-calculated impulses.
     '''

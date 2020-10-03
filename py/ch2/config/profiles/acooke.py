@@ -6,7 +6,7 @@ from ...commands.args import DEFAULT
 from ...common.names import TIME_ZERO
 from ...diary.model import TYPE, EDIT
 from ...lib import to_time, time_to_local_date
-from ...names import Sports, simple_name
+from ...names import Sports, simple_name, N
 from ...pipeline.calculate.power import PowerCalculator
 from ...pipeline.read.activity import ActivityReader
 from ...sql import StatisticJournalType, StatisticName, DiaryTopic, DiaryTopicJournal
@@ -68,7 +68,7 @@ class ACooke(Garmin):
         # (cotic and bowman are kit items added via kit commands)
 
         return {Sports.SPORT_CYCLING: {
-                    ActivityReader.KIT: {
+                    N.KIT: {
                         'cotic': simple_name(MTB),
                         'bowman': simple_name(ROAD),
                     },

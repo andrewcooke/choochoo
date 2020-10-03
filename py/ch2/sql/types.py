@@ -1,8 +1,10 @@
 from json import dumps, loads
 from logging import getLogger
 from pydoc import locate
+from re import compile, IGNORECASE
 
-from sqlalchemy import TypeDecorator, Integer, Text
+from geoalchemy2 import Geography
+from sqlalchemy import TypeDecorator, Integer, Text, func
 
 from ..names import simple_name
 
@@ -166,6 +168,36 @@ class QualifiedName(TypeDecorator):
             return simple_name(value)
 
     process_bind_param = process_literal_param
+
+
+POINT = compile(r'point\((\d*\.?\d*)\s+(\d*\.?\d*)\)', IGNORECASE)
+
+
+class Point(TypeDecorator):
+    '''
+    i don't completely understand why this works, or why column_expression is needed.
+    seems like we're fighting geoalchemy2 somehow.
+
+    also, it seems to break things when used for activity_journal.centre(!)
+
+    also, geoalchemy2 doesn't add an index to the table
+    '''
+
+    impl = Geography('point', srid=4326)
+
+    def process_literal_param(self, value, dialect):
+        lon, lat = value
+        return f'Point({lon} {lat})'
+
+    process_bind_param = process_literal_param
+
+    def process_result_value(self, value, dialect):
+        # value is a geoalchemy2 WKBElement
+        match = POINT.match(value.data)
+        return float(match.group(1)), float(match.group(2))
+
+    def column_expression(self, col):
+        return func.ST_AsText(col, type_=self)
 
 
 NAME = 'name'

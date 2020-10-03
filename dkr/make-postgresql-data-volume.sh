@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "${BASH_SOURCE%/*}/" || exit
+
 CMD=$0
 DEV=
 
@@ -23,6 +25,11 @@ while [ $# -gt 0 ]; do
     fi
     shift
 done
+
+if [ -z "$DEV" -a -z "FORCE_NEW_DISK" ]; then
+    echo "refusing to delete existing database (set FORCE_NEW_DISK=1)"
+    exit 2
+fi
 
 ./prune.sh
 docker volume rm -f "postgresql-data$DEV"

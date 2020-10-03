@@ -10,9 +10,9 @@ from ..pipeline import LoaderMixin, OwnerInMixin
 from ...common.date import format_dateq
 from ...common.log import log_current_exception
 from ...lib import local_date_to_time, time_to_local_date, to_date
-from ...names import Titles, Names, Summaries as S, Units
+from ...names import T, N, U, S
 from ...sql import MonitorJournal, StatisticJournalInteger, StatisticName, StatisticJournal, Composite, \
-    CompositeComponent, Source
+    CompositeComponent, Source, StatisticJournalType
 from ...sql.utils import add
 
 log = getLogger(__name__)
@@ -26,6 +26,12 @@ class StepsCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
     more data, we need to delete the previous values.  So we need to be careful (1) in deciding when
     we have new data; (2) in avoiding duplicates; and (3) in tracking composite sources.
     '''
+
+    def _startup(self, s):
+        super()._startup(s)
+        self._provides(s, T.DAILY_STEPS, StatisticJournalType.INTEGER, U.STEPS_UNITS,
+                       S.join(S.SUM, S.AVG, S.CNT, S.MAX, S.MSR),
+                       'The number of steps in a day.')
 
     def _missing(self, s):
         # any day that has an unused monitor journal is a missing day
@@ -93,9 +99,7 @@ class StepsCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
                     s.add(CompositeComponent(input_source_id=input_source_id, output_source=output_source))
                 s.commit()
                 loader = self._get_loader(s, add_serial=False, clear_timestamp=False)
-                loader.add(Titles.DAILY_STEPS, Units.STEPS_UNITS, S.join(S.SUM, S.AVG, S.CNT, S.MAX, S.MSR),
-                           output_source, daily_steps, start, StatisticJournalInteger,
-                           description='''The number of steps in a day.''')
+                loader.add_data(N.DAILY_STEPS, output_source, daily_steps, start)
                 loader.load()
                 self._prev_loader = loader
             except Exception as e:
@@ -104,7 +108,7 @@ class StepsCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
 
     def _read_data(self, s, start, finish):
         daily_steps = s.query(func.sum(StatisticJournalInteger.value)).join(StatisticName). \
-            filter(StatisticName.name == Names.STEPS,
+            filter(StatisticName.name == N.STEPS,
                    StatisticName.owner == self.owner_in,
                    StatisticJournalInteger.time < finish,
                    StatisticJournalInteger.time >= start).scalar()

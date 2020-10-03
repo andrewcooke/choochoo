@@ -15,7 +15,7 @@ from ...common.date import time_to_local_date, format_time, to_time, dates_from,
 from ...data.frame import read_query
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...fit.profile.profile import read_fit
-from ...names import N, T, Units
+from ...names import N, T, U
 from ...sql import MonitorJournal, StatisticJournalInteger, StatisticName, StatisticJournal, Interval
 from ...sql.database import StatisticJournalType, Source
 from ...sql.utils import add
@@ -68,6 +68,15 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
         from ...commands.upload import MONITOR
         super().__init__(config, *args, sub_dir=MONITOR, **kargs)
 
+    def _startup(self, s):
+        super()._startup(s)
+        self._provides(s, T.HEART_RATE, StatisticJournalType.INTEGER, U.BPM, None,
+                       'The instantaneous heart rate.')
+        self._provides(s, T.CUMULATIVE_STEPS, StatisticJournalType.INTEGER, U.STEPS_UNITS, None,
+                       'The number of steps in a day to this point in time.')
+        self._provides(s, T.STEPS, StatisticJournalType.INTEGER, U.STEPS_UNITS, None,
+                       'The increment in steps read from the FIT file.')
+
     def _get_loader(self, s, **kargs):
         return super()._get_loader(s, cls=MonitorLoader, **kargs)
 
@@ -113,9 +122,7 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
         steps_by_activity = defaultdict(lambda: 0)
         for record in records:
             if HEART_RATE_ATTR in record.data and record.data[HEART_RATE_ATTR][0][0]:
-                loader.add(T.HEART_RATE, Units.BPM, None, mjournal,
-                           record.data[HEART_RATE_ATTR][0][0], record.timestamp, StatisticJournalInteger,
-                           description='''The instantaneous heart rate.''')
+                loader.add_data(N.HEART_RATE, mjournal, record.data[HEART_RATE_ATTR][0][0], record.timestamp)
             if STEPS_ATTR in record.data:
                 # we ignore activity type here (used to store it when activity group and statistic name
                 # were mixed together, but never used it anywhere)
@@ -126,10 +133,7 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
                 for activity, steps in zip(record.data[ACTIVITY_TYPE_ATTR][0], record.data[STEPS_ATTR][0]):
                     steps_by_activity[activity] = steps
                 total = sum(steps_by_activity.values())
-                loader.add(T.CUMULATIVE_STEPS, Units.STEPS_UNITS, None,
-                           mjournal, total,
-                           record.timestamp, StatisticJournalInteger,
-                           description='''The number of steps in a day to this point in time.''')
+                loader.add_data(N.CUMULATIVE_STEPS, mjournal, total, record.timestamp)
 
     def _shutdown(self, s):
         super()._shutdown(s)
@@ -222,8 +226,7 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
         return df
 
     def _write_diff(self, s, df):
-        steps = StatisticName.add_if_missing(s, T.STEPS, StatisticJournalType.INTEGER, Units.STEPS_UNITS,
-                                             None, self.owner_out, description=STEPS_DESCRIPTION)
+        steps = StatisticName.from_name(s, N.STEPS, self.owner_out)
         times = df.loc[(df[NEW_STEPS] != df[N.STEPS]) & ~df[N.STEPS].isna()].index.astype(np.int64) / 1e9
         if len(times):
             times = [to_time(time) for time in times]
@@ -236,8 +239,7 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
                        StatisticJournal.statistic_name == steps).delete(synchronize_session=False)
         loader = self._get_loader(s, owner=self.owner_out, add_serial=False)
         for time, row in df.loc[(df[NEW_STEPS] != df[N.STEPS]) & ~df[NEW_STEPS].isna()].iterrows():
-            loader.add(T.STEPS, Units.STEPS_UNITS, None, row[N.SOURCE], int(row[NEW_STEPS]),
-                       time, StatisticJournalInteger, description=STEPS_DESCRIPTION)
+            loader.add_data(N.STEPS, row[N.SOURCE], int(row[NEW_STEPS]), time)
         loader.load()
 
 

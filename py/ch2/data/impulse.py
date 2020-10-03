@@ -5,19 +5,19 @@ import pandas as pd
 from .heart_rate import BC_ZONES
 from ..common.date import to_time
 from ..lib.data import interpolate_freq, safe_none, safe_return
-from ..names import Names
+from ..names import N
 
 
 @safe_none
-def hr_zone(heart_rate_df, fthr_df, pc_fthr_zones=BC_ZONES, heart_rate=Names.HEART_RATE, hr_zone=Names.HR_ZONE):
+def hr_zone(heart_rate_df, fthr_df, pc_fthr_zones=BC_ZONES, heart_rate=N.HEART_RATE, hr_zone=N.HR_ZONE):
     '''
     mutate input df to include hr zone
 
     this can be used for a huge slew of data, or for an individual activity.
     '''
-    fthrs = sorted([(time, row[Names.FTHR]) for time, row in fthr_df.dropna().iterrows()], reverse=True)
+    fthrs = sorted([(time, row[N.FTHR]) for time, row in fthr_df.dropna().iterrows()], reverse=True)
     if not fthrs:
-        raise Exception(f'No {Names.FTHR} defined')
+        raise Exception(f'No {N.FTHR} defined')
     fthrs = fthrs + [(to_time('2100'), None)]
     fthrs = [(a[0], b[0], a[1]) for a, b in zip(fthrs, fthrs[1:])]
     heart_rate_df[hr_zone] = np.nan
@@ -48,8 +48,8 @@ def hr_zone(heart_rate_df, fthr_df, pc_fthr_zones=BC_ZONES, heart_rate=Names.HEA
             lower = upper
 
 
-@safe_return(lambda: pd.DataFrame(columns=[Names.HR_IMPULSE_10]))
-def impulse_10(hr_zone_df, impulse, hr_zone=Names.HR_ZONE):
+@safe_return(lambda: pd.DataFrame(columns=[N.HR_IMPULSE_10]))
+def impulse_10(hr_zone_df, impulse, hr_zone=N.HR_ZONE):
     '''
     interpolate HR to 10s values then calculate impulse using model parameters.
 
@@ -57,8 +57,8 @@ def impulse_10(hr_zone_df, impulse, hr_zone=Names.HR_ZONE):
     '''
     impulse_df = interpolate_freq(hr_zone_df.loc[:, [hr_zone]], '10s',
                                   method='index', limit=int(0.5 + impulse.max_secs / 10)).dropna()
-    impulse_df[Names.HR_IMPULSE_10] = (impulse_df[hr_zone] - impulse.zero) / (impulse.one - impulse.zero)
-    impulse_df[Names.HR_IMPULSE_10].clip(lower=0, inplace=True)
-    impulse_df[Names.HR_IMPULSE_10] = impulse_df[Names.HR_IMPULSE_10] ** impulse.gamma
+    impulse_df[N.HR_IMPULSE_10] = (impulse_df[hr_zone] - impulse.zero) / (impulse.one - impulse.zero)
+    impulse_df[N.HR_IMPULSE_10].clip(lower=0, inplace=True)
+    impulse_df[N.HR_IMPULSE_10] = impulse_df[N.HR_IMPULSE_10] ** impulse.gamma
     impulse_df.drop(columns=[hr_zone], inplace=True)
     return impulse_df

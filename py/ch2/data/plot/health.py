@@ -5,7 +5,7 @@ from bokeh.plotting import figure
 from .line import multi_dot_plot, dot_plotter, comb_plotter, DEFAULT_BACKEND
 from .utils import make_range, evenly_spaced_hues, tooltip
 from ..frame import related_statistics
-from ...names import Names as N, like, Units
+from ...names import Names as N, like, U
 
 
 def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_BACKEND):
@@ -36,13 +36,13 @@ def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_
     f.add_layout(LinearAxis(y_range_name=N.ACTIVE_DISTANCE, axis_label=f'dots - {N.ACTIVE_DISTANCE_KM}'), 'right')
     plotter = comb_plotter()
     for time, colour, group in zip(times, colours, groups):
-        time_h = N._slash(time, Units.H)
+        time_h = N._slash(time, U.H)
         source[time_h] = source[time] / 3600
         source[N.ACTIVITY_GROUP] = group
         plotter(f, x=N.TIME, y=time_h, source=source, color=colour, alpha=1)
     plotter = dot_plotter()
     for distance, colour, group in zip(distances, colours, groups):
-        distance_km = N._slash(distance, Units.KM)
+        distance_km = N._slash(distance, U.KM)
         source[distance_km] = source[distance]
         source[N.ACTIVITY_GROUP] = group
         plotter(f, x=N.TIME, y=distance_km, source=source, color=colour, alpha=1, name='with_hover',

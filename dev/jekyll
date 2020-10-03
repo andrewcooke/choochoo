@@ -1,6 +1,0 @@
-#!/bin/bash
-
-cd docs
-# if you're not me, this path is probably incorrect
-# please raise an issue and i'll fix my paths
-/usr/lib64/ruby/gems/2.5.0/gems/bundler-1.17.1/exe/bundle exec jekyll serve

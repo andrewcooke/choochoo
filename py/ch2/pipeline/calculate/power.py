@@ -14,7 +14,7 @@ from ...data.frame import median_dt
 from ...data.lib import interpolate_to_index
 from ...data.power import add_differentials, add_energy_budget, add_loss_estimate, add_power_estimate
 from ...lib.data import reftuple, MissingReference
-from ...names import N, Units, Summaries, T
+from ...names import N, U, S, T
 from ...sql import Constant, StatisticJournalType
 
 log = getLogger(__name__)
@@ -42,13 +42,13 @@ class PowerCalculator(LoaderMixin, ActivityGroupCalculatorMixin, DataFrameCalcul
 
     def _startup(self, s):
         super()._startup(s)
-        self._provides(s, T.POWER_ESTIMATE, StatisticJournalType.FLOAT, Units.W, Summaries.AVG,
+        self._provides(s, T.POWER_ESTIMATE, StatisticJournalType.FLOAT, U.W, S.AVG,
                        'The estimated power.')
-        self._provides(s, T.HEADING, StatisticJournalType.FLOAT, Units.DEG, None,
+        self._provides(s, T.HEADING, StatisticJournalType.FLOAT, U.DEG, None,
                        'The current heading.')
-        self._provides(s, T.ENERGY_ESTIMATE, StatisticJournalType.FLOAT, Units.KJ, Summaries.MAX,
+        self._provides(s, T.ENERGY_ESTIMATE, StatisticJournalType.FLOAT, U.KJ, S.MAX,
                        'The estimated total energy expended.')
-        self._provides(s, T.CALORIE_ESTIMATE, StatisticJournalType.FLOAT, Units.KCAL, Summaries.MAX,
+        self._provides(s, T.CALORIE_ESTIMATE, StatisticJournalType.FLOAT, U.KCAL, S.MAX,
                        'The estimated calories burnt.')
 
     def _set_power(self, s, ajournal):
@@ -89,13 +89,13 @@ class PowerCalculator(LoaderMixin, ActivityGroupCalculatorMixin, DataFrameCalcul
         for time, row in df.iterrows():
             for name in fields:
                 if name in row and not pd.isnull(row[name]):
-                    loader.add_data_only(name, ajournal, row[name], time)
+                    loader.add_data(name, ajournal, row[name], time)
 
     def __add_total_energy(self, s, ajournal, loader, ldf):
         if present(ldf, N.POWER_ESTIMATE):
             ldf['tmp'] = ldf[N.POWER_ESTIMATE]
             ldf.loc[ldf['tmp'].isna(), ['tmp']] = 0
             energy = np.trapz(y=ldf['tmp'], x=ldf.index.astype(np.int64) / 1e12)
-            loader.add_data_only(N.ENERGY_ESTIMATE, ajournal, energy, ajournal.start)
-            loader.add_data_only(N.CALORIE_ESTIMATE, ajournal, energy * 0.239006 / self.caloric_eff, ajournal.start)
+            loader.add_data(N.ENERGY_ESTIMATE, ajournal, energy, ajournal.start)
+            loader.add_data(N.CALORIE_ESTIMATE, ajournal, energy * 0.239006 / self.caloric_eff, ajournal.start)
             ldf.drop(columns=['tmp'], inplace=True)

@@ -134,7 +134,7 @@ class Configure:
             journal = s.query(StatisticJournal). \
                 filter(StatisticJournal.id == statistic_journal_id,
                        StatisticJournal.source_id == constant.id).one()
-            journal.set(value)
+            journal.value = value
             if not constant.single:
                 journal.time = local_time_to_time(time)
         else:

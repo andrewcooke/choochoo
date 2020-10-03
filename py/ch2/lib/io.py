@@ -22,6 +22,10 @@ def modified_file_scans(s, paths, owner):
         # log.debug(f'Scanning {path}')
         last_modified = to_time(stat(path).st_mtime)
         hash = file_hash(path)
+        file_scan_from_hash = s.query(FileScan).\
+            join(FileHash).\
+            filter(FileHash.hash == hash,
+                   FileScan.owner == owner).one_or_none()
         file_scan_from_path = s.query(FileScan). \
             filter(FileScan.path == path,
                    FileScan.owner == owner).one_or_none()
@@ -29,15 +33,22 @@ def modified_file_scans(s, paths, owner):
         # get last scan and make sure it's up-to-date
         if file_scan_from_path:
             if hash != file_scan_from_path.file_hash.hash:
-                log.warning('File at %s appears to have changed since last read on %s')
+                log.warning(f'File at {path} appears to have changed since last read on '
+                            f'{file_scan_from_path.last_scan}')
                 file_scan_from_path.file_hash = FileHash.get_or_add(s, hash)
                 file_scan_from_path.last_scan = TIME_ZERO
+        elif file_scan_from_hash:
+            log.warning(f'File at {path} already exists at {file_scan_from_hash} - skipping')
+            continue
         else:
             file_scan_from_path = FileScan.add(s, path, owner, hash)
             s.flush()  # want this to appear in queries below
 
         # only look at hash if we are going to process anyway
         if last_modified > file_scan_from_path.last_scan:
+
+            log.debug(f'File at {path} was modified on {last_modified} '
+                      f'which is after last read on {file_scan_from_path.last_scan}')
 
             file_scan_from_hash = s.query(FileScan).\
                 join(FileHash).\

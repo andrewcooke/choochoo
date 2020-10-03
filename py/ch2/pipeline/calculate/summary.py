@@ -6,12 +6,12 @@ from sqlalchemy import func, inspect, and_, select
 
 from .utils import ProcessCalculator, IntervalCalculatorMixin
 from ..pipeline import LoaderMixin
-from ...data.frame import _tables
 from ...common.date import local_date_to_time
-from ...names import Summaries as S
+from ...data.frame import _tables
+from ...names import Summaries as S, simple_name
 from ...sql.tables.source import Interval, Source
 from ...sql.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, StatisticJournalInteger, \
-    StatisticJournalFloat, TYPE_TO_JOURNAL_CLASS, STATISTIC_JOURNAL_CLASSES
+    StatisticJournalFloat, TYPE_TO_JOURNAL_CLASS, STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
 
 log = getLogger(__name__)
 
@@ -67,8 +67,10 @@ class SummaryCalculator(LoaderMixin, IntervalCalculatorMixin, ProcessCalculator)
                         new_type = StatisticJournalFloat
                     else:
                         new_type = StatisticJournalInteger
-                    loader.add(title, units, None, interval, value, start, new_type,
-                               description=self._describe(statistic_name, summary, interval))
+                    new_type = STATISTIC_JOURNAL_TYPES[new_type]
+                    StatisticName.add_if_missing(s, title, new_type, units, None, self.owner_out,
+                                                 self._describe(statistic_name, summary, interval))
+                    loader.add_data(simple_name(title), interval, value, start)
         # add and commit these here - what else can we do?
         log.debug(f'Adding {len(measures)} measures')
         for measure in measures:

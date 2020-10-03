@@ -1,8 +1,9 @@
 #!/bin/bash
 
+cd "${BASH_SOURCE%/*}/" || exit
+
 CMD=$0
 PGCONF=postgres-nolog.conf
-IMAGE=postgres:11.8-alpine
 
 help () {
     echo -e "\n  Run the postgres image (only)"
@@ -30,4 +31,5 @@ docker run --rm -p 127.0.0.1:5432:5432 \
        -v `pwd`/postgres.conf:/etc/postgresql/postgresql.conf \
        --shm-size=1g \
        --name=postgresql \
-       $IMAGE -c 'config_file=/etc/postgresql/postgresql.conf'
+       postgis/postgis:13-3.0-alpine \
+       -c 'config_file=/etc/postgresql/postgresql.conf'

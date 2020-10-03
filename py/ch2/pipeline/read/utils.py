@@ -1,13 +1,12 @@
 from abc import abstractmethod
 from glob import iglob
 from logging import getLogger
-from os.path import join, exists
+from os.path import join
 
 from ..pipeline import ProcessPipeline
 from ... import FatalException
 from ...commands.args import base_system_path, PERMANENT, BASE
 from ...common.date import now
-from ...common.io import touch
 from ...common.log import log_current_exception
 from ...fit.format.read import filtered_records
 from ...lib import to_time
@@ -60,13 +59,19 @@ class ProcessFitReader(ProcessPipeline):
                 log_current_exception()
 
     def _read(self, s, file_scan):
-        source, data = self._read_data(s, file_scan)
-        s.commit()
-        with Timestamp(owner=self.owner_out, source=source).on_success(s):
-            loader = self._get_loader(s, add_serial=True)
-            self._load_data(s, loader, data)
-            loader.load()
-        return loader  # returned so coverage can be accessed
+        path = file_scan.path  # read this now so that on error we don't go back to database
+        try:
+            source, data = self._read_data(s, file_scan)
+            with Timestamp(owner=self.owner_out, source=source).on_success(s):
+                loader = self._get_loader(s, add_serial=True)
+                self._load_data(s, loader, data)
+                loader.load()
+            return loader  # returned so coverage can be accessed
+        except Exception as e:
+            log_current_exception()
+            log.error(f'Error loading {path}: {e}')
+            s.rollback()
+            raise AbortImportButMarkScanned()
 
     @staticmethod
     def read_fit_file(data, *options):

@@ -127,6 +127,7 @@ class Titles(TitlesBase):
     HR_IMPULSE_10 = 'HR Impulse / 10s'
     HR_ZONE = 'HR Zone'
     INDEX = 'Index'
+    KIT = 'Kit'
     KIT_ADDED = 'Kit Added'
     KIT_RETIRED = 'Kit Retired'
     KIT_USED = 'Kit Used'
@@ -134,6 +135,7 @@ class Titles(TitlesBase):
     LIFETIME = 'Lifetime'
     LOCAL_TIME = 'Date'
     LONGITUDE = 'Longitude'
+    LON_LAT = 'Lon / Lat'
     LOSS = 'Loss'
     MAX_MEAN_PE_M = 'Max Mean PE %dm'
     MAX_MEAN_PE_M_ANY = 'Max Mean PE %'
@@ -237,6 +239,10 @@ class Summaries:
     def join(*args): return ','.join(args)
 
 
+def any_to_fmt(pattern, fmt='%s'):
+    return pattern.replace('%', fmt)
+
+
 def like(pattern, names):
     return list(_like(pattern, names))
 
@@ -279,7 +285,7 @@ class NamesMeta(type):
 class Names(Titles, metaclass=NamesMeta): pass
 
 
-T, N = Titles, Names
+T, N, U, S = Titles, Names, Units, Summaries
 
 
 def simple_name(name, none=True, strip=True):

@@ -53,7 +53,7 @@ ln -s $PGCONF postgres.conf
 if (( RESET )); then
     ./make-postgresql-data-volume.sh $DEV
     ./make-postgresql-log-volume.sh $DEV
-    ./make-choochoo-data-volume.sh $DEV
+    ./make-choochoo-data-volume.sh
     ./make-choochoo-image.sh $BIG $SLOW $JS
 fi
 

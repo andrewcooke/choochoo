@@ -3,7 +3,7 @@ from logging import getLogger
 
 from ..lib import format_date, time_to_local_date, to_time
 from ..common.log import log_current_exception
-from ..names import Titles, simple_name
+from ..names import T, simple_name
 from ..sql import KitGroup, KitComponent, KitItem, KitModel, StatisticJournalTimestamp, StatisticName, \
     StatisticJournalType
 from ..sql.utils import add
@@ -62,7 +62,7 @@ def copy_statistics(record, old_s, old, old_source, new_s, new_source):
     statistic_name = old.meta.tables['statistic_name']
     statistic_journal = old.meta.tables['statistic_journal']
     statistic_journal_timestamp = old.meta.tables['statistic_journal_timestamp']
-    for title in (Titles.KIT_ADDED, Titles.KIT_RETIRED):
+    for title in (T.KIT_ADDED, T.KIT_RETIRED):
         old_timestamp = old_s.query(statistic_journal). \
             join(statistic_journal_timestamp). \
             join(statistic_name). \
@@ -73,6 +73,6 @@ def copy_statistics(record, old_s, old, old_source, new_s, new_source):
                                                               None, None, type(new_source))
             # to_time for sqlite
             add(new_s, StatisticJournalTimestamp(source=new_source, time=to_time(old_timestamp.time),
-                                                 statistic_name=new_statistic_name))
+                                                 value=to_time(old_timestamp.time), statistic_name=new_statistic_name))
             date = format_date(time_to_local_date(to_time(old_timestamp.time)))
             record.info(f'Statistic matching {title} at {date} for {old_source.name}')
