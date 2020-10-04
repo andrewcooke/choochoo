@@ -1,6 +1,9 @@
 
 # Docker Cookbook
 
+**Important** - the use of Docker has changed so quickly that these notes are
+now out of date.  The [install](index.md) notes ar emore reliable.
+
 This page contains various hints, tips and examples on how you can
 configure and use the Docker images.
 
