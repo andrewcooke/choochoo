@@ -30,6 +30,6 @@ docker run --rm -p 127.0.0.1:5432:5432 \
        -e POSTGRES_HOST_AUTH_METHOD=trust \
        -v `pwd`/postgres.conf:/etc/postgresql/postgresql.conf \
        --shm-size=1g \
-       --name=postgresql \
+       --name=postgresql-transient \
        postgis/postgis:13-3.0-alpine \
        -c 'config_file=/etc/postgresql/postgresql.conf'

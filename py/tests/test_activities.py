@@ -8,7 +8,7 @@ from ch2.commands.constants import constants
 from ch2.commands.upload import upload
 from ch2.common.args import mm, m
 from ch2.config.profiles.default import default
-from ch2.data import Names as N
+from ch2.names import N
 from ch2.pipeline.pipeline import run_pipeline
 from ch2.sql.tables.activity import ActivityJournal
 from ch2.sql.tables.pipeline import PipelineType
@@ -41,7 +41,7 @@ class TestActivities(LogTestCase):
             self.assertEqual(2099, n_fix)
             # WHY does this jump around?
             n = s.query(count(StatisticJournal.id)).scalar()
-            self.assertEqual(90661, n)
+            self.assertEqual(62525, n)
             self.assertTrue(n > 30000)
             self.assertTrue(n < 100000)
             journal = s.query(ActivityJournal).one()
@@ -65,17 +65,6 @@ class TestActivities(LogTestCase):
                 print(f'{name} = {stat}')
                 self.assertTrue(stat, f'No value for {name}')
             self.assertTrue(count > 0)
-
-    def test_florian(self):
-        user = random_test_user()
-        with TemporaryDirectory() as f:
-            bootstrap_db(user, mm(BASE), f, m(V), '5')
-            bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), configurator=default)
-            config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), 'upload',
-                                          'data/test/source/private/florian.fit')
-            upload(config)
-            with config.db.session_context() as s:
-                self.__assert_basic_stats(s)
 
     def test_michael(self):
         user = random_test_user()

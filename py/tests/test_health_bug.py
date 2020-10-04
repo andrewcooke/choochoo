@@ -1,7 +1,8 @@
 
 from tests import LogTestCase
 
-from ch2.data import session, std_health_statistics, Names as N
+from ch2.data import session, std_health_statistics
+from ch2.names import N
 
 
 class TestHealthBug(LogTestCase):

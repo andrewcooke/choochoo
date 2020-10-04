@@ -7,7 +7,8 @@ from ch2.commands.args import DEV, V, bootstrap_db, BASE, UPLOAD
 from ch2.commands.upload import upload
 from ch2.common.args import mm, m
 from ch2.config.profiles.default import default
-from ch2.data import Names as N, Statistics
+from ch2.names import N
+from ch2.data import Statistics
 from ch2.pipeline.read.segment import SegmentReader
 from tests import LogTestCase, random_test_user
 

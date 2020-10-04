@@ -67,6 +67,9 @@ cd choochoo
 FORCE_NEW_DISK=1 dkr/run-ch2-jp-pg-persist.sh --reset
 
 # eventually choochoo is visible at http://0.0.0.0:8000/
+
+Ctrl-C
+dkr/run-ch2-jp-pg-persist.sh   # normal use
 ```
 
 ### Other Linux

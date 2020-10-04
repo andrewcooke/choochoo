@@ -13,7 +13,7 @@ from ..names import U, N
 from ..pipeline.calculate.kit import KitCalculator
 from ..pipeline.pipeline import run_pipeline
 from ..sql import PipelineType
-from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name, ADDED, EXPIRED, N, INDIVIDUAL
+from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name, ADDED, EXPIRED, _N, INDIVIDUAL
 from ..sql.tables.source import Composite
 from ..sql.types import long_cls
 
@@ -227,7 +227,8 @@ def stats_children(model):
         format = lambda s: format_minutes(int(s))
     else:
         format = lambda x: x
-    return [{NAME: N, VALUE: model[N]}] + [{NAME: name, VALUE: format(model[name])} for name in names if name != N]
+    return [{NAME: _N, VALUE: model[_N]}] + \
+           [{NAME: name, VALUE: format(model[name])} for name in names if name != _N]
 
 
 def to_stats(model):

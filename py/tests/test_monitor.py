@@ -8,7 +8,7 @@ from ch2.commands.upload import upload
 from ch2.common.args import mm, m
 from ch2.common.date import to_time, local_date_to_time
 from ch2.config.profiles.default import default
-from ch2.data import Names as N
+from ch2.names import N
 from ch2.pipeline.calculate.steps import StepsCalculator
 from ch2.sql.tables.monitor import MonitorJournal
 from ch2.sql.tables.statistic import StatisticJournal, StatisticName
@@ -29,7 +29,7 @@ class TestMonitor(LogTestCase):
             upload(config)
             with config.db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                self.assertEqual(130, n)
+                self.assertEqual(134, n)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)
 
