@@ -3,6 +3,12 @@
 
 ### v0.35.0
 
+Restored some user support thanks to Chris Kelly.  Database now using PostGIS,
+but no new user-visible features.  Continuing with simplification of the
+system (dead code pruned).
+
+### v0.35.0
+
 Giving up (for a time) on user support as I transition to some kind of
 web-hosted solution.  See updated README.  Changes to code include more
 simplification (especially in loading data) and more consistent use of Docker
