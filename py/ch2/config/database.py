@@ -120,9 +120,9 @@ def add_activity_displayer_delegate(s, cls, **kargs):
     return add_next_pipeline(s, cls, PipelineType.DISPLAY_ACTIVITY, **kargs)
 
 
-def add_read_and_calculate(s, cls, blocked_by=None, **kargs):
+def add_process(s, cls, blocked_by=None, **kargs):
     '''
-    Add a class to the read / calculate pipeline.
+    Add a class to the process pipeline.
 
     The pipeline classes are invoked when activities are imported from FIT files.
     They read the files and create journal entries and associated statistics.

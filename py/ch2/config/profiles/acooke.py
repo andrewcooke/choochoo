@@ -8,8 +8,8 @@ from ...diary.model import TYPE, EDIT
 from ...lib import to_time, time_to_local_date
 from ...names import Sports, simple_name, N
 from ...pipeline.calculate.power import PowerCalculator
-from ...pipeline.read.activity import ActivityReader
 from ...sql import StatisticJournalType, StatisticName, DiaryTopic, DiaryTopicJournal
+from ...sql.tables.sector import SectorGroup
 from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ...sql.utils import add
 
@@ -61,6 +61,9 @@ class ACooke(Garmin):
 
         self._load_activity_group(s, ROAD, 'Road cycling activities')
         self._load_activity_group(s, MTB, 'MTB cycling activities')
+
+    def _load_sector_groups(self, s):
+        SectorGroup.add(s, -33.4, -70.7, 1000, 'Santiago')
 
     def _sport_to_activity(self):
 

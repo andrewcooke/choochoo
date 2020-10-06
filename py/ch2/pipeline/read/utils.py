@@ -4,7 +4,6 @@ from logging import getLogger
 from os.path import join
 
 from ..pipeline import ProcessPipeline
-from ... import FatalException
 from ...commands.args import base_system_path, PERMANENT, BASE
 from ...common.date import now
 from ...common.log import log_current_exception
@@ -52,11 +51,6 @@ class ProcessFitReader(ProcessPipeline):
                 log.warning(f'Could not process {file_scan} (scanned)')
                 # log_current_exception()
                 file_scan.last_scan = now()
-            except FatalException:
-                raise
-            except Exception as e:
-                log.warning(f'Could not process {file_scan} (ignored)')
-                log_current_exception()
 
     def _read(self, s, file_scan):
         path = file_scan.path  # read this now so that on error we don't go back to database

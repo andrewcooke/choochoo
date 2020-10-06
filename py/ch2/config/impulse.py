@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from .database import add_enum_constant, add_read_and_calculate
+from .database import add_enum_constant, add_process
 from ..names import T, N
 from ..pipeline.calculate.impulse import HRImpulse, ImpulseCalculator
 from ..pipeline.calculate.response import Response, ResponseCalculator
@@ -49,10 +49,10 @@ Data needed to calculate the FF-model impulse from heart rate zones.
 Once the impulse is calculated it is summed with a decay to find fitness and fatigue
 (see Fitness and Fatigue constants). 
 ''')
-    add_read_and_calculate(s, ImpulseCalculator, blocked_by=[SegmentReader],
-                           owner_in=short_cls(SegmentReader),
-                           impulse_constant=constant.name, prefix=prefix,
-                           activity_group=activity_group)
+    add_process(s, ImpulseCalculator, blocked_by=[SegmentReader],
+                owner_in=short_cls(SegmentReader),
+                impulse_constant=constant.name, prefix=prefix,
+                activity_group=activity_group)
 
 
 def add_responses(s, responses=((42, 1, 1, T.FITNESS_D % 42, 'fitness'),
@@ -72,6 +72,6 @@ Data needed to calculate the FF-model {label} for {days} days.
 * Start is the initial fitness value.
 * Scale is an arbitrary scale factor (typically used so that fitness and fatigue have comparable values).
 ''') for (days, start, scale, title, label) in responses]
-    add_read_and_calculate(s, ResponseCalculator, blocked_by=[ImpulseCalculator],
-                           owner_in=short_cls(owner_in), prefix=prefix,
-                           response_constants=[constant.name for constant in constants])
+    add_process(s, ResponseCalculator, blocked_by=[ImpulseCalculator],
+                owner_in=short_cls(owner_in), prefix=prefix,
+                response_constants=[constant.name for constant in constants])

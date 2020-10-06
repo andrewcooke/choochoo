@@ -169,7 +169,7 @@ def populate_tmp_lines(s, parameters, point, srid, radius, indep=1, overlap=0):
     s.query(ClusterInputScratch).delete(synchronize_session=False)
     sql = text('''
   with lines as (select id, 
-                        st_transform(route::geometry, :srid) as line
+                        st_transform(route_t::geometry, :srid) as line
                    from activity_journal
                   where st_distance(:point, centre) < :radius),
        lengths as (select id, st_npoints(line) - :indep - :overlap as length from lines),
@@ -193,7 +193,7 @@ def fragments_from_hulls(s, parameters_id):
         filter(ClusterFragmentScratch.cluster_hull_id.in_(cluster_hull_ids)). \
         delete(synchronize_session=False)
     sql = text('''
-  with route as (select st_transform(route::geometry, cp.srid) as route,
+  with route as (select st_transform(route_t::geometry, cp.srid) as route,
                         aj.id as activity_journal_id
                    from activity_journal as aj,
                         cluster_parameters as cp
@@ -206,7 +206,7 @@ def fragments_from_hulls(s, parameters_id):
                         from (select (st_dump(st_intersection(r.route, c.hull))).geom,
                                      r.activity_journal_id,
                                      c.id as cluster_hull_id,
-                                     st_transform(aj.route::geometry, cp.srid) as route
+                                     st_transform(aj.route_t::geometry, cp.srid) as route
                                 from route as r,
                                      cluster_hull as c,
                                      activity_journal as aj,

@@ -1,16 +1,15 @@
 from logging import getLogger
 from os.path import splitext, basename
 
-from math import floor
 from pygeotile.point import Point
 from sqlalchemy import text, select
 from sqlalchemy.orm import aliased
 
 from .utils import AbortImportButMarkScanned, ProcessFitReader
-from ... import FatalException
 from ...commands.args import DEFAULT
 from ...commands.upload import ACTIVITY
 from ...common.date import to_time, datetime_to_epoch
+from ...common.geo import utm_srid
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
@@ -124,9 +123,9 @@ class ActivityReader(ProcessFitReader):
             return self._activity_group(s, path, sport, lookup[DEFAULT], kit)
         log.warning('Unrecognised sport: "%s" in %s' % (sport, path))
         if sport in (Sports.SPORT_GENERIC,):
-            raise Exception(f'Ignoring {sport} entry')
+            raise AbortImportButMarkScanned(f'Ignoring {sport} entry')
         else:
-            raise FatalException(f'There is no group configured for {sport} entries in the FIT file.')
+            raise Exception(f'There is no group configured for {sport} entries in the FIT file.')
 
     def _lookup_activity_group(self, s, name):
         activity_group = ActivityGroup.from_name(s, name)
@@ -273,7 +272,7 @@ class ActivityReader(ProcessFitReader):
 
     def __create_postgis(self, s):
         ajournal = ActivityJournal.__table__
-        if self.__create_route(s, ajournal):
+        if self.__create_route_t(s, ajournal):
             self.__create_centre(s, ajournal)
             self.__create_utm_srid(s, ajournal)
 
@@ -283,20 +282,19 @@ class ActivityReader(ProcessFitReader):
         log.debug(query)
         row = s.execute(query).fetchone()
         lon, lat = row[0], row[1]
-        # https://trac.osgeo.org/postgis/wiki/UsersWikiplpgsqlfunctionsDistance
-        utm_srid = (32600 if lat > 0 else 32700) + floor((lon + 180) / 6) + 1
-        update = ajournal.update().values(utm_srid=utm_srid).where(ajournal.c.id == self.__ajournal.id)
+        srid = utm_srid(lat, lon)
+        update = ajournal.update().values(utm_srid=srid).where(ajournal.c.id == self.__ajournal.id)
         log.debug(update)
         s.execute(update)
 
     def __create_centre(self, s, ajournal):
-        centre = f'ST_Centroid({ajournal.c.route})'
+        centre = f'ST_Centroid({ajournal.c.route_t})'
         update = ajournal.update().values(centre=text(centre)).where(ajournal.c.id == self.__ajournal.id)
         log.debug(update)
         s.execute(update)
 
-    def __create_route(self, s, ajournal):
-        log.debug('Setting route')
+    def __create_route_t(self, s, ajournal):
+        log.debug('Setting route_t')
         lon_lat_epoch = list(self.__lon_lat_epoch(s))
         if lon_lat_epoch:
             points = [f'ST_MakePointM({lon}, {lat}, {epoch})' for lon, lat, epoch in lon_lat_epoch]
@@ -304,7 +302,7 @@ class ActivityReader(ProcessFitReader):
         else:
             log.warning('Empty route?!')
             line = "'LINESTRINGM EMPTY'::geography"
-        update = ajournal.update().values(route=text(line)).where(ajournal.c.id == self.__ajournal.id)
+        update = ajournal.update().values(route_t=text(line)).where(ajournal.c.id == self.__ajournal.id)
         log.debug(update)
         s.execute(update)
         return bool(lon_lat_epoch)

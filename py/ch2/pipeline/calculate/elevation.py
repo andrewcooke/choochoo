@@ -1,6 +1,8 @@
 
 from logging import getLogger
 
+from sqlalchemy import text
+
 from .utils import ProcessCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 from ..pipeline import LoaderMixin
 from ...common.math import is_nan
@@ -30,7 +32,8 @@ class ElevationCalculator(LoaderMixin, ActivityJournalCalculatorMixin, DataFrame
         from ..owners import SegmentReader
         try:
             return Statistics(s, activity_journal=ajournal, with_timespan=True). \
-                by_name(SegmentReader, N.DISTANCE, N.RAW_ELEVATION, N.ELEVATION, N.ALTITUDE).df
+                by_name(SegmentReader, N.LATITUDE, N.LONGITUDE, N.DISTANCE,
+                        N.RAW_ELEVATION, N.ELEVATION, N.ALTITUDE).df
         except Exception as e:
             log.warning(f'Failed to generate statistics for elevation: {e}')
             raise
@@ -52,3 +55,25 @@ class ElevationCalculator(LoaderMixin, ActivityJournalCalculatorMixin, DataFrame
                 loader.add_data(N.ELEVATION, ajournal, row[N.ELEVATION], time)
             if N.GRADE in row and not is_nan(row[N.GRADE]):
                 loader.add_data(N.GRADE, ajournal, row[N.GRADE], time)
+        self.__create_route_ed(s, ajournal, df)
+
+    def __create_route_ed(self, s, ajournal, df):
+        log.debug('Setting route_ed')
+        lon_lat_elevation_distance = list(self.__lon_lat_elevation_distance(df))
+        if lon_lat_elevation_distance:
+            points = [f'ST_MakePoint({lon}, {lat}, {elevation}, {distance})' for lon, lat, elevation, distance
+                      in lon_lat_elevation_distance]
+            line = f'ST_MakeLine(ARRAY[{", ".join(points)}])'
+        else:
+            log.warning('Empty route?!')
+            line = "'LINESTRINGZM EMPTY'::geography"
+        table = ajournal.__table__
+        update = table.update().values(route_ed=text(line)).where(table.c.id == ajournal.id)
+        log.debug(update)
+        s.execute(update)
+
+    def __lon_lat_elevation_distance(self, df):
+        if N.ELEVATION in df:
+            for row in df.dropna().itertuples():
+                yield getattr(row, N.LONGITUDE), getattr(row, N.LATITUDE), \
+                      getattr(row, N.ELEVATION), getattr(row, N.DISTANCE)

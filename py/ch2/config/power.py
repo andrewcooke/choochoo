@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from .database import add_enum_constant, add_read_and_calculate
+from .database import add_enum_constant, add_process
 from ..names import simple_name
 from ..pipeline.calculate import ElevationCalculator
 from ..pipeline.calculate.power import PowerModel, PowerCalculator, BikeModel
@@ -29,8 +29,8 @@ The physical parameters are encoded directly below.
 * rider_weight is the weight of the rider.
 In more complex configurations these can be references to other constants.
 ''')
-    add_read_and_calculate(s, PowerCalculator, blocked_by=[ElevationCalculator],
-                           power_model=power_model.name, activity_group=activity_group.name)
+    add_process(s, PowerCalculator, blocked_by=[ElevationCalculator],
+                power_model=power_model.name, activity_group=activity_group.name)
 
 
 def add_kit_power_estimate(s, activity_groups):
@@ -50,8 +50,8 @@ This is the indirect (complex) configuration which delegates to a kit-specific b
 the weight from a diary entry.
 ''')
     for activity_group in activity_groups:
-        add_read_and_calculate(s, PowerCalculator, blocked_by=[ElevationCalculator],
-                               power_model=power_model.name, activity_group=simple_name(activity_group))
+        add_process(s, PowerCalculator, blocked_by=[ElevationCalculator],
+                    power_model=power_model.name, activity_group=simple_name(activity_group))
 
 
 def add_kit_power_model(s, kit, activity_group, cda, crr, bike_weight):

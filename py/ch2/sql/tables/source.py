@@ -33,6 +33,7 @@ class SourceType(IntEnum):
     ITEM = 8
     MODEL = 9
     ACTIVITY_TOPIC = 10
+    SECTOR = 11
 
 
 class Source(Base):

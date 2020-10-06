@@ -10,16 +10,6 @@ getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())
 
 
-class FatalException(Exception):
-
-    '''
-    Base class for exceptions that we can't ignore at some higher level
-    (fundamental things like bad config).
-    '''
-
-    pass
-
-
 from .commands.args import COMMAND, make_parser, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DATABASE, CONSTANTS, SHOW_SCHEDULE, MONITOR, GARMIN, \
     UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, \

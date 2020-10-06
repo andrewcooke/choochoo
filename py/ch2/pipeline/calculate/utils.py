@@ -19,7 +19,7 @@ class ProcessCalculator(ProcessPipeline): pass
 
 class JournalCalculatorMixin:
     '''
-    auto-detects missing entries, deletes on forcing, and schedules threads via owner_out.
+    auto-detects missing entries and schedules threads via owner_out.
 
     provides access to the journal via _get_source.
     '''
