@@ -3,6 +3,7 @@
 
 * [Danger Ahead](#danger-ahead)
 * [OS-Specific Instructions](#os-specific-instructions)
+  * [Github Codespaces)(#github-codespaces)]
   * [MacOS](#macos)
   * [Ubuntu](#ubuntu)
   * [Other Linux](#other-linux)
@@ -21,15 +22,43 @@ page - currently this project is not easy to use and fixing that is not a
 high priority.
 
 If you want to continue anyway, the notes below point you in the right
-direction.  You need a unix machine and it's likely macos won't cut it.
+direction. Good luck!
 
 ## OS-Specific Instructions
 
+### Github Codespaces
+
+If you have access to Github Codespaces, This is the quickest way to get up and 
+running with a development environment. Clone the Choochoo repo to your account,
+select the branch you want to use, and run the "Code -> Open with Codespaces" flow.
+Once in there, open up a terminal and move on to the Ubuntu instructions. 
+
+All of the dependencies are already there and docker is running so you should skip
+all of the apt-get commands, but it's likely that that you'll need to update
+docker-compose. You may have luck with running:
+
+https://gist.github.com/tylerszabo/b5b3f9874bb9cce56d23e1f814433b86
+
+Once you're up and running, open the "docker" panel, right click on the running
+choochoo container, and click "Open in browser". 
+
+
 ### MacOS
 
-Chris Kelly [reports](https://github.com/andrewcooke/choochoo/issues/54) some
-success using multipass to run Ubuntu.  See below for updated instructions on
-running in Ubuntu.
+This has not been run natively on Mac OS X, but you can run an Ubuntu VM using
+something like [multipass](http://multipass.run). Ensure that you have enough 
+memory (4G) and disk (25G) to run.
+
+`multipass launch -d 25G -m 4G -n choochoo`
+`multipass exec choochoo -- apt-get install -y gcc`
+`multipass shell choochoo`
+
+Now that you are in your VM, on to the Ubuntu instructions to finish installation.
+
+To access choochoo once it is running, you will need to set up port forwarding using
+something like this from your Mac, where 192.168.64.3 is the ip of your vm:
+
+`ssh -L 8000:127.0.0.1:8000 ubuntu@192.168.64.3`
 
 ### Ubuntu
 
@@ -40,24 +69,25 @@ client tools):
 ```
 git clone https://github.com/andrewcooke/choochoo.git
 cd choochoo
+sudo apt-get update
 
 # configure the python environment
-sudo apt-get install python3.8-venv libpq-dev python3.8-dev
+sudo apt-get install -y python3.8-venv libpq-dev python3.8-dev
 dev/make-env-py.sh
 
 # configure the javascript environment
-sudo apt-get install npm
+sudo apt-get install -y npm
 dev/make-env-js.sh
 
 # configure docker
-sudo apt-get install apt-transport-https ca-certificates curl \
+sudo apt-get install -y apt-transport-https ca-certificates curl \
      gnupg-agent software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo add-apt-repository \
      "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
      $(lsb_release -cs) stable"
 sudo apt-get update
-sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose
 sudo usermod -aG docker $USER
 
 [reboot]
