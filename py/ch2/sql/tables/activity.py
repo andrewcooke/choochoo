@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship, backref
 from .source import SourceType, GroupedSource, Source
 from ..support import Base
 from ..triggers import add_child_ddl, add_text
-from ..types import Sort, ShortCls, NullText, Name, name_and_title, Point
+from ..types import Sort, ShortCls, NullText, Name, name_and_title, Point, UTC
 from ...common.date import format_time, local_date_to_time, local_time_to_time
 from ...lib.utils import timing
 
@@ -58,11 +58,12 @@ class ActivityJournal(GroupedSource):
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False, index=True, unique=True)
     file_hash = relationship('FileHash', backref=backref('activity_journal', uselist=False))
-    start = Column(DateTime(timezone=True), nullable=False, index=True, unique=True)
-    finish = Column(DateTime(timezone=True), nullable=False)
+    start = Column(UTC, nullable=False, index=True, unique=True)
+    finish = Column(UTC, nullable=False)
     # nullable because created later
     route_t = Column(Geography('LineStringM', srid=4326))
     route_ed = Column(Geography('LineStringZM', srid=4326))
+    route_edt = Column(Geography('LineStringZM', srid=4326))  # distance * 1e7 + time
     centre = Column(Geography('Point', srid=4326))
     utm_srid = Column(Integer)
 

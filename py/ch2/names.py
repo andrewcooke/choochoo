@@ -150,6 +150,7 @@ class Titles(TitlesBase):
     NAME = 'Name'
     PERCENT_IN_Z = 'Percent in Z%d'
     PERCENT_IN_Z_ANY = 'Percent in Z%'
+    POINTS = 'Points'
     PLATEAU_D = 'Plateau %d'
     PLATEAU_D_ANY = 'Plateau %'
     POWER_ESTIMATE = 'Power Estimate'

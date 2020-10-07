@@ -137,7 +137,7 @@ class Database(DatabaseBase):
         return super().no_schema(table=table)
 
 
-def connect(args):
+def connect_config(args):
     '''
     Bootstrap from commandline-like args.
     '''
@@ -151,8 +151,14 @@ def connect(args):
     args.append(NO_OP)
     ns = NamespaceWithVariables._from_ns(make_parser(with_noop=True).parse_args(args), PROGNAME, DB_VERSION)
     make_log_from_args(ns)
-    data = Config(ns)
-    return ns, data.db
+    return Config(ns)
+
+
+def connect(args):
+    '''
+    Bootstrap from commandline-like args.
+    '''
+    return connect_config(args).db
 
 
 class ReflectedDatabase(DatabaseBase):

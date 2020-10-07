@@ -1,5 +1,5 @@
-from logging import getLogger
 import datetime as dt
+from logging import getLogger
 
 import numpy as np
 import pandas as pd
@@ -7,16 +7,15 @@ import pytz
 from sqlalchemy import asc, desc, distinct
 from sqlalchemy.orm import aliased
 
-from ch2.data import read_query
-from ..common.date import YMD, format_seconds
+from ..common.date import YMD
+from ..common.log import log_current_exception
+from ..common.names import TIME_ZERO
+from ..data import read_query
 from ..data import session, present
-from ..lib import local_date_to_time, to_date, time_to_local_time
-from ch2.common.log import log_current_exception
+from ..lib import time_to_local_time
 from ..lib.utils import timing
 from ..names import Names as N, like, MED_WINDOW, SPACE
-from ch2.common.names import TIME_ZERO
-from ..sql import StatisticName, ActivityGroup, StatisticJournal, ActivityTimespan, ActivityJournal, Source, \
-    ActivityTopic
+from ..sql import StatisticName, ActivityGroup, StatisticJournal, ActivityTimespan, ActivityJournal, Source
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ..sql.types import short_cls
 

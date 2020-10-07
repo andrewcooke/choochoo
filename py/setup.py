@@ -30,7 +30,7 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'matplotlib',
                      'numpy',
                      'openpyxl',
-                     'pandas==0.25.3',
+                     'pandas',
                      'pendulum',
                      'psutil',
                      'psycopg2',

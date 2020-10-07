@@ -3,8 +3,9 @@ from logging import getLogger
 from pydoc import locate
 from re import compile, IGNORECASE
 
+import pytz
 from geoalchemy2 import Geography
-from sqlalchemy import TypeDecorator, Integer, Text, func
+from sqlalchemy import TypeDecorator, Integer, Text, func, DateTime
 
 from ..names import simple_name
 
@@ -170,7 +171,7 @@ class QualifiedName(TypeDecorator):
     process_bind_param = process_literal_param
 
 
-POINT = compile(r'point\((\d*\.?\d*)\s+(\d*\.?\d*)\)', IGNORECASE)
+POINT = compile(r'point\((-?\d*\.?\d*)\s+(-?\d*\.?\d*)\)', IGNORECASE)
 
 
 class Point(TypeDecorator):
@@ -229,3 +230,14 @@ def name_and_title(kargs):
     else:
         raise Exception(f'Provide {NAME} or {TITLE}')
     return kargs
+
+
+class UTC(TypeDecorator):
+
+    impl = DateTime(timezone=True)
+
+    def process_result_value(self, value, dialect):
+        from ..lib.schedule import Schedule
+        if value is None:
+            return None
+        return value.replace(tzinfo=pytz.UTC)

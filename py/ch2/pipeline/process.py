@@ -261,7 +261,7 @@ class DependencyQueue:
         speedup = process_time / clock_time
         log.info(f'Clock time: {format_seconds(clock_time)}; Process time: {format_seconds(process_time)}; '
                  f'Speedup: x{speedup:.1f}')
-        log.info(f'Missing args min {self.__min_missing}; max {self.__max_missing}; gamma {self.__gamma}')
+        log.info(f'Missing args: min {self.__min_missing}; max {self.__max_missing}; gamma {self.__gamma}')
 
     def __split_missing(self, pipeline, missing):
         # this (min, min) is a bit weird but makes sense, i think

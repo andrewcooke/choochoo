@@ -29,7 +29,7 @@ def session(*args):
     '''
     Create a database session (used in Jupyter templates)
     '''
-    ns, db = connect(args)
+    db = connect(args)
     return db.session()
 
 
