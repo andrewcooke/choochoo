@@ -85,7 +85,7 @@ class ElevationCalculator(LoaderMixin, ActivityJournalCalculatorMixin, DataFrame
         if N.ELEVATION in df:
             for row in df.dropna().itertuples():
                 time = (row.Index - ajournal.start).total_seconds()
-                distance = getattr(row, N.DISTANCE)
+                distance = getattr(row, N.DISTANCE) * 1000  # convert to m
                 # 15 digits available.
                 # 6+1 for time = 999999.9s = 10 days
                 # 6+1 for distance = 999999.9m = 1000km
@@ -100,6 +100,7 @@ def onedp(x):
 
 def expand_distance_time(df, key, t0):
     df[N.DISTANCE] = (df[key] / 1e7).round(1)
-    df[N.TIME] = df[key] - df[N.DISTANCE] * 1e7
+    df[N.TIME] = (df[key] - df[N.DISTANCE] * 1e7).round(1)
+    df[N.DISTANCE] /= 1000   # convert back to km
     df[N.TIME] = pd.to_timedelta(df[N.TIME], 'seconds') + t0
     return df.drop(columns=[key])

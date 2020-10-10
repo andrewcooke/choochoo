@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 from .source import SourceType, Source, GroupedSource
 from ..support import Base
 from ..triggers import add_child_ddl
+from ..types import UTC
 from ...common.date import format_time
 
 
@@ -23,8 +24,8 @@ class SegmentJournal(GroupedSource):
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='set null'),
                                  index=True)
     activity_journal = relationship('ActivityJournal', foreign_keys=[activity_journal_id])
-    start = Column(DateTime(timezone=True), nullable=False)
-    finish = Column(DateTime(timezone=True), nullable=False)
+    start = Column(UTC, nullable=False)
+    finish = Column(UTC, nullable=False)
     UniqueConstraint(segment_id, activity_journal_id, start, finish)
 
     __mapper_args__ = {

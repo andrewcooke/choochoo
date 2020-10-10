@@ -147,7 +147,10 @@ def add_database(config):
     add(cnxn, 'database', urlsplit(config.args._format(URI)).path[1:],
         f'create database {{name}} with owner {quote(cnxn, config.args[USER])}')
     cnxn = get_cnxn(config)
+    # https://dba.stackexchange.com/a/37373
+    execute(cnxn, 'create extension if not exists btree_gist')
     execute(cnxn, 'create extension if not exists postgis')
+    # todo - move to separate stage
     execute(cnxn, 'create role postgis_reader inherit')
     execute(cnxn, 'grant select on geometry_columns to postgis_reader')
     execute(cnxn, 'grant select on geography_columns to postgis_reader')

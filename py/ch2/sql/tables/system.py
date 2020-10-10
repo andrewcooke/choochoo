@@ -6,7 +6,7 @@ import psutil as ps
 from sqlalchemy import Column, Text, Integer, DateTime, distinct
 
 from ..support import Base
-from ..types import ShortCls, Name, short_cls
+from ..types import ShortCls, Name, short_cls, UTC
 from ..utils import add
 from ...common.date import to_time
 from ...lib import now
@@ -64,7 +64,7 @@ class Process(Base):
     id = Column(Integer, primary_key=True)
     owner = Column(ShortCls, nullable=False, index=True)
     pid = Column(Integer, nullable=False, unique=True)
-    start = Column(DateTime(timezone=True), nullable=False, default=now)
+    start = Column(UTC, nullable=False, default=now)
     command = Column(Text, nullable=True)
     log = Column(Text, nullable=True)
 

@@ -167,8 +167,8 @@ class ActivityTimespan(Base):
                                     backref=backref('timespans', cascade='all, delete-orphan',
                                                     passive_deletes=True,
                                                     order_by='ActivityTimespan.start'))
-    start = Column(DateTime(timezone=True), nullable=False)
-    finish = Column(DateTime(timezone=True), nullable=False)
+    start = Column(UTC, nullable=False)
+    finish = Column(UTC, nullable=False)
     UniqueConstraint(activity_journal_id, start)
 
     def __str__(self):
@@ -182,8 +182,8 @@ class ActivityBookmark(Base):
     id = Column(Integer, primary_key=True)
     activity_journal_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
     activity_journal = relationship('ActivityJournal')
-    start = Column(DateTime(timezone=True), nullable=False)
-    finish = Column(DateTime(timezone=True), nullable=False)
+    start = Column(UTC, nullable=False)
+    finish = Column(UTC, nullable=False)
     owner = Column(ShortCls, nullable=False, index=True)  # index for deletion
     constraint = Column(NullText, index=True)
     UniqueConstraint(activity_journal_id, start, finish, owner, constraint)

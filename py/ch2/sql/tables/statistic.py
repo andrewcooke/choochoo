@@ -11,7 +11,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from .source import Interval
 from ..support import Base
 from ..triggers import add_child_ddl, add_text
-from ..types import ShortCls, Name, name_and_title, Point
+from ..types import ShortCls, Name, name_and_title, Point, UTC
 from ..utils import add
 from ...common.date import format_seconds, local_date_to_time, time_to_local_time
 from ...diary.model import TYPE, MEASURES, SCHEDULES
@@ -150,7 +150,7 @@ class StatisticJournal(Base):
     statistic_name = relationship('StatisticName')
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
     source = relationship('Source')
-    time = Column(DateTime(timezone=True), nullable=False, index=True)
+    time = Column(UTC, nullable=False, index=True)
     # serial "counts" along values in the timeseries.  it's optional.  for garmin, all values appear each
     # record, so all imported values share the same serial.  but that's not true for the corrected elevation,
     # for example.
@@ -430,7 +430,7 @@ class StatisticJournalTimestamp(StatisticJournal):
     __tablename__ = 'statistic_journal_timestamp'
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
-    value = Column(DateTime(timezone=True), nullable=False)
+    value = Column(UTC, nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.TIMESTAMP

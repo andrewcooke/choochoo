@@ -27,7 +27,7 @@ CLIMB_CATEGORIES = {MIN_CLIMB_ELEVATION: '4', 160: '3', 320: '2', 640: '1', 800:
 PERCENT = 100 / 1000
 
 # trade-off between pure elevation (0) and pure gradient (1)
-CLIMB_PHI = 0.6
+CLIMB_PHI = 0.7
 
 Climb = namedtuple('Climb', 'phi, min_elevation, min_gradient, max_gradient, max_reversal',
                    defaults=(CLIMB_PHI, MIN_CLIMB_ELEVATION, MIN_CLIMB_GRADIENT,
@@ -133,7 +133,7 @@ def biggest_climb(df, params=Climb(), grid=10):
 
 def search(df, params=Climb()):
     # returns (score, dlo, dhi)
-    # use times (indices) rather than ilocs because we're subdividing the data
+    # use distance (indices) rather than ilocs because we're subdividing the data
     max_score, max_indices, d = 0, (None, None), df.index[1] - df.index[0]
     for offset in range(len(df)-1, 0, -1):
         df[N._delta(N.ELEVATION)] = df[N.ELEVATION].diff(offset)
@@ -141,7 +141,7 @@ def search(df, params=Climb()):
         min_elevation = max(params.min_elevation, params.min_gradient * d_distance / PERCENT)
         if df[N._delta(N.ELEVATION)].max() > min_elevation:  # avoid some work
             # factor of 1000 below to convert km to m
-            df[SCORE] = (df[N._delta(N.ELEVATION)] / (1000 * d_distance)) ** params.phi
+            df[SCORE] = df[N._delta(N.ELEVATION)] / ((1000 * d_distance) ** params.phi)
             score = df.loc[df[N._delta(N.ELEVATION)] > min_elevation, SCORE].max()
             if not is_nan(score) and score > max_score:
                 max_score = score

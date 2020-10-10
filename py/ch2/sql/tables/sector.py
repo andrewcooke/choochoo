@@ -2,12 +2,12 @@ from logging import getLogger
 
 from geoalchemy2 import Geometry
 from sqlalchemy import Column, Integer, Text, ForeignKey, DateTime, Float, UniqueConstraint, or_
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 
 from .source import GroupedSource, Source, SourceType
 from ..support import Base
-from ..triggers import add_child_ddl
-from ..types import ShortCls, Point
+from ..triggers import add_child_ddl, add_text
+from ..types import ShortCls, Point, UTC
 from ..utils import add
 from ...common.geo import utm_srid
 
@@ -31,8 +31,8 @@ class SectorJournal(GroupedSource):
     activity_journal = relationship('ActivityJournal', foreign_keys=[activity_journal_id])
     # these duplicate data (can be extracted from st_linesubstring and the activity route)
     # but simplify time_range below.
-    start = Column(DateTime(timezone=True), nullable=False)
-    finish = Column(DateTime(timezone=True), nullable=False)
+    start = Column(UTC, nullable=False)
+    finish = Column(UTC, nullable=False)
     start_fraction = Column(Float, nullable=False)
     finish_fraction = Column(Float, nullable=False)
     UniqueConstraint(sector_id, activity_journal_id, start_fraction, finish_fraction)
@@ -69,12 +69,33 @@ class SectorGroup(Base):
         add(s, SectorGroup(srid=srid, centre=(lon, lat), radius=radius_km * 1000, title=title))
 
 
+@add_text('''
+alter table sector
+  add constraint sector_optional_exclusion
+  exclude using gist (owner with =,
+                      sector_group_id with =,
+                      exclusion with &&)
+''')
 class Sector(Base):
 
     __tablename__ = 'sector'
 
     id = Column(Integer, primary_key=True)
-    sector_group_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'), nullable=False)
+    sector_group_id = Column(Integer, ForeignKey('sector_group.id', ondelete='cascade'), nullable=False)
+    sector_group = relationship('SectorGroup')
     route = Column(Geometry('LineString'), nullable=False)
     title = Column(Text, nullable=False)
     owner = Column(ShortCls, nullable=False, index=True)
+    exclusion = Column(Geometry)
+
+
+class Climb(Base):
+
+    __tablename__ = 'climb'
+
+    id = Column(Integer, primary_key=True)
+    sector_id = Column(Integer, ForeignKey('sector.id', ondelete='cascade'), nullable=False)
+    sector = relationship('Sector')
+    category = Column(Text)
+    elevation = Column(Float, nullable=False)
+    distance = Column(Float, nullable=False)

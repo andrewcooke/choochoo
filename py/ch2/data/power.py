@@ -88,7 +88,12 @@ def add_power_estimate(df):
         df[N.POWER_ESTIMATE] = df[N.POWER_ESTIMATE].apply(to_numeric, errors='coerce')
     energy = (df[N.POWER_ESTIMATE].iloc[1:] * df[N.DELTA_TIME].iloc[1:]).cumsum()
     df[N.ENERGY] = 0.0
+    # Slicing a positional slice with .loc is not supported, and will raise TypeError in a future version.
+    # Use .loc with labels or .iloc with positions instead.
     df.loc[1:, [N.ENERGY]] = energy
+    # A value is trying to be set on a copy of a slice from a DataFrame.
+    # Try using .loc[row_indexer,col_indexer] = value instead
+    # df.iloc[1:][N.ENERGY] = energy
     return df
 
 

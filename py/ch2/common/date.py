@@ -16,7 +16,7 @@ YMDTHMS = YMD + 'T' + HMS
 YMD_HM = YMD + ' ' + HM
 
 ALL_DATE_FORMATS = ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S.%f',
-                    '%Y-%m-%dT%H:%M:%S', YMD_HMS,
+                    '%Y-%m-%dT%H:%M:%S', YMD_HMS, YMD_HMS + '+00',
                     '%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', YMD, '%Y')
 
 
