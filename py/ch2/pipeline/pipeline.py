@@ -12,7 +12,6 @@ from ..common.names import BASE, UNDEF
 from ..common.names import VERBOSITY, URI
 from ..lib.utils import timing
 from ..lib.workers import command_root
-from ..names import any_to_fmt
 from ..sql import Pipeline, Interval, PipelineType, StatisticJournal, StatisticName
 from ..sql.types import short_cls
 

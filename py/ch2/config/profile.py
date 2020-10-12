@@ -14,6 +14,7 @@ from ..pipeline.calculate import ImpulseCalculator
 from ..pipeline.calculate.achievement import AchievementCalculator
 from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.elevation import ElevationCalculator
+from ..pipeline.calculate.climb import FindClimbCalculator
 from ..pipeline.calculate.heart_rate import RestHRCalculator
 from ..pipeline.calculate.kit import KitCalculator
 from ..pipeline.calculate.nearby import SimilarityCalculator, NearbyCalculator
@@ -148,6 +149,8 @@ your FF-model parameters (fitness and fatigue).
     def _load_standard_statistics(self, s, blockers=None):
         add_process(s, SegmentCalculator, blocked_by=[SegmentReader],
                     owner_in=short_cls(SegmentReader))
+        add_process(s, FindClimbCalculator, blocked_by=[ElevationCalculator],
+                    owner_in=short_cls(SegmentReader), climb=CLIMB_CNAME)
         add_process(s, StepsCalculator, blocked_by=[MonitorReader],
                     owner_in=short_cls(MonitorReader))
         add_process(s, RestHRCalculator, blocked_by=[MonitorReader],
@@ -156,7 +159,8 @@ your FF-model parameters (fitness and fatigue).
                     owner_in=short_cls(SegmentReader))
         blockers = blockers or []
         add_process(s, ActivityCalculator,
-                    blocked_by=blockers + [ElevationCalculator, ImpulseCalculator, ResponseCalculator],
+                    blocked_by=blockers + [ElevationCalculator, ImpulseCalculator, ResponseCalculator,
+                                           FindClimbCalculator],
                     owner_in=short_cls(ResponseCalculator),
                     climb=CLIMB_CNAME, response_prefix=N.DEFAULT)
         add_process(s, SimilarityCalculator, blocked_by=[ActivityCalculator],

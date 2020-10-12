@@ -1,28 +1,37 @@
 import datetime as dt
+from json import loads
 from logging import getLogger
 
 import pandas as pd
 from sqlalchemy import text, func
 from sqlalchemy.exc import IntegrityError
 
-from ch2.common.date import local_time_to_time, to_time
-from ch2.common.log import log_current_exception
-from ch2.data import Statistics
-from ch2.data.climb import find_climbs
-from ch2.names import N
-from ch2.pipeline.calculate.elevation import expand_distance_time, ElevationCalculator
-from ch2.pipeline.calculate.utils import ActivityJournalCalculatorMixin, ProcessCalculator
-from ch2.pipeline.read.segment import SegmentReader
-from ch2.sql import Timestamp
-from ch2.sql.database import connect_config
-from ch2.sql.tables.sector import SectorGroup, Sector, Climb
-from ch2.sql.types import short_cls
-from ch2.sql.utils import add
+from .elevation import expand_distance_time, ElevationCalculator, elapsed_time_to_time
+from .utils import ActivityJournalCalculatorMixin, ProcessCalculator
+from ..read.segment import SegmentReader
+from ...common.date import local_time_to_time
+from ...common.log import log_current_exception
+from ...data import Statistics
+from ...data.climb import find_climbs
+from ...names import N
+from ...sql import Timestamp, Constant
+from ...sql.tables.sector import SectorGroup, Sector, Climb
+from ...sql.types import short_cls
+from ...sql.utils import add
 
 log = getLogger(__name__)
 
 
 class FindClimbCalculator(ActivityJournalCalculatorMixin, ProcessCalculator):
+
+    def __init__(self, *args, climb=None, **kargs):
+        super().__init__(*args, **kargs)
+        self.__climb_ref = climb
+
+    def _startup(self, s):
+        from ...data.climb import Climb
+        super()._startup(s)
+        self.__climb = Climb(**loads(Constant.from_name(s, self.__climb_ref).at(s).value))
 
     def _run_one(self, missed):
         start = local_time_to_time(missed)
@@ -35,7 +44,8 @@ class FindClimbCalculator(ActivityJournalCalculatorMixin, ProcessCalculator):
                             all():
                         try:
                             self.__find_big_climbs(s, sector_group, ajournal)
-                            self.__find_small_climbs(s, sector_group, ajournal)
+                            # doesn't add anything new
+                            # self.__find_small_climbs(s, sector_group, ajournal)
                         except Exception as e:
                             log.warning(f'Climb detection failed with {e} for activity journal {ajournal.id} '
                                         f'and sector group {sector_group.id}')
@@ -45,16 +55,17 @@ class FindClimbCalculator(ActivityJournalCalculatorMixin, ProcessCalculator):
     def __find_big_climbs(self, s, sector_group, ajournal):
         log.info('Finding climbs from the entire route')
         df = self.__complete_route(s, sector_group.id, ajournal.id)
-        df = expand_distance_time(df, 'distance_time', ajournal.start)
+        df = expand_distance_time(df)
         df = df.set_index(df[N.TIME]).drop(columns=[N.TIME])
-        for climb in find_climbs(df):
+        for climb in find_climbs(df, params=self.__climb):
             log.info(f'Have a climb (elevation {climb[N.CLIMB_ELEVATION]})')
             self.__register_climb(s, df, climb, sector_group)
 
     def __find_small_climbs(self, s, sector_group, ajournal):
         log.info('Finding climbs from the remaining route')
         df = self.__non_climb_paths(s, sector_group.id, ajournal.id)
-        df = expand_distance_time(df, 'distance_time', ajournal.start)
+        df = expand_distance_time(df)
+        df = elapsed_time_to_time(df, ajournal.start)
         df = df.set_index(df[N.TIME]).drop(columns=[N.TIME])
         for path in df['path'].unique():
             df_path = df.loc[df['path'] == path]
@@ -193,8 +204,3 @@ select st_x(point) as x, st_y(point) as y, st_z(point) as elevation, st_m(point)
         return Statistics(s, activity_journal=ajournal, with_timespan=True). \
             by_name(SegmentReader, N.DISTANCE, N.HEART_RATE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y). \
             by_name(ElevationCalculator, N.ELEVATION).df
-
-
-if __name__ == '__main__':
-    config = connect_config(['-v5'])
-    FindClimbCalculator(config).run()

@@ -61,11 +61,15 @@ class ActivityJournal(GroupedSource):
     start = Column(UTC, nullable=False, index=True, unique=True)
     finish = Column(UTC, nullable=False)
     # nullable because created later
-    route_t = Column(Geography('LineStringM', srid=4326))
-    route_ed = Column(Geography('LineStringZM', srid=4326))
-    route_edt = Column(Geography('LineStringZM', srid=4326))  # distance * 1e7 + time
     centre = Column(Geography('Point', srid=4326))
     utm_srid = Column(Integer)
+    # we probably don't need all these
+    route_d = Column(Geography('LineStringM', srid=4326))
+    route_t = Column(Geography('LineStringM', srid=4326))
+    route_dt = Column(Geography('LineStringM', srid=4326))
+    route_ed = Column(Geography('LineStringZM', srid=4326))
+    route_et = Column(Geography('LineStringZM', srid=4326))
+    route_edt = Column(Geography('LineStringZM', srid=4326))  # distance / m * 1e7 + elapsed time
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ACTIVITY
