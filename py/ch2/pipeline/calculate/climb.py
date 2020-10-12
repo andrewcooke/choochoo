@@ -56,6 +56,7 @@ class FindClimbCalculator(ActivityJournalCalculatorMixin, ProcessCalculator):
         log.info('Finding climbs from the entire route')
         df = self.__complete_route(s, sector_group.id, ajournal.id)
         df = expand_distance_time(df)
+        df = elapsed_time_to_time(df, ajournal.start)
         df = df.set_index(df[N.TIME]).drop(columns=[N.TIME])
         for climb in find_climbs(df, params=self.__climb):
             log.info(f'Have a climb (elevation {climb[N.CLIMB_ELEVATION]})')
@@ -138,7 +139,7 @@ class FindClimbCalculator(ActivityJournalCalculatorMixin, ProcessCalculator):
                      and sg.id = :sector_group_id
                      and st_distance(sg.centre, aj.centre) < sg.radius)
 select st_x((point).geom) as x, st_y((point).geom) as y, 
-       st_z((point).geom) as {N.ELEVATION}, st_m((point).geom) as distance_time
+       st_z((point).geom) as {N.ELEVATION}, st_m((point).geom) as "{N.DISTANCE_TIME}"
   from points;
         ''')
         log.debug(sql)
@@ -146,7 +147,6 @@ select st_x((point).geom) as x, st_y((point).geom) as y,
                          params={'sector_group_id': sector_group_id,
                                  'activity_journal_id': activity_journal_id})
         return df
-
 
     def __non_climb_paths(self, s, sector_group_id, activity_journal_id, buffer=20):
         sql = text(f'''
@@ -189,7 +189,7 @@ select st_x((point).geom) as x, st_y((point).geom) as y,
                                                        st_linelocatepoint(route, (point).geom)))) as point,
                             path as path
                        from points)
-select st_x(point) as x, st_y(point) as y, st_z(point) as elevation, st_m(point) as distance_time, path
+select st_x(point) as x, st_y(point) as y, st_z(point) as {N.ELEVATION}, st_m(point) as "{N.DISTANCE_TIME}", path
   from og_points;
         ''')
         log.debug(sql)
