@@ -15,7 +15,7 @@ from ...data import Statistics
 from ...data.climb import find_climbs
 from ...names import N
 from ...sql import Timestamp, Constant
-from ...sql.tables.sector import SectorGroup, Sector, Climb
+from ...sql.tables.sector import SectorGroup, Sector, ClimbSector
 from ...sql.types import short_cls
 from ...sql.utils import add
 
@@ -95,19 +95,19 @@ class FindClimbCalculator(ActivityJournalCalculatorMixin, ProcessCalculator):
 
     def __blocked_by_bigger(self, s, sector_group, box, elevation):
         query = s.query(Sector). \
-            join(Climb). \
+            join(ClimbSector). \
             filter(Sector.sector_group == sector_group,
                    Sector.owner == self,
-                   Climb.elevation >= elevation,
+                   ClimbSector.elevation >= elevation,
                    Sector.exclusion.intersects(text(box)))
         return s.query(query.exists()).scalar()
 
     def __remove_smaller(self, s, sector_group, box, elevation):
         query = s.query(Sector.id). \
-            join(Climb). \
+            join(ClimbSector). \
             filter(Sector.sector_group == sector_group,
                    Sector.owner == self,
-                   Climb.elevation < elevation,
+                   ClimbSector.elevation < elevation,
                    Sector.exclusion.intersects(text(box)))
         n = query.count()
         if n:
@@ -121,14 +121,12 @@ class FindClimbCalculator(ActivityJournalCalculatorMixin, ProcessCalculator):
             title = f'Climb (cat {climb[N.CLIMB_CATEGORY]})'
         else:
             title = f'Climb (uncat)'
-        # text because we're passing in direct SQL functions, not EWKT
-        sector = add(s, Sector(sector_group=sector_group, route=text(route), title=title,
-                     owner=self, exclusion=text(box)))
-        s.commit()
         category = climb.get(N.CLIMB_CATEGORY, None)
-        add(s, Climb(sector=sector, category=category, elevation=climb[N.CLIMB_ELEVATION],
-                     distance=climb[N.CLIMB_DISTANCE]))
-        return 1
+        # text because we're passing in direct SQL functions, not EWKT
+        add(s, ClimbSector(sector_group=sector_group, route=text(route), title=title,
+                           owner=self, exclusion=text(box), distance=climb[N.CLIMB_DISTANCE],
+                           category=category, elevation=climb[N.CLIMB_ELEVATION]))
+        s.commit()
 
     def __complete_route(self, s, sector_group_id, activity_journal_id):
         sql = text(f'''

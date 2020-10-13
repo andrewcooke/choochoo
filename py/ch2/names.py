@@ -160,6 +160,8 @@ class Titles(TitlesBase):
     RESPONSES = 'Responses'
     RECOVERY_D = 'Recovery %d'
     RECOVERY_D_ANY = 'Recovery %'
+    SECTOR_TIME = 'Sector Time'
+    SECTOR_DISTANCE = 'Sector Distance'
     SEGMENT_TIME = 'Segment Time'
     SEGMENT_DISTANCE = 'Segment Distance'
     SEGMENT_HEART_RATE = 'Segment Heart Rate'

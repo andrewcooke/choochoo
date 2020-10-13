@@ -19,6 +19,7 @@ from ..pipeline.calculate.heart_rate import RestHRCalculator
 from ..pipeline.calculate.kit import KitCalculator
 from ..pipeline.calculate.nearby import SimilarityCalculator, NearbyCalculator
 from ..pipeline.calculate.response import ResponseCalculator
+from ..pipeline.calculate.sector import FindSectorCalculator
 from ..pipeline.calculate.segment import SegmentCalculator
 from ..pipeline.calculate.steps import StepsCalculator
 from ..pipeline.calculate.summary import SummaryCalculator
@@ -151,6 +152,7 @@ your FF-model parameters (fitness and fatigue).
                     owner_in=short_cls(SegmentReader))
         add_process(s, FindClimbCalculator, blocked_by=[ElevationCalculator],
                     owner_in=short_cls(SegmentReader), climb=CLIMB_CNAME)
+        add_process(s, FindSectorCalculator, blocked_by=[FindClimbCalculator])
         add_process(s, StepsCalculator, blocked_by=[MonitorReader],
                     owner_in=short_cls(MonitorReader))
         add_process(s, RestHRCalculator, blocked_by=[MonitorReader],

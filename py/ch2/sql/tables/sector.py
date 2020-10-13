@@ -1,15 +1,18 @@
+from enum import IntEnum
 from logging import getLogger
 
 from geoalchemy2 import Geometry
-from sqlalchemy import Column, Integer, Text, ForeignKey, DateTime, Float, UniqueConstraint, or_
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import Column, Integer, Text, ForeignKey, Float, UniqueConstraint, or_
+from sqlalchemy.orm import relationship
 
 from .source import GroupedSource, Source, SourceType
+from .statistic import StatisticJournalType
 from ..support import Base
 from ..triggers import add_child_ddl, add_text
 from ..types import ShortCls, Point, UTC
 from ..utils import add
 from ...common.geo import utm_srid
+from ...names import N, T, U, S
 
 log = getLogger(__name__)
 
@@ -69,6 +72,12 @@ class SectorGroup(Base):
         add(s, SectorGroup(srid=srid, centre=(lon, lat), radius=radius_km * 1000, title=title))
 
 
+class SectorType(IntEnum):
+
+    SECTOR = 0
+    CLIMB = 1
+
+
 @add_text('''
 alter table sector
   add constraint sector_optional_exclusion
@@ -81,21 +90,66 @@ class Sector(Base):
     __tablename__ = 'sector'
 
     id = Column(Integer, primary_key=True)
+    type = Column(Integer, nullable=False, index=True)  # index needed for fast delete of subtypes
     sector_group_id = Column(Integer, ForeignKey('sector_group.id', ondelete='cascade'), nullable=False)
     sector_group = relationship('SectorGroup')
     route = Column(Geometry('LineString'), nullable=False)
+    distance = Column(Float, nullable=False)
     title = Column(Text, nullable=False)
     owner = Column(ShortCls, nullable=False, index=True)
     exclusion = Column(Geometry)
 
+    __mapper_args__ = {
+        'polymorphic_identity': SectorType.SECTOR,
+        'polymorphic_on': 'type'
+    }
 
-class Climb(Base):
+    @classmethod
+    def provides(cls, s, pipeline):
+        pipeline._provides(s, T.SECTOR_TIME, StatisticJournalType.FLOAT, U.S, S.join(S.MIN, S.CNT, S.MSR),
+                           'The time to complete the sector.')
+        pipeline._provides(s, T.SECTOR_DISTANCE, StatisticJournalType.FLOAT, U.KM, None,
+                           'The sector distance.')
 
-    __tablename__ = 'climb'
+    def add_statistics(self, s, sjournal, loader):
+        loader.add_data(N.SECTOR_TIME, sjournal, (sjournal.finish - sjournal.start).total_seconds(), sjournal.start)
+        loader.add_data(N.SECTOR_DISTANCE, sjournal, sjournal.distance, sjournal.start)
 
-    id = Column(Integer, primary_key=True)
-    sector_id = Column(Integer, ForeignKey('sector.id', ondelete='cascade'), nullable=False)
-    sector = relationship('Sector')
+
+@add_child_ddl(Sector)
+class ClimbSector(Sector):
+
+    __tablename__ = 'climb'  # TODO - rename!!!
+
+    id = Column(Integer, ForeignKey('sector.id', ondelete='cascade'), primary_key=True)
     category = Column(Text)
     elevation = Column(Float, nullable=False)
-    distance = Column(Float, nullable=False)
+
+    __mapper_args__ = {
+        'polymorphic_identity': SectorType.CLIMB
+    }
+
+    # these don't delegate to parent because we want to use different names for basically the same thing
+
+    @classmethod
+    def provides(cls, s, pipeline):
+        pipeline._provides(s, T.CLIMB_ELEVATION, StatisticJournalType.FLOAT, U.M, S.join(S.MAX, S.SUM, S.MSR),
+                           'The difference in elevation between start and end of the climb.')
+        pipeline._provides(s, T.CLIMB_DISTANCE, StatisticJournalType.FLOAT, U.KM, S.join(S.MAX, S.SUM, S.MSR),
+                           'The distance travelled during the climb.')
+        pipeline._provides(s, T.CLIMB_TIME, StatisticJournalType.FLOAT, U.S, S.join(S.MAX, S.SUM, S.MSR),
+                           'The time spent on the climb.')
+        pipeline._provides(s, T.CLIMB_GRADIENT, StatisticJournalType.FLOAT, U.PC,  S.join(S.MAX, S.MSR),
+                           'The average inclination of the climb (elevation / distance).')
+        # pipeline._provides(s, T.CLIMB_POWER, StatisticJournalType.FLOAT, U.W,  S.join(S.MAX, S.MSR),
+        #                    'The average estimated power during the climb.')
+        pipeline._provides(s, T.CLIMB_CATEGORY, StatisticJournalType.TEXT, None, None,
+                           'The climb category (text, "4" to "1" and "HC").')
+
+    def add_statistics(self, s, sjournal, loader):
+        loader.add_data(N.CLIMB_ELEVATION, sjournal, self.elevation, sjournal.start)
+        loader.add_data(N.CLIMB_DISTANCE, sjournal, self.distance, sjournal.start)
+        loader.add_data(N.CLIMB_TIME, sjournal, (sjournal.finish - sjournal.start).total_seconds(), sjournal.start)
+        loader.add_data(N.CLIMB_GRADIENT, sjournal, self.elevation / (10 * self.distance), sjournal.start)
+        if self.category:
+            loader.add_data(N.CLIMB_CATEGORY, sjournal, self.category, sjournal.start)
