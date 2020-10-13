@@ -53,7 +53,7 @@ def month(month):
                             filter(ActivityJournal.start >= local_date_to_time(day),
                                    ActivityJournal.start < local_date_to_time(day + dt.timedelta(days=1))).all():
                         df = Statistics(s, activity_journal=a). \
-                            by_name(SegmentReader, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y).df
+                            by_name(ActivityReader, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y).df
                         contents.append(map_thumbnail(map_size, map_size, df, title=False))
                         df = Statistics(s, activity_journal=a). \
                             by_name(ActivityCalculator, N.ACTIVE_DISTANCE, N.ACTIVE_TIME).df

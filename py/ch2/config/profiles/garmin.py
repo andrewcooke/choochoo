@@ -1,9 +1,9 @@
 
 from ..database import add_process
 from ..profile import Profile
+from ...pipeline.read.activity import ActivityReader
 from ...pipeline.read.garmin import GarminReader
 from ...pipeline.read.monitor import MonitorReader
-from ...pipeline.read.segment import SegmentReader
 from ...sql.types import short_cls
 
 
@@ -23,7 +23,7 @@ class Garmin(Profile):
     def _load_read_pipeline(self, s):
         sport_to_activity = self._sport_to_activity()
         record_to_db = self._record_to_db()
-        add_process(s, SegmentReader, owner_out=short_cls(SegmentReader),
+        add_process(s, ActivityReader, owner_out=short_cls(ActivityReader),
                     sport_to_activity=sport_to_activity, record_to_db=record_to_db)
         monitor_reader = add_process(s, MonitorReader)
         # add these, chained so that we load available data (know what is missing),

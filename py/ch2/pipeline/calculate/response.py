@@ -10,7 +10,7 @@ from sqlalchemy.sql.functions import count
 
 from .utils import ProcessCalculator
 from ..pipeline import LoaderMixin, OwnerInMixin
-from ..read.segment import SegmentReader
+from ..read.activity import ActivityReader
 from ...common.date import round_hour, to_time, now, format_timeq
 from ...common.math import is_nan
 from ...common.names import TIME_ZERO
@@ -18,7 +18,7 @@ from ...data import Statistics, present
 from ...data.response import sum_to_hour, calc_response
 from ...names import Names as N, SPACE
 from ...sql import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
-    StatisticJournalFloat, StatisticJournalType
+    StatisticJournalType
 from ...sql.tables.source import SourceType
 from ...sql.utils import add
 
@@ -168,7 +168,7 @@ class ResponseCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
         df = Statistics(s, with_source=True).by_name(ImpulseCalculator, name).with_. \
             rename({name: N.HR_IMPULSE_10, N._src(name): N._src(N.HR_IMPULSE_10)}).df
         name = N._cov(N.HEART_RATE)
-        df = Statistics(s).by_name(SegmentReader, name).with_. \
+        df = Statistics(s).by_name(ActivityReader, name).with_. \
             rename({name: N.COVERAGE}).into(df, tolerance='10s')
         if present(df, N.COVERAGE):
             df[N.COVERAGE].fillna(axis='index', method='ffill', inplace=True)

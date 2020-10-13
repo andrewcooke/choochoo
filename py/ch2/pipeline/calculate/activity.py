@@ -5,13 +5,13 @@ from logging import getLogger
 
 from sqlalchemy import desc
 
-from .response import ResponseCalculator
 from .elevation import ElevationCalculator
 from .impulse import ImpulseCalculator
 from .power import PowerCalculator
+from .response import ResponseCalculator
 from .utils import ProcessCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 from ..pipeline import OwnerInMixin, LoaderMixin
-from ..read.segment import SegmentReader
+from ..read.activity import ActivityReader
 from ...data import Statistics
 from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats, \
     direction_stats, copy_times, round_km, MAX_MINUTES
@@ -104,7 +104,7 @@ class ActivityCalculator(LoaderMixin, OwnerInMixin,
     def _read_dataframe(self, s, ajournal):
         try:
             adf = Statistics(s, activity_journal=ajournal, with_timespan=True). \
-                by_name(SegmentReader, N.DISTANCE, N.HEART_RATE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y). \
+                by_name(ActivityReader, N.DISTANCE, N.HEART_RATE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y). \
                 by_name(ElevationCalculator, N.ELEVATION). \
                 by_name(ImpulseCalculator, N.HR_ZONE). \
                 by_name(PowerCalculator, N.POWER_ESTIMATE).df

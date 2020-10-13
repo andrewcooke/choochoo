@@ -8,7 +8,7 @@ from matplotlib.pyplot import show, figure
 from .args import ACTIVITY, THUMBNAIL_DIR
 from ..data.query import Statistics
 from ..names import N
-from ..pipeline.read.segment import SegmentReader
+from ..pipeline.read.activity import ActivityReader
 from ..sql import ActivityJournal
 
 log = getLogger(__name__)
@@ -40,7 +40,7 @@ def read_activity(s, activity_id, decimate=10):
     try:
         activity_journal = s.query(ActivityJournal).filter(ActivityJournal.id == activity_id).one()
         df = Statistics(s, activity_journal=activity_journal). \
-            by_name(SegmentReader, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y).df
+            by_name(ActivityReader, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y).df
         return df.iloc[::decimate, :]
     except:
         raise Exception(f'{activity_id} is not a valid activity ID')

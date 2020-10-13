@@ -8,5 +8,4 @@ from .kit import KitCalculator
 from .steps import StepsCalculator
 from .nearby import NearbyCalculator
 from .response import ResponseCalculator
-from .segment import SegmentCalculator
 from .summary import SummaryCalculator

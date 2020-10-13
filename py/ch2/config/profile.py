@@ -13,28 +13,26 @@ from ..names import N, T, Sports, U, S
 from ..pipeline.calculate import ImpulseCalculator
 from ..pipeline.calculate.achievement import AchievementCalculator
 from ..pipeline.calculate.activity import ActivityCalculator
-from ..pipeline.calculate.elevation import ElevationCalculator
 from ..pipeline.calculate.climb import FindClimbCalculator
+from ..pipeline.calculate.elevation import ElevationCalculator
 from ..pipeline.calculate.heart_rate import RestHRCalculator
 from ..pipeline.calculate.kit import KitCalculator
 from ..pipeline.calculate.nearby import SimilarityCalculator, NearbyCalculator
 from ..pipeline.calculate.response import ResponseCalculator
 from ..pipeline.calculate.sector import FindSectorCalculator
-from ..pipeline.calculate.segment import SegmentCalculator
 from ..pipeline.calculate.steps import StepsCalculator
 from ..pipeline.calculate.summary import SummaryCalculator
 from ..pipeline.display.activity.achievement import AchievementDelegate
 from ..pipeline.display.activity.jupyter import JupyterDelegate
 from ..pipeline.display.activity.nearby import NearbyDelegate
-from ..pipeline.display.activity.segment import SegmentDelegate
 from ..pipeline.display.activity.utils import ActivityDisplayer, ActivityDelegate
 from ..pipeline.display.database import DatabaseDisplayer
 from ..pipeline.display.diary import DiaryDisplayer
 from ..pipeline.display.monitor import MonitorDisplayer
 from ..pipeline.display.response import ResponseDisplayer
+from ..pipeline.read.activity import ActivityReader
 from ..pipeline.read.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..pipeline.read.monitor import MonitorReader
-from ..pipeline.read.segment import SegmentReader
 from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, ActivityTopic
 from ..sql.types import short_cls
 from ..srtm.file import SRTM1_DIR_CNAME
@@ -117,7 +115,7 @@ class Profile:
     def _load_read_pipeline(self, s):
         sport_to_activity = self._sport_to_activity()
         record_to_db = self._record_to_db()
-        add_process(s, SegmentReader, owner_out=short_cls(SegmentReader),
+        add_process(s, ActivityReader, owner_out=short_cls(ActivityReader),
                     sport_to_activity=sport_to_activity, record_to_db=record_to_db)
         add_process(s, MonitorReader)
 
@@ -148,17 +146,17 @@ your FF-model parameters (fitness and fatigue).
         add_responses(s, self._ff_parameters(), prefix=N.DEFAULT)
 
     def _load_standard_statistics(self, s, blockers=None):
-        add_process(s, SegmentCalculator, blocked_by=[SegmentReader],
-                    owner_in=short_cls(SegmentReader))
+        add_process(s, ActivityCalculator, blocked_by=[ActivityReader],
+                    owner_in=short_cls(ActivityReader))
         add_process(s, FindClimbCalculator, blocked_by=[ElevationCalculator],
-                    owner_in=short_cls(SegmentReader), climb=CLIMB_CNAME)
+                    owner_in=short_cls(ActivityReader), climb=CLIMB_CNAME)
         add_process(s, FindSectorCalculator, blocked_by=[FindClimbCalculator])
         add_process(s, StepsCalculator, blocked_by=[MonitorReader],
                     owner_in=short_cls(MonitorReader))
         add_process(s, RestHRCalculator, blocked_by=[MonitorReader],
                     owner_in=short_cls(MonitorReader))
-        add_process(s, KitCalculator, blocked_by=[SegmentReader],
-                    owner_in=short_cls(SegmentReader))
+        add_process(s, KitCalculator, blocked_by=[ActivityReader],
+                    owner_in=short_cls(ActivityReader))
         blockers = blockers or []
         add_process(s, ActivityCalculator,
                     blocked_by=blockers + [ElevationCalculator, ImpulseCalculator, ResponseCalculator,
@@ -186,7 +184,7 @@ your FF-model parameters (fitness and fatigue).
     def _load_calculate_pipeline(self, s):
         # order is important here because some pipelines expect values created by others
         # this converts RAW_ELEVATION to ELEVATION, if needed
-        add_process(s, ElevationCalculator, blocked_by=[SegmentReader])
+        add_process(s, ElevationCalculator, blocked_by=[ActivityReader])
         blockers = self._load_power_statistics(s)
         self._load_ff_statistics(s)
         self._load_standard_statistics(s, blockers=blockers)
@@ -205,7 +203,7 @@ your FF-model parameters (fitness and fatigue).
         add_displayer(s, DatabaseDisplayer)
 
     def _activity_displayer_delegates(self):
-        return [AchievementDelegate, ActivityDelegate, SegmentDelegate, NearbyDelegate, JupyterDelegate]
+        return [AchievementDelegate, ActivityDelegate, NearbyDelegate, JupyterDelegate]
 
     def _load_constants(self, s):
         add_constant(s, SRTM1_DIR_CNAME, self._config.args._format(value='{data}/srtm1'),

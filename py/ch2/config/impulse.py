@@ -4,7 +4,7 @@ from .database import add_enum_constant, add_process
 from ..names import T, N
 from ..pipeline.calculate.impulse import HRImpulse, ImpulseCalculator
 from ..pipeline.calculate.response import Response, ResponseCalculator
-from ..pipeline.read.segment import SegmentReader
+from ..pipeline.read.activity import ActivityReader
 from ..sql import ActivityGroup
 from ..sql.types import short_cls
 
@@ -49,8 +49,8 @@ Data needed to calculate the FF-model impulse from heart rate zones.
 Once the impulse is calculated it is summed with a decay to find fitness and fatigue
 (see Fitness and Fatigue constants). 
 ''')
-    add_process(s, ImpulseCalculator, blocked_by=[SegmentReader],
-                owner_in=short_cls(SegmentReader),
+    add_process(s, ImpulseCalculator, blocked_by=[ActivityReader],
+                owner_in=short_cls(ActivityReader),
                 impulse_constant=constant.name, prefix=prefix,
                 activity_group=activity_group)
 

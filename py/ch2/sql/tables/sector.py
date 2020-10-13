@@ -117,9 +117,9 @@ class Sector(Base):
 
 
 @add_child_ddl(Sector)
-class ClimbSector(Sector):
+class SectorClimb(Sector):
 
-    __tablename__ = 'climb'  # TODO - rename!!!
+    __tablename__ = 'sector_climb'
 
     id = Column(Integer, ForeignKey('sector.id', ondelete='cascade'), primary_key=True)
     category = Column(Text)

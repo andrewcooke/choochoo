@@ -6,7 +6,7 @@ from .utils import ActivityJournalCalculatorMixin, ProcessCalculator
 from ..pipeline import LoaderMixin
 from ...common.date import local_time_to_time
 from ...sql import Timestamp
-from ...sql.tables.sector import SectorGroup, SectorJournal, Sector, ClimbSector
+from ...sql.tables.sector import SectorGroup, SectorJournal, Sector, SectorClimb
 from ...sql.utils import add
 
 log = getLogger(__name__)
@@ -21,7 +21,7 @@ class FindSectorCalculator(LoaderMixin, ActivityJournalCalculatorMixin, ProcessC
     def _startup(self, s):
         super()._startup(s)
         Sector.provides(s, self)
-        ClimbSector.provides(s, self)
+        SectorClimb.provides(s, self)
 
     def _run_one(self, missed):
         start = local_time_to_time(missed)

@@ -32,13 +32,13 @@ class CoastingBookmark:
 
     def __find(self, s, kit, min_time, max_cadence, min_speed, group):
 
-        from ..pipeline.owners import ActivityReader, SegmentReader
+        from ..pipeline.owners import ActivityReader
 
         group = ActivityGroup.from_name(s, group)
-        cadence_statistic = StatisticName.from_name(s, 'Cadence', SegmentReader, group)
-        distance_statistic = StatisticName.from_name(s, 'Distance', SegmentReader, group)
-        speed_statistic = StatisticName.from_name(s, 'Speed', SegmentReader, group)
-        kit_statistic = StatisticName.from_name(s, ActivityReader.Kit, SegmentReader, group)
+        cadence_statistic = StatisticName.from_name(s, 'Cadence', ActivityReader, group)
+        distance_statistic = StatisticName.from_name(s, 'Distance', ActivityReader, group)
+        speed_statistic = StatisticName.from_name(s, 'Speed', ActivityReader, group)
+        kit_statistic = StatisticName.from_name(s, ActivityReader.Kit, ActivityReader, group)
         s.execute('PRAGMA automatic_index=OFF;')
         for row in s.execute('''
 select t.activity_journal_id, s.time, f.time

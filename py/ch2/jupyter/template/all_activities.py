@@ -29,7 +29,7 @@ def all_activities(start, finish):
     s = session('-v2')
     maps = [map_thumbnail(100, 120, data)
             for data in (Statistics(s, activity_journal=aj).
-                             by_name(SegmentReader, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y).
+                             by_name(ActivityReader, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y).
                              by_name(ActivityCalculator, N.ACTIVE_DISTANCE, N.ACTIVE_TIME).df
                          for aj in s.query(ActivityJournal).
                              filter(ActivityJournal.start >= local_date_to_time(start),

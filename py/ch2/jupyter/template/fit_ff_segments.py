@@ -47,7 +47,7 @@ def fit_ff_segments(group, *segment_titles):
     segments = [s.query(Segment).filter(Segment.title == segment_title).one() for segment_title in segment_titles]
     for segment in segments:
         print(segment.title, segment.distance)
-    kit_statistic = StatisticName.from_name(s, ActivityReader.KIT, SegmentReader)
+    kit_statistic = StatisticName.from_name(s, ActivityReader.KIT, ActivityReader)
     journals_by_kit_by_segment = \
         {segment: group_to_dict(s.query(StatisticJournalText.value, SegmentJournal).
                                 join(ActivityJournal, SegmentJournal.activity_journal_id == ActivityJournal.id).

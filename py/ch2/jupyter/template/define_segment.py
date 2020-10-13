@@ -30,7 +30,7 @@ def define_segment(local_time):
     '''
     s = session('-v2')
     df = Statistics(s, activity_journal=local_time). \
-        by_name(SegmentReader, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y, N.DISTANCE, N.ELEVATION,
+        by_name(ActivityReader, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y, N.DISTANCE, N.ELEVATION,
                 N.LATITUDE, N.LONGITUDE).df
     df.dropna(inplace=True)
     df.describe()

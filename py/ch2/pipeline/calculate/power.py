@@ -58,11 +58,11 @@ class PowerCalculator(LoaderMixin, ActivityGroupCalculatorMixin, DataFrameCalcul
         log.debug(f'Power: {self.power_model_ref}: {self.power_model}')
 
     def _read_dataframe(self, s, ajournal):
-        from ..owners import SegmentReader, ElevationCalculator
+        from ..owners import ActivityReader, ElevationCalculator
         try:
             self._set_power(s, ajournal)
             df = Statistics(s, activity_journal=ajournal, with_timespan=True). \
-                by_name(SegmentReader, N.DISTANCE, N.SPEED, N.CADENCE). \
+                by_name(ActivityReader, N.DISTANCE, N.SPEED, N.CADENCE). \
                 by_name(ElevationCalculator, N.ELEVATION).df
             ldf = linear_resample_time(df)
             ldf = add_differentials(ldf, max_gap=1.1 * median_dt(df))

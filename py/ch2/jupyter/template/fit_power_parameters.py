@@ -48,7 +48,7 @@ def fit_power_parameters(bookmark, large):
     s = session('-v 5')
     large = strtobool(large)
     route = Statistics(s, bookmarks=bookmarks(s, bookmark)). \
-        by_name(SegmentReader, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y,
+        by_name(ActivityReader, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y,
                 N.DISTANCE, N.ELEVATION, N.SPEED, N.CADENCE)
     route.sort_index(inplace=True)  # bookmarks are not sorted by time
     if large:

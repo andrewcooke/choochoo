@@ -30,10 +30,10 @@ class ElevationCalculator(LoaderMixin, ActivityJournalCalculatorMixin, DataFrame
                        'The gradient of the smoothed SRTM1 elevation.')
 
     def _read_dataframe(self, s, ajournal):
-        from ..owners import SegmentReader
+        from ..owners import ActivityReader
         try:
             return Statistics(s, activity_journal=ajournal, with_timespan=True). \
-                by_name(SegmentReader, N.LATITUDE, N.LONGITUDE, N.DISTANCE, N.ELAPSED_TIME,
+                by_name(ActivityReader, N.LATITUDE, N.LONGITUDE, N.DISTANCE, N.ELAPSED_TIME,
                         N.RAW_ELEVATION, N.ELEVATION, N.ALTITUDE).df
         except Exception as e:
             log.warning(f'Failed to generate statistics for elevation: {e}')

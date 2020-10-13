@@ -7,9 +7,9 @@ from ch2.commands.args import DEV, V, bootstrap_db, BASE, UPLOAD
 from ch2.commands.upload import upload
 from ch2.common.args import mm, m
 from ch2.config.profiles.default import default
-from ch2.names import N
 from ch2.data import Statistics
-from ch2.pipeline.read.segment import SegmentReader
+from ch2.names import N
+from ch2.pipeline.read.activity import ActivityReader
 from tests import LogTestCase, random_test_user
 
 log = getLogger(__name__)
@@ -30,7 +30,7 @@ class TestPower(LogTestCase):
 
             with config.db.session_context() as s:
                 stats = Statistics(s, activity_journal='2018-03-04 07:16:33', with_timespan=True). \
-                    by_name(SegmentReader, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X,
+                    by_name(ActivityReader, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X,
                             N.SPHERICAL_MERCATOR_Y, N.DISTANCE, N.ELEVATION, N.SPEED, N.CADENCE, N.HEART_RATE).df
                 stats.describe()
 

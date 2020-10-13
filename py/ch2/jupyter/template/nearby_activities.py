@@ -52,7 +52,7 @@ def nearby_activities():
             dxb, dyb = offset_b * sin(b), offset_b * cos(b)
             activity_journal = s.query(ActivityJournal).filter(ActivityJournal.id == source_id).one()
             stats = Statistics(s, activity_journal=activity_journal). \
-                            by_name(SegmentReader, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y).df
+                            by_name(ActivityReader, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y).df
             f.line(x=stats[N.SPHERICAL_MERCATOR_X] + dxa + dxb, y=stats[N.SPHERICAL_MERCATOR_Y] + dya + dyb,
                    color=palette[i], line_width=1.5, line_dash='dotted')
             if x_max is None:

@@ -8,14 +8,14 @@ from sqlalchemy.exc import IntegrityError
 
 from .elevation import expand_distance_time, ElevationCalculator, elapsed_time_to_time
 from .utils import ActivityJournalCalculatorMixin, ProcessCalculator
-from ..read.segment import SegmentReader
+from ..read.activity import ActivityReader
 from ...common.date import local_time_to_time
 from ...common.log import log_current_exception
 from ...data import Statistics
 from ...data.climb import find_climbs
 from ...names import N
 from ...sql import Timestamp, Constant
-from ...sql.tables.sector import SectorGroup, Sector, ClimbSector
+from ...sql.tables.sector import SectorGroup, Sector, SectorClimb
 from ...sql.types import short_cls
 from ...sql.utils import add
 
@@ -95,19 +95,19 @@ class FindClimbCalculator(ActivityJournalCalculatorMixin, ProcessCalculator):
 
     def __blocked_by_bigger(self, s, sector_group, box, elevation):
         query = s.query(Sector). \
-            join(ClimbSector). \
+            join(SectorClimb). \
             filter(Sector.sector_group == sector_group,
                    Sector.owner == self,
-                   ClimbSector.elevation >= elevation,
+                   SectorClimb.elevation >= elevation,
                    Sector.exclusion.intersects(text(box)))
         return s.query(query.exists()).scalar()
 
     def __remove_smaller(self, s, sector_group, box, elevation):
         query = s.query(Sector.id). \
-            join(ClimbSector). \
+            join(SectorClimb). \
             filter(Sector.sector_group == sector_group,
                    Sector.owner == self,
-                   ClimbSector.elevation < elevation,
+                   SectorClimb.elevation < elevation,
                    Sector.exclusion.intersects(text(box)))
         n = query.count()
         if n:
@@ -123,7 +123,7 @@ class FindClimbCalculator(ActivityJournalCalculatorMixin, ProcessCalculator):
             title = f'Climb (uncat)'
         category = climb.get(N.CLIMB_CATEGORY, None)
         # text because we're passing in direct SQL functions, not EWKT
-        add(s, ClimbSector(sector_group=sector_group, route=text(route), title=title,
+        add(s, SectorClimb(sector_group=sector_group, route=text(route), title=title,
                            owner=self, exclusion=text(box), distance=climb[N.CLIMB_DISTANCE],
                            category=category, elevation=climb[N.CLIMB_ELEVATION]))
         s.commit()
@@ -200,5 +200,5 @@ select st_x(point) as x, st_y(point) as y, st_z(point) as {N.ELEVATION}, st_m(po
 
     def __original_route(self, s, ajournal):
         return Statistics(s, activity_journal=ajournal, with_timespan=True). \
-            by_name(SegmentReader, N.DISTANCE, N.HEART_RATE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y). \
+            by_name(ActivityReader, N.DISTANCE, N.HEART_RATE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y). \
             by_name(ElevationCalculator, N.ELEVATION).df

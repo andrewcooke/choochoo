@@ -335,13 +335,13 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
     from ..pipeline.calculate.elevation import ElevationCalculator
     from ..pipeline.calculate.impulse import ImpulseCalculator
     from ..pipeline.calculate.power import PowerCalculator
-    from ..pipeline.read.segment import SegmentReader
+    from ..pipeline.read.activity import ActivityReader
 
     if not isinstance(activity_journal, ActivityJournal):
         activity_journal = ActivityJournal.at(s, activity_journal, activity_group=activity_group)
 
     stats = Statistics(s, activity_journal=activity_journal, with_timespan=True). \
-        by_name(SegmentReader, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y,
+        by_name(ActivityReader, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y,
                 N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE).with_. \
         rename_with_units(N.LATITUDE, N.LONGITUDE, N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE). \
         copy({N.SPEED_MS: N.MED_SPEED_KMH}, scale=3.6, median=MED_WINDOW). \
@@ -365,32 +365,3 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
         into(stats, tolerance='1s')
 
     return stats
-
-
-if __name__ == '__main__':
-
-    from ..pipeline.owners import ActivityCalculator, SegmentReader, StepsCalculator
-
-    s = session('-v5')
-
-    with timing('select'):
-        df = std_health_statistics(s)
-        # df = std_activity_statistics(s, '2020-05-15', 'road')
-        # df = Statistics(s).like(N.CLIMB_ANY, owner=ActivityCalculator).from_(activity_journal='2020-05-15').by_group().df
-        # df = Statistics(s).for_(N.ACTIVE_DISTANCE, owner=ActivityCalculator).by_group()
-        # acc = Accumulator(s, sources=[ActivityJournal.at(s, '2020-05-15')])
-        # acc = Accumulator(s, with_timespan=True, sources=[ActivityJournal.at(s, '2020-05-15')])
-        # acc = Accumulator(s, with_source=True)
-        # acc.by_name(ActivityCalculator, N.CLIMB_ANY, like=True)
-        # df = acc.df
-        # df = Statistics(s). \
-        #     by_name(ActivityTopic, N.NAME). \
-        #     by_name(ActivityCalculator, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB).with_. \
-        #     copy({N.ACTIVE_DISTANCE: N.ACTIVE_DISTANCE_KM}).add_times().df
-        # print(df.describe())
-        # df['Duration'] = df[N.ACTIVE_TIME].map(format_seconds)
-
-    print(df)
-    print(df.describe())
-    print(df.columns)
-    print(df[N.REST_HR_BPM].describe())

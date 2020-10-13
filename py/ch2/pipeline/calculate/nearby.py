@@ -122,13 +122,13 @@ class SimilarityCalculator(OwnerInMixin, ProcessCalculator):
                 yield lon_lat
 
     def _aj_lon_lat(self, s, new=True):
-        from ..owners import SegmentReader
+        from ..owners import ActivityReader
         lat = s.query(StatisticName.id). \
             filter(StatisticName.name == N.LATITUDE,
-                   StatisticName.owner == SegmentReader).scalar()
+                   StatisticName.owner == ActivityReader).scalar()
         lon = s.query(StatisticName.id). \
             filter(StatisticName.name == N.LONGITUDE,
-                   StatisticName.owner == SegmentReader).scalar()
+                   StatisticName.owner == ActivityReader).scalar()
         if not lat or not lon:
             log.warning(f'No {N.LATITUDE} or {N.LONGITUDE} in database')
             return
