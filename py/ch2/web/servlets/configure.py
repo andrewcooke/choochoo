@@ -16,7 +16,6 @@ from ...import_.activity import activity_imported
 from ...import_.constant import constant_imported
 from ...import_.diary import diary_imported
 from ...import_.kit import kit_imported
-from ...import_.segment import segment_imported
 from ...lib import time_to_local_time, local_time_to_time
 from ...lib.log import Record
 from ...sql import Constant, StatisticJournal, ActivityJournal
@@ -36,7 +35,6 @@ KIT = 'kit'
 NAME = 'name'
 PROFILE = 'profile'
 PROFILES = 'profiles'
-SEGMENT = 'segment'
 SINGLE = 'single'
 STATISTIC = 'statistic'
 TIME = 'time'
@@ -95,8 +93,7 @@ class Configure:
         return {IMPORTED: {DIARY: diary_imported(record, self.__config.db),
                            ACTIVITY: activity_imported(record, self.__config.db),
                            KIT: kit_imported(record, self.__config.db),
-                           CONSTANT: constant_imported(record, self.__config.db),
-                           SEGMENT: segment_imported(record, self.__config.db)},
+                           CONSTANT: constant_imported(record, self.__config.db)},
                 VERSIONS: available_versions(self.__config)}
 
     def write_import(self, request, s):

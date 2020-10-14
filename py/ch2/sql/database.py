@@ -19,12 +19,12 @@ ActivityGroup, ActivityJournal, ActivityTimespan, ActivityBookmark
 DiaryTopic, DiaryTopicJournal, DiaryTopicField,
 ActivityTopic, ActivityTopicJournal, ActivityTopicField,
 StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText, StatisticMeasure
-Segment, SegmentJournal
 Pipeline
 MonitorJournal
 Constant, SystemConstant, Process
 ActivitySimilarity, ActivityNearby
 Timestamp, Process, SystemConstant
+SectorGroup, Sector, SectorClimb
 
 
 log = getLogger(__name__)

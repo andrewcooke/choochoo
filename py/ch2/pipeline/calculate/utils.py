@@ -8,7 +8,7 @@ from ...common.date import time_to_local_timeq, format_dateq
 from ...common.log import log_current_exception, log_query
 from ...lib import local_time_to_time, to_date
 from ...lib.schedule import Schedule
-from ...sql import Timestamp, ActivityJournal, ActivityGroup, SegmentJournal, Interval
+from ...sql import Timestamp, ActivityJournal, ActivityGroup, Interval
 from ...sql.utils import add
 
 log = getLogger(__name__)
@@ -62,11 +62,6 @@ class ActivityGroupCalculatorMixin(ActivityJournalCalculatorMixin):
 
     def _delimit_timestamp(self, q):
         return q.filter(Timestamp.constraint == self.activity_group)
-
-
-class SegmentJournalCalculatorMixin(JournalCalculatorMixin):
-
-    _journal_type = SegmentJournal
 
 
 class DataFrameCalculatorMixin:

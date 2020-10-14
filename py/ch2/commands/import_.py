@@ -9,7 +9,6 @@ from ..import_.activity import import_activity
 from ..import_.constant import import_constant
 from ..import_.diary import import_diary
 from ..import_.kit import import_kit
-from ..import_.segment import import_segment
 from ..lib.log import Record
 from ..sql.database import ReflectedDatabase
 
@@ -68,7 +67,6 @@ def import_source(config, record, source, flags=None):
         if flags[ACTIVITIES]: import_activity(record, old, config.db)
         if flags[KIT]: import_kit(record, old, config.db)
         if flags[CONSTANTS]: import_constant(record, old, config.db)
-        if flags[SEGMENTS]: import_segment(record, old, config.db)
 
 
 def infer_uri(config, source):

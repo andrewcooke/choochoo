@@ -4,6 +4,7 @@ from os.path import splitext, basename
 from pygeotile.point import Point
 
 from .utils import AbortImportButMarkScanned, ProcessFitReader
+from ..pipeline import LoaderMixin
 from ...commands.args import DEFAULT
 from ...commands.upload import ACTIVITY
 from ...common.date import to_time
@@ -27,7 +28,7 @@ log = getLogger(__name__)
 # /home/andrew/archive/fit/batch/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24715592701_tap-sync-18690-cc1dd93225119215a1ea87c584a974ce.fit
 # /home/andrew/archive/fit/batch/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24718989709_tap-sync-18690-effaaaffdd06b9419991471bd92d53d5.fit
 
-class ActivityReader(ProcessFitReader):
+class ActivityReader(LoaderMixin, ProcessFitReader):
 
     KIT = 'kit'
 
