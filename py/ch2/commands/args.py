@@ -69,6 +69,7 @@ BATCH = 'batch'
 BORDER = 'border'
 CHANGE = 'change'
 CHECK = 'check'
+CLIMB = 'climb'
 CMD = 'cmd'
 COMPACT = 'compact'
 COMPONENT = 'component'
@@ -88,6 +89,7 @@ DESCRIBE = 'describe'
 DESCRIPTION = 'description'
 DEV = 'dev'
 DIR = 'dir'
+DISPLAY = 'display'
 DISABLE = 'disable'
 DISCARD = 'discard'
 DROP = 'drop'
@@ -569,6 +571,8 @@ def make_parser(with_noop=False):
     thumbnail = commands.add_parser(THUMBNAIL, help='generate a thumbnail map of an activity')
     thumbnail.add_argument(ACTIVITY, metavar='ACTIVITY', help='an activity ID or date')
     add_thumbnail_dir(thumbnail)
+    thumbnail.add_argument(mm(DISPLAY), action='store_true', help='display image')
+    thumbnail.add_argument(mm(CLIMB), type=int, metavar='ID', help='add climb')
 
     if with_noop:
         noop = commands.add_parser(NO_OP, help='used within jupyter (no-op from cmd line)')

@@ -2,12 +2,13 @@ from logging import getLogger
 
 from sqlalchemy import text, func
 
-from .utils import ActivityJournalCalculatorMixin, ProcessCalculator
-from ..pipeline import LoaderMixin
-from ...common.date import local_time_to_time
-from ...sql import Timestamp
-from ...sql.tables.sector import SectorGroup, SectorJournal, Sector, SectorClimb
-from ...sql.utils import add
+from ch2.sql.database import connect_config
+from ch2.pipeline.calculate.utils import ActivityJournalCalculatorMixin, ProcessCalculator
+from ch2.pipeline.pipeline import LoaderMixin
+from ch2.common.date import local_time_to_time
+from ch2.sql import Timestamp, ActivityJournal
+from ch2.sql.tables.sector import SectorGroup, SectorJournal, Sector, SectorClimb
+from ch2.sql.utils import add
 
 log = getLogger(__name__)
 
@@ -28,16 +29,19 @@ class FindSectorCalculator(LoaderMixin, ActivityJournalCalculatorMixin, ProcessC
         with self._config.db.session_context() as s:
             ajournal = self._get_source(s, start)
             with Timestamp(owner=self.owner_out, source=ajournal).on_success(s):
-                if ajournal.route_edt:
-                    for sector_group in s.query(SectorGroup). \
-                            filter(func.ST_Distance(SectorGroup.centre, ajournal.centre) < SectorGroup.radius). \
-                            all():
-                        count = 0
-                        for sjournal in self.__load_matches(s, sector_group, ajournal):
-                            self.__add_statistics(s, sjournal)
-                            count += 1
-                        if count:
-                            log.info(f'Found {count} sectors for activity on {ajournal.start}')
+                self._run_activity_journal(s, ajournal)
+
+    def _run_activity_journal(self, s, ajournal):
+        if ajournal.route_edt:
+            for sector_group in s.query(SectorGroup). \
+                    filter(func.ST_Distance(SectorGroup.centre, ajournal.centre) < SectorGroup.radius). \
+                    all():
+                count = 0
+                for sjournal in self.__load_matches(s, sector_group, ajournal):
+                    self.__add_statistics(s, sjournal)
+                    count += 1
+                if count:
+                    log.info(f'Found {count} sectors for activity on {ajournal.start}')
 
     def __load_matches(self, s, sector_group, ajournal):
         sql = text('''
@@ -90,3 +94,11 @@ select sector_id,
         sjournal.sector.add_statistics(s, sjournal, loader)
         loader.load()
 
+
+if __name__ == '__main__':
+    config = connect_config(['-v5'])
+    pipeline = FindSectorCalculator(config)
+    with config.db.session_context() as s:
+        import pdb; pdb.set_trace()
+        ajournal = s.query(ActivityJournal).filter(ActivityJournal.id == 1799).one()
+        pipeline._run_activity_journal(s, ajournal)

@@ -93,11 +93,17 @@ class Sector(Base):
     type = Column(Integer, nullable=False, index=True)  # index needed for fast delete of subtypes
     sector_group_id = Column(Integer, ForeignKey('sector_group.id', ondelete='cascade'), nullable=False)
     sector_group = relationship('SectorGroup')
+    # this used only for debugging (it should not matter)
+    activity_journal_id = Column(Integer, ForeignKey('activity_journal.id'), index=True)
     route = Column(Geometry('LineString'), nullable=False)
     distance = Column(Float, nullable=False)
     title = Column(Text, nullable=False)
     owner = Column(ShortCls, nullable=False, index=True)
     exclusion = Column(Geometry)
+    # null because set later (calculated from route but stored for efficiency)
+    start = Column(Geometry('LineString'))
+    finish = Column(Geometry('LineString'))
+    hull = Column(Geometry('Polygon'))
 
     __mapper_args__ = {
         'polymorphic_identity': SectorType.SECTOR,

@@ -120,7 +120,7 @@ def biggest_climb(df, params=Climb(), grid=10):
     # returns (score, dlo, dhi))
     # use distances (indices) rather than ilocs because we're subdividing the data
     if len(df) > 100 * grid:
-        score, lo, hi = search(df.iloc[::grid].copy())
+        score, lo, hi = search(df.iloc[::grid].copy(), grid=True)
         if score:
             # need to pass through iloc to extend range
             ilo, ihi = get_index_loc(df, lo), get_index_loc(df, hi)
@@ -131,7 +131,7 @@ def biggest_climb(df, params=Climb(), grid=10):
         return search(df, params=params)
 
 
-def search(df, params=Climb()):
+def search(df, params=Climb(), grid=False):
     # returns (score, dlo, dhi)
     # use distance (indices) rather than ilocs because we're subdividing the data
     max_score, max_indices, d = 0, (None, None), df.index[1] - df.index[0]
@@ -147,6 +147,11 @@ def search(df, params=Climb()):
                 max_score = score
                 hi = df.loc[df[SCORE] == max_score].index[0]  # arbitrarily pick one if tied (error here w item())
                 lo = df.index[get_index_loc(df, hi) - offset]
+                if not grid:
+                    # step inwards one location from each end
+                    # (so that we have some 'extra' to aid with intersections)
+                    lo = df.index[get_index_loc(df, hi) - (offset-1)]
+                    hi = df.index[get_index_loc(df, hi) - 1]
                 max_indices = (lo, hi)
     return max_score, max_indices[0], max_indices[1]
 
