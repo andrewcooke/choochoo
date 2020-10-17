@@ -45,46 +45,54 @@ class FindSectorCalculator(LoaderMixin, ActivityJournalCalculatorMixin, ProcessC
 
     def __load_matches(self, s, sector_group, ajournal):
         sql = text('''
-with hull as (select s.id as sector_id,
+with srid as (select s.id as sector_id,
                      st_setsrid(s.route, sg.srid) as sector,
-                     st_buffer(st_setsrid(s.route, sg.srid), 20, 'endcap=flat') as hull
+                     st_transform(aj.route_t::geometry, sg.srid) as route_t,
+                     st_setsrid(s.start, sg.srid) as start,
+                     st_setsrid(s.finish, sg.srid) as finish
                 from sector as s,
+                     activity_journal as aj,
                      sector_group as sg
-               where sg.id = :sector_group_id),
-     candidate as (select h.sector_id,
-                          h.sector,
-                          st_transform(aj.route_t::geometry, sg.srid) as route,
-                          (st_dump(st_multi(st_intersection(st_transform(aj.route_t::geometry, sg.srid), h.hull)))).geom as candidate
-                     from hull as h,
-                          activity_journal as aj,
-                          sector_group as sg
-                    where aj.id = :activity_journal_id
-                      and sg.id = :sector_group_id),
-     statistic as (select c.sector_id,
-                          c.route,
-                          aj.start as t0,
-                          cos(st_angle(c.sector, c.candidate)) as similarity,
-                          st_length(c.sector) as target_length,
-                          st_length(c.candidate) as candidate_length,
-                          st_linelocatepoint(c.route, st_startpoint(c.candidate)) as start_fraction,
-                          st_linelocatepoint(c.route, st_endpoint(c.candidate)) as finish_fraction
-                     from candidate as c,
-                          activity_journal as aj
-                    where not st_isempty(candidate)
-                      and aj.id = :activity_journal_id)
-select sector_id,
-       t0 + interval '1' second * st_m(st_lineinterpolatepoint(route, greatest(0, least(1, start_fraction)))) as start,
-       t0 + interval '1' second * st_m(st_lineinterpolatepoint(route, greatest(0, least(1, finish_fraction)))) as finish,
-       start_fraction, finish_fraction
-  from statistic
- where similarity > 0.9
-   and candidate_length between 0.9 * target_length and 1.1 * target_length;
+               where s.sector_group_id = sg.id
+                 and sg.id = :sector_group_id
+                 and aj.id = :activity_journal_id
+                 and st_intersects(st_setsrid(s.hull, sg.srid), st_transform(aj.route_t::geometry, sg.srid))),
+     start_point as (select r.sector_id,
+                            r.route_t,
+                            (st_dump(st_multi(st_intersection(r.start, r.route_t)))).geom as point
+                       from srid as r),
+     start_fraction as (select p.sector_id,
+                               st_linelocatepoint(p.route_t, p.point) as fraction
+                          from start_point as p),
+     finish_point as (select r.sector_id,
+                             r.route_t,
+                             (st_dump(st_multi(st_intersection(r.finish, r.route_t)))).geom as point
+                        from srid as r),
+     finish_fraction as (select p.sector_id,
+                                st_linelocatepoint(p.route_t, p.point) as fraction
+                           from finish_point as p)
+select r.sector_id,
+       s.fraction as start_fraction,
+       f.fraction as finish_fraction,
+       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_t, s.fraction)) as start,
+       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_t, f.fraction)) as finish
+  from srid as r,
+       start_fraction as s,
+       finish_fraction as f,
+       activity_journal as aj
+ where aj.id = :activity_journal_id
+   and s.fraction < f.fraction
+   and s.sector_id = f.sector_id
+   and s.sector_id = r.sector_id
+   and st_length(st_linesubstring(r.route_t, s.fraction, f.fraction)) 
+       between 0.95 * st_length(r.sector) and 1.05 * st_length(r.sector)
 ''')
         log.debug(sql)
         result = s.connection().execute(sql, sector_group_id=sector_group.id, activity_journal_id=ajournal.id)
         for row in result.fetchall():
             data = {name: value for name, value in zip(result.keys(), row)}
-            sjournal = add(s, SectorJournal(activity_journal_id=ajournal.id, activity_group=ajournal.activity_group, **data))
+            sjournal = add(s, SectorJournal(activity_journal_id=ajournal.id, activity_group=ajournal.activity_group,
+                                            **data))
             s.commit()
             yield sjournal
 

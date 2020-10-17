@@ -130,6 +130,8 @@ class FindClimbCalculator(ActivityJournalCalculatorMixin, ProcessCalculator):
         return climb
 
     def __complete_sector(self, s, sector_id):
+        # need to take just the final metre at each end of teh route and shift to avoid multilines
+        # with 'jigsaw' shaped routes (endpoint of multiline is null).
         sql = text('''
 with srid as (select st_setsrid(s.route, sg.srid) as route,
                      st_length(st_setsrid(s.route, sg.srid)) as length
