@@ -79,6 +79,7 @@ class Titles(TitlesBase):
     ALL = 'All'
     ANY_ALL = '% All'
     ALTITUDE = 'Altitude'
+    AZIMUTH = 'Azimuth'
     ASPECT_RATIO = 'Aspect Ratio'
     BOOKMARK = 'Bookmark'
     CADENCE = 'Cadence'

@@ -9,7 +9,7 @@ from .elevation import ElevationCalculator
 from .impulse import ImpulseCalculator
 from .power import PowerCalculator
 from .response import ResponseCalculator
-from .utils import ProcessCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
+from .utils import ProcessCalculator, ActivityJournalProcessCalculator, DataFrameCalculatorMixin
 from ..pipeline import OwnerInMixin, LoaderMixin
 from ..read.activity import ActivityReader
 from ...data import Statistics
@@ -25,8 +25,8 @@ from ...sql import Constant, ActivityJournal, StatisticJournal, StatisticJournal
 log = getLogger(__name__)
 
 
-class ActivityCalculator(LoaderMixin, OwnerInMixin,
-                         ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator):
+class ActivityCalculator(LoaderMixin, OwnerInMixin, DataFrameCalculatorMixin,
+                         ActivityJournalProcessCalculator):
 
     def __init__(self, *args, climb=None, response_prefix=None, **kargs):
         self.climb_ref = climb

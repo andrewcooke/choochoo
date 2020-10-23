@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from .utils import ProcessCalculator, ActivityJournalCalculatorMixin
+from .utils import ProcessCalculator, ActivityJournalProcessCalculator
 from ..pipeline import OwnerInMixin
 from ..read.activity import ActivityReader
 from ...common.date import local_time_to_time
@@ -12,7 +12,7 @@ from ...sql.tables.kit import expand_item
 log = getLogger(__name__)
 
 
-class KitCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, ProcessCalculator):
+class KitCalculator(OwnerInMixin, ActivityJournalProcessCalculator):
     '''
     Convert `-D kit=XXX` statistic set on activities during import into kit usage entries.
 

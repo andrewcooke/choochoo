@@ -9,6 +9,7 @@ from .frame import linear_resample, median_dt, present, linear_resample_time
 from ..lib.data import safe_dict
 from ..names import N
 
+
 log = getLogger(__name__)
 
 MAX_MINUTES = (5, 10, 30, 60, 90, 120, 180)
@@ -143,3 +144,16 @@ def direction_stats(df):
             stats[N.DIRECTION] = 90 - 180 * theta / pi
             stats[N.ASPECT_RATIO] = df['v'].std() / df['u'].std()
     return stats
+
+
+def add_delta_azimuth(df):
+    df['dx'] = df[N.SPHERICAL_MERCATOR_X].diff()
+    df['dy'] = df[N.SPHERICAL_MERCATOR_Y].diff()
+    df[N.AZIMUTH] = np.arctan2(df['dy'], df['dx'])
+    df[N.AZIMUTH].fillna(axis='index', method='ffill', inplace=True)
+    df[N.AZIMUTH].fillna(axis='index', method='bfill', inplace=True)
+    df[N.AZIMUTH] = np.unwrap(df[N.AZIMUTH])
+    df[N._delta(N.AZIMUTH)] = df[N.AZIMUTH].diff()
+    df[N._delta(N.AZIMUTH)] = df[N._delta(N.AZIMUTH)].fillna(0)
+    return df
+

@@ -2,7 +2,7 @@ from enum import IntEnum
 from logging import getLogger
 
 from geoalchemy2 import Geometry
-from sqlalchemy import Column, Integer, Text, ForeignKey, Float, UniqueConstraint, or_
+from sqlalchemy import Column, Integer, Text, ForeignKey, Float, UniqueConstraint, or_, func, and_, select
 from sqlalchemy.orm import relationship
 
 from .source import GroupedSource, Source, SourceType
@@ -32,12 +32,14 @@ class SectorJournal(GroupedSource):
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='set null'),
                                  index=True)
     activity_journal = relationship('ActivityJournal', foreign_keys=[activity_journal_id])
+    start_fraction = Column(Float, nullable=False)
+    finish_fraction = Column(Float, nullable=False)
     # these duplicate data (can be extracted from st_linesubstring and the activity route)
     # but simplify time_range below.
     start = Column(UTC, nullable=False)
     finish = Column(UTC, nullable=False)
-    start_fraction = Column(Float, nullable=False)
-    finish_fraction = Column(Float, nullable=False)
+    # this duplicates data because it's useful and a pain to calculate separately
+    distance = Column(Float, nullable=False)
     UniqueConstraint(sector_id, activity_journal_id, start_fraction, finish_fraction)
 
     __mapper_args__ = {
@@ -56,6 +58,12 @@ class SectorJournal(GroupedSource):
 
 
 class SectorGroup(Base):
+    '''
+    this is not owned by anything (sectors are owned individually).
+    rather, it defines a place where we are interested in all kinds of sectors -
+    typically, the geographical region where the user lives.
+    we could even try setting it algorithmically from a few activities.
+    '''
 
     __tablename__ = 'sector_group'
 
@@ -67,12 +75,37 @@ class SectorGroup(Base):
     UniqueConstraint(centre, radius, title)
 
     @classmethod
-    def add(cls, s, lat, lon, radius_km, title):
+    def add(cls, s, centre, radius_km, title, delete=False):
+        '''
+        if delete is True, nearby similar entries are deleted before insertion.
+        if delete is False, and there is already a nearby similar entry, it is returned.
+        otherwise, insertion is attempted without deletion.
+        '''
+        lon, lat = centre
         srid = utm_srid(lat, lon)
-        add(s, SectorGroup(srid=srid, centre=(lon, lat), radius=radius_km * 1000, title=title))
+        radius = radius_km * 1000
+        if delete is not None:
+            query = s.query(SectorGroup). \
+                filter(func.ST_Distance(SectorGroup.centre, Point.fmt(centre)) < radius,
+                       SectorGroup.srid == srid)
+            n = query.count()
+            if delete:
+                if n:
+                    log.warning(f'Deleting {n} previous sector groups')
+                    query.delete(synchronize_session=False)
+            else:
+                if n:
+                    sector_group = query.first()
+                    log.info(f'Using previously defined sector group "{sector_group.title}"')
+                    return sector_group
+        return add(s, SectorGroup(srid=srid, centre=centre, radius=radius, title=title))
 
 
 class SectorType(IntEnum):
+    '''
+    different owners don't need to defin their own types.
+    the subclasses are mainly for display (climb has elevation and category and is displayed differently)
+    '''
 
     SECTOR = 0
     CLIMB = 1

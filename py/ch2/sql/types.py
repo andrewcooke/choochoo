@@ -187,18 +187,24 @@ class Point(TypeDecorator):
     impl = Geography('point', srid=4326)
 
     def process_literal_param(self, value, dialect):
-        lon, lat = value
-        return f'Point({lon} {lat})'
+        return Point.fmt(value)
 
     process_bind_param = process_literal_param
 
     def process_result_value(self, value, dialect):
-        # value is a geoalchemy2 WKBElement
-        match = POINT.match(value.data)
-        return float(match.group(1)), float(match.group(2))
+        if value:
+            # value is a geoalchemy2 WKBElement
+            match = POINT.match(value.data)
+            return float(match.group(1)), float(match.group(2))
 
     def column_expression(self, col):
         return func.ST_AsText(col, type_=self)
+
+    @classmethod
+    def fmt(cls, point):
+        if point:
+            lon, lat = point
+            return f'Point({lon} {lat})'
 
 
 NAME = 'name'

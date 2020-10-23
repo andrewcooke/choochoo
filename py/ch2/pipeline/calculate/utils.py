@@ -2,8 +2,9 @@ from abc import abstractmethod
 from logging import getLogger
 
 from sqlalchemy import not_
+from sqlalchemy.sql.functions import count
 
-from ..pipeline import ProcessPipeline
+from ..pipeline import ProcessPipeline, OwnerInMixin
 from ...common.date import time_to_local_timeq, format_dateq
 from ...common.log import log_current_exception, log_query
 from ...lib import local_time_to_time, to_date
@@ -17,7 +18,7 @@ log = getLogger(__name__)
 class ProcessCalculator(ProcessPipeline): pass
 
 
-class JournalCalculatorMixin:
+class JournalProcessCalculator(ProcessCalculator):
     '''
     auto-detects missing entries and schedules threads via owner_out.
 
@@ -45,12 +46,12 @@ class JournalCalculatorMixin:
         return s.query(self._journal_type).filter(self._journal_type.start == time).one()
 
 
-class ActivityJournalCalculatorMixin(JournalCalculatorMixin):
+class ActivityJournalProcessCalculator(JournalProcessCalculator):
 
     _journal_type = ActivityJournal
 
 
-class ActivityGroupCalculatorMixin(ActivityJournalCalculatorMixin):
+class ActivityGroupProcessCalculator(ActivityJournalProcessCalculator):
 
     def __init__(self, *args, activity_group=None, **kargs):
         super().__init__(*args, **kargs)
@@ -62,6 +63,12 @@ class ActivityGroupCalculatorMixin(ActivityJournalCalculatorMixin):
 
     def _delimit_timestamp(self, q):
         return q.filter(Timestamp.constraint == self.activity_group)
+
+
+class ActivityOwnerProcessCalculator(OwnerInMixin, ActivityJournalProcessCalculator):
+
+    def _delimit_timestamp(self, q):
+        return q.filter(Timestamp.constraint == self.owner_in)
 
 
 class DataFrameCalculatorMixin:
@@ -90,9 +97,10 @@ class DataFrameCalculatorMixin:
                     log.error(f'No statistics on {missed}: {e}')
                     log_current_exception(traceback=True)
 
-    @abstractmethod
-    def _get_source(self, s, time):
-        raise NotImplementedError()
+    # allow pass-through to JournalProcessCalculator
+    # @abstractmethod
+    # def _get_source(self, s, time):
+    #     raise NotImplementedError()
 
     @abstractmethod
     def _read_dataframe(self, s, source):
@@ -158,3 +166,23 @@ class IntervalCalculatorMixin:
     @abstractmethod
     def _calculate_results(self, s, interval, data, loader):
         raise NotImplementedError()
+
+
+class RerunWhenNewActivitiesMixin(OwnerInMixin):
+
+    def _missing(self, s):
+        prev = Timestamp.get(s, self.owner_out)
+        if not prev:
+            return ['missing']
+        prev_ids = s.query(Timestamp.source_id). \
+            filter(Timestamp.owner == self.owner_in,
+                   Timestamp.constraint == None,
+                   Timestamp.time < prev.time).cte()
+        later = s.query(count(ActivityJournal.id)). \
+            join(ActivityGroup). \
+            filter(not_(ActivityJournal.id.in_(prev_ids))).scalar()
+        if later:
+            return ['missing']
+        else:
+            return []
+

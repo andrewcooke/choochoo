@@ -62,7 +62,7 @@ class ProcessFitReader(ProcessPipeline):
                 loader.load()
             return loader  # returned so coverage can be accessed
         except Exception as e:
-            log_current_exception()
+            log_current_exception(traceback=True)
             log.error(f'Error loading {path}: {e}')
             s.rollback()
             raise AbortImportButMarkScanned()

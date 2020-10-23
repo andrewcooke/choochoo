@@ -150,7 +150,8 @@ your FF-model parameters (fitness and fatigue).
                     owner_in=short_cls(ActivityReader))
         add_process(s, FindClimbCalculator, blocked_by=[ElevationCalculator],
                     owner_in=short_cls(ActivityReader), climb=CLIMB_CNAME)
-        add_process(s, FindSectorCalculator, blocked_by=[FindClimbCalculator])
+        add_process(s, FindSectorCalculator, blocked_by=[FindClimbCalculator],
+                    owner_in=short_cls(FindClimbCalculator))
         add_process(s, StepsCalculator, blocked_by=[MonitorReader],
                     owner_in=short_cls(MonitorReader))
         add_process(s, RestHRCalculator, blocked_by=[MonitorReader],

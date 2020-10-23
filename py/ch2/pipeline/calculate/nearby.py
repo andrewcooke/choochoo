@@ -8,7 +8,7 @@ from sqlalchemy import inspect, select, alias, and_, distinct, func, not_
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import count
 
-from .utils import ProcessCalculator
+from .utils import ProcessCalculator, RerunWhenNewActivitiesMixin
 from ..pipeline import OwnerInMixin
 from ...common.log import log_current_exception
 from ...lib.dbscan import DBSCAN
@@ -24,7 +24,7 @@ Nearby = namedtuple('Nearby', 'constraint, activity_group, border, start, finish
                               'latitude, longitude, height, width, fraction')
 
 
-class SimilarityCalculator(OwnerInMixin, ProcessCalculator):
+class SimilarityCalculator(RerunWhenNewActivitiesMixin, ProcessCalculator):
     '''
     this seems to be more efficient than
 
@@ -47,22 +47,6 @@ class SimilarityCalculator(OwnerInMixin, ProcessCalculator):
     def startup(self):
         log.info(f'Reducing to {int(0.5 + 100 * self.fraction):d}%')
         super().startup()
-
-    def _missing(self, s):
-        prev = Timestamp.get(s, self.owner_out)
-        if not prev:
-            return ['missing']
-        prev_ids = s.query(Timestamp.source_id). \
-            filter(Timestamp.owner == self.owner_in,
-                   Timestamp.constraint == None,
-                   Timestamp.time < prev.time).cte()
-        later = s.query(count(ActivityJournal.id)). \
-            join(ActivityGroup). \
-            filter(not_(ActivityJournal.id.in_(prev_ids))).scalar()
-        if later:
-            return ['missing']
-        else:
-            return []
 
     def _run_one(self, missed):
         with self._config.db.session_context() as s:

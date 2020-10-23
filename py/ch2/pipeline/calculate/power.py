@@ -6,7 +6,7 @@ from logging import getLogger
 import numpy as np
 import pandas as pd
 
-from .utils import ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator
+from .utils import ActivityGroupProcessCalculator, DataFrameCalculatorMixin, ProcessCalculator
 from ..pipeline import LoaderMixin
 from ...common.log import log_current_exception
 from ...data import present, linear_resample_time, Statistics
@@ -33,7 +33,7 @@ class PowerModel(reftuple('Power', 'bike_model, rider_weight')):
             return instance
 
 
-class PowerCalculator(LoaderMixin, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator):
+class PowerCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityGroupProcessCalculator):
 
     def __init__(self, *args, power_model=None, caloric_eff=0.25, activity_group=None, **kargs):
         self.power_model_ref = power_model

@@ -191,3 +191,4 @@ def add_climb_stats(df, climbs):
         else:
             log.warning(f'Missing {N.POWER_ESTIMATE} in climb data')
 
+

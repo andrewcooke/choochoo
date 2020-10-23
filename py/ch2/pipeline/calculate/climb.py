@@ -6,24 +6,21 @@ import pandas as pd
 from sqlalchemy import text, func
 from sqlalchemy.exc import IntegrityError
 
-from .elevation import expand_distance_time, ElevationCalculator, elapsed_time_to_time
-from .utils import ActivityJournalCalculatorMixin, ProcessCalculator
-from ..read.activity import ActivityReader
+from .elevation import expand_distance_time, elapsed_time_to_time
+from .utils import ActivityJournalProcessCalculator
 from ...common.date import local_time_to_time
 from ...common.log import log_current_exception
-from ...data import Statistics
 from ...data.climb import find_climbs
+from ...data.sector import HULL_RADIUS, add_start_finish
 from ...names import N
 from ...sql import Timestamp, Constant
 from ...sql.tables.sector import SectorGroup, Sector, SectorClimb
+from ...sql.types import Point
 from ...sql.utils import add
 
 log = getLogger(__name__)
 
-HULL_RADIUS = 40
-
-
-class FindClimbCalculator(ActivityJournalCalculatorMixin, ProcessCalculator):
+class FindClimbCalculator(ActivityJournalProcessCalculator):
 
     def __init__(self, *args, climb=None, **kargs):
         super().__init__(*args, **kargs)
@@ -41,7 +38,8 @@ class FindClimbCalculator(ActivityJournalCalculatorMixin, ProcessCalculator):
             with Timestamp(owner=self.owner_out, source=ajournal).on_success(s):
                 if ajournal.route_edt:
                     for sector_group in s.query(SectorGroup). \
-                            filter(func.st_distance(SectorGroup.centre, ajournal.centre) < SectorGroup.radius). \
+                            filter(func.st_distance(SectorGroup.centre, Point.fmt(ajournal.centre))
+                                   < SectorGroup.radius). \
                             all():
                         log.info(f'Finding climbs for activity journal {ajournal.id} / sector group {sector_group.id}')
                         try:
@@ -71,7 +69,7 @@ class FindClimbCalculator(ActivityJournalCalculatorMixin, ProcessCalculator):
             try:
                 climb = self.__add_climb(s, sector_group, climb, route, box, activity_journal_id)
                 s.commit()
-                self.__complete_sector(s, climb.id)
+                add_start_finish(s, climb.id)
                 s.commit()
                 log.info('Added climb')
                 return
@@ -129,40 +127,6 @@ class FindClimbCalculator(ActivityJournalCalculatorMixin, ProcessCalculator):
         s.flush()
         return climb
 
-    def __complete_sector(self, s, sector_id):
-        # need to take just the final metre at each end of teh route and shift to avoid multilines
-        # with 'jigsaw' shaped routes (endpoint of multiline is null).
-        sql = text('''
-with srid as (select st_setsrid(s.route, sg.srid) as route,
-                     st_length(st_setsrid(s.route, sg.srid)) as length
-                from sector as s,
-                     sector_group as sg
-               where s.id = :sector_id
-                 and sg.id = s.sector_group_id),
-     ends as (select st_linesubstring(route, 0, 1/length) as start,
-                     st_linesubstring(route, 1-1/length, 1) as finish,
-                     route
-                from srid),
-     offsets as (select st_offsetcurve(start, :radius) as start_left,
-                        st_offsetcurve(start, -:radius) as start_right,
-                        st_offsetcurve(finish, :radius) as finish_left,
-                        st_offsetcurve(finish, -:radius) as finish_right,
-                        st_buffer(route, :radius, 'endcap=flat') as hull
-                   from ends),
-     endcaps as (select st_makeline(st_startpoint(start_left), st_endpoint(start_right)) as start,
-                        st_makeline(st_endpoint(finish_left), st_startpoint(finish_right)) as finish,
-                        o.hull
-                   from offsets as o)
-update sector
-   set start = e.start,
-       finish = e.finish,
-       hull = e.hull
-  from endcaps as e
- where sector.id = :sector_id
-''')
-        log.debug(sql)
-        s.connection().execute(sql, sector_id=sector_id, radius=HULL_RADIUS)
-
     def __complete_route(self, s, sector_group_id, activity_journal_id):
         sql = text(f'''
   with points as (select st_dumppoints(st_transform(aj.route_edt::geometry, sg.srid)) as point
@@ -180,8 +144,3 @@ select st_x((point).geom) as x, st_y((point).geom) as y,
                          params={'sector_group_id': sector_group_id,
                                  'activity_journal_id': activity_journal_id})
         return df
-
-    def __original_route(self, s, ajournal):
-        return Statistics(s, activity_journal=ajournal, with_timespan=True). \
-            by_name(ActivityReader, N.DISTANCE, N.HEART_RATE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y). \
-            by_name(ElevationCalculator, N.ELEVATION).df

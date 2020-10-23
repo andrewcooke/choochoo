@@ -63,7 +63,8 @@ class ACooke(Garmin):
         self._load_activity_group(s, MTB, 'MTB cycling activities')
 
     def _load_sector_groups(self, s):
-        SectorGroup.add(s, -33.4, -70.7, 1000, 'Santiago')
+        # note lon, lat for centre
+        SectorGroup.add(s, (-70.7, -33.4), 1000, 'Santiago')
 
     def _sport_to_activity(self):
 

@@ -3,11 +3,12 @@ from logging import getLogger
 import pandas as pd
 from sqlalchemy import text, select
 
-from .utils import ProcessCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
+from .utils import ActivityJournalProcessCalculator, DataFrameCalculatorMixin
 from ..pipeline import LoaderMixin
 from ...common.geo import utm_srid
 from ...common.math import is_nan
 from ...data import Statistics
+from ...data.activity import add_delta_azimuth
 from ...data.elevation import smooth_elevation
 from ...data.frame import present
 from ...names import N, T, U
@@ -16,7 +17,7 @@ from ...sql import StatisticJournalType, ActivityJournal
 log = getLogger(__name__)
 
 
-class ElevationCalculator(LoaderMixin, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, ProcessCalculator):
+class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournalProcessCalculator):
 
     def __init__(self, *args, smooth=3, **kargs):
         self.smooth = smooth
@@ -34,7 +35,8 @@ class ElevationCalculator(LoaderMixin, ActivityJournalCalculatorMixin, DataFrame
         try:
             return Statistics(s, activity_journal=ajournal, with_timespan=True). \
                 by_name(ActivityReader, N.LATITUDE, N.LONGITUDE, N.DISTANCE, N.ELAPSED_TIME,
-                        N.RAW_ELEVATION, N.ELEVATION, N.ALTITUDE).df
+                        N.RAW_ELEVATION, N.ELEVATION, N.ALTITUDE,
+                        N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y).df
         except Exception as e:
             log.warning(f'Failed to generate statistics for elevation: {e}')
             raise
@@ -46,7 +48,7 @@ class ElevationCalculator(LoaderMixin, ActivityJournalCalculatorMixin, DataFrame
             elif present(df, N.ALTITUDE):
                 log.warning(f'Using {N.ALTITUDE} as {N.ELEVATION}')
                 df[N.ELEVATION] = df[N.ALTITUDE]
-            return df
+            return add_delta_azimuth(df)
         else:
             return None
 
@@ -64,6 +66,7 @@ class ElevationCalculator(LoaderMixin, ActivityJournalCalculatorMixin, DataFrame
         if self.__create_route(s, ajournal, df, 'route_d', N.DISTANCE):
             self.__create_centre(s, ajournal)
             self.__create_utm_srid(s, ajournal)
+        self.__create_route(s, ajournal, df, 'route_a', N._delta(N.AZIMUTH))
         self.__create_route(s, ajournal, df, 'route_t', N.ELAPSED_TIME)
         self.__create_route_z(s, ajournal, df, 'route_ed', N.DISTANCE)
         self.__create_route_z(s, ajournal, df, 'route_et', N.ELAPSED_TIME)
