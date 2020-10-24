@@ -52,7 +52,7 @@ class SectorJournal(GroupedSource):
     @classmethod
     def clean(cls, s):
         q1 = s.query(SectorJournal.id). \
-            filter(or_(SectorJournal.segment_id == None,
+            filter(or_(SectorJournal.sector_id == None,
                        SectorJournal.activity_journal_id == None)).cte()
         s.query(Source).filter(Source.id.in_(q1)).delete(synchronize_session=False)
 

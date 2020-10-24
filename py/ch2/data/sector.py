@@ -32,14 +32,16 @@ with srid as (select s.id as sector_id,
                        from srid as r),
      start_fraction as (select p.sector_id,
                                st_linelocatepoint(p.route_t, p.point) as fraction
-                          from start_point as p),
+                          from start_point as p
+                         where st_geometrytype(p.point) = 'ST_Point'),  -- small number of cases intersect as lines
      finish_point as (select r.sector_id,
                              r.route_t,
                              (st_dump(st_multi(st_intersection(r.finish, r.route_t)))).geom as point
                         from srid as r),
      finish_fraction as (select p.sector_id,
                                 st_linelocatepoint(p.route_t, p.point) as fraction
-                           from finish_point as p)
+                           from finish_point as p
+                          where st_geometrytype(p.point) = 'ST_Point')
 select distinct  -- multiple starts/finishes can lead to duplicates
        r.sector_id,
        s.fraction as start_fraction,

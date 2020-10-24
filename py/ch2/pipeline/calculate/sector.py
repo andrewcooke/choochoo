@@ -8,7 +8,7 @@ from ch2.pipeline.calculate.utils import ActivityJournalProcessCalculator, Proce
 from ch2.pipeline.pipeline import LoaderMixin, OwnerInMixin
 from ch2.sql import Timestamp, ActivityJournal
 from ch2.sql.database import connect_config
-from ch2.sql.tables.sector import SectorGroup, Sector, SectorClimb
+from ch2.sql.tables.sector import SectorGroup, Sector, SectorClimb, SectorJournal
 from ch2.sql.types import Point, short_cls
 
 log = getLogger(__name__)
@@ -24,6 +24,7 @@ class FindSectorCalculator(LoaderMixin, ActivityOwnerProcessCalculator):
         super()._startup(s)
         Sector.provides(s, self)
         SectorClimb.provides(s, self)
+        SectorJournal.clean(s)
 
     def _run_one(self, missed):
         start = local_time_to_time(missed)

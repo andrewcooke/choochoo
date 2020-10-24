@@ -214,19 +214,23 @@ def sectors_from_hulls(s, sector_group):
 
 def populate_tmp_fragments_from_hulls(s, sector_group, min_separation=50):
     sql = text('''
-  with route as (select st_transform(route_t::geometry, sg.srid) as route,
+  with route as (select st_transform(route_a::geometry, sg.srid) as route,
                         aj.id as activity_journal_id
                    from activity_journal as aj,
                         sector_group as sg
                   where sg.id = :sector_group_id
                     and st_distance(aj.centre, sg.centre) < sg.radius),
-       fragment2d as (select (st_dump(st_intersection(r.route, c.hull))).geom as fragment,
-                             r.activity_journal_id,
+       straight as (select (st_dump(st_multi(st_locatebetween(r.route, -2, 2)))).geom as straight,
+                           r.route,
+                           r.activity_journal_id
+                      from route as r),
+       fragment2d as (select (st_dump(st_intersection(s.straight, c.hull))).geom as fragment,
+                             s.activity_journal_id,
                              c.id as cluster_hull_id,
-                             r.route as route
-                        from route as r,
+                             s.route as route
+                        from straight as s,
                              cluster_hull as c
-                       where st_intersects(r.route, c.hull)
+                       where st_intersects(s.straight, c.hull)
                          and c.sector_group_id = :sector_group_id),
        startend as (select activity_journal_id,
                            cluster_hull_id,
@@ -304,3 +308,4 @@ select :sector_type, :sector_group_id, activity_journal_id, st_force2d(fragment)
     s.connection().execute(sql, sector_group_id=sector_group.id, sector_type=SectorType.SECTOR,
                            owner=short_cls(ClusterCalculator))
     s.commit()
+
