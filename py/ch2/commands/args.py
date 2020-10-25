@@ -69,7 +69,6 @@ BATCH = 'batch'
 BORDER = 'border'
 CHANGE = 'change'
 CHECK = 'check'
-CLIMB = 'climb'
 CMD = 'cmd'
 COMPACT = 'compact'
 COMPONENT = 'component'
@@ -181,6 +180,7 @@ SCHEDULE = 'schedule'
 SCHEMA = 'schema'
 SCHEMAS = 'schemas'
 SECURE = 'secure'
+SECTOR = 'sector'
 SHOW = 'show'
 SINGLE = 'single'
 SLICES = 'slices'
@@ -572,7 +572,7 @@ def make_parser(with_noop=False):
     thumbnail.add_argument(ACTIVITY, metavar='ACTIVITY', help='an activity ID or date')
     add_thumbnail_dir(thumbnail)
     thumbnail.add_argument(mm(DISPLAY), action='store_true', help='display image')
-    thumbnail.add_argument(mm(CLIMB), type=int, metavar='ID', help='add climb')
+    thumbnail.add_argument(mm(SECTOR), type=int, nargs='?', metavar='ID', help='mark sector')
 
     if with_noop:
         noop = commands.add_parser(NO_OP, help='used within jupyter (no-op from cmd line)')

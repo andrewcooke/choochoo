@@ -2,7 +2,7 @@ from enum import IntEnum
 from logging import getLogger
 
 from geoalchemy2 import Geometry
-from sqlalchemy import Column, Integer, Text, ForeignKey, Float, UniqueConstraint, or_, func, and_, select
+from sqlalchemy import Column, Integer, Text, ForeignKey, Float, UniqueConstraint, or_, func, and_, select, text
 from sqlalchemy.orm import relationship
 
 from .source import GroupedSource, Source, SourceType
@@ -153,6 +153,24 @@ class Sector(Base):
     def add_statistics(self, s, sjournal, loader):
         loader.add_data(N.SECTOR_TIME, sjournal, (sjournal.finish - sjournal.start).total_seconds(), sjournal.start)
         loader.add_data(N.SECTOR_DISTANCE, sjournal, sjournal.distance, sjournal.start)
+
+    def read_centroid(self, s):
+        sql = text('''
+      with point as (select st_centroid(st_transform(st_setsrid(s.route, sg.srid), 3785)) as point
+                       from sector as s,
+                            sector_group as sg
+                      where s.sector_group_id = sg.id
+                        and s.id = :sector_id)
+    select st_x(point), st_y(point)
+      from point; 
+    ''')
+        row = s.connection().execute(sql, sector_id=self.id).fetchone()
+        return row[0], row[1]
+
+    def display(self, s, fx, fy, ax, cm=1.5):
+        x, y = self.read_centroid(s)
+        ax.plot(fx(x), fy(y), marker='^', color='#dd2c00', markersize=cm*4)
+
 
 
 @add_child_ddl(Sector)

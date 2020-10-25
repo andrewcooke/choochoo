@@ -3,7 +3,7 @@ import datetime as dt
 from logging import getLogger
 
 from geoalchemy2 import Geography, Geometry
-from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint, desc, DateTime, Index
+from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint, desc, DateTime, Index, text
 from sqlalchemy.orm import relationship, backref
 
 from .source import SourceType, GroupedSource, Source
