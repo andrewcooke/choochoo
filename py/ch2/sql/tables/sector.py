@@ -169,7 +169,7 @@ class Sector(Base):
 
     def display(self, s, fx, fy, ax, cm=1.5):
         x, y = self.read_centroid(s)
-        ax.plot(fx(x), fy(y), marker='^', color='#dd2c00', markersize=cm*4)
+        ax.plot(fx(x), fy(y), marker='^', color='#dd2c00', markersize=cm*5)
 
 
 

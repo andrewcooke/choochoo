@@ -16,7 +16,7 @@ from .servlets.search import Search
 from .servlets.thumbnail import Thumbnail
 from .servlets.upload import Upload
 from .static import Static
-from ..commands.args import LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, WARN, SECURE, THUMBNAIL_DIR, \
+from ..commands.args import LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, WARN, SECURE, IMAGE_DIR, \
     NOTEBOOK_DIR, JUPYTER
 from ..common.args import mm
 from ..common.names import BASE
@@ -48,7 +48,7 @@ class WebController(BaseController):
         self.__warn_data = args[WARN + '-' + DATA]
         self.__warn_secure = args[WARN + '-' + SECURE]
         self.__notebook_dir = args[NOTEBOOK_DIR]
-        self.__thumbnail_dir = args[THUMBNAIL_DIR]
+        self.__thumbnail_dir = args[IMAGE_DIR]
         self.__jupyter = args[JUPYTER]
 
     def _build_cmd_and_log(self, ch2):
@@ -56,7 +56,7 @@ class WebController(BaseController):
         cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._config.args[BASE]} ' \
               f'{WEB} {SERVICE} {mm(WEB + "-" + BIND)} {self._bind} {mm(WEB + "-" + PORT)} {self._port} ' \
               f'{mm(JUPYTER)} {self.__jupyter} ' \
-              f'{mm(THUMBNAIL_DIR)} {self.__thumbnail_dir} {mm(NOTEBOOK_DIR)} {self.__notebook_dir}'
+              f'{mm(IMAGE_DIR)} {self.__thumbnail_dir} {mm(NOTEBOOK_DIR)} {self.__notebook_dir}'
         if self.__warn_data: cmd += f' {mm(WARN + "-" + DATA)}'
         if self.__warn_secure: cmd += f' {mm(WARN + "-" + SECURE)}'
         return cmd, log_name

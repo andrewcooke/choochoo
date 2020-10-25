@@ -20,6 +20,7 @@ from ...sql.utils import add
 
 log = getLogger(__name__)
 
+
 class FindClimbCalculator(ActivityJournalProcessCalculator):
 
     def __init__(self, *args, climb=None, **kargs):

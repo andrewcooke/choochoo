@@ -4,9 +4,8 @@ from os.path import exists, join
 
 from matplotlib import use
 from matplotlib.pyplot import show, figure
-from sqlalchemy import text
 
-from .args import ACTIVITY, THUMBNAIL_DIR, DISPLAY, SECTOR
+from .args import ACTIVITY, IMAGE_DIR, DISPLAY, SECTOR
 from ..data.query import Statistics
 from ..names import N
 from ..pipeline.read.activity import ActivityReader
@@ -20,24 +19,15 @@ def thumbnail(config):
 ## thumbnail
 
     > ch2 thumbnail ACTIVITY-ID
-    > ch2 thumbnail DATE
 
 Generate a thumbnail map of the activity route.
     '''
     with config.db.session_context() as s:
-        activity_id = parse_activity(s, config.args[ACTIVITY])
         sector = read_sector(s, config.args[SECTOR])
         if config.args[DISPLAY]:
-            display(s, activity_id, sector)
+            display(s, config.args[ACTIVITY], sector)
         else:
-            create_in_cache(config.args._format_path(THUMBNAIL_DIR), s, activity_id, sector)
-
-
-def parse_activity(s, text):
-    try:
-        return int(text)
-    except ValueError:
-        return ActivityJournal.at(s, text).id
+            create_in_cache(config.args._format_path(IMAGE_DIR), s, config.args[ACTIVITY], sector)
 
 
 def read_activity(s, activity_id, decimate=10):

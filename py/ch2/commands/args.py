@@ -41,9 +41,9 @@ NO_OP = 'no-op'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
 SEARCH = 'search'
 SHOW_SCHEDULE = 'show-schedule'
+SPARKLINE = 'sparkline'
 TEXT = 'text'
 THUMBNAIL = 'thumbnail'
-THUMBNAIL_DIR = 'thumbnail-dir'
 UNLOCK = 'unlock'
 VALIDATE = 'validate'
 
@@ -111,6 +111,7 @@ GREP = 'grep'
 GROUP = 'group'
 HEADER_SIZE = 'header-size'
 HEIGHT = 'height'
+IMAGE_DIR = 'image-dir'
 INTERNAL = 'internal'
 ITEM = 'item'
 K = 'k'
@@ -188,6 +189,7 @@ SOURCE = 'source'
 SOURCES = 'sources'
 SOURCE_ID = 'source-id'
 START = 'start'
+STATISTIC = 'statistic'
 STATISTICS = 'statistics'
 STATISTIC_NAMES = 'statistic-names'
 STATISTIC_JOURNALS = 'statistic-journals'
@@ -272,9 +274,9 @@ def make_parser(with_noop=False):
         cmd.add_argument(mm(prefix + DATA), action='store_true', help='warn user that data may be lost')
         cmd.add_argument(mm(prefix + SECURE), action='store_true', help='warn user that the system is insecure')
 
-    def add_thumbnail_dir(cmd):
-        cmd.add_argument(mm(THUMBNAIL_DIR), metavar='DIR', default='{base}/{version}/thumbnail',
-                         help='thumbnail cache')
+    def add_image_dir(cmd):
+        cmd.add_argument(mm(IMAGE_DIR), metavar='DIR', default='{base}/{version}/image',
+                         help='image cache')
 
     def add_notebook_dir(cmd):
         cmd.add_argument(mm(NOTEBOOK_DIR), metavar='DIR', default='{base}/{version}/notebook',
@@ -288,7 +290,7 @@ def make_parser(with_noop=False):
     add_server_args(web_start, prefix=WEB, default_port=WEB_PORT, name='web server')
     add_jupyter(web_start)
     add_warning_args(web_start)
-    add_thumbnail_dir(web_start)
+    add_image_dir(web_start)
     add_notebook_dir(web_start)
     web_cmds.add_parser(STOP, help='stop the web server', description='stop the web server')
     web_cmds.add_parser(STATUS, help='display status of web server', description='display status of web server')
@@ -297,7 +299,7 @@ def make_parser(with_noop=False):
     add_server_args(web_service, prefix=WEB, default_port=WEB_PORT, name='web server')
     add_jupyter(web_service)
     add_warning_args(web_service)
-    add_thumbnail_dir(web_service)
+    add_image_dir(web_service)
     add_notebook_dir(web_service)
 
     upload = commands.add_parser(UPLOAD, help='upload data (copy FIT files to permanent store)',
@@ -569,10 +571,16 @@ def make_parser(with_noop=False):
                                 help='max number of seconds between timestamps')
 
     thumbnail = commands.add_parser(THUMBNAIL, help='generate a thumbnail map of an activity')
-    thumbnail.add_argument(ACTIVITY, metavar='ACTIVITY', help='an activity ID or date')
-    add_thumbnail_dir(thumbnail)
+    thumbnail.add_argument(ACTIVITY, type=int, metavar='ACTIVITY', help='an activity ID')
+    add_image_dir(thumbnail)
     thumbnail.add_argument(mm(DISPLAY), action='store_true', help='display image')
     thumbnail.add_argument(mm(SECTOR), type=int, nargs='?', metavar='ID', help='mark sector')
+
+    sparkline = commands.add_parser(SPARKLINE, help='generate a sparkline plot for a statistics')
+    sparkline.add_argument(STATISTIC, type=int, metavar='STATISTIC', help='the statistics ID')
+    add_image_dir(sparkline)
+    sparkline.add_argument(mm(DISPLAY), action='store_true', help='display image')
+    sparkline.add_argument(mm(ACTIVITY), type=int, nargs='?', metavar='ID', help='mark activity')
 
     if with_noop:
         noop = commands.add_parser(NO_OP, help='used within jupyter (no-op from cmd line)')
