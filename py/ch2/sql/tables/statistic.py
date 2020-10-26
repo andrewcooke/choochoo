@@ -231,10 +231,12 @@ class StatisticJournal(Base):
     def measures_as_model(self, date):
         if hasattr(self, 'measures'):
             measures = {TYPE: MEASURES, SCHEDULES: {}}
+            # order by day, month, year etc
             for measure in sorted(self.measures,
                                   key=lambda measure: measure.source.schedule.frame_length_in_days(date),
                                   reverse=True):
-                measures[SCHEDULES][measure.source.schedule.describe(compact=True)] = (measure.percentile, measure.rank)
+                measures[SCHEDULES][measure.source.schedule.describe(compact=True)] = \
+                    (measure.percentile, measure.rank)
             return measures
         else:
             return None

@@ -1,6 +1,5 @@
 
 import datetime as dt
-from json import loads
 from logging import getLogger
 
 from sqlalchemy import desc
@@ -9,18 +8,17 @@ from .elevation import ElevationCalculator
 from .impulse import ImpulseCalculator
 from .power import PowerCalculator
 from .response import ResponseCalculator
-from .utils import ProcessCalculator, ActivityJournalProcessCalculator, DataFrameCalculatorMixin
+from .sector import SectorCalculator
+from .utils import ActivityJournalProcessCalculator, DataFrameCalculatorMixin
 from ..pipeline import OwnerInMixin, LoaderMixin
 from ..read.activity import ActivityReader
 from ...data import Statistics
 from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats, \
     direction_stats, copy_times, round_km, MAX_MINUTES
-from ...data.climb import find_climbs, Climb, add_climb_stats
-from ...data.frame import present
 from ...data.response import response_stats, DIGITS
 from ...lib.data import safe_dict
 from ...names import N, T, S, U, SPACE
-from ...sql import Constant, ActivityJournal, StatisticJournal, StatisticJournalType, StatisticName
+from ...sql import ActivityJournal, StatisticJournal, StatisticJournalType, StatisticName
 
 log = getLogger(__name__)
 
@@ -28,8 +26,7 @@ log = getLogger(__name__)
 class ActivityCalculator(LoaderMixin, OwnerInMixin, DataFrameCalculatorMixin,
                          ActivityJournalProcessCalculator):
 
-    def __init__(self, *args, climb=None, response_prefix=None, **kargs):
-        self.climb_ref = climb
+    def __init__(self, *args, response_prefix=None, **kargs):
         self.response_prefix = response_prefix
         super().__init__(*args, add_serial=False, **kargs)
 
@@ -67,18 +64,6 @@ class ActivityCalculator(LoaderMixin, OwnerInMixin, DataFrameCalculatorMixin,
                        'The highest average power estimate in the given interval.', values=MAX_MINUTES)
         self._provides(s, T.TOTAL_CLIMB, StatisticJournalType.FLOAT, U.M, S.join(S.MAX, S.MSR),
                        'The total height climbed in the detected climbs (only).')
-        self._provides(s, T.CLIMB_ELEVATION, StatisticJournalType.FLOAT, U.M, S.join(S.MAX, S.SUM, S.MSR),
-                       'The difference in elevation between start and end of the climb.')
-        self._provides(s, T.CLIMB_DISTANCE, StatisticJournalType.FLOAT, U.KM, S.join(S.MAX, S.SUM, S.MSR),
-                       'The distance travelled during the climb.')
-        self._provides(s, T.CLIMB_TIME, StatisticJournalType.FLOAT, U.S, S.join(S.MAX, S.SUM, S.MSR),
-                       'The time spent on the climb.')
-        self._provides(s, T.CLIMB_GRADIENT, StatisticJournalType.FLOAT, U.PC,  S.join(S.MAX, S.MSR),
-                       'The average inclination of the climb (elevation / distance).')
-        self._provides(s, T.CLIMB_POWER, StatisticJournalType.FLOAT, U.W,  S.join(S.MAX, S.MSR),
-                       'The average estimated power during the climb.')
-        self._provides(s, T.CLIMB_CATEGORY, StatisticJournalType.TEXT, None, None,
-                       'The climb category (text, "4" to "1" and "HC").')
         # these are complicated :( because exact names are calculated elsewhere
         for statistic_name in s.query(StatisticName). \
                 filter(StatisticName.name.like('%' + N.FITNESS_ANY),
@@ -117,19 +102,21 @@ class ActivityCalculator(LoaderMixin, OwnerInMixin, DataFrameCalculatorMixin,
                     drop_prefix(self.response_prefix).df
             else:
                 sdf = None
+            cdf = Statistics(s, start=ajournal.start, finish=ajournal.finish). \
+                by_name(SectorCalculator, N.CLIMB_ELEVATION).df
             prev = s.query(ActivityJournal). \
                 filter(ActivityJournal.start < ajournal.start). \
                 order_by(desc(ActivityJournal.start)). \
                 first()
             delta = (ajournal.start - prev.start).total_seconds() if prev else None
-            return adf, sdf, delta
+            return adf, sdf, cdf, delta
         except Exception as e:
             log.warning(f'Failed to generate statistics for activity: {e}')
             raise
 
     def _calculate_stats(self, s, ajournal, data):
-        adf, sdf, delta = data
-        stats, climbs = {}, None
+        adf, sdf, cdf, delta = data
+        stats = {}
         stats.update(copy_times(ajournal))
         stats.update(active_stats(adf))
         stats.update(self.__average_power(s, ajournal, stats[N.ACTIVE_TIME]))
@@ -140,11 +127,9 @@ class ActivityCalculator(LoaderMixin, OwnerInMixin, DataFrameCalculatorMixin,
         stats.update(direction_stats(adf))
         if sdf is not None:
             stats.update(response_stats(sdf, delta))
-        if present(adf, N.ELEVATION):
-            params = Climb(**loads(Constant.from_name(s, self.climb_ref).at(s).value))
-            climbs = list(find_climbs(adf, params=params))
-            add_climb_stats(adf, climbs)
-        return data, stats, climbs
+        if cdf is not None:
+            stats.update({N.TOTAL_CLIMB: cdf[N.CLIMB_ELEVATION].sum()})
+        return data, stats
 
     @safe_dict
     def __average_power(self, s, ajournal, active_time):
@@ -157,12 +142,6 @@ class ActivityCalculator(LoaderMixin, OwnerInMixin, DataFrameCalculatorMixin,
             return {N.MEAN_POWER_ESTIMATE: 0}
 
     def _copy_results(self, s, ajournal, loader, data):
-        df, stats, climbs = data
-        if climbs:
-            stats[N.TOTAL_CLIMB] = sum(climb[N.CLIMB_ELEVATION] for climb in climbs)
-            for climb in sorted(climbs, key=lambda climb: climb[N.TIME]):
-                time = climb.pop(N.TIME)
-                for name in climb.keys():
-                    loader.add_data(name, ajournal, climb[name], time)
+        df, stats = data
         for name in stats.keys():
             loader.add_data(name, ajournal, stats[name], ajournal.start)

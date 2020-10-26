@@ -61,14 +61,14 @@ def read_statistic(s, statistic_id, sector_id, activity_id):
 def fig_from_data(data, cm=1.5, width=2):
     fig = new_fig(cm=cm, width=width)
     ax, _ = new_ax(fig, width=width)
-    xs, ys, activity = data
+    xs, ys, _ = data
     if xs:
         fx, fy, _, _ = normalize(xs, ys, preserve_aspect_ratio=False)
         xs, ys = [fx(x) for x in xs], [fy(y) for y in ys]
         ax.plot(xs, ys, color='white')
-        if any(activity):
-            ix = activity.index(True)
-            ax.plot([xs[ix]], [ys[ix]], marker='o', color=ORANGE, markersize=cm*2)
+        for (x, y, activity) in zip(*data):
+            if activity:
+                ax.plot([fx(x)], [fy(y)], marker='o', color=ORANGE, markersize=cm*2)
     return fig
 
 

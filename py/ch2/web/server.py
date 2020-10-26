@@ -13,7 +13,7 @@ from .servlets.diary import Diary
 from .servlets.jupyter import Jupyter
 from .servlets.kit import Kit
 from .servlets.search import Search
-from .servlets.thumbnail import Thumbnail
+from .servlets.image import Thumbnail, Sparkline
 from .servlets.upload import Upload
 from .static import Static
 from ..commands.args import LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, WARN, SECURE, IMAGE_DIR, \
@@ -103,6 +103,7 @@ class WebServer:
         static = Static('.static')
         upload = Upload(config)
         thumbnail = Thumbnail(config)
+        sparkline = Sparkline(config)
         search = Search()
 
         self.url_map = Map([
@@ -139,7 +140,11 @@ class WebServer:
             Rule('/api/kit/statistics', endpoint=self.check(kit.read_statistics, empty=False), methods=(GET,)),
             Rule('/api/kit/<date>', endpoint=self.check(kit.read_snapshot, empty=False), methods=(GET,)),
 
-            Rule('/api/thumbnail/<activity>', endpoint=thumbnail, methods=(GET,)),
+            Rule('/api/thumbnail/<int:activity>', endpoint=thumbnail, methods=(GET,)),
+            Rule('/api/thumbnail/<int:activity>/<int:sector>', endpoint=thumbnail, methods=(GET,)),
+            Rule('/api/sparkline/<int:statistic>', endpoint=sparkline, methods=(GET,)),
+            Rule('/api/sparkline/<int:statistic>/<int:sector>', endpoint=sparkline, methods=(GET,)),
+            Rule('/api/sparkline/<int:statistic>/<int:sector>/<int:activity>', endpoint=sparkline, methods=(GET,)),
             Rule('/api/static/<path:path>', endpoint=static, methods=(GET,)),
 
             Rule('/api/upload', endpoint=self.check(upload, empty=False), methods=(PUT,)),

@@ -14,7 +14,7 @@ from ch2.sql.types import Point, short_cls
 log = getLogger(__name__)
 
 
-class FindSectorCalculator(LoaderMixin, ActivityOwnerProcessCalculator):
+class SectorCalculator(LoaderMixin, ActivityOwnerProcessCalculator):
     '''
     Run through new activity journals, find any sectors that match, populate the SectorJournal,
     and add associated statistics.
@@ -50,7 +50,7 @@ class FindSectorCalculator(LoaderMixin, ActivityOwnerProcessCalculator):
 
 if __name__ == '__main__':
     config = connect_config(['-v5'])
-    pipeline = FindSectorCalculator(config)
+    pipeline = SectorCalculator(config)
     with config.db.session_context() as s:
         ajournal = s.query(ActivityJournal).filter(ActivityJournal.id == 1799).one()
         pipeline._run_activity_journal(s, ajournal)

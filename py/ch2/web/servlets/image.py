@@ -5,7 +5,6 @@ from werkzeug.wrappers import ETagResponseMixin
 
 from . import ContentType
 from ...commands.args import IMAGE_DIR
-from ...commands.thumbnail import create_in_cache
 
 log = getLogger(__name__)
 
@@ -14,15 +13,12 @@ class CacheResponse(Response, ETagResponseMixin):
     pass
 
 
-class Thumbnail(ContentType):
+class BaseImage(ContentType):
 
     def __init__(self, config):
-        self.__config = config
+        self._image_dir = config.args._format_path(IMAGE_DIR)
 
-    def __call__(self, request, s, activity):
-        activity_id = int(activity)
-        dir = self.__config.args._format_path(IMAGE_DIR)
-        path = create_in_cache(dir, s, activity_id)
+    def _serve(self, path):
         try:
             log.debug(f'Reading {path}')
             with open(path, 'rb') as input:
@@ -33,3 +29,19 @@ class Thumbnail(ContentType):
         except Exception as e:
             log.warning(f'Error serving {path}: {e}')
             raise
+
+
+class Thumbnail(BaseImage):
+
+    def __call__(self, request, s, activity, sector=None):
+        from ...commands.thumbnail import create_in_cache
+        path = create_in_cache(self._image_dir, s, activity, sector_id=sector)
+        return self._serve(path)
+
+
+class Sparkline(BaseImage):
+
+    def __call__(self, request, s, statistic, sector, activity):
+        from ...commands.sparkline import create_in_cache
+        path = create_in_cache(self._image_dir, s, statistic, sector_id=sector, activity_id=activity)
+        return self._serve(path)

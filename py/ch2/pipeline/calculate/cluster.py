@@ -20,7 +20,7 @@ class ClusterCalculator(RerunWhenNewActivitiesMixin, ProcessCalculator):
 
 
 if __name__ == '__main__':
-    from ch2.pipeline.calculate.sector import FindSectorCalculator
+    from ch2.pipeline.calculate.sector import SectorCalculator
     config = connect_config(['-v5'])
     # ClusterCalculator(config, owner_in=short_cls(ActivityReader)).run()
-    FindSectorCalculator(config, owner_in=short_cls(ClusterCalculator)).run()
+    SectorCalculator(config, owner_in=short_cls(ClusterCalculator)).run()

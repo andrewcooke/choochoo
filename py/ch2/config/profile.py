@@ -19,7 +19,7 @@ from ..pipeline.calculate.heart_rate import RestHRCalculator
 from ..pipeline.calculate.kit import KitCalculator
 from ..pipeline.calculate.nearby import SimilarityCalculator, NearbyCalculator
 from ..pipeline.calculate.response import ResponseCalculator
-from ..pipeline.calculate.sector import FindSectorCalculator
+from ..pipeline.calculate.sector import SectorCalculator
 from ..pipeline.calculate.steps import StepsCalculator
 from ..pipeline.calculate.summary import SummaryCalculator
 from ..pipeline.display.activity.achievement import AchievementDelegate
@@ -146,11 +146,9 @@ your FF-model parameters (fitness and fatigue).
         add_responses(s, self._ff_parameters(), prefix=N.DEFAULT)
 
     def _load_standard_statistics(self, s, blockers=None):
-        add_process(s, ActivityCalculator, blocked_by=[ActivityReader],
-                    owner_in=short_cls(ActivityReader))
         add_process(s, FindClimbCalculator, blocked_by=[ElevationCalculator],
                     owner_in=short_cls(ActivityReader), climb=CLIMB_CNAME)
-        add_process(s, FindSectorCalculator, blocked_by=[FindClimbCalculator],
+        add_process(s, SectorCalculator, blocked_by=[FindClimbCalculator],
                     owner_in=short_cls(FindClimbCalculator))
         add_process(s, StepsCalculator, blocked_by=[MonitorReader],
                     owner_in=short_cls(MonitorReader))
@@ -161,9 +159,9 @@ your FF-model parameters (fitness and fatigue).
         blockers = blockers or []
         add_process(s, ActivityCalculator,
                     blocked_by=blockers + [ElevationCalculator, ImpulseCalculator, ResponseCalculator,
-                                           FindClimbCalculator],
+                                           FindClimbCalculator, SectorCalculator],
                     owner_in=short_cls(ResponseCalculator),
-                    climb=CLIMB_CNAME, response_prefix=N.DEFAULT)
+                    response_prefix=N.DEFAULT)
         add_process(s, SimilarityCalculator, blocked_by=[ActivityCalculator],
                     owner_in=short_cls(ActivityCalculator))
         add_process(s, NearbyCalculator, blocked_by=[SimilarityCalculator],

@@ -24,11 +24,10 @@ def thumbnail(config):
 Generate a thumbnail map of the activity route.
     '''
     with config.db.session_context() as s:
-        sector = read_sector(s, config.args[SECTOR])
         if config.args[DISPLAY]:
-            display(s, config.args[ACTIVITY], sector)
+            display(s, config.args[ACTIVITY], config.args[SECTOR])
         else:
-            create_in_cache(config.args._format_path(IMAGE_DIR), s, config.args[ACTIVITY], sector)
+            create_in_cache(config.args._format_path(IMAGE_DIR), s, config.args[ACTIVITY], config.args[SECTOR])
 
 
 def read_activity(s, activity_id, decimate=10):
@@ -79,24 +78,24 @@ def fig_from_df(df, grid=10, cm=1.5, border=0.2):
     return fx, fy, make_figure(xs, ys, side, grid, cm, border)
 
 
-def display(s, activity_id, sector=None):
+def display(s, activity_id, sector_id=None):
     df = read_activity(s, activity_id)
     use('tkagg')
     fx, fy, fig = fig_from_df(df)
-    if fx and sector:
-        sector.display(s, fx, fy, fig.gca())
+    if fx and sector_id:
+        read_sector(s, sector_id).display(s, fx, fy, fig.gca())
     fig.gca().set_facecolor('black')
     show()
 
 
-def create_in_cache(dir, s, activity_id, sector=None):
-    path = join(dir, f'{THUMBNAIL}-{activity_id}:{sector.id if sector else None}.png')
+def create_in_cache(dir, s, activity_id, sector_id=None):
+    path = join(dir, f'{THUMBNAIL}-{activity_id}:{sector_id if sector_id else None}.png')
     if not exists(path):
         df = read_activity(s, activity_id)
         use('agg')
         fx, fy, fig = fig_from_df(df)
-        if fx and sector:
-            sector.display(s, fx, fy, fig.gca())
+        if fx and sector_id:
+            read_sector(s, sector_id).display(s, fx, fy, fig.gca())
         fig.savefig(path, transparent=True)
     log.info(f'Thumbnail in {path}')
     return path

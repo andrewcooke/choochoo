@@ -8,7 +8,9 @@ from .frame import linear_resample, present
 from ..common.math import is_nan
 from ..lib.data import nearest_index, get_index_loc, safe_yield, safe_none
 from ..names import Names as N
+from ..pipeline.calculate import ActivityCalculator
 from ..sql import StatisticName, StatisticJournal, Source
+from ..sql.tables.sector import SectorJournal
 
 log = getLogger(__name__)
 
@@ -157,38 +159,23 @@ def search(df, params=Climb(), grid=False):
 
 
 def climbs_for_activity(s, ajournal):
-
-    from ..pipeline.owners import ActivityCalculator
-
-    total = s.query(StatisticJournal).join(StatisticName, Source). \
+    from ..pipeline.calculate.sector import SectorCalculator
+    total = s.query(StatisticJournal). \
+        join(StatisticName, Source). \
         filter(StatisticName.name == N.TOTAL_CLIMB,
                StatisticJournal.time == ajournal.start,
                StatisticName.owner == ActivityCalculator,
                Source.activity_group == ajournal.activity_group).order_by(StatisticJournal.time).one_or_none()
-    statistics = s.query(StatisticJournal).join(StatisticName, Source). \
+    query = s.query(StatisticJournal). \
+        join(StatisticName, Source). \
+        join(SectorJournal, SectorJournal.id == Source.id). \
         filter(StatisticName.name.like(N.CLIMB_ANY),
                StatisticJournal.time >= ajournal.start,
                StatisticJournal.time <= ajournal.finish,
-               StatisticName.owner == ActivityCalculator,
-               Source.activity_group == ajournal.activity_group).order_by(StatisticJournal.time).all()
+               StatisticName.owner == SectorCalculator,
+               Source.activity_group == ajournal.activity_group).order_by(StatisticJournal.time)
+    statistics = query.all()
     return total, sorted((dict((statistic.statistic_name.name, statistic) for statistic in climb_statistics)
                           for _, climb_statistics in groupby(statistics, key=lambda statistic: statistic.time)),
                          key=lambda climb: climb[N.CLIMB_ELEVATION].value, reverse=True)
-
-
-@safe_none
-def add_climb_stats(df, climbs):
-    for climb in climbs:
-        finish = climb[N.TIME]
-        start = finish - dt.timedelta(seconds=climb[N.CLIMB_TIME])
-        if N.POWER_ESTIMATE in df.columns:
-            # mean() returns a series!
-            power = df.loc[start:finish, [N.POWER_ESTIMATE]].mean()[0]
-            if not is_nan(power):
-                climb[N.CLIMB_POWER] = power
-            else:
-                log.warning(f'Invalid {N.POWER_ESTIMATE} in climb data')
-        else:
-            log.warning(f'Missing {N.POWER_ESTIMATE} in climb data')
-
 

@@ -10,8 +10,7 @@ from .elevation import expand_distance_time, elapsed_time_to_time
 from .utils import ActivityJournalProcessCalculator
 from ...common.date import local_time_to_time
 from ...common.log import log_current_exception
-from ...data.climb import find_climbs
-from ...data.sector import HULL_RADIUS, add_start_finish
+from ...data.sector import add_start_finish
 from ...names import N
 from ...sql import Timestamp, Constant
 from ...sql.tables.sector import SectorGroup, Sector, SectorClimb
@@ -52,6 +51,7 @@ class FindClimbCalculator(ActivityJournalProcessCalculator):
                             s.rollback()
 
     def __find_big_climbs(self, s, sector_group, ajournal):
+        from ...data.climb import find_climbs
         log.info('Finding climbs from the entire route')
         df = self.__complete_route(s, sector_group.id, ajournal.id)
         df = expand_distance_time(df)

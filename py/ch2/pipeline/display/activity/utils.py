@@ -127,6 +127,8 @@ class ActivityDelegate(ActivityJournalDelegate):
         if zones: yield [text('HR Zones (% time)')] + zones
         active_data = list(self.__read_active_data(s, ajournal, date))
         if active_data: yield [text('Activity Statistics')] + active_data
+        # sectors = list(self.__read_sectors(s, ajournal, date))
+        # if sectors: yield [text('Sectors')] + sectors
         climbs = list(self.__read_climbs(s, ajournal, date))
         if climbs: yield [text('Climbs')] + climbs
         for (title, template, re) in (('Min Time', N.MIN_KM_TIME_ANY, r'(\d+km)'),
@@ -171,25 +173,40 @@ class ActivityDelegate(ActivityJournalDelegate):
 
     @classmethod
     def __sjournal_as_value(cls, sjournal, date=None):
+        # date is really a flag to include measures
         measures = sjournal.measures_as_model(date) if date else None
         return value(sjournal.statistic_name.title, sjournal.value,
                      units=sjournal.statistic_name.units, measures=measures)
 
     @classmethod
     def __climb_as_value(cls, climb, key, date=None):
+        # date is really a flag to include measures
         return cls.__sjournal_as_value(climb[key], date=date)
 
     @classmethod
     def __read_climbs(cls, s, ajournal, date):
         total, climbs = climbs_for_activity(s, ajournal)
-        if total:
-            yield cls.__sjournal_as_value(total, date=date)
+        if climbs:
+            if total:
+                yield cls.__sjournal_as_value(total, date=date)
             for climb in climbs:
                 yield [text('Climb'),
                        cls.__climb_as_value(climb, N.CLIMB_ELEVATION, date=date),
                        cls.__climb_as_value(climb, N.CLIMB_DISTANCE),
                        cls.__climb_as_value(climb, N.CLIMB_TIME),
                        cls.__climb_as_value(climb, N.CLIMB_GRADIENT)]
+
+    # @classmethod
+    # def __read_sectors(cls, s, ajournal, date):
+    #     total, climbs = climbs_for_activity(s, ajournal)
+    #     if total:
+    #         yield cls.__sjournal_as_value(total, date=date)
+    #         for climb in climbs:
+    #             yield [text('Climb'),
+    #                    cls.__climb_as_value(climb, N.CLIMB_ELEVATION, date=date),
+    #                    cls.__climb_as_value(climb, N.CLIMB_DISTANCE),
+    #                    cls.__climb_as_value(climb, N.CLIMB_TIME),
+    #                    cls.__climb_as_value(climb, N.CLIMB_GRADIENT)]
 
     def __read_template(self, s, ajournal, template, re, date):
         sjournals = s.query(StatisticJournal).join(StatisticName). \
