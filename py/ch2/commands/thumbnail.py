@@ -90,7 +90,7 @@ def display(s, activity_id, sector=None):
 
 
 def create_in_cache(dir, s, activity_id, sector=None):
-    path = join(dir, f'{THUMBNAIL}-{activity_id}-{sector.id if sector else None}.png')
+    path = join(dir, f'{THUMBNAIL}-{activity_id}:{sector.id if sector else None}.png')
     if not exists(path):
         df = read_activity(s, activity_id)
         use('agg')

@@ -571,15 +571,16 @@ def make_parser(with_noop=False):
                                 help='max number of seconds between timestamps')
 
     thumbnail = commands.add_parser(THUMBNAIL, help='generate a thumbnail map of an activity')
-    thumbnail.add_argument(ACTIVITY, type=int, metavar='ACTIVITY', help='an activity ID')
+    thumbnail.add_argument(ACTIVITY, type=int, metavar='ID', help='an activity ID')
     add_image_dir(thumbnail)
     thumbnail.add_argument(mm(DISPLAY), action='store_true', help='display image')
     thumbnail.add_argument(mm(SECTOR), type=int, nargs='?', metavar='ID', help='mark sector')
 
     sparkline = commands.add_parser(SPARKLINE, help='generate a sparkline plot for a statistics')
-    sparkline.add_argument(STATISTIC, type=int, metavar='STATISTIC', help='the statistics ID')
+    sparkline.add_argument(STATISTIC, type=int, metavar='ID', help='the statistics ID')
     add_image_dir(sparkline)
     sparkline.add_argument(mm(DISPLAY), action='store_true', help='display image')
+    sparkline.add_argument(mm(SECTOR), type=int, nargs='?', metavar='ID', help='restrict to single sector')
     sparkline.add_argument(mm(ACTIVITY), type=int, nargs='?', metavar='ID', help='mark activity')
 
     if with_noop:

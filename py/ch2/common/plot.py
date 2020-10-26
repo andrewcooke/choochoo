@@ -18,6 +18,10 @@ def normalize(xs, ys, preserve_aspect_ratio=True):
         else:
             xlo -= (dy - dx) / 2
             dx = dy
+    if dx == 0:
+        xlo, dx = xlo - 0.5, 1
+    if dy == 0:
+        ylo, dy = ylo - 0.5, 1
     return lambda x: (x - xlo) / dx - 0.5, lambda y: (y - ylo) / dy - 0.5, dx, dy
 
 
