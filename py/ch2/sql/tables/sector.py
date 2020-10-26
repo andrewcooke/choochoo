@@ -12,6 +12,7 @@ from ..triggers import add_child_ddl, add_text
 from ..types import ShortCls, Point, UTC
 from ..utils import add
 from ...common.geo import utm_srid
+from ...common.plot import ORANGE
 from ...names import N, T, U, S
 
 log = getLogger(__name__)
@@ -169,7 +170,7 @@ class Sector(Base):
 
     def display(self, s, fx, fy, ax, cm=1.5):
         x, y = self.read_centroid(s)
-        ax.plot(fx(x), fy(y), marker='^', color='#dd2c00', markersize=cm*5)
+        ax.plot(fx(x), fy(y), marker='^', color=ORANGE, markersize=cm*5)
 
 
 

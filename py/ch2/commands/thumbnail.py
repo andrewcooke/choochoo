@@ -5,7 +5,8 @@ from os.path import exists, join
 from matplotlib import use
 from matplotlib.pyplot import show, figure
 
-from .args import ACTIVITY, IMAGE_DIR, DISPLAY, SECTOR
+from .args import ACTIVITY, IMAGE_DIR, DISPLAY, SECTOR, THUMBNAIL
+from ..common.plot import normalize, new_fig, new_ax
 from ..data.query import Statistics
 from ..names import N
 from ..pipeline.read.activity import ActivityReader
@@ -48,39 +49,19 @@ def read_sector(s, sector_id):
             raise Exception(f'{sector_id} is not a valid sector ID')
 
 
-def stats(zs):
-    lo, hi = min(zs), max(zs)
-    return lo, hi, hi - lo
-
-
-def normalize(xs, ys):
-    xlo, xhi, dx = stats(xs)
-    ylo, yhi, dy = stats(ys)
-    if dx > dy:
-        ylo -= (dx - dy) / 2
-    else:
-        xlo -= (dy - dx) / 2
-    d = max(dx, dy)
-    return lambda x: (x - xlo) / d - 0.5, lambda y: (y - ylo) / d - 0.5, d
-
-
-def make_figure(xs, ys, side, grid, cm, border):
-    fig = figure(frameon=False)
-    fig.set_size_inches(cm / 2.54, cm / 2.54)
-    ax = fig.add_subplot(1, 1, 1)
-    for edge in ('top', 'right', 'bottom', 'left'):
-        ax.spines[edge].set_visible(False)
-    lim = 0.5 * (1 + border)
+def add_grid(ax, lim, side, grid):
     km = 1000 / side
     n = int(lim / (grid * km)) + 1
     ticks = [km * d * grid for d in range(-n, n+1)]
     ax.set_xticks(ticks)
     ax.set_yticks(ticks)
-    ax.tick_params(labelbottom=False, labelleft=False, length=0)
     ax.grid(axis='both', color='#535353')
-    ax.set_xlim([-lim, lim])
-    ax.set_ylim([-lim, lim])
-    ax.set_aspect(aspect='equal', adjustable='box')
+
+
+def make_figure(xs, ys, side, grid, cm=1.5, border=0.2):
+    fig = new_fig(cm=cm)
+    ax, lim = new_ax(fig)
+    add_grid(ax, lim, side, grid)
     ax.plot(xs, ys, color='white')
     ax.plot([xs[0]], [ys[0]], marker='o', color='green', markersize=cm*3)
     ax.plot([xs[-1]], [ys[-1]], marker='o', color='red', markersize=cm*1.5)
@@ -90,7 +71,7 @@ def make_figure(xs, ys, side, grid, cm, border):
 def fig_from_df(df, grid=10, cm=1.5, border=0.2):
     xs, ys = zip(*[(x, y) for _, (x, y) in df.iterrows()])
     if xs:
-        fx, fy, side = normalize(xs, ys)
+        fx, fy, side, _ = normalize(xs, ys)
         xs, ys = [fx(x) for x in xs], [fy(y) for y in ys]
     else:
         fx, fy = None, None
@@ -98,7 +79,7 @@ def fig_from_df(df, grid=10, cm=1.5, border=0.2):
     return fx, fy, make_figure(xs, ys, side, grid, cm, border)
 
 
-def display(s, activity_id, sector):
+def display(s, activity_id, sector=None):
     df = read_activity(s, activity_id)
     use('tkagg')
     fx, fy, fig = fig_from_df(df)
@@ -109,7 +90,7 @@ def display(s, activity_id, sector):
 
 
 def create_in_cache(dir, s, activity_id, sector=None):
-    path = join(dir, f'{activity_id}.png')
+    path = join(dir, f'{THUMBNAIL}-{activity_id}-{sector.id if sector else None}.png')
     if not exists(path):
         df = read_activity(s, activity_id)
         use('agg')

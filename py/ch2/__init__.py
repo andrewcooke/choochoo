@@ -1,6 +1,7 @@
 from logging import getLogger, NullHandler
 from sys import version_info, exit
 
+from .commands.sparkline import sparkline
 from .common.args import NamespaceWithVariables
 from .common.global_ import set_global_dev
 from .common.md import Markdown
@@ -13,7 +14,7 @@ getLogger('tornado').addHandler(NullHandler())
 from .commands.args import COMMAND, make_parser, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DATABASE, CONSTANTS, SHOW_SCHEDULE, MONITOR, GARMIN, \
     UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, IMPORT, THUMBNAIL, CHECK, SEARCH, VALIDATE, \
-    DB_VERSION, UPLOAD, PROCESS, DELETE
+    DB_VERSION, UPLOAD, PROCESS, DELETE, SPARKLINE
 from .commands.process import process
 from .commands.upload import upload
 from .commands.constants import constants
@@ -61,6 +62,7 @@ COMMANDS = {CONSTANTS: constants,
             PROCESS: process,
             SEARCH: search,
             SHOW_SCHEDULE: show_schedule,
+            SPARKLINE: sparkline,
             THUMBNAIL: thumbnail,
             UPLOAD: upload,
             VALIDATE: validate,
