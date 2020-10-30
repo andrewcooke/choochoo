@@ -179,7 +179,7 @@ def climbs_for_activity(s, ajournal):
     def make_climb(sjournals):
         sjournals = list(sjournals)
         climb = {sjournal.statistic_name.name: sjournal for sjournal in sjournals}
-        climb['start_distance'] = sjournals[0].source.start_distance
+        climb['start-distance'] = sjournals[0].source.start_distance
         return climb
 
     return total, sorted((make_climb(grouped)

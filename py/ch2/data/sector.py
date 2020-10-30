@@ -1,7 +1,10 @@
+from itertools import groupby
 from logging import getLogger
 
 from sqlalchemy import text
 
+from ch2.names import N
+from ch2.sql import StatisticJournal, StatisticName, Source
 from ch2.sql.tables.sector import SectorJournal
 from ch2.sql.utils import add
 
@@ -111,3 +114,26 @@ update sector
 ''')
     log.debug(sql)
     s.connection().execute(sql, sector_id=sector_id, radius=HULL_RADIUS)
+
+
+def sectors_for_activity(s, ajournal):
+    from ..pipeline.calculate.sector import SectorCalculator
+    query = s.query(StatisticJournal). \
+        join(StatisticName, Source). \
+        join(SectorJournal, SectorJournal.id == Source.id). \
+        filter(StatisticName.name.like(N.SECTOR_ANY),
+               StatisticJournal.time >= ajournal.start,
+               StatisticJournal.time <= ajournal.finish,
+               StatisticName.owner == SectorCalculator,
+               Source.activity_group == ajournal.activity_group).order_by(StatisticJournal.time)
+    sjournals = query.all()
+
+    def make_sector(sjournals):
+        sjournals = list(sjournals)
+        sector = {sjournal.statistic_name.name: sjournal for sjournal in sjournals}
+        sector['start-distance'] = sjournals[0].source.start_distance
+        return sector
+
+    return sorted((make_sector(grouped)
+                   for _, grouped in groupby(sjournals, key=lambda sjournal: sjournal.time)),
+                  key=lambda sector: sector['start-distance'])

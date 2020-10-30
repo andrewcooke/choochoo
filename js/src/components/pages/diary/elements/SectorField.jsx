@@ -26,21 +26,16 @@ const useStyles = makeStyles(theme => ({
 }));
 
 
-export default function ClimbField(prop) {
+export default function SectorField(prop) {
 
     const {json} = prop;
-    const [, location, thumbnail, sparkline, category, elevation, distance, time, gradient] = json;
+    const [, location, thumbnail, sparkline, distance, time] = json;
     const classes = useStyles();
-    const cat = category.value === '' ? '' : 'Category ' + category.value;
 
     return (<>
         <Grid container item xs={4} className={classes.left}>
             <Grid item xs={12}>
-                <InputLabel shrink>Climb at {sprintf('%2.1f', location.value)}{location.units}</InputLabel>
-                <Text>{sprintf('%2.1f', elevation.value)}m {cat}</Text>
-                <Typography/>
-                <Text>{sprintf('%2.1f', gradient.value)}%</Text>
-                <Text secondary> </Text>
+                <InputLabel shrink>Sector at {sprintf('%2.1f', location.value)}{location.units}</InputLabel>
                 <FormatValueUnits value={distance.value} units={distance.units}/>
                 <Text secondary> </Text>
                 <FormatValueUnits value={time.value} units={time.units}/>
@@ -52,9 +47,6 @@ export default function ClimbField(prop) {
             </Grid>
             <Grid item xs={3}>
                 <Image url={thumbnail.value} className={classes.thumbnail}/>
-            </Grid>
-            <Grid item xs={12} className={classes.right}>
-                <Measures measures={elevation.measures}/>
             </Grid>
         </Grid>
     </>);

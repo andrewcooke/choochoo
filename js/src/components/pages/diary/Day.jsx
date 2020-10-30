@@ -9,6 +9,7 @@ import {
     JupyterActivity,
     NearbyMenu,
     ScoreField,
+    SectorField,
     ShrimpField,
     TextField,
     ValueField
@@ -99,6 +100,8 @@ function Header(props) {
 
     if (head.tag === 'climb') {
         return (<ClimbField json={json}/>);
+    } else if (head.tag === 'sector') {
+        return (<SectorField json={json}/>);
     } else if (head.tag === 'nearby-links') {
         return (<NearbyMenu json={json} history={history}/>);
     } else {

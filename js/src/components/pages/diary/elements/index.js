@@ -12,6 +12,7 @@ export {default as mkEditableField} from './mkEditableField';
 export {default as NearbyMenu} from './NearbyMenu';
 export {default as Schedule} from './Schedule';
 export {default as ScoreField} from './ScoreField';
+export {default as SectorField} from './SectorField';
 export {default as ShrimpField} from './ShrimpField';
 export {default as SummaryField} from './SummaryField';
 export {default as TextField} from './TextField';
