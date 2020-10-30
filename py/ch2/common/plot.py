@@ -1,6 +1,11 @@
 from matplotlib.pyplot import figure
 
 ORANGE = '#dd2c00'
+LIME = '#cddc39'
+CYAN = '#00b8d4'
+
+RED = 'red'
+GREEN = 'green'
 
 
 def stats(zs):

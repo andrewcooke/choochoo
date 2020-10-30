@@ -6,7 +6,7 @@ from matplotlib import use
 from matplotlib.pyplot import show, figure
 
 from .args import ACTIVITY, IMAGE_DIR, DISPLAY, SECTOR, THUMBNAIL
-from ..common.plot import normalize, new_fig, new_ax
+from ..common.plot import normalize, new_fig, new_ax, LIME, ORANGE
 from ..data.query import Statistics
 from ..names import N
 from ..pipeline.read.activity import ActivityReader
@@ -62,8 +62,8 @@ def make_figure(xs, ys, side, grid, cm=1.5, border=0.2):
     ax, lim = new_ax(fig)
     add_grid(ax, lim, side, grid)
     ax.plot(xs, ys, color='white')
-    ax.plot([xs[0]], [ys[0]], marker='o', color='green', markersize=cm*3)
-    ax.plot([xs[-1]], [ys[-1]], marker='o', color='red', markersize=cm*1.5)
+    ax.plot([xs[0]], [ys[0]], marker='o', color=LIME, markersize=cm*3)
+    ax.plot([xs[-1]], [ys[-1]], marker='o', color=ORANGE, markersize=cm*1.5)
     return fig
 
 
