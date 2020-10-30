@@ -14,6 +14,7 @@ from ..pipeline.calculate import ImpulseCalculator
 from ..pipeline.calculate.achievement import AchievementCalculator
 from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.climb import FindClimbCalculator
+from ..pipeline.calculate.cluster import ClusterCalculator
 from ..pipeline.calculate.elevation import ElevationCalculator
 from ..pipeline.calculate.heart_rate import RestHRCalculator
 from ..pipeline.calculate.kit import KitCalculator
@@ -150,6 +151,11 @@ your FF-model parameters (fitness and fatigue).
                     owner_in=short_cls(ActivityReader), climb=CLIMB_CNAME)
         add_process(s, SectorCalculator, blocked_by=[FindClimbCalculator],
                     owner_in=short_cls(FindClimbCalculator))
+        # depends on ElevationCalculator to set center
+        add_process(s, ClusterCalculator, blocked_by=[ElevationCalculator],
+                    owner_in=short_cls(ActivityReader))
+        add_process(s, SectorCalculator, blocked_by=[ClusterCalculator],
+                    owner_in=short_cls(ClusterCalculator))
         add_process(s, StepsCalculator, blocked_by=[MonitorReader],
                     owner_in=short_cls(MonitorReader))
         add_process(s, RestHRCalculator, blocked_by=[MonitorReader],

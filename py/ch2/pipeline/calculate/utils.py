@@ -170,6 +170,10 @@ class IntervalCalculatorMixin:
 
 class RerunWhenNewActivitiesMixin(OwnerInMixin):
 
+    def __init__(self, *args, excess=0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__excess = excess
+
     def _missing(self, s):
         prev = Timestamp.get(s, self.owner_out)
         if not prev:
@@ -177,12 +181,26 @@ class RerunWhenNewActivitiesMixin(OwnerInMixin):
         prev_ids = s.query(Timestamp.source_id). \
             filter(Timestamp.owner == self.owner_in,
                    Timestamp.constraint == None,
-                   Timestamp.time < prev.time).cte()
-        later = s.query(count(ActivityJournal.id)). \
+                   Timestamp.time < prev.time)
+        after = s.query(count(ActivityJournal.id)). \
             join(ActivityGroup). \
-            filter(not_(ActivityJournal.id.in_(prev_ids))).scalar()
-        if later:
+            filter(not_(ActivityJournal.id.in_(prev_ids.cte()))).scalar()
+        if self.__excess:
+            before = prev_ids.count()
+            missing = after > self.__excess * before
+            if missing:
+                log.info(f'Number of new activities ({after}) exceeds threshold '
+                         f'({self.__excess} x {before} = {self.__excess * before})')
+            else:
+                log.info('No new data')
+        else:
+            missing = after
+            if missing:
+                log.info('New data so reprocess')
+            else:
+                log.info('No new data')
+        if missing:
+            s.query(Timestamp).filter(owner=self.owner_out).delete(synchronize_session=False)
             return ['missing']
         else:
             return []
-

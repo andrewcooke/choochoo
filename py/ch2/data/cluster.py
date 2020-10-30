@@ -43,12 +43,15 @@ once we have local clusters, find 'typical' routes and then group by those?
 
 
 def hulls_from_last_activity(s, radius_km):
-    activity_journal = s.query(ActivityJournal).order_by(desc(ActivityJournal.start)).first()
+    activity_journal = s.query(ActivityJournal). \
+        filter(ActivityJournal.centre != None). \
+        order_by(desc(ActivityJournal.start)).first()
     return hulls_from_activity(s, activity_journal, radius_km)
 
 
 def hulls_from_activity(s, activity_journal, radius_km):
-    return hulls_from_point(s, activity_journal.centre, radius_km, title=f'From activity {activity_journal.start}')
+    return hulls_from_point(s, activity_journal.centre, radius_km,
+                            title=f'From activity {activity_journal.start}')
 
 
 Parameters = namedtuple('Parameters', 'start,exp,min_dbscan,min_total,target,buffer,indep,overlap',
