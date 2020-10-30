@@ -14,11 +14,9 @@ import {
     ValueField
 } from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
-import {Thumbnail, Layout, BusyWarning} from "../../elements";
+import {BusyWarning, Image, Layout, Thumbnail} from "../../elements";
 import {ColumnCard, ColumnList, LinkButton, Loading, Text} from "../../../common/elements";
 import {handleJson} from "../../functions";
-import {parse} from "date-fns";
-import {FMT_DAY} from "../../../constants";
 
 
 const useStyles = makeStyles(theme => ({
@@ -57,11 +55,16 @@ function childrenFromRest(head, rest, writer, level, history) {
                 children.push(<Header writer={writer} json={row} level={level} history={history} key={i}/>);
             }
         } else {
-            if (head.tag === 'activity' && i === 0 && row.label === 'Name' && row.type === 'edit') {
-                children.push(<EditField writer={writer} json={row} xs={10} key={i}/>);
-                children.push(<Grid item xs={2} key={i+0.5}>
-                    <Thumbnail activity_id={head.db} className={classes.img}/>
-                </Grid>);
+            if (head.tag === 'activity') {
+                if (row.label === 'Name') {
+                    children.push(<EditField writer={writer} json={row} xs={10} key={i}/>);
+                } else if (row.tag === 'thumbnail') {
+                    children.push(<Grid item xs={2} key={i+0.5}>
+                        <Image url={row.value} className={classes.img}/>
+                    </Grid>);
+                } else {
+                     children.push(<Field writer={writer} json={row} key={i}/>);
+                }
             } else {
                 children.push(<Field writer={writer} json={row} key={i}/>);
             }

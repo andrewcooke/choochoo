@@ -174,8 +174,14 @@ def climbs_for_activity(s, ajournal):
                StatisticJournal.time <= ajournal.finish,
                StatisticName.owner == SectorCalculator,
                Source.activity_group == ajournal.activity_group).order_by(StatisticJournal.time)
-    statistics = query.all()
-    return total, sorted((dict((statistic.statistic_name.name, statistic) for statistic in climb_statistics)
-                          for _, climb_statistics in groupby(statistics, key=lambda statistic: statistic.time)),
-                         key=lambda climb: climb[N.CLIMB_ELEVATION].value, reverse=True)
+    sjournals = query.all()
 
+    def make_climb(sjournals):
+        sjournals = list(sjournals)
+        climb = {sjournal.statistic_name.name: sjournal for sjournal in sjournals}
+        climb['start_distance'] = sjournals[0].source.start_distance
+        return climb
+
+    return total, sorted((make_climb(grouped)
+                          for _, grouped in groupby(sjournals, key=lambda sjournal: sjournal.time)),
+                         key=lambda climb: climb[N.CLIMB_ELEVATION].value, reverse=True)

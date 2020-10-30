@@ -11,11 +11,12 @@ log = getLogger(__name__)
 HULL_RADIUS = 40
 
 
-def find_sectors(s, sector_group, ajournal, owner):
+def find_sector_journals(s, sector_group, ajournal, owner):
     sql = text('''
 with srid as (select s.id as sector_id,
                      st_setsrid(s.route, sg.srid) as sector,
                      st_transform(aj.route_t::geometry, sg.srid) as route_t,
+                     st_transform(aj.route_d::geometry, sg.srid) as route_d,
                      st_setsrid(s.start, sg.srid) as start,
                      st_setsrid(s.finish, sg.srid) as finish
                 from sector as s,
@@ -46,9 +47,10 @@ select distinct  -- multiple starts/finishes can lead to duplicates
        r.sector_id,
        s.fraction as start_fraction,
        f.fraction as finish_fraction,
-       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_t, s.fraction)) as start,
-       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_t, f.fraction)) as finish,
-       st_length(st_linesubstring(r.route_t, s.fraction, f.fraction)) as distance
+       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_t, s.fraction)) as start_time,
+       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_t, f.fraction)) as finish_time,
+       st_m(st_lineinterpolatepoint(r.route_d, s.fraction)) as start_distance,
+       st_m(st_lineinterpolatepoint(r.route_d, f.fraction)) as finish_distance
   from srid as r,
        start_fraction as s,
        finish_fraction as f,

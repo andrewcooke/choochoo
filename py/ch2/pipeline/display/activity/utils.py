@@ -12,9 +12,10 @@ from ....common.date import YMD_HM, HM, format_minutes, add_date, MONTH, YMD, YE
 from ....common.log import log_current_exception
 from ....data.climb import climbs_for_activity
 from ....diary.database import interval_column
-from ....diary.model import optional_text, text, from_field, value
+from ....diary.model import optional_text, text, from_field, value, image
 from ....lib import local_date_to_time, time_to_local_time, to_time, to_date, time_to_local_date
-from ....names import Names as N
+from ....lib.utils import insert
+from ....names import Names as N, U
 from ....sql import ActivityGroup, ActivityJournal, ActivityTopicJournal, ActivityTopicField, StatisticName, \
     ActivityTopic, StatisticJournal, Pipeline, PipelineType, Interval
 
@@ -90,7 +91,8 @@ class ActivityDelegate(ActivityJournalDelegate):
 
     def _read_journal_topics(self, s, ajournal, date):
         yield text('Activity', db=ajournal)
-        yield from self.__read_activity_topics(s, ajournal, date)
+        yield from insert(self.__read_activity_topics(s, ajournal, date),
+                          1, image(f'/api/thumbnail/{ajournal.id}', tag='thumbnail'))
 
     def __read_activity_topics(self, s, ajournal, date):
         tjournal = ActivityTopicJournal.get_or_add(s, ajournal.file_hash, ajournal.activity_group)
@@ -184,6 +186,21 @@ class ActivityDelegate(ActivityJournalDelegate):
         return cls.__sjournal_as_value(climb[key], date=date)
 
     @classmethod
+    def __climb_thumbnail(cls, climb):
+        sector_journal = climb[N.CLIMB_TIME].source
+        return image(f'/api/thumbnail/{sector_journal.activity_journal_id}/{sector_journal.sector_id}',
+                     tag='thumbnail')
+
+    @classmethod
+    def __climb_sparkline(cls, climb):
+        statistic_journal = climb[N.CLIMB_TIME]
+        sector_journal = statistic_journal.source
+        return image(f'/api/isparkline/{statistic_journal.statistic_name_id}/'
+                     f'{sector_journal.sector_id}/'
+                     f'{sector_journal.activity_journal_id}',
+                     tag='sparkline')
+
+    @classmethod
     def __read_climbs(cls, s, ajournal, date):
         total, climbs = climbs_for_activity(s, ajournal)
         if climbs:
@@ -191,6 +208,10 @@ class ActivityDelegate(ActivityJournalDelegate):
                 yield cls.__sjournal_as_value(total, date=date)
             for climb in climbs:
                 yield [text('Climb'),
+                       value('Climb at', climb['start_distance'], units=U.KM),
+                       cls.__climb_thumbnail(climb),
+                       cls.__climb_sparkline(climb),
+                       cls.__climb_as_value(climb, N.CLIMB_CATEGORY),
                        cls.__climb_as_value(climb, N.CLIMB_ELEVATION, date=date),
                        cls.__climb_as_value(climb, N.CLIMB_DISTANCE),
                        cls.__climb_as_value(climb, N.CLIMB_TIME),

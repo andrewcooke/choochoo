@@ -15,6 +15,8 @@ def rewrite_db(model):
             db = model[DB]
             if hasattr(db, 'id'):
                 model[DB] = db.id
+            elif isinstance(db, str):  # images have urls
+                model[DB] = db
             else:  # links have tuples
                 model[DB] = [x if str_or_none(x) else x.id for x in db]
         return model

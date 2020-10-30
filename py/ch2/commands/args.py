@@ -113,6 +113,7 @@ HEADER_SIZE = 'header-size'
 HEIGHT = 'height'
 IMAGE_DIR = 'image-dir'
 INTERNAL = 'internal'
+INVERT = 'invert'
 ITEM = 'item'
 K = 'k'
 KARG = 'karg'
@@ -580,8 +581,9 @@ def make_parser(with_noop=False):
     sparkline.add_argument(STATISTIC, type=int, metavar='ID', help='the statistics ID')
     add_image_dir(sparkline)
     sparkline.add_argument(mm(DISPLAY), action='store_true', help='display image')
-    sparkline.add_argument(mm(SECTOR), type=int, nargs='?', metavar='ID', help='restrict to single sector')
-    sparkline.add_argument(mm(ACTIVITY), type=int, nargs='?', metavar='ID', help='mark activity')
+    sparkline.add_argument(mm(INVERT), action='store_true', help='invert image')
+    sparkline.add_argument(mm(SECTOR), type=int, metavar='ID', help='restrict to single sector')
+    sparkline.add_argument(mm(ACTIVITY), type=int, metavar='ID', help='mark activity')
 
     if with_noop:
         noop = commands.add_parser(NO_OP, help='used within jupyter (no-op from cmd line)')

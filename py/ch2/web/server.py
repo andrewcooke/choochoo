@@ -145,6 +145,9 @@ class WebServer:
             Rule('/api/sparkline/<int:statistic>', endpoint=sparkline, methods=(GET,)),
             Rule('/api/sparkline/<int:statistic>/<int:sector>', endpoint=sparkline, methods=(GET,)),
             Rule('/api/sparkline/<int:statistic>/<int:sector>/<int:activity>', endpoint=sparkline, methods=(GET,)),
+            Rule('/api/isparkline/<int:statistic>', endpoint=sparkline, methods=(GET,), defaults={'invert': True}),
+            Rule('/api/isparkline/<int:statistic>/<int:sector>', endpoint=sparkline, methods=(GET,), defaults={'invert': True}),
+            Rule('/api/isparkline/<int:statistic>/<int:sector>/<int:activity>', endpoint=sparkline, methods=(GET,), defaults={'invert': True}),
             Rule('/api/static/<path:path>', endpoint=static, methods=(GET,)),
 
             Rule('/api/upload', endpoint=self.check(upload, empty=False), methods=(PUT,)),

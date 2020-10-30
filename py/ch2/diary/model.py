@@ -20,7 +20,6 @@ describing the contents of the node.
 All leaf nodes have a 'type' attribute which describes the type of the node.
 The contents of a node of a given type match the constructor functions below.
 All leaf nodes have a 'value' attribute.
-All leaf nodes except those of type 'text' have a 'label' attribute.
 All leaf nodes have a 'tag' attribute that is intended as a machine-readable semantic marker (so where the client 
 needs exceptional processing I will try to maintain these even if the text of a node changes, for example).
 '''
@@ -34,6 +33,7 @@ DP = 'dp'
 EDIT = 'edit'
 FLOAT = 'float'
 HI = 'hi'
+IMAGE = 'image'
 INTEGER = 'integer'
 LABEL = 'label'
 LINK = 'link'
@@ -108,9 +108,13 @@ def measures(schedules):
     return {TYPE: MEASURES, SCHEDULES: schedules}
 
 
-def link(value, tag=None, db=None):
+def link(value, db=None, tag=None):
     if not isinstance(db, tuple): log.warning(f'Bad db for link {value}')
     return {TYPE: LINK, VALUE: value, TAG: to_tag(tag or value), DB: db}
+
+
+def image(value, tag=None):
+    return {TYPE: IMAGE, VALUE: value, TAG: to_tag(tag or value)}
 
 
 # --- decorators

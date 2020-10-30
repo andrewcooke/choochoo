@@ -37,10 +37,11 @@ class SectorJournal(GroupedSource):
     finish_fraction = Column(Float, nullable=False)
     # these duplicate data (can be extracted from st_linesubstring and the activity route)
     # but simplify time_range below.
-    start = Column(UTC, nullable=False)
-    finish = Column(UTC, nullable=False)
+    start_time = Column(UTC, nullable=False)
+    finish_time = Column(UTC, nullable=False)
     # this duplicates data because it's useful and a pain to calculate separately
-    distance = Column(Float, nullable=False)
+    start_distance = Column(Float, nullable=False)
+    finish_distance = Column(Float, nullable=False)
     UniqueConstraint(sector_id, activity_journal_id, start_fraction, finish_fraction)
 
     __mapper_args__ = {
@@ -152,8 +153,10 @@ class Sector(Base):
                            'The sector distance.')
 
     def add_statistics(self, s, sjournal, loader):
-        loader.add_data(N.SECTOR_TIME, sjournal, (sjournal.finish - sjournal.start).total_seconds(), sjournal.start)
-        loader.add_data(N.SECTOR_DISTANCE, sjournal, sjournal.distance, sjournal.start)
+        loader.add_data(N.SECTOR_TIME, sjournal, (sjournal.finish_time - sjournal.start_time).total_seconds(),
+                        sjournal.start_time)
+        loader.add_data(N.SECTOR_DISTANCE, sjournal, sjournal.finish_distance - sjournal.start_distance,
+                        sjournal.start_time)
 
     def read_centroid(self, s):
         sql = text('''
@@ -170,7 +173,7 @@ class Sector(Base):
 
     def display(self, s, fx, fy, ax, cm=1.5):
         x, y = self.read_centroid(s)
-        ax.plot(fx(x), fy(y), marker='^', color=ORANGE, markersize=cm*5)
+        ax.plot(fx(x), fy(y), marker='^', color=ORANGE, markersize=cm*3)
 
 
 
@@ -205,9 +208,12 @@ class SectorClimb(Sector):
                            'The climb category (text, "4" to "1" and "HC").')
 
     def add_statistics(self, s, sjournal, loader):
-        loader.add_data(N.CLIMB_ELEVATION, sjournal, self.elevation, sjournal.start)
-        loader.add_data(N.CLIMB_DISTANCE, sjournal, self.distance, sjournal.start)
-        loader.add_data(N.CLIMB_TIME, sjournal, (sjournal.finish - sjournal.start).total_seconds(), sjournal.start)
-        loader.add_data(N.CLIMB_GRADIENT, sjournal, self.elevation / (10 * self.distance), sjournal.start)
+        # note that apart from time these are taken from the sector rather than the journal
+        # this is deliberate - seems like we want these climbs to be consistent.
+        loader.add_data(N.CLIMB_ELEVATION, sjournal, self.elevation, sjournal.start_time)
+        loader.add_data(N.CLIMB_DISTANCE, sjournal, self.distance, sjournal.start_time)
+        loader.add_data(N.CLIMB_TIME, sjournal, (sjournal.finish_time - sjournal.start_time).total_seconds(),
+                        sjournal.start_time)
+        loader.add_data(N.CLIMB_GRADIENT, sjournal, self.elevation / (10 * self.distance), sjournal.start_time)
         if self.category:
-            loader.add_data(N.CLIMB_CATEGORY, sjournal, self.category, sjournal.start)
+            loader.add_data(N.CLIMB_CATEGORY, sjournal, self.category, sjournal.start_time)

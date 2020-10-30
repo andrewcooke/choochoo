@@ -3,7 +3,7 @@ from logging import getLogger
 from sqlalchemy import func
 
 from ch2.common.date import local_time_to_time
-from ch2.data.sector import find_sectors, add_sector_statistics
+from ch2.data.sector import find_sector_journals, add_sector_statistics
 from ch2.pipeline.calculate.utils import ActivityJournalProcessCalculator, ProcessCalculator, ActivityOwnerProcessCalculator
 from ch2.pipeline.pipeline import LoaderMixin, OwnerInMixin
 from ch2.sql import Timestamp, ActivityJournal
@@ -39,7 +39,7 @@ class SectorCalculator(LoaderMixin, ActivityOwnerProcessCalculator):
                     filter(func.ST_Distance(SectorGroup.centre, Point.fmt(ajournal.centre)) < SectorGroup.radius). \
                     all():
                 count = 0
-                for sjournal in find_sectors(s, sector_group, ajournal, self.owner_in):
+                for sjournal in find_sector_journals(s, sector_group, ajournal, self.owner_in):
                     loader = self._get_loader(s, add_serial=False)
                     add_sector_statistics(s, sjournal, loader)
                     loader.load()

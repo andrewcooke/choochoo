@@ -41,7 +41,7 @@ class Thumbnail(BaseImage):
 
 class Sparkline(BaseImage):
 
-    def __call__(self, request, s, statistic, sector, activity):
+    def __call__(self, request, s, statistic, sector, activity, invert=False):
         from ...commands.sparkline import create_in_cache
-        path = create_in_cache(self._image_dir, s, statistic, sector_id=sector, activity_id=activity)
+        path = create_in_cache(self._image_dir, s, statistic, sector_id=sector, activity_id=activity, invert=invert)
         return self._serve(path)
