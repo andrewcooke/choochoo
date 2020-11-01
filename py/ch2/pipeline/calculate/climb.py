@@ -14,7 +14,7 @@ from ...data.sector import add_start_finish
 from ...names import N
 from ...sql import Timestamp, Constant
 from ...sql.tables.sector import SectorGroup, Sector, SectorClimb
-from ...sql.types import Point
+from ...sql.types import linestringxy
 from ...sql.utils import add
 
 log = getLogger(__name__)
@@ -38,7 +38,7 @@ class FindClimbCalculator(ActivityJournalProcessCalculator):
             with Timestamp(owner=self.owner_out, source=ajournal).on_success(s):
                 if ajournal.route_edt:
                     for sector_group in s.query(SectorGroup). \
-                            filter(func.st_distance(SectorGroup.centre, Point.fmt(ajournal.centre))
+                            filter(func.st_distance(SectorGroup.centre, ajournal.centre)
                                    < SectorGroup.radius). \
                             all():
                         log.info(f'Finding climbs for activity journal {ajournal.id} / sector group {sector_group.id}')
@@ -63,8 +63,7 @@ class FindClimbCalculator(ActivityJournalProcessCalculator):
 
     def __register_climb(self, s, df, climb, sector_group, activity_journal_id):
         df = df.loc[climb[N.TIME] - dt.timedelta(seconds=climb[N.CLIMB_TIME]) : climb[N.TIME]]
-        points = [f'ST_MakePoint({row.x}, {row.y})' for row in df.itertuples()]
-        route = f'ST_MakeLine(ARRAY[{", ".join(points)}])'
+        route = linestringxy([(row.x, row.y) for row in df.itertuples()], type='geometry')
         box = f'Box2D({route})'
         while True:
             try:

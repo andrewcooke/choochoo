@@ -10,6 +10,7 @@ from .source import SourceType, GroupedSource, Source
 from ..support import Base
 from ..triggers import add_child_ddl, add_text
 from ..types import Sort, ShortCls, NullText, Name, name_and_title, Point, UTC
+from ..utils import WGS84_SRID
 from ...common.date import format_time, local_date_to_time, local_time_to_time
 from ...lib.utils import timing
 
@@ -61,16 +62,16 @@ class ActivityJournal(GroupedSource):
     start = Column(UTC, nullable=False, index=True, unique=True)
     finish = Column(UTC, nullable=False)
     # nullable because created later
-    centre = Column(Point)
+    centre = Column(Geography('Point', srid=WGS84_SRID))
     utm_srid = Column(Integer)
     # we probably don't need all these
-    route_a = Column(Geography('LineStringM', srid=4326))
-    route_d = Column(Geography('LineStringM', srid=4326))
-    route_t = Column(Geography('LineStringM', srid=4326))
-    route_dt = Column(Geography('LineStringM', srid=4326))
-    route_ed = Column(Geography('LineStringZM', srid=4326))
-    route_et = Column(Geography('LineStringZM', srid=4326))
-    route_edt = Column(Geography('LineStringZM', srid=4326))  # distance / m * 1e7 + elapsed time
+    route_a = Column(Geography('LineStringM', srid=WGS84_SRID))  # azimuth
+    route_d = Column(Geography('LineStringM', srid=WGS84_SRID))  # distance
+    route_t = Column(Geography('LineStringM', srid=WGS84_SRID))  # time
+    route_dt = Column(Geography('LineStringM', srid=WGS84_SRID))  # distance/time multiplexed
+    route_ed = Column(Geography('LineStringZM', srid=WGS84_SRID))  # elevation, distance
+    route_et = Column(Geography('LineStringZM', srid=WGS84_SRID))  # elevation, time
+    route_edt = Column(Geography('LineStringZM', srid=WGS84_SRID))  # elevation, distance / m * 1e7 + elapsed time
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ACTIVITY

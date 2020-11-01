@@ -22,7 +22,7 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-if [ -z "FORCE_NEW_DISK" ]; then
+if [ -z "$FORCE_NEW_DISK" ]; then
     echo "refusing to delete existing data (set FORCE_NEW_DISK=1)"
     exit 2
 fi

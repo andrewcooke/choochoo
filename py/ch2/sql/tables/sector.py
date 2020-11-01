@@ -1,7 +1,9 @@
 from enum import IntEnum
 from logging import getLogger
 
-from geoalchemy2 import Geometry
+from geoalchemy2 import Geometry, WKTElement, Geography
+from geoalchemy2.shape import to_shape
+from shapely.wkb import loads
 from sqlalchemy import Column, Integer, Text, ForeignKey, Float, UniqueConstraint, or_, func, and_, select, text
 from sqlalchemy.orm import relationship
 
@@ -9,8 +11,8 @@ from .source import GroupedSource, Source, SourceType
 from .statistic import StatisticJournalType
 from ..support import Base
 from ..triggers import add_child_ddl, add_text
-from ..types import ShortCls, Point, UTC
-from ..utils import add
+from ..types import ShortCls, Point, UTC, point
+from ..utils import add, SPHM_SRID, WGS84_SRID
 from ...common.geo import utm_srid
 from ...common.plot import ORANGE, LIME, CYAN
 from ...names import N, T, U, S
@@ -71,7 +73,7 @@ class SectorGroup(Base):
 
     id = Column(Integer, primary_key=True)
     srid = Column(Integer, nullable=False)
-    centre = Column(Point, nullable=False)
+    centre = Column(Geography('Point', srid=WGS84_SRID), nullable=False)
     radius = Column(Float, nullable=False)  # metres
     title = Column(Text, nullable=False)
     UniqueConstraint(centre, radius, title)
@@ -83,12 +85,12 @@ class SectorGroup(Base):
         if delete is False, and there is already a nearby similar entry, it is returned.
         otherwise, insertion is attempted without deletion.
         '''
-        lon, lat = centre
-        srid = utm_srid(lat, lon)
+        srid = utm_srid(*centre)
+        centre = text(point(*centre))
         radius = radius_km * 1000
         if delete is not None:
             query = s.query(SectorGroup). \
-                filter(func.ST_Distance(SectorGroup.centre, Point.fmt(centre)) < radius,
+                filter(func.ST_Distance(SectorGroup.centre, centre) < radius,
                        SectorGroup.srid == srid)
             n = query.count()
             if delete:
@@ -158,22 +160,23 @@ class Sector(Base):
         loader.add_data(N.SECTOR_DISTANCE, sjournal, sjournal.finish_distance - sjournal.start_distance,
                         sjournal.start_time)
 
-    def read_centroid(self, s):
-        sql = text('''
-      with point as (select st_centroid(st_transform(st_setsrid(s.route, sg.srid), 3785)) as point
-                       from sector as s,
-                            sector_group as sg
-                      where s.sector_group_id = sg.id
-                        and s.id = :sector_id)
-    select st_x(point), st_y(point)
-      from point; 
+# st_asewkb(st_setsrid(s.route, WGS84_SRID))
+# loads(bytes(row[0]))
+
+    def read_path(self, s):
+        sql = text(f'''
+select st_astext(st_transform(st_setsrid(s.route, sg.srid), {SPHM_SRID}))
+  from sector as s,
+       sector_group as sg
+ where s.id = :sector_id
+   and sg.id = s.sector_group_id
     ''')
         row = s.connection().execute(sql, sector_id=self.id).fetchone()
-        return row[0], row[1]
+        return to_shape(WKTElement(row[0])).xy
 
     def display(self, s, fx, fy, ax, cm=1.5):
-        x, y = self.read_centroid(s)
-        ax.plot(fx(x), fy(y), marker='^', color=CYAN, markersize=cm*3)
+        xs, ys = self.read_path(s)
+        ax.plot([fx(x) for x in xs], [fy(y) for y in ys], color=CYAN)
 
 
 
@@ -217,3 +220,20 @@ class SectorClimb(Sector):
         loader.add_data(N.CLIMB_GRADIENT, sjournal, self.elevation / (10 * self.distance), sjournal.start_time)
         if self.category:
             loader.add_data(N.CLIMB_CATEGORY, sjournal, self.category, sjournal.start_time)
+
+    def read_centroid(self, s):
+        sql = text('''
+      with point as (select st_centroid(st_transform(st_setsrid(s.route, sg.srid), 3785)) as point
+                       from sector as s,
+                            sector_group as sg
+                      where s.sector_group_id = sg.id
+                        and s.id = :sector_id)
+    select st_x(point), st_y(point)
+      from point; 
+    ''')
+        row = s.connection().execute(sql, sector_id=self.id).fetchone()
+        return row[0], row[1]
+
+    def display(self, s, fx, fy, ax, cm=1.5):
+        x, y = self.read_centroid(s)
+        ax.plot(fx(x), fy(y), marker='^', color=CYAN, markersize=cm*3)

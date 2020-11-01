@@ -1,6 +1,7 @@
 from logging import getLogger
 
 import pandas as pd
+from geoalchemy2.shape import to_shape
 from sqlalchemy import text, select
 
 from .utils import ActivityJournalProcessCalculator, DataFrameCalculatorMixin
@@ -13,6 +14,7 @@ from ...data.elevation import smooth_elevation
 from ...data.frame import present
 from ...names import N, T, U
 from ...sql import StatisticJournalType, ActivityJournal
+from ...sql.types import linestringxyzm, linestringxym
 
 log = getLogger(__name__)
 
@@ -77,12 +79,7 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
     def __create_route_z(self, s, ajournal, df, name, m):
         log.debug(f'Setting {name}')
         xyzm = list(self.__xyzm(df, m))
-        if xyzm:
-            points = [f'ST_MakePoint({x}, {y}, {z}, {m})' for x, y, z, m in xyzm]
-            line = f'ST_MakeLine(ARRAY[{", ".join(points)}])'
-        else:
-            log.warning(f'Empty {name}')
-            line = "'LINESTRINGZM EMPTY'::geography"
+        line = linestringxyzm(xyzm)
         table = ajournal.__table__
         update = table.update().values(**{name: text(line)}).where(table.c.id == ajournal.id)
         # log.debug(update)
@@ -96,12 +93,7 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
     def __create_route(self, s, ajournal, df, name, m):
         log.debug(f'Setting {name}')
         xym = list(self.__xym(df, m))
-        if xym:
-            points = [f'ST_MakePointM({x}, {y}, {m})' for x, y, m in xym]
-            line = f'ST_MakeLine(ARRAY[{", ".join(points)}])'
-        else:
-            log.warning(f'Empty {name}')
-            line = "'LINESTRINGM EMPTY'::geography"
+        line = linestringxym(xym)
         table = ajournal.__table__
         update = table.update().values(**{name: text(line)}).where(table.c.id == ajournal.id)
         # log.debug(update)
@@ -114,11 +106,10 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
 
     def __create_utm_srid(self, s, ajournal):
         table = ActivityJournal.__table__
-        query = select([text(f'ST_X({table.c.centre}::geometry)'), text(f'ST_Y({table.c.centre}::geometry)')]). \
-            where(table.c.id == ajournal.id)
+        query = select(table.c.centre).where(table.c.id == ajournal.id)
         log.debug(query)
         row = s.execute(query).fetchone()
-        lon, lat = row[0], row[1]
+        lon, lat = to_shape(row[0]).xy
         srid = utm_srid(lat, lon)
         update = table.update().values(utm_srid=srid).where(table.c.id == ajournal.id)
         log.debug(update)

@@ -3,6 +3,7 @@ import datetime as dt
 from enum import IntEnum
 from logging import getLogger
 
+from geoalchemy2 import Geography
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, Index, DateTime
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship, backref
@@ -12,7 +13,7 @@ from .source import Interval
 from ..support import Base
 from ..triggers import add_child_ddl, add_text
 from ..types import ShortCls, Name, name_and_title, Point, UTC
-from ..utils import add
+from ..utils import add, WGS84_SRID
 from ...common.date import format_seconds, local_date_to_time, time_to_local_time
 from ...diary.model import TYPE, MEASURES, SCHEDULES
 from ...lib.utils import sigfig
@@ -448,16 +449,14 @@ class StatisticJournalTimestamp(StatisticJournal):
 
 
 @add_child_ddl(StatisticJournal)
-@add_text('''
-create index idx_%(table)s_value on %(table)s using gist (value);
-''')
 class StatisticJournalPoint(StatisticJournal):
+
+    # TODO - is this useful? (no)
 
     __tablename__ = 'statistic_journal_point'
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
-    # value = Column(Geography('point', srid=4326), nullable=False)
-    value = Column(Point, nullable=False)
+    value = Column(Geography('Point', srid=WGS84_SRID), nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.POINT

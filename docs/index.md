@@ -28,20 +28,22 @@ direction. Good luck!
 
 ### Github Codespaces
 
-If you have access to Github Codespaces, This is the quickest way to get up and 
-running with a development environment. Clone the Choochoo repo to your account,
-select the branch you want to use, and run the "Code -> Open with Codespaces" flow.
-Once in there, open up a terminal and move on to the Ubuntu instructions. 
+*Warning - Experimental*
 
-All of the dependencies are already there and docker is running so you should skip
-all of the apt-get commands, but it's likely that that you'll need to update
-docker-compose. You may have luck with running:
+If you have access to Github Codespaces, This is the quickest way to get up
+and running with a development environment. Clone the Choochoo repo to your
+account, select the branch you want to use, and run the "Code -> Open with
+Codespaces" flow.  Once in there, open up a terminal and move on to the Ubuntu
+instructions.
+
+All of the dependencies are already there and docker is running so you should
+skip all of the apt-get commands, but it's likely that that you'll need to
+update docker-compose. You may have luck with running:
 
 https://gist.github.com/tylerszabo/b5b3f9874bb9cce56d23e1f814433b86
 
-Once you're up and running, open the "docker" panel, right click on the running
-choochoo container, and click "Open in browser". 
-
+Once you're up and running, open the "docker" panel, right click on the
+running choochoo container, and click "Open in browser".
 
 ### MacOS
 
@@ -53,10 +55,12 @@ memory (4G) and disk (25G) to run.
 `multipass exec choochoo -- apt-get install -y gcc`
 `multipass shell choochoo`
 
-Now that you are in your VM, on to the Ubuntu instructions to finish installation.
+Now that you are in your VM, on to the Ubuntu instructions to finish
+installation.
 
-To access choochoo once it is running, you will need to set up port forwarding using
-something like this from your Mac, where 192.168.64.3 is the ip of your vm:
+To access choochoo once it is running, you will need to set up port forwarding
+using something like this from your Mac, where 192.168.64.3 is the ip of your
+vm:
 
 `ssh -L 8000:127.0.0.1:8000 ubuntu@192.168.64.3`
 
@@ -117,16 +121,23 @@ The system runs within docker.  It requires three images and three virtual
 volumes.
 
 Clone the repo (the master branch is more likely to work, but the dev branch
-has the latest code).  In the dkr directory are some scripts:
+has the latest code).  In the dkr directory are various scripts (in general a
+script will display help if given the `-h` argument).
 
-* make-choochoo-image.sh - use this to build the main image (the other images
-  run postgres and jupyter and are downloaded automatically).
+Use `run-ch2-jp-pg-persist.sh` to start everything.  Use `--reset` to build
+disks for the first use.
 
-* run-ch2-jp-pg-persist.sh - use this to start everything.  Use `-h` to see
-  options.  Use `--reset` to build disks for the first use.
+    dkr/run-ch2-jp-pg-persist.sh --reset
 
-The `run-ch2-jp-pg-persist.sh` script will start the web server on
-http://localhost:8000
+It will start the web server on http://localhost:8000
+
+Note that for the very first use **only** you will need to create the
+permanent data disk.  This requires defining `FORCE_NEW_DISK`:
+
+    FORCE_NEW_DISK=1 dkr/run-ch2-jp-pg-persist.sh --reset
+
+but **this will delete all existing data** so should only be used on the very
+first run.
 
 ## Initial Configuration
 

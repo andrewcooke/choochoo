@@ -63,10 +63,6 @@ class BasePipeline:
 
 class ProcessPipeline(BasePipeline):
     '''
-    Can be either called with no arguments except --like and --force, in which case all outstanding data
-    are processed, or with --worker id (which identifies the pipeline) and arguments (each of which identifies
-    a dataset to process).  In the latter case, --force and --like are ignored.
-
     When run via ProcessRunner, an instance is created and either:
     * run() is called, in which case all work (worker or not) is done locally.
       in this case, worker should not call startup() and shutdown(), but a "full run" should.

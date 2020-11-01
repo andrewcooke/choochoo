@@ -4,12 +4,12 @@ from sqlalchemy import func
 
 from ch2.common.date import local_time_to_time
 from ch2.data.sector import find_sector_journals, add_sector_statistics
-from ch2.pipeline.calculate.utils import ActivityJournalProcessCalculator, ProcessCalculator, ActivityOwnerProcessCalculator
-from ch2.pipeline.pipeline import LoaderMixin, OwnerInMixin
+from ch2.pipeline.calculate.utils import ActivityOwnerProcessCalculator
+from ch2.pipeline.pipeline import LoaderMixin
 from ch2.sql import Timestamp, ActivityJournal
 from ch2.sql.database import connect_config
 from ch2.sql.tables.sector import SectorGroup, Sector, SectorClimb, SectorJournal
-from ch2.sql.types import Point, short_cls
+from ch2.sql.types import Point
 
 log = getLogger(__name__)
 
@@ -36,7 +36,7 @@ class SectorCalculator(LoaderMixin, ActivityOwnerProcessCalculator):
     def _run_activity_journal(self, s, ajournal):
         if ajournal.route_edt:
             for sector_group in s.query(SectorGroup). \
-                    filter(func.ST_Distance(SectorGroup.centre, Point.fmt(ajournal.centre)) < SectorGroup.radius). \
+                    filter(func.ST_Distance(SectorGroup.centre, ajournal.centre) < SectorGroup.radius). \
                     all():
                 count = 0
                 for sjournal in find_sector_journals(s, sector_group, ajournal, self.owner_in):

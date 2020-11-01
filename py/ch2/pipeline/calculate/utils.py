@@ -200,7 +200,7 @@ class RerunWhenNewActivitiesMixin(OwnerInMixin):
             else:
                 log.info('No new data')
         if missing:
-            s.query(Timestamp).filter(owner=self.owner_out).delete(synchronize_session=False)
+            s.query(Timestamp).filter(Timestamp.owner == self.owner_out).delete(synchronize_session=False)
             return ['missing']
         else:
             return []

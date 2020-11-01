@@ -3,23 +3,24 @@
 cd "${BASH_SOURCE%/*}/" || exit
 
 CMD=$0
-DEV="-dev"
-DEV2="--dev"
+DEV=
+DEV2=
 DIR=/tmp/backup-pg-persist
 
 help () {
     echo -e "\n  Backup the postgres data"
     echo -e "\n  Usage:"
-    echo -e "\n   $CMD [--reset] [--prof] [--no-dev] [-h]"
-    echo -e "\n  --no-dev:    don't use dev-specific disks"
+    echo -e "\n   $CMD [--reset] [--prof] [--dev] [-h]"
+    echo -e "\n  --dev:       use dev-specific disks"
     echo -e "   -h:         show this message\n"
+    echo -e "\nBy default this backs-up the non-dev data."
     exit 1
 }
 
 while [ $# -gt 0 ]; do
-    if [ $1 == "--no-dev" ]; then
-        DEV=
-        DEV2=
+    if [ $1 == "--dev" ]; then
+	DEV="-dev"
+	DEV2="--dev"
     elif [ $1 == "-h" ]; then
         help
     else

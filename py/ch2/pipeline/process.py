@@ -75,7 +75,8 @@ class ProcessRunner:
         while True:
             try:
                 pipeline, cmd, log_index = queue.pop()
-                popen = self.__config.run_process(pipeline.cls, cmd, log_name(pipeline, log_index))
+                popen = self.__config.run_process(pipeline.cls, cmd, log_name(pipeline, log_index),
+                                                  constraint=pipeline.id)
                 pipelines[popen] = (pipeline, log_index)
                 popens.append(popen)
                 if len(popens) == capacity:
@@ -169,7 +170,7 @@ class DependencyQueue:
         self.__start = now()
         # clear out any junk from previous errors?
         for pipeline in self.__unblocked:
-            self.__config.delete_all_processes(pipeline.cls)
+            self.__config.delete_all_processes(pipeline.cls, constraint=pipeline.id)
 
     def __clean_pipelines(self, pipelines):
         included = set(pipelines)
@@ -200,7 +201,7 @@ class DependencyQueue:
                     unblocked = self.__blocked.pop(i)
                     log.info(f'{pipeline} unblocks {unblocked}')
                     self.__unblocked.append(unblocked)
-                    self.__config.delete_all_processes(unblocked.cls)
+                    # self.__config.delete_all_processes(unblocked.cls)
 
     def pop(self):
         # unblocking takes some time, so do it step by step as we need more

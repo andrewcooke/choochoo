@@ -10,6 +10,7 @@ from ..types import ShortCls, Name, short_cls, UTC
 from ..utils import add
 from ...common.date import to_time
 from ...lib import now
+from ...lib.utils import str_or_none
 from ...names import simple_name
 
 log = getLogger(__name__)
@@ -63,23 +64,26 @@ class Process(Base):
 
     id = Column(Integer, primary_key=True)
     owner = Column(ShortCls, nullable=False, index=True)
+    constraint = Column(Text)
     pid = Column(Integer, nullable=False, unique=True)
     start = Column(UTC, nullable=False, default=now)
     command = Column(Text, nullable=True)
     log = Column(Text, nullable=True)
 
     @classmethod
-    def run(cls, s, owner, cmd, log_name):
+    def run(cls, s, owner, cmd, log_name, constraint=None):
         from ...pipeline.process import fmt_cmd
         popen = ps.Popen(args=cmd, shell=True)
         log.debug(f'Adding command [{fmt_cmd(cmd)}]; pid {popen.pid}')
         s.query(Process).filter(Process.pid == popen.pid).delete(synchronize_session=False)
-        s.add(Process(command=cmd, owner=owner, pid=popen.pid, log=log_name))
+        s.add(Process(command=cmd, owner=owner, pid=popen.pid, log=log_name,
+                      constraint=str_or_none(constraint)))
         s.commit()
         return popen
 
     @classmethod
     def delete(cls, s, owner, pid, delta_seconds=3):
+        # ignore constraint here because we have pid
         process = s.query(Process).filter(Process.owner == owner, Process.pid == pid).one()
         process.__kill(delta_seconds=delta_seconds)
         log.debug(f'Deleting record for process {process.pid}')
@@ -87,8 +91,9 @@ class Process(Base):
         s.commit()
 
     @classmethod
-    def delete_all(cls, s, owner, delta_seconds=3):
-        for process in s.query(Process).filter(Process.owner == owner).all():
+    def delete_all(cls, s, owner, delta_seconds=3, constraint=None):
+        for process in s.query(Process).filter(Process.owner == owner,
+                                               Process.constraint == str_or_none(constraint)).all():
             if process.pid == getpid():
                 log.debug(f'Not killing self (PID {process.pid})')
             else:

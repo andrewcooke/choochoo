@@ -246,3 +246,10 @@ def insert(generator, index, extra):
         if i == index:
             yield extra
         yield value
+
+
+def str_or_none(value):
+    if value is None:
+        return value
+    else:
+        return str(value)

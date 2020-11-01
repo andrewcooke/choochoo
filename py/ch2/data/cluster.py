@@ -1,6 +1,7 @@
 from collections import namedtuple
 from logging import getLogger
 
+from geoalchemy2.shape import to_shape
 from math import log10
 from sqlalchemy import desc, text
 
@@ -59,7 +60,7 @@ Parameters = namedtuple('Parameters', 'start,exp,min_dbscan,min_total,target,buf
 
 
 def hulls_from_point(s, centre, radius_km, title, parameters=Parameters()):
-    sector_group = SectorGroup.add(s, centre, radius_km, title)
+    sector_group = SectorGroup.add(s, to_shape(centre).coords[0], radius_km, title)
     log.info(f'Starting clustering for {sector_group.title}')
     delete_tmp_lines(s, sector_group)
     populate_tmp_lines(s, sector_group, parameters)

@@ -35,22 +35,24 @@ class Config(BaseConfig):
 
     def get_process(self, owner, pid):
         with self.db.session_context() as s:
-            process = s.query(Process).filter(Process.owner == owner, Process.pid == pid).one()
+            process = s.query(Process).filter(Process.owner == owner, Process.pid == pid).one_or_none()
+            if process is None:
+                raise Exception(f'Could not find entry for process {pid} (owner {owner})')
             s.expunge(process)
             return process
 
-    def run_process(self, owner, cmd, log_name):
+    def run_process(self, owner, cmd, log_name, constraint=None):
         with self.db.session_context() as s:
-            return Process.run(s, owner, cmd, log_name)  # todo change order
+            return Process.run(s, owner, cmd, log_name, constraint=constraint)  # todo change order
 
     def delete_process(self, owner, pid, delta_seconds=3):
         with self.db.session_context() as s:
             Process.delete(s, owner, pid, delta_seconds=delta_seconds)
 
-    def delete_all_processes(self, owner, delta_seconds=3, default=UNDEF):
+    def delete_all_processes(self, owner, delta_seconds=3, default=UNDEF, constraint=None):
         with self.default(default):
             with self.db.session_context() as s:
-                Process.delete_all(s, owner, delta_seconds=delta_seconds)
+                Process.delete_all(s, owner, delta_seconds=delta_seconds, constraint=constraint)
 
     def exists_any_process(self, owner=None, excluding=None):
         with self.db.session_context() as s:
