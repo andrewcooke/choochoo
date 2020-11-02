@@ -1,7 +1,14 @@
 
 ## Latest Changes
 
-### v0.35.0
+### v0.37.0
+
+Started exploiting PostGIS: climbs are recognised across activities; common
+sectors are identified via clustering.  Display of climbs and sectors includes
+sparklines and thumbnails.  Some consolidation of Docker scripts so that we
+focus on common use cases.
+
+### v0.36.0
 
 Restored some user support thanks to Chris Kelly.  Database now using PostGIS,
 but no new user-visible features.  Continuing with simplification of the

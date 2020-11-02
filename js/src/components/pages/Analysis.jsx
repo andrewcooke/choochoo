@@ -52,7 +52,7 @@ export default function Analysis(props) {
         setParams(null);
         fetch('/api/analysis/parameters')
             .then(handleJson(history, setParams, setError));
-    }, [reads]);
+    }, [1]);
 
     return (
         <Layout title='Analysis' content={<Columns params={params}/>} errorState={errorState}/>
