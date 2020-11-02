@@ -121,9 +121,24 @@ def backup_schema(config):
                 execute(cnxn, stmt)
 
 
+def truncate_tables(config):
+    user = config.args[USER]
+    cnxn = get_cnxn(config)
+    q_user = quote(cnxn, user)
+    with with_log(f'Truncating tables in {user}'):
+        for row1 in execute(cnxn, "select table_name from information_schema.tables "
+                                  "where table_schema = :schema and table_type = 'BASE TABLE'",
+                            schema=user).fetchall():
+            table = row1[0]
+            src = f'{q_user}.{quote(cnxn, table)}'
+            log.info(f'Truncating {src}')
+            execute(cnxn, f'truncate table {src} cascade')
+
+
 def remove_schema(config, previous=True):
     if previous and config.args[PREVIOUS]:
         backup_schema(config)
+    truncate_tables(config)
     remove(get_cnxn(config), 'schema', config.args[USER], ' cascade')
 
 

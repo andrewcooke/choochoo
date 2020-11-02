@@ -106,7 +106,7 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
 
     def __create_utm_srid(self, s, ajournal):
         table = ActivityJournal.__table__
-        query = select(table.c.centre).where(table.c.id == ajournal.id)
+        query = select([table.c.centre]).where(table.c.id == ajournal.id)
         log.debug(query)
         row = s.execute(query).fetchone()
         lon, lat = to_shape(row[0]).xy
