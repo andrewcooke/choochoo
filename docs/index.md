@@ -3,7 +3,7 @@
 
 * [Danger Ahead](#danger-ahead)
 * [OS-Specific Instructions](#os-specific-instructions)
-  * [Github Codespaces)(#github-codespaces)]
+  * [Github Codespaces](#github-codespaces)
   * [MacOS](#macos)
   * [Ubuntu](#ubuntu)
   * [Other Linux](#other-linux)
@@ -18,8 +18,8 @@
 ## Danger Ahead
 
 See the [explanation](https://github.com/andrewcooke/choochoo) on the front
-page - currently this project is not easy to use and fixing that is not a
-high priority.
+page - currently this project is not easy to use and fixing that is not a high
+priority (well, more exactly, it is not a short-term priority).
 
 If you want to continue anyway, the notes below point you in the right
 direction. Good luck!
@@ -124,20 +124,19 @@ Clone the repo (the master branch is more likely to work, but the dev branch
 has the latest code).  In the dkr directory are various scripts (in general a
 script will display help if given the `-h` argument).
 
-Use `run-ch2-jp-pg-persist.sh` to start everything.  Use `--reset` to build
-disks for the first use.
+Once (only) you need to create a disk (virtual volume) where the permanent
+data (FIT files) are stored:
+
+    FORCE_NEW_DISK=1 dkr/make-choochoo-data-volume.sh
+
+Do not repeat this or you will lose all previous uploads.
+
+Then use `run-ch2-jp-pg-persist.sh` to start everything.  Use `--reset` to
+build disks (virtual volumes) for the first use.
 
     dkr/run-ch2-jp-pg-persist.sh --reset
 
 It will start the web server on http://localhost:8000
-
-Note that for the very first use **only** you will need to create the
-permanent data disk.  This requires defining `FORCE_NEW_DISK`:
-
-    FORCE_NEW_DISK=1 dkr/run-ch2-jp-pg-persist.sh --reset
-
-but **this will delete all existing data** so should only be used on the very
-first run.
 
 ## Initial Configuration
 
