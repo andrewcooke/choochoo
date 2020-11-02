@@ -11,7 +11,7 @@ from .pipeline import Pipeline, PipelineType
 from .sector import SectorGroup, Sector, SectorClimb
 from .source import Source, Interval, NoStatistics, Composite, CompositeComponent
 from .statistic import StatisticName, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \
-    StatisticJournalTimestamp, StatisticJournal, StatisticMeasure, StatisticJournalType, StatisticJournalPoint
+    StatisticJournalTimestamp, StatisticJournal, StatisticMeasure, StatisticJournalType
 from .system import SystemConstant, Process
 from .timestamp import Timestamp
 from .topic import DiaryTopicJournal, DiaryTopic, DiaryTopicField, ActivityTopicJournal, ActivityTopic, \

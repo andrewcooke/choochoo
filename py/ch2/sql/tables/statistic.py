@@ -138,7 +138,6 @@ class StatisticJournalType(IntEnum):
     FLOAT = 2
     TEXT = 3
     TIMESTAMP = 4
-    POINT = 5
 
 
 class StatisticJournal(Base):
@@ -448,29 +447,6 @@ class StatisticJournalTimestamp(StatisticJournal):
         return time_to_local_time(self.value)
 
 
-@add_child_ddl(StatisticJournal)
-class StatisticJournalPoint(StatisticJournal):
-
-    # TODO - is this useful? (no)
-
-    __tablename__ = 'statistic_journal_point'
-
-    id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
-    value = Column(Geography('Point', srid=WGS84_SRID), nullable=False)
-
-    __mapper_args__ = {
-        'polymorphic_identity': StatisticJournalType.POINT
-    }
-
-    @classmethod
-    def add(cls, s, name, units, summary, owner, source, value, time, serial=None, description=None):
-        return super().add(s, name, units, summary, owner, source, value, time, serial,
-                           StatisticJournalType.POINT, description=description)
-
-    def formatted(self):
-        return time_to_local_time(self.value)
-
-
 class StatisticMeasure(Base):
 
     __tablename__ = 'statistic_measure'
@@ -494,22 +470,19 @@ STATISTIC_JOURNAL_CLASSES = {
     StatisticJournalType.INTEGER: StatisticJournalInteger,
     StatisticJournalType.FLOAT: StatisticJournalFloat,
     StatisticJournalType.TEXT: StatisticJournalText,
-    StatisticJournalType.TIMESTAMP: StatisticJournalTimestamp,
-    StatisticJournalType.POINT: StatisticJournalPoint
+    StatisticJournalType.TIMESTAMP: StatisticJournalTimestamp
 }
 
 STATISTIC_JOURNAL_TYPES = {
     StatisticJournalInteger: StatisticJournalType.INTEGER,
     StatisticJournalFloat: StatisticJournalType.FLOAT,
     StatisticJournalText: StatisticJournalType.TEXT,
-    StatisticJournalTimestamp: StatisticJournalType.TIMESTAMP,
-    StatisticJournalPoint: StatisticJournalType.POINT
+    StatisticJournalTimestamp: StatisticJournalType.TIMESTAMP
 }
 
 TYPE_TO_JOURNAL_CLASS = {
     int: StatisticJournalInteger,
     float: StatisticJournalFloat,
     str: StatisticJournalText,
-    dt.datetime: StatisticJournalTimestamp,
-    tuple: StatisticJournalPoint
+    dt.datetime: StatisticJournalTimestamp
 }

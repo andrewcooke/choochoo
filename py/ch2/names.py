@@ -138,7 +138,6 @@ class Titles(TitlesBase):
     LIFETIME = 'Lifetime'
     LOCAL_TIME = 'Date'
     LONGITUDE = 'Longitude'
-    LON_LAT = 'Lon / Lat'
     LOSS = 'Loss'
     MAX_MEAN_PE_M = 'Max Mean PE %dm'
     MAX_MEAN_PE_M_ANY = 'Max Mean PE %'

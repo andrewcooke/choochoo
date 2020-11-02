@@ -179,7 +179,6 @@ select st_astext(st_transform(st_setsrid(s.route, sg.srid), {SPHM_SRID}))
         ax.plot([fx(x) for x in xs], [fy(y) for y in ys], color=CYAN)
 
 
-
 @add_child_ddl(Sector)
 class SectorClimb(Sector):
 

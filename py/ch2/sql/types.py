@@ -184,7 +184,7 @@ def linestringxyzm(xyzm, type='geography'):
         points = [f'ST_MakePoint({x}, {y}, {z}, {m})' for x, y, z, m in xyzm]
         line = f'ST_MakeLine(ARRAY[{", ".join(points)}])'
     else:
-        log.warning(f'Empty {name}')
+        log.warning(f'Empty geo data')
         line = "'LINESTRINGZM EMPTY'::" + type
     return line
 
@@ -194,7 +194,7 @@ def linestringxym(xym, type='geography'):
         points = [f'ST_MakePointM({x}, {y}, {m})' for x, y, m in xym]
         line = f'ST_MakeLine(ARRAY[{", ".join(points)}])'
     else:
-        log.warning(f'Empty {name}')
+        log.warning(f'Empty geo data')
         line = "'LINESTRINGM EMPTY'::" + type
     return line
 
@@ -204,7 +204,7 @@ def linestringxy(xy, type='geography'):
         points = [f'ST_MakePoint({x}, {y}, {m})' for x, y in xy]
         line = f'ST_MakeLine(ARRAY[{", ".join(points)}])'
     else:
-        log.warning(f'Empty {name}')
+        log.warning(f'Empty geo data')
         line = "'LINESTRING EMPTY'::" + type
     return line
 

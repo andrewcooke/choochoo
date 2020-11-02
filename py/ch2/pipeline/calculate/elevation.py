@@ -109,7 +109,7 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
         query = select([table.c.centre]).where(table.c.id == ajournal.id)
         log.debug(query)
         row = s.execute(query).fetchone()
-        lon, lat = to_shape(row[0]).xy
+        lon, lat = to_shape(row[0]).coords[0]
         srid = utm_srid(lat, lon)
         update = table.update().values(utm_srid=srid).where(table.c.id == ajournal.id)
         log.debug(update)

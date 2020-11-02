@@ -1,9 +1,7 @@
 from logging import getLogger
 from os.path import splitext, basename
 
-from geoalchemy2.shape import from_shape
-from pygeotile.point import Point as PyGeoPoint
-from shapely.geometry import Point
+from pygeotile.point import Point
 
 from .utils import AbortImportButMarkScanned, ProcessFitReader
 from ..pipeline import LoaderMixin
@@ -57,8 +55,6 @@ class ActivityReader(LoaderMixin, ProcessFitReader):
                        'The Web Mercator EPSG:3857 Y coordinate')
         self._provides(s, T.RAW_ELEVATION, StatisticJournalType.FLOAT, U.M, None,
                        'The elevation from SRTM1 at this location')
-        self._provides(s, T.LON_LAT, StatisticJournalType.POINT, U.DEG, None,
-                       'The WGS84 longitude and latitude')
         self._provides(s, T.KIT, StatisticJournalType.TEXT, None, None,
                        'The kit used in the activity')
         # also coverages - see _read
@@ -240,8 +236,7 @@ class ActivityReader(LoaderMixin, ProcessFitReader):
                     logged += 1
                     # values derived from lat/lon
                     if lat is not None and lon is not None:
-                        loader.add_data(N.LON_LAT, ajournal, from_shape(Point(lon, lat)), timestamp)
-                        x, y = PyGeoPoint.from_latitude_longitude(lat, lon).meters
+                        x, y = Point.from_latitude_longitude(lat, lon).meters
                         loader.add_data(N.SPHERICAL_MERCATOR_X, ajournal, x, timestamp)
                         loader.add_data(N.SPHERICAL_MERCATOR_Y, ajournal, y, timestamp)
                         if self.add_elevation:

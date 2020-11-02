@@ -108,8 +108,10 @@ def find_versions(config, max_depth=3):
                 if not db.no_data():
                     log.info(f'Import candidate for {version} at {uri_template}')
                     yield version, uri
-            except CannotConnect:
-                pass
+                else:
+                    log.debug('No data')
+            except CannotConnect as e:
+                log.debug(f'Cannot connect: {e}')
 
 
 def count_down_version(current_version, restart_minor=0, max_depth=3):
