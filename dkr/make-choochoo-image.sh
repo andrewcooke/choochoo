@@ -70,3 +70,5 @@ echo -e "\n> $CMD\n"
 eval $CMD
 popd > /dev/null
 rm $FILE
+
+echo -e "\nIMPORTANT: YOU SHOULD ALSO UPDATE THE JUPYTER IMAGE\n"
