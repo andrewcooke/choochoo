@@ -1,12 +1,8 @@
-
-from abc import abstractmethod, ABC
 from logging import getLogger
-from sys import stdout
-import re
 
 from .args import TOPIC, HELP, PROGNAME
 from ..common.args import m
-from ..common.io import terminal_width
+from ..common.md import Markdown
 
 log = getLogger(__name__)
 

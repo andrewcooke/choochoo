@@ -162,8 +162,3 @@ Once the system is configured you can upload activity data (FIT files)
 via the `Upload` page.  If you are just starting, ignore `Kit` for the
 moment, select a file, and click `UPLOAD`.
 
-## More Information
-
-[Docker Cookbook](docker).
-
-[Technical Documentation](technical).

@@ -14,7 +14,7 @@ Another approach is to look for "standards" like the classification of
 climbs in competitions.  This too has problems, which I will discuss
 below.
 
-Choochoo was took a new approach - automatic detection of climbs.
+Choochoo took a new approach - automatic detection of climbs.
 This gives consistent, reliable statistics from "natural" climb
 identifications.  Of course, "natural" is open to interpretation;
 user-adjustable parameters allow the algorithm to be tweaked if
@@ -27,6 +27,7 @@ desired.
     * [Efficiency](#efficiency)
   * [Configuration](#configuration)
   * [Results](#results)
+  * [Updates](#updates)
 
 ## Design
 
@@ -126,3 +127,10 @@ parameters used to search for climbs.  These are:
 ## Results
 
 Climbs are displayed in the daily diary and on the summary graphics.
+
+## Updates
+
+Since this document was written, climbs have been integrated with sectors and
+a global set of climbs is used actoss all activities (instead of identifying
+climbs again for each activity).  However, the basic algorithm used to detect
+climbs remains as above.
