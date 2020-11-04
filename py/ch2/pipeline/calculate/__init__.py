@@ -9,3 +9,4 @@ from .steps import StepsCalculator
 from .nearby import NearbyCalculator
 from .response import ResponseCalculator
 from .summary import SummaryCalculator
+from .sector import SectorCalculator

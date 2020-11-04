@@ -12,7 +12,6 @@ from ch2.lib import *
 from ch2.names import N, like
 from ch2.pipeline.owners import *
 
-
 @template
 def activity_details(local_time, activity_group):
 
@@ -35,10 +34,12 @@ def activity_details(local_time, activity_group):
     activity = std_activity_statistics(s, activity_journal=local_time, activity_group=activity_group)
     health = std_health_statistics(s)
     hr_zones = hr_zones_from_database(s, local_time, activity_group)
-    climbs = Statistics(s, activity_journal=local_time, activity_group=activity_group). \
-        by_name(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
-        by_name(ActivityCalculator, N.CLIMB_ANY, like=True).with_. \
+    climbs = Statistics(s, sources=climb_sources(s, local_time, activity_group=activity_group)). \
+        by_name(SectorCalculator, N.CLIMB_ANY, like=True).with_. \
         copy_with_units().df
+    active = Statistics(s, activity_journal=local_time, activity_group=activity_group). \
+        by_name(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
+        with_.copy_with_units().df.append(climbs)
 
     f'''
     ## Activity Plots
@@ -104,7 +105,7 @@ def activity_details(local_time, activity_group):
     Active time and distance exclude pauses.
     '''
 
-    climbs[[N.ACTIVE_TIME_S, N.ACTIVE_DISTANCE_KM]].dropna(). \
+    active[[N.ACTIVE_TIME_S, N.ACTIVE_DISTANCE_KM]].dropna(). \
         transform({N.ACTIVE_TIME_S: format_seconds, N.ACTIVE_DISTANCE_KM: format_km})
 
     '''

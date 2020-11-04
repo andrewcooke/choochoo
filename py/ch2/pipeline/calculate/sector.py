@@ -9,7 +9,6 @@ from ch2.pipeline.pipeline import LoaderMixin
 from ch2.sql import Timestamp, ActivityJournal
 from ch2.sql.database import connect_config
 from ch2.sql.tables.sector import SectorGroup, Sector, SectorClimb, SectorJournal
-from ch2.sql.types import Point
 
 log = getLogger(__name__)
 

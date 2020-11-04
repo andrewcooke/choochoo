@@ -130,7 +130,7 @@ class Statistics:
         if self.__sources:
             q = q.filter(StatisticJournal.source_id.in_([source.id for source in self.__sources]))
         elif self.__activity_group:
-            # only use of sources not specified separately (since those fix groups anyway)
+            # only use if sources not specified separately (since those fix groups anyway)
             source = aliased(Source)
             q = q.join(source, source.id == StatisticJournal.source_id). \
                 filter(source.activity_group_id == self.__activity_group.id)

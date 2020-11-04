@@ -1,15 +1,12 @@
-
-import datetime as dt
 from collections import namedtuple
 from itertools import groupby
 from logging import getLogger
 
 from .frame import linear_resample, present
 from ..common.math import is_nan
-from ..lib.data import nearest_index, get_index_loc, safe_yield, safe_none
+from ..lib.data import nearest_index, get_index_loc, safe_yield
 from ..names import Names as N
-from ..pipeline.calculate import ActivityCalculator
-from ..sql import StatisticName, StatisticJournal, Source
+from ..sql import StatisticName, StatisticJournal, Source, ActivityJournal
 from ..sql.tables.sector import SectorJournal
 
 log = getLogger(__name__)
@@ -160,6 +157,7 @@ def search(df, params=Climb(), grid=False):
 
 def climbs_for_activity(s, ajournal):
     from ..pipeline.calculate.sector import SectorCalculator
+    from ..pipeline.calculate import ActivityCalculator
     total = s.query(StatisticJournal). \
         join(StatisticName, Source). \
         filter(StatisticName.name == N.TOTAL_CLIMB,
@@ -185,3 +183,9 @@ def climbs_for_activity(s, ajournal):
     return total, sorted((make_climb(grouped)
                           for _, grouped in groupby(sjournals, key=lambda sjournal: sjournal.time)),
                          key=lambda climb: climb[N.CLIMB_ELEVATION].value, reverse=True)
+
+
+def climb_sources(s, activity_journal, activity_group=None):
+    if not isinstance(activity_journal, Source):
+        activity_journal = ActivityJournal.at(s, activity_journal, activity_group=activity_group)
+    return s.query(SectorJournal).filter(SectorJournal.activity_journal_id == activity_journal.id).all()
