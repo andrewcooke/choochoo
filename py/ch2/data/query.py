@@ -359,9 +359,10 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
         drop_prefix(N.DEFAULT + SPACE).into(stats, tolerance='10s', interpolate=True)
 
     stats = Statistics(s, activity_journal=activity_journal). \
-        by_name(PowerCalculator, N.POWER_ESTIMATE).with_. \
+        by_name(PowerCalculator, N.POWER_ESTIMATE, N.VERTICAL_POWER).with_. \
         rename_with_units(). \
-        copy({N.POWER_ESTIMATE_W: N.MED_POWER_ESTIMATE_W}, median=MED_WINDOW). \
+        copy({N.POWER_ESTIMATE_W: N.MED_POWER_ESTIMATE_W,
+              N.VERTICAL_POWER_W: N.MED_VERTICAL_POWER_W}, median=MED_WINDOW). \
         into(stats, tolerance='1s')
 
     return stats

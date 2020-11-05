@@ -67,7 +67,7 @@ if (( RESET )); then
     fi
     ./make-postgresql-log-volume.sh $DEV2
     ./make-choochoo-image.sh $BIG $SLOW $JS $DEV2
-    ./make-jupyter-image.sh $SLOW
+    ./make-jupyter-image.sh $SLOW $DEV2
 fi
 
 rm -f docker-compose.yml

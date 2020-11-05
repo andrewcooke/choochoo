@@ -204,12 +204,14 @@ class Titles(TitlesBase):
     SPEED_KMH = TitlesBase._slash(SPEED, Units.KMH)
     SPEED_MS = TitlesBase._slash(SPEED, Units.MS)
     POWER_ESTIMATE_W = TitlesBase._slash(POWER_ESTIMATE, Units.W)
+    VERTICAL_POWER_W = TitlesBase._slash(VERTICAL_POWER, Units.W)
 
     MED_SPEED_KMH = TitlesBase._med(SPEED_KMH)
     MED_HEART_RATE_BPM = TitlesBase._med(HEART_RATE_BPM)
     MED_HR_IMPULSE_10 = TitlesBase._med(HR_IMPULSE_10)
     MED_CADENCE_RPM = TitlesBase._med(CADENCE_RPM)
     MED_POWER_ESTIMATE_W = TitlesBase._med(POWER_ESTIMATE_W)
+    MED_VERTICAL_POWER_W = TitlesBase._med(VERTICAL_POWER_W)
 
     POWER_HR = 'Power / HR'
     POWER_HR_LAG = 'Power / HR Lag'

@@ -14,7 +14,7 @@ FILE=`pwd`/Dockerfile.local
 help () {
     echo -e "\n  Create the image used to run Choochoo in Docker"
     echo -e "\n  Usage:"
-    echo -e "\n   $CMD [--big] [--slow] [--js] [--prune] [-h] [FILE]"
+    echo -e "\n   $CMD [--big] [--slow] [--dev] [--js] [--prune] [-h] [FILE]"
     echo -e "\n    FILE:      destination file name (default Dockerfile)"
     echo -e "  --big:       use larger base distro"
     echo -e "  --slow:      do not mount pip cache (buildkit)"

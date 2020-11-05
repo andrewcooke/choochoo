@@ -12,7 +12,7 @@ services:
       - 'pg'
       - 'jp'
   jp:
-    image: 'andrewcooke/jupyter:latest-local'
+    image: 'andrewcooke/jupyter:latest-localDEV'
     container_name: 'jupyter'
     user: '${ID}'
     command: 'start-notebook.sh

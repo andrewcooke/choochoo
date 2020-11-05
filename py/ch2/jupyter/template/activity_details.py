@@ -76,6 +76,8 @@ def activity_details(local_time, activity_group):
     xrange = xrange or (hr.x_range if hr else None)
 
     pw = comparison_line_plot(700, 200, N.DISTANCE_KM, N.MED_POWER_ESTIMATE_W, activity, ylo=0, x_range=xrange)
+    pw.varea(source=activity, x=N.DISTANCE_KM, y1=0, y2=N.MED_VERTICAL_POWER_W,
+             level='underlay', color='black', fill_alpha=0.25)
     add_climb_zones(pw, climbs, activity)
     pw_c = cumulative_plot(200, 200, N.MED_POWER_ESTIMATE_W, activity, ylo=0)
     xrange = xrange or (pw.x_range if pw else None)

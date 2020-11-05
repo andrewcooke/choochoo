@@ -79,10 +79,11 @@ def add_loss_estimate(df, m, cda=0.45, crr=0, p=1.225, g=9.8):
 def add_power_estimate(df):
     # power input must balance the energy budget.
     df[N.VERTICAL_POWER] = df[N.DELTA_ENERGY] / df[N.DELTA_TIME].dt.total_seconds()
+    df[N.VERTICAL_POWER].clip(lower=0, inplace=True)
     df[N.POWER_ESTIMATE] = (df[N.DELTA_ENERGY] + df[N.LOSS]) / df[N.DELTA_TIME].dt.total_seconds()
     df[N.POWER_ESTIMATE].clip(lower=0, inplace=True)
-    if N.CADENCE in df.columns:
-        df.loc[df[N.CADENCE] < 1, [N.POWER_ESTIMATE]] = 0.0
+    # if N.CADENCE in df.columns:
+    #     df.loc[df[N.CADENCE] < 1, [N.POWER_ESTIMATE]] = 0.0
     if any(df[N.POWER_ESTIMATE].isna()):
         df.loc[df[N.POWER_ESTIMATE].isna(), [N.POWER_ESTIMATE]] = 0.0
         # need to coerce because dtype is object
