@@ -3,18 +3,17 @@ from logging import getLogger
 
 from geoalchemy2 import Geometry, WKTElement, Geography
 from geoalchemy2.shape import to_shape
-from shapely.wkb import loads
-from sqlalchemy import Column, Integer, Text, ForeignKey, Float, UniqueConstraint, or_, func, and_, select, text
+from sqlalchemy import Column, Integer, Text, ForeignKey, Float, UniqueConstraint, or_, func, text
 from sqlalchemy.orm import relationship
 
 from .source import GroupedSource, Source, SourceType
 from .statistic import StatisticJournalType
 from ..support import Base
 from ..triggers import add_child_ddl, add_text
-from ..types import ShortCls, Point, UTC, point
+from ..types import ShortCls, UTC, point
 from ..utils import add, SPHM_SRID, WGS84_SRID
 from ...common.geo import utm_srid
-from ...common.plot import ORANGE, LIME, CYAN
+from ...common.plot import CYAN
 from ...names import N, T, U, S
 
 log = getLogger(__name__)
@@ -154,7 +153,7 @@ class Sector(Base):
         pipeline._provides(s, T.SECTOR_DISTANCE, StatisticJournalType.FLOAT, U.KM, None,
                            'The sector distance.')
 
-    def add_statistics(self, s, sjournal, loader):
+    def add_statistics(self, s, sjournal, loader, **kargs):
         loader.add_data(N.SECTOR_TIME, sjournal, (sjournal.finish_time - sjournal.start_time).total_seconds(),
                         sjournal.start_time)
         loader.add_data(N.SECTOR_DISTANCE, sjournal, sjournal.finish_distance - sjournal.start_distance,
@@ -204,12 +203,12 @@ class SectorClimb(Sector):
                            'The time spent on the climb.')
         pipeline._provides(s, T.CLIMB_GRADIENT, StatisticJournalType.FLOAT, U.PC,  S.join(S.MAX, S.MSR),
                            'The average inclination of the climb (elevation / distance).')
-        # pipeline._provides(s, T.CLIMB_POWER, StatisticJournalType.FLOAT, U.W,  S.join(S.MAX, S.MSR),
-        #                    'The average estimated power during the climb.')
+        pipeline._provides(s, T.VERTICAL_POWER, StatisticJournalType.FLOAT, U.W,  S.join(S.MAX, S.MSR),
+                           'The estimated power for the climb considering only weight / height.')
         pipeline._provides(s, T.CLIMB_CATEGORY, StatisticJournalType.TEXT, None, None,
                            'The climb category (text, "4" to "1" and "HC").')
 
-    def add_statistics(self, s, sjournal, loader):
+    def add_statistics(self, s, sjournal, loader, power_model=None, **kargs):
         # note that apart from time these are taken from the sector rather than the journal
         # this is deliberate - seems like we want these climbs to be consistent.
         loader.add_data(N.CLIMB_ELEVATION, sjournal, self.elevation, sjournal.start_time)
@@ -219,6 +218,19 @@ class SectorClimb(Sector):
         loader.add_data(N.CLIMB_GRADIENT, sjournal, self.elevation / (10 * self.distance), sjournal.start_time)
         if self.category:
             loader.add_data(N.CLIMB_CATEGORY, sjournal, self.category, sjournal.start_time)
+        if power_model:
+            power = self._estimate_power(s, sjournal, power_model)
+            loader.add_data(N.VERTICAL_POWER, sjournal, power, sjournal.start_time)
+
+    def _estimate_power(self, s, sjournal, power_model, g=9.8):
+        from ...data.query import interpolate
+        from ...pipeline.read.activity import ActivityReader
+        speed_start = interpolate(s, sjournal.activity_journal, N.SPEED, ActivityReader, sjournal.start_time)
+        speed_finish = interpolate(s, sjournal.activity_journal, N.SPEED, ActivityReader, sjournal.finish_time)
+        total_weight = power_model.bike_model.bike_weight + power_model.rider_weight
+        energy_after = 0.5 * total_weight * speed_finish ** 2 + total_weight * g * self.elevation
+        energy_before = 0.5 * total_weight * speed_start ** 2
+        return (energy_after - energy_before) / (sjournal.finish_time - sjournal.start_time).total_seconds()
 
     def read_centroid(self, s):
         sql = text('''

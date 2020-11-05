@@ -1,12 +1,15 @@
 from .garmin import Garmin
-from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field
-from ..power import add_simple_power_estimate, add_kit_power_estimate, add_kit_power_model
+from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_process
+from ..power import add_simple_power_estimate, add_kit_power_estimate, add_kit_power_model, POWER_MODEL_CNAME
 from ..profile import WALK, SWIM, RUN, BIKE
 from ...commands.args import DEFAULT
 from ...common.names import TIME_ZERO
 from ...diary.model import TYPE, EDIT
 from ...lib import to_time, time_to_local_date
 from ...names import Sports, simple_name, N
+from ...pipeline.calculate import SectorCalculator
+from ...pipeline.calculate.climb import FindClimbCalculator
+from ...pipeline.calculate.cluster import ClusterCalculator
 from ...pipeline.calculate.power import PowerCalculator
 from ...sql import StatisticJournalType, StatisticName, DiaryTopic, DiaryTopicJournal
 from ...sql.tables.sector import SectorGroup
@@ -81,6 +84,13 @@ class ACooke(Garmin):
                 Sports.SPORT_RUNNING: simple_name(RUN),
                 Sports.SPORT_SWIMMING: simple_name(SWIM),
                 Sports.SPORT_WALKING: simple_name(WALK)}
+
+    def _sector_statistics(self, s, blockers=None):
+        blockers = blockers or []
+        for activity_group in (ROAD, MTB):
+            add_process(s, SectorCalculator, blocked_by=[ClusterCalculator, FindClimbCalculator],
+                        power_model=POWER_MODEL_CNAME, activity_group=activity_group)
+        return blockers + [SectorCalculator]
 
     def _load_power_statistics(self, s, simple=False):
         # add power estimates for the two bikes

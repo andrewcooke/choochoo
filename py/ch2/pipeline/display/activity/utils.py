@@ -217,7 +217,8 @@ class ActivityDelegate(ActivityJournalDelegate):
                        cls.__dict_as_value(climb, N.CLIMB_ELEVATION, date=date),
                        cls.__dict_as_value(climb, N.CLIMB_DISTANCE),
                        cls.__dict_as_value(climb, N.CLIMB_TIME),
-                       cls.__dict_as_value(climb, N.CLIMB_GRADIENT)]
+                       cls.__dict_as_value(climb, N.CLIMB_GRADIENT),
+                       cls.__dict_as_value(climb, N.VERTICAL_POWER)]
 
     @classmethod
     def __read_sectors(cls, s, ajournal, date):

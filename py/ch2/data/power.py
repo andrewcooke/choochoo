@@ -78,6 +78,7 @@ def add_loss_estimate(df, m, cda=0.45, crr=0, p=1.225, g=9.8):
 @safe_first
 def add_power_estimate(df):
     # power input must balance the energy budget.
+    df[N.VERTICAL_POWER] = df[N.DELTA_ENERGY] / df[N.DELTA_TIME].dt.total_seconds()
     df[N.POWER_ESTIMATE] = (df[N.DELTA_ENERGY] + df[N.LOSS]) / df[N.DELTA_TIME].dt.total_seconds()
     df[N.POWER_ESTIMATE].clip(lower=0, inplace=True)
     if N.CADENCE in df.columns:

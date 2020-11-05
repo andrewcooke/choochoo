@@ -10,6 +10,7 @@ from ...common.log import log_current_exception, log_query
 from ...lib import local_time_to_time, to_date
 from ...lib.schedule import Schedule
 from ...sql import Timestamp, ActivityJournal, ActivityGroup, Interval
+from ...sql.types import short_cls
 from ...sql.utils import add
 
 log = getLogger(__name__)
@@ -58,17 +59,16 @@ class ActivityGroupProcessCalculator(ActivityJournalProcessCalculator):
         self.activity_group = activity_group
 
     def _delimit_missing(self, q):
-        return log_query(q.join(ActivityGroup).filter(ActivityGroup.name == self.activity_group),
-                         'Missing:')
+        if self.activity_group:
+            q = q.join(ActivityGroup).filter(ActivityGroup.name == self.activity_group)
+        else:
+            log.warning(f'No activity_group defined for {short_cls(self)}')
+        return log_query(q, 'Missing:')
 
     def _delimit_timestamp(self, q):
-        return q.filter(Timestamp.constraint == self.activity_group)
-
-
-class ActivityOwnerProcessCalculator(OwnerInMixin, ActivityJournalProcessCalculator):
-
-    def _delimit_timestamp(self, q):
-        return q.filter(Timestamp.constraint == self.owner_in)
+        if self.activity_group:
+            q = q.filter(Timestamp.constraint == self.activity_group)
+        return q
 
 
 class DataFrameCalculatorMixin:

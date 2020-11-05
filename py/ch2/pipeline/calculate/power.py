@@ -44,6 +44,8 @@ class PowerCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityGroupProces
         super()._startup(s)
         self._provides(s, T.POWER_ESTIMATE, StatisticJournalType.FLOAT, U.W, S.AVG,
                        'The estimated power.')
+        self._provides(s, T.VERTICAL_POWER, StatisticJournalType.FLOAT, U.W, S.AVG,
+                       'The estimated power from height gain alone.')
         self._provides(s, T.HEADING, StatisticJournalType.FLOAT, U.DEG, None,
                        'The current heading.')
         self._provides(s, T.ENERGY_ESTIMATE, StatisticJournalType.FLOAT, U.KJ, S.MAX,
@@ -82,7 +84,7 @@ class PowerCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityGroupProces
         ldf = add_power_estimate(ldf)
         return df, ldf
 
-    def _copy_results(self, s, ajournal, loader, dfs, fields=(N.POWER_ESTIMATE,)):
+    def _copy_results(self, s, ajournal, loader, dfs, fields=(N.POWER_ESTIMATE, N.VERTICAL_POWER)):
         df, ldf = dfs
         self.__add_total_energy(s, ajournal, loader, ldf)
         df = interpolate_to_index(df, ldf, *fields)

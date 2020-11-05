@@ -14,7 +14,7 @@ log = getLogger(__name__)
 HULL_RADIUS = 40
 
 
-def find_sector_journals(s, sector_group, ajournal, owner):
+def find_sector_journals(s, sector_group, ajournal):
     sql = text('''
 with srid as (select s.id as sector_id,
                      st_setsrid(s.route, sg.srid) as sector,
@@ -28,7 +28,6 @@ with srid as (select s.id as sector_id,
                where s.sector_group_id = sg.id
                  and sg.id = :sector_group_id
                  and aj.id = :activity_journal_id
-                 and s.owner = :owner
                  and st_intersects(st_setsrid(s.hull, sg.srid), st_transform(aj.route_t::geometry, sg.srid))),
      start_point as (select r.sector_id,
                             r.route_t,
@@ -66,8 +65,7 @@ select distinct  -- multiple starts/finishes can lead to duplicates
        between 0.95 * st_length(r.sector) and 1.05 * st_length(r.sector)
 ''')
     log.debug(sql)
-    result = s.connection().execute(sql, sector_group_id=sector_group.id, activity_journal_id=ajournal.id,
-                                    owner=owner)
+    result = s.connection().execute(sql, sector_group_id=sector_group.id, activity_journal_id=ajournal.id)
     for row in result.fetchall():
         data = {name: value for name, value in zip(result.keys(), row)}
         sjournal = add(s, SectorJournal(activity_journal_id=ajournal.id, activity_group=ajournal.activity_group,
@@ -76,9 +74,9 @@ select distinct  -- multiple starts/finishes can lead to duplicates
         yield sjournal
 
 
-def add_sector_statistics(s, sjournal, loader):
+def add_sector_statistics(s, sjournal, loader, **kargs):
     # delegate to the sector since that can be subclassed (eg climb)
-    sjournal.sector.add_statistics(s, sjournal, loader)
+    sjournal.sector.add_statistics(s, sjournal, loader, **kargs)
 
 
 def add_start_finish(s, sector_id):

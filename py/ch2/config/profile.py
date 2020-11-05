@@ -149,13 +149,9 @@ your FF-model parameters (fitness and fatigue).
     def _load_standard_statistics(self, s, blockers=None):
         add_process(s, FindClimbCalculator, blocked_by=[ElevationCalculator],
                     owner_in=short_cls(ActivityReader), climb=CLIMB_CNAME)
-        add_process(s, SectorCalculator, blocked_by=[FindClimbCalculator],
-                    owner_in=short_cls(FindClimbCalculator))
-        # depends on ElevationCalculator to set center
         add_process(s, ClusterCalculator, blocked_by=[ElevationCalculator],
                     owner_in=short_cls(ActivityReader))
-        add_process(s, SectorCalculator, blocked_by=[ClusterCalculator],
-                    owner_in=short_cls(ClusterCalculator))
+        blockers = self._sector_statistics(s, blockers=blockers)
         add_process(s, StepsCalculator, blocked_by=[MonitorReader],
                     owner_in=short_cls(MonitorReader))
         add_process(s, RestHRCalculator, blocked_by=[MonitorReader],
@@ -165,13 +161,19 @@ your FF-model parameters (fitness and fatigue).
         blockers = blockers or []
         add_process(s, ActivityCalculator,
                     blocked_by=blockers + [ElevationCalculator, ImpulseCalculator, ResponseCalculator,
-                                           FindClimbCalculator, SectorCalculator],
+                                           FindClimbCalculator],
                     owner_in=short_cls(ResponseCalculator),
                     response_prefix=N.DEFAULT)
         add_process(s, SimilarityCalculator, blocked_by=[ActivityCalculator],
                     owner_in=short_cls(ActivityCalculator))
         add_process(s, NearbyCalculator, blocked_by=[SimilarityCalculator],
                     owner_in=short_cls(SimilarityCalculator))
+
+    def _sector_statistics(self, s, blockers=None):
+        blockers = blockers or []
+        add_process(s, SectorCalculator, blocked_by=[ClusterCalculator, FindClimbCalculator])
+        blockers.append(SectorCalculator)
+        return blockers
 
     def _load_summary_statistics(self, s):
         # need to call normalize here because schedule isn't a schedule type column,

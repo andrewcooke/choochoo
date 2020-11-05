@@ -176,6 +176,7 @@ class Titles(TitlesBase):
     TIME_IN_Z_ANY = 'Time in Z%'
     TIMESPAN_ID = 'Timespan ID'
     TOTAL_CLIMB = 'Total Climb'
+    VERTICAL_POWER = 'Vertical Power'
 
     LO_REST_HR = TitlesBase._lo(REST_HR)
     HI_REST_HR = TitlesBase._hi(REST_HR)

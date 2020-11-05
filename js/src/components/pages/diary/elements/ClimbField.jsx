@@ -29,7 +29,7 @@ const useStyles = makeStyles(theme => ({
 export default function ClimbField(prop) {
 
     const {json} = prop;
-    const [, location, thumbnail, sparkline, category, elevation, distance, time, gradient] = json;
+    const [, location, thumbnail, sparkline, category, elevation, distance, time, gradient, power] = json;
     const classes = useStyles();
     const cat = category.value === '' ? '' : 'Category ' + category.value;
 
@@ -41,6 +41,8 @@ export default function ClimbField(prop) {
                 <Typography/>
                 <Text>{sprintf('%2.1f', gradient.value)}%</Text>
                 <Text secondary> </Text>
+                <FormatValueUnits value={power.value} units={power.units}/>
+                <Typography/>
                 <FormatValueUnits value={distance.value} units={distance.units}/>
                 <Text secondary> </Text>
                 <FormatValueUnits value={time.value} units={time.units}/>

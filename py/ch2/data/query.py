@@ -365,3 +365,32 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
         into(stats, tolerance='1s')
 
     return stats
+
+
+def interpolate(s, source, statistic_name, statistic_owner, time, activity_group=None):
+    if not isinstance(source, Source):
+        source = ActivityJournal.at(s, source, activity_group=activity_group)
+    before = s.query(StatisticJournal). \
+        join(StatisticName). \
+        filter(StatisticName.name == statistic_name,
+               StatisticName.owner == statistic_owner,
+               StatisticJournal.time <= time,
+               StatisticJournal.source == source). \
+        order_by(desc(StatisticJournal.time)).first()
+    after = s.query(StatisticJournal). \
+        join(StatisticName). \
+        filter(StatisticName.name == statistic_name,
+               StatisticName.owner == statistic_owner,
+               StatisticJournal.time >= time,
+               StatisticJournal.source == source). \
+        order_by(asc(StatisticJournal.time)).first()
+    if before is None or after is None:
+        return None
+    if before.time == time:
+        return before.value
+    if after.time == time:
+        return after.value
+    dt = (after.time - before.time).total_seconds()
+    ta = (after.time - time).total_seconds()
+    tb = (time - before.time).total_seconds()
+    return (ta * before.value + tb * after.value) / dt

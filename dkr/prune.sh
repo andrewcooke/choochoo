@@ -5,5 +5,5 @@ if [ -f auto-prune ]; then
     docker image prune -f
     docker system prune -f
 else
-    echo "prune manually or `touch auto-prune`"
+    echo "prune manually or \`touch auto-prune\`"
 fi

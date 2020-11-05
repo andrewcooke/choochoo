@@ -2,6 +2,8 @@ from collections import namedtuple
 from itertools import groupby
 from logging import getLogger
 
+from sqlalchemy import or_
+
 from .frame import linear_resample, present
 from ..common.math import is_nan
 from ..lib.data import nearest_index, get_index_loc, safe_yield
@@ -167,7 +169,8 @@ def climbs_for_activity(s, ajournal):
     query = s.query(StatisticJournal). \
         join(StatisticName, Source). \
         join(SectorJournal, SectorJournal.id == Source.id). \
-        filter(StatisticName.name.like(N.CLIMB_ANY),
+        filter(or_(StatisticName.name.like(N.CLIMB_ANY),
+                   StatisticName.name == N.VERTICAL_POWER),
                StatisticJournal.time >= ajournal.start,
                StatisticJournal.time <= ajournal.finish,
                StatisticName.owner == SectorCalculator,
