@@ -47,7 +47,10 @@ def hulls_from_last_activity(s, radius_km):
     activity_journal = s.query(ActivityJournal). \
         filter(ActivityJournal.centre != None). \
         order_by(desc(ActivityJournal.start)).first()
-    return hulls_from_activity(s, activity_journal, radius_km)
+    if activity_journal:
+        return hulls_from_activity(s, activity_journal, radius_km)
+    else:
+        log.warning('No activities, so no clusters (no sector group)')
 
 
 def hulls_from_activity(s, activity_journal, radius_km):

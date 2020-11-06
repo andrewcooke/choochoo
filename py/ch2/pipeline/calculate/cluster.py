@@ -15,7 +15,8 @@ class ClusterCalculator(RerunWhenNewActivitiesMixin, ProcessCalculator):
         with self._config.db.session_context() as s:
             with Timestamp(owner=self.owner_out).on_success(s):
                 sector_group = hulls_from_last_activity(s, self.__radius_km)
-                sectors_from_hulls(s, sector_group)
+                if sector_group:
+                    sectors_from_hulls(s, sector_group)
 
 
 if __name__ == '__main__':

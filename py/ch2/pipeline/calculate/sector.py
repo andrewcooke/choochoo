@@ -30,14 +30,21 @@ class SectorCalculator(LoaderMixin, ActivityGroupProcessCalculator):
         Sector.provides(s, self)
         SectorClimb.provides(s, self)
         SectorJournal.clean(s)
-        self.__power_model = PowerModel(**loads(Constant.from_name(s, self.__power_model_ref).at(s).value))
+        if self.__power_model_ref:
+            self.__power_model = PowerModel(**loads(Constant.from_name(s, self.__power_model_ref).at(s).value))
+        else:
+            log.warning('No power model configured for sectors')
+            self.__power_model = None
 
     def _run_one(self, missed):
         start = local_time_to_time(missed)
         with self._config.db.session_context() as s:
             ajournal = self._get_source(s, start)
-            power_model = self.__power_model.expand(s, ajournal.start,
-                                                    default_owner=Constant, default_activity_group=self.activity_group)
+            if self.__power_model:
+                power_model = self.__power_model.expand(s, ajournal.start, default_owner=Constant,
+                                                        default_activity_group=self.activity_group)
+            else:
+                power_model = None
             log.debug(f'Power: {self.__power_model_ref}: {power_model}')
             with Timestamp(owner=self.owner_out, source=ajournal, constraint=self.activity_group).on_success(s):
                 self._run_activity_journal(s, ajournal, power_model)

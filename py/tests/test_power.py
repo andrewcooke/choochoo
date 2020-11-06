@@ -6,7 +6,7 @@ import pandas as pd
 from ch2.commands.args import DEV, V, bootstrap_db, BASE, UPLOAD
 from ch2.commands.upload import upload
 from ch2.common.args import mm, m
-from ch2.config.profiles.default import default
+from ch2.config.profiles.acooke import acooke
 from ch2.data import Statistics
 from ch2.names import N
 from ch2.pipeline.read.activity import ActivityReader
@@ -22,7 +22,7 @@ class TestPower(LogTestCase):
         user = random_test_user()
         with TemporaryDirectory() as f:
 
-            bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
+            bootstrap_db(user, m(V), '5', mm(DEV), configurator=acooke)
 
             config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), UPLOAD,
                                        'data/test/source/personal/2018-03-04-qdp.fit')
