@@ -64,13 +64,12 @@ class ActivityJournal(GroupedSource):
     # nullable because created later
     centre = Column(Geography('Point', srid=WGS84_SRID))
     utm_srid = Column(Integer)
-    # we probably don't need all these
+    # used to detect folding back
     route_a = Column(Geography('LineStringM', srid=WGS84_SRID))  # azimuth
+    # used to calculate start/finish distance and time from offsets
     route_d = Column(Geography('LineStringM', srid=WGS84_SRID))  # distance
     route_t = Column(Geography('LineStringM', srid=WGS84_SRID))  # time
-    route_dt = Column(Geography('LineStringM', srid=WGS84_SRID))  # distance/time multiplexed
-    route_ed = Column(Geography('LineStringZM', srid=WGS84_SRID))  # elevation, distance
-    route_et = Column(Geography('LineStringZM', srid=WGS84_SRID))  # elevation, time
+    # used to detect climbs
     route_edt = Column(Geography('LineStringZM', srid=WGS84_SRID))  # elevation, distance / m * 1e7 + elapsed time
 
     __mapper_args__ = {
