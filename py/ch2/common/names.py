@@ -1,6 +1,6 @@
 from re import sub, ASCII
 
-from ch2.common.date import to_time
+from .date import to_time
 
 ADMIN_USER = 'admin-user'
 ADMIN_PASSWD = 'admin-passwd'
