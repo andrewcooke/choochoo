@@ -16,7 +16,7 @@ from ....diary.database import interval_column
 from ....diary.model import optional_text, text, from_field, value, image
 from ....lib import local_date_to_time, time_to_local_time, to_time, to_date, time_to_local_date
 from ....lib.utils import insert
-from ....names import Names as N, U
+from ....names import Names as N, U, T
 from ....sql import ActivityGroup, ActivityJournal, ActivityTopicJournal, ActivityTopicField, StatisticName, \
     ActivityTopic, StatisticJournal, Pipeline, PipelineType, Interval
 
@@ -209,11 +209,15 @@ class ActivityDelegate(ActivityJournalDelegate):
             if total:
                 yield cls.__sjournal_as_value(total, date=date)
             for climb in climbs:
+                if N.CLIMB_CATEGORY in climb:
+                    category = cls.__dict_as_value(climb, N.CLIMB_CATEGORY)
+                else:
+                    category = value(T.CLIMB_CATEGORY, '-')
                 yield [text('Climb'),
                        value('Climb at', climb['start-distance'], units=U.KM),
                        cls.__thumbnail(climb[N.CLIMB_TIME]),
                        cls.__sparkline(climb[N.CLIMB_TIME]),
-                       cls.__dict_as_value(climb, N.CLIMB_CATEGORY),
+                       category,
                        cls.__dict_as_value(climb, N.CLIMB_ELEVATION, date=date),
                        cls.__dict_as_value(climb, N.CLIMB_DISTANCE),
                        cls.__dict_as_value(climb, N.CLIMB_TIME),

@@ -83,9 +83,11 @@ class SectorGroup(Base):
         if delete is True, nearby similar entries are deleted before insertion.
         if delete is False, and there is already a nearby similar entry, it is returned.
         otherwise, insertion is attempted without deletion.
+        centre is (lon, lat)
         '''
-        srid = utm_srid(*centre)
-        centre = text(point(*centre))
+        lon, lat = centre
+        srid = utm_srid(lat, lon)
+        centre = text(point(lon, lat))
         radius = radius_km * 1000
         if delete is not None:
             query = s.query(SectorGroup). \

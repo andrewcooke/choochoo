@@ -44,25 +44,33 @@ with srid as (select s.id as sector_id,
      finish_fraction as (select p.sector_id,
                                 st_linelocatepoint(p.route_t, p.point) as fraction
                            from finish_point as p
-                          where st_geometrytype(p.point) = 'ST_Point')
+                          where st_geometrytype(p.point) = 'ST_Point'),
+     shortest as (select r.sector_id,
+                         s.fraction as start_fraction,
+                         f.fraction as finish_fraction,
+                         min(f.fraction - s.fraction) over (partition by r.sector_id) as shortest
+                    from srid as r,
+                         start_fraction as s,
+                         finish_fraction as f
+                   where s.fraction < f.fraction
+                     and s.sector_id = f.sector_id
+                     and s.sector_id = r.sector_id
+                     and st_length(st_linesubstring(r.route_t, s.fraction, f.fraction))
+                         between 0.95 * st_length(r.sector) and 1.05 * st_length(r.sector))
 select distinct  -- multiple starts/finishes can lead to duplicates
-       r.sector_id,
-       s.fraction as start_fraction,
-       f.fraction as finish_fraction,
-       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_t, s.fraction)) as start_time,
-       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_t, f.fraction)) as finish_time,
-       st_m(st_lineinterpolatepoint(r.route_d, s.fraction)) as start_distance,
-       st_m(st_lineinterpolatepoint(r.route_d, f.fraction)) as finish_distance
+       s.sector_id,
+       s.start_fraction,
+       s.finish_fraction,
+       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_t, s.start_fraction)) as start_time,
+       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_t, s.finish_fraction)) as finish_time,
+       st_m(st_lineinterpolatepoint(r.route_d, s.start_fraction)) as start_distance,
+       st_m(st_lineinterpolatepoint(r.route_d, s.finish_fraction)) as finish_distance
   from srid as r,
-       start_fraction as s,
-       finish_fraction as f,
+       shortest as s,
        activity_journal as aj
  where aj.id = :activity_journal_id
-   and s.fraction < f.fraction
-   and s.sector_id = f.sector_id
-   and s.sector_id = r.sector_id
-   and st_length(st_linesubstring(r.route_t, s.fraction, f.fraction)) 
-       between 0.95 * st_length(r.sector) and 1.05 * st_length(r.sector)
+   and r.sector_id = s.sector_id
+   and s.finish_fraction - s.start_fraction = s.shortest
 ''')
     log.debug(sql)
     result = s.connection().execute(sql, sector_group_id=sector_group.id, activity_journal_id=ajournal.id)

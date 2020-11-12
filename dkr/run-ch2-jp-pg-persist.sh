@@ -2,6 +2,8 @@
 
 cd "${BASH_SOURCE%/*}/" || exit
 
+source version.sh
+
 CMD=$0
 BIG=
 JS=
@@ -15,7 +17,8 @@ DEV2=
 help () {
     echo -e "\n  Run choochoo + jupyter + postgres with named volumes"
     echo -e "\n  Usage:"
-    echo -e "\n   $CMD [--big] [--slow] [--js] [--reset] [--prof] [--dev] [-h]"
+    echo -e "\n   $CMD [--big] [--slow] [--js] [--reset] [--prof] [--dev] \\"
+    echo -e "           [--version VERSION] [-h]"
     echo -e "\n  --big:       use larger base distro"
     echo -e "  --slow:      do not mount pip cache (buildkit)"
     echo -e "  --js:        assumes node pre-built"
@@ -23,6 +26,7 @@ help () {
     echo -e "  --restore:   restore database from backup (you must backup first)"
     echo -e "  --prof:      use the pgbadger conf for postgres (profiling)"
     echo -e "  --dev:       use dev-specific disks"
+    echo -e "  --version:   version for kupyter mount ($VERSION)"
     echo -e "   -h:         show this message"
     echo -e "\n  --big, --slow and --js are only used if --reset is specified\n"
     exit 1
@@ -44,6 +48,9 @@ while [ $# -gt 0 ]; do
     elif [ $1 == "--dev" ]; then
         DEV="-dev"
         DEV2="--dev"
+    elif [ $1 == "--version" ]; then
+        shift
+	VERSION="$1"
     elif [ $1 == "-h" ]; then
         help
     else
@@ -73,6 +80,5 @@ fi
 rm -f docker-compose.yml
 cp docker-compose-ch2-jp-pg-persist.yml docker-compose.yml
 sed -i s/DEV/$DEV/ docker-compose.yml 
-source version.sh
 sed -i s/VERSION/$VERSION/ docker-compose.yml 
 ID="$(id -u):$(id -g)" docker-compose up

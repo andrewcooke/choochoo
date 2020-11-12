@@ -1,3 +1,6 @@
+from geoalchemy2.shape import from_shape
+from shapely.geometry import Point
+
 from .garmin import Garmin
 from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_process
 from ..power import add_simple_power_estimate, add_kit_power_estimate, add_kit_power_model, POWER_MODEL_CNAME
@@ -67,7 +70,7 @@ class ACooke(Garmin):
 
     def _load_sector_groups(self, s):
         # note lon, lat for centre
-        SectorGroup.add(s, (-70.7, -33.4), 1000, 'Santiago')
+        SectorGroup.add(s, (-70.7, -33.4), 5000, 'Santiago, Chile')
 
     def _sport_to_activity(self):
 
