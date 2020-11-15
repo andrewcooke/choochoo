@@ -38,6 +38,7 @@ INTEGER = 'integer'
 LABEL = 'label'
 LINK = 'link'
 LO = 'lo'
+MAP = 'map'
 MEASURES = 'measures'
 TAG = 'tag'
 SCHEDULES = 'schedules'
@@ -115,6 +116,10 @@ def link(value, db=None, tag=None):
 
 def image(value, tag=None):
     return {TYPE: IMAGE, VALUE: value, TAG: to_tag(tag or value)}
+
+
+def map(xloyloxhiyhi, db):
+    return {TYPE: MAP, VALUE: xloyloxhiyhi, DB: db}
 
 
 # --- decorators

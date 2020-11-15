@@ -255,7 +255,6 @@ class UTC(TypeDecorator):
     impl = DateTime(timezone=True)
 
     def process_result_value(self, value, dialect):
-        from ..lib.schedule import Schedule
         if value is None:
             return None
         return value.replace(tzinfo=pytz.UTC)

@@ -25,6 +25,7 @@ from ..pipeline.calculate.steps import StepsCalculator
 from ..pipeline.calculate.summary import SummaryCalculator
 from ..pipeline.display.activity.achievement import AchievementDelegate
 from ..pipeline.display.activity.jupyter import JupyterDelegate
+from ..pipeline.display.activity.map import MapDelegate
 from ..pipeline.display.activity.nearby import NearbyDelegate
 from ..pipeline.display.activity.utils import ActivityDisplayer, ActivityDelegate
 from ..pipeline.display.database import DatabaseDisplayer
@@ -210,7 +211,7 @@ your FF-model parameters (fitness and fatigue).
         add_displayer(s, DatabaseDisplayer)
 
     def _activity_displayer_delegates(self):
-        return [AchievementDelegate, ActivityDelegate, NearbyDelegate, JupyterDelegate]
+        return [AchievementDelegate, MapDelegate, ActivityDelegate, NearbyDelegate, JupyterDelegate]
 
     def _load_constants(self, s):
         add_constant(s, SRTM1_DIR_CNAME, self._config.args._format(value='{data}/srtm1'),
