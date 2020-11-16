@@ -12,6 +12,7 @@ from .servlets.configure import Configure
 from .servlets.diary import Diary
 from .servlets.jupyter import Jupyter
 from .servlets.kit import Kit
+from .servlets.route import Route
 from .servlets.search import Search
 from .servlets.image import Thumbnail, Sparkline
 from .servlets.upload import Upload
@@ -100,6 +101,7 @@ class WebServer:
         diary = Diary()
         jupyter = Jupyter(config, self.__config.args[JUPYTER])
         kit = Kit()
+        route = Route()
         static = Static('.static')
         upload = Upload(config)
         thumbnail = Thumbnail(config)
@@ -142,12 +144,16 @@ class WebServer:
 
             Rule('/api/thumbnail/<int:activity>', endpoint=thumbnail, methods=(GET,)),
             Rule('/api/thumbnail/<int:activity>/<int:sector>', endpoint=thumbnail, methods=(GET,)),
+
+            Rule('/api/route/<int:activity>', endpoint=route, methods=(GET,)),
+
             Rule('/api/sparkline/<int:statistic>', endpoint=sparkline, methods=(GET,)),
             Rule('/api/sparkline/<int:statistic>/<int:sector>', endpoint=sparkline, methods=(GET,)),
             Rule('/api/sparkline/<int:statistic>/<int:sector>/<int:activity>', endpoint=sparkline, methods=(GET,)),
             Rule('/api/isparkline/<int:statistic>', endpoint=sparkline, methods=(GET,), defaults={'invert': True}),
             Rule('/api/isparkline/<int:statistic>/<int:sector>', endpoint=sparkline, methods=(GET,), defaults={'invert': True}),
             Rule('/api/isparkline/<int:statistic>/<int:sector>/<int:activity>', endpoint=sparkline, methods=(GET,), defaults={'invert': True}),
+
             Rule('/api/static/<path:path>', endpoint=static, methods=(GET,)),
 
             Rule('/api/upload', endpoint=self.check(upload, empty=False), methods=(PUT,)),

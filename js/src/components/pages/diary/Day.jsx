@@ -15,7 +15,7 @@ import {
     ValueField
 } from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
-import {BusyWarning, Image, Layout, Thumbnail} from "../../elements";
+import {BusyWarning, Image, Layout, Map} from "../../elements";
 import {ColumnCard, ColumnList, LinkButton, Loading, Text} from "../../../common/elements";
 import {handleJson} from "../../functions";
 
@@ -142,6 +142,8 @@ function Field(props) {
                 <Text>Unsupported link: {JSON.stringify(json)}</Text>
             </Grid>);
         }
+    } else if (json.type === 'map') {
+        return <Map json={json}/>
     } else {
         return (<Grid item xs={4}>
             <Text>Unsupported type: {JSON.stringify(json)}</Text>
