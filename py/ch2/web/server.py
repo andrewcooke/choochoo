@@ -145,7 +145,7 @@ class WebServer:
             Rule('/api/thumbnail/<int:activity>', endpoint=thumbnail, methods=(GET,)),
             Rule('/api/thumbnail/<int:activity>/<int:sector>', endpoint=thumbnail, methods=(GET,)),
 
-            Rule('/api/route/<int:activity>', endpoint=route, methods=(GET,)),
+            Rule('/api/route/activity/<int:activity>', endpoint=route, methods=(GET,)),
 
             Rule('/api/sparkline/<int:statistic>', endpoint=sparkline, methods=(GET,)),
             Rule('/api/sparkline/<int:statistic>/<int:sector>', endpoint=sparkline, methods=(GET,)),
