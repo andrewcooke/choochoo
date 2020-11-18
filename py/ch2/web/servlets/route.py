@@ -31,6 +31,7 @@ select st_force2d(aj.route_t::geometry)
     def _read_sectors(self, s, activity):
         for sjournal in s.query(SectorJournal).filter(SectorJournal.activity_journal_id == activity).all():
             yield {'latlon': self._read_sector_route(s, sjournal.sector.id),
+                   'type': sjournal.sector.type,
                    'db': sjournal.sector.id}  # todo - probably want tuple w 'climb' etc here
 
     def _read_sector_route(self, s, sector_id):

@@ -130,8 +130,6 @@ class ActivityDelegate(ActivityJournalDelegate):
         if zones: yield [text('HR Zones (% time)')] + zones
         active_data = list(self.__read_active_data(s, ajournal, date))
         if active_data: yield [text('Activity Statistics')] + active_data
-        # sectors = list(self.__read_sectors(s, ajournal, date))
-        # if sectors: yield [text('Sectors')] + sectors
         climbs = list(self.__read_climbs(s, ajournal, date))
         if climbs: yield [text('Climbs')] + climbs
         sectors = list(self.__read_sectors(s, ajournal, date))

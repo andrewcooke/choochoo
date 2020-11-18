@@ -185,7 +185,7 @@ def climbs_for_activity(s, ajournal):
 
     return total, sorted((make_climb(grouped)
                           for _, grouped in groupby(sjournals, key=lambda sjournal: sjournal.time)),
-                         key=lambda climb: climb[N.CLIMB_ELEVATION].value, reverse=True)
+                         key=lambda climb: climb['start-distance'])
 
 
 def climb_sources(s, activity_journal, activity_group=None):

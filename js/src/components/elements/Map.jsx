@@ -63,9 +63,12 @@ function ActivityMap(props) {
     const lons = latlon.map(latlon => latlon[1]).sort();
     const bounds = [[lats[0], last(lons)], [last(lats), lons[0]]];
 
-    log.debug(`lats ${lats}`);
-    log.debug(`lons ${lons}`);
-    log.debug(`Bounds ${bounds}`);
+    // log.debug(`lats ${lats}`);
+    // log.debug(`lons ${lons}`);
+    // log.debug(`Bounds ${bounds}`);
+
+    const red = {fillColor: 'red', color: 'red', fillOpacity: 1};
+    const green = {fillColor: 'green', color: 'green', fillOpacity: 1};
 
     return (
         <Grid item xs={12} className={classes.map}>
@@ -75,10 +78,8 @@ function ActivityMap(props) {
                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"/>
                 {activity_routes(data)}
                 <LayerGroup>
-                    <Circle center={last(latlon)} radius={100}
-                            pathOptions={{'fillColor': 'red', 'color': 'red'}}/>
-                    <Circle center={latlon[0]} radius={70}
-                            pathOptions={{'fillColor': 'green', 'color': 'green'}}/>
+                    <Circle center={last(latlon)} radius={100} pathOptions={red} key={1}/>
+                    <Circle center={latlon[0]} radius={70} pathOptions={green} key={2}/>
                 </LayerGroup>
             </MapContainer>
         </Grid>);
@@ -87,10 +88,13 @@ function ActivityMap(props) {
 
 function activity_routes(data) {
     const latlon = data['latlon'];
-    const routes = [<ActivityRoute route={latlon}/>]
+    const routes = [<ActivityRoute route={latlon} key={-1}/>]
     if ('sectors' in data) {
         return [...routes,
-            ...data['sectors'].map(sector => <ActivityRoute route={sector['latlon']} color='black'/>)];
+            ...data['sectors'].map((sector, i) =>
+                <ActivityRoute route={sector['latlon']}
+                               color={sector['type'] === 1 ? 'cyan' : 'black'}
+                               key={i}/>)];
     } else {
         return routes;
     }
@@ -98,6 +102,9 @@ function activity_routes(data) {
 
 
 function ActivityRoute(props) {
-    const {route, color='grey'} = props;
-    return <Polyline pathOptions={{color: color}} positions={route}/>;
+    const [opacity, setOpacity] = useState(1.0);
+    const {route, color='grey', weight=3} = props;
+    return <Polyline pathOptions={{color: color, weight: weight, opacity: opacity}} positions={route}
+                     eventHandlers={{mouseover: e => setOpacity(0.5),
+                                     mouseout: e => setOpacity(1.0)}}/>;
 }
