@@ -15,9 +15,10 @@ import {
     ValueField
 } from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
-import {BusyWarning, Image, Layout, Map} from "../../elements";
+import {BusyWarning, Image, Layout} from "../../elements";
 import {ColumnCard, ColumnList, LinkButton, Loading, Text} from "../../../common/elements";
 import {handleJson} from "../../functions";
+import ActivityMap from "../../elements/ActivityMap";
 
 
 const useStyles = makeStyles(theme => ({
@@ -143,7 +144,7 @@ function Field(props) {
             </Grid>);
         }
     } else if (json.type === 'map') {
-        return <Map json={json}/>
+        return <ActivityMap json={json}/>
     } else {
         return (<Grid item xs={4}>
             <Text>Unsupported type: {JSON.stringify(json)}</Text>
