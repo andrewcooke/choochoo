@@ -4,6 +4,7 @@ import {Analysis, Search, Upload, Welcome} from "./pages";
 import {Edit, Snapshot, Statistics} from "./pages/kit";
 import {Constants, Initial, Import} from "./pages/configure";
 import {Day, Month, Year} from "./pages/diary";
+import {Create, Sector} from "./pages/sector";
 
 
 export default function Routes() {
@@ -23,6 +24,8 @@ export default function Routes() {
                 <Route path='/kit/edit' exact={true} component={Edit}/>
                 <Route path='/kit/statistics' exact={true} component={Statistics}/>
                 <Route path='/kit/:date' exact={true} component={Snapshot}/>
+                <Route path='/sector/:id(\d+)' exact={true} component={Sector}/>
+                <Route path='/sector/new/:id(\d+)' exact={true} component={Create}/>
                 <Route path='/:date(\d+)' exact={true} component={Year}/>
                 <Route path='/:date(\d+-\d+)' exact={true} component={Month}/>
                 <Route path='/:date(\d+-\d+-\d+)' exact={true}

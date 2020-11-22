@@ -1,20 +1,8 @@
 import React from "react";
-import {IconButton, Tooltip} from "@material-ui/core";
 import {Publish} from '@material-ui/icons';
-import {useHistory} from 'react-router-dom';
+import {LinkIcon} from ".";
 
 
 export default function UploadIcon(props) {
-
-    const history = useHistory();
-
-    function onClick() {
-        history.push('/upload')
-    }
-
-    return (<Tooltip title='Upload' placement='bottom'>
-        <IconButton color="inherit" onClick={onClick}>
-            <Publish/>
-        </IconButton>
-    </Tooltip>);
+    return <LinkIcon url='/upload' tooltip='Upload' icon={<Publish/>}/>;
 }

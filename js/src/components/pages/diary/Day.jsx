@@ -15,10 +15,12 @@ import {
     ValueField
 } from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
-import {BusyWarning, Image, Layout} from "../../elements";
+import {BusyWarning, Image, Layout, LinkIcon} from "../../elements";
 import {ColumnCard, ColumnList, LinkButton, Loading, Text} from "../../../common/elements";
 import {handleJson} from "../../functions";
 import ActivityMap from "../../elements/ActivityMap";
+import log from "loglevel";
+import {Add} from "@material-ui/icons";
 
 
 const useStyles = makeStyles(theme => ({
@@ -173,10 +175,22 @@ function TopLevelPaper(props) {
         // we drop the title for these
         if (['activity', 'achievements', 'nearbys'].includes(head.tag)) {
             return (<ColumnCard>{children}</ColumnCard>);
+        } else if (head.tag === 'sectors') {
+            return <SectorCard>{children}</SectorCard>;
         } else {
             return (<ColumnCard header={head.value}>{children}</ColumnCard>);
         }
     }
+}
+
+
+function SectorCard(props) {
+    const {children} = props;
+    return (<ColumnCard>
+        <Grid item xs={11}><Typography variant='h2'>Sectors</Typography>
+        </Grid><Grid item xs={1}><LinkIcon url={'/sector/new'} icon={<Add/>}/></Grid>
+        {children}
+    </ColumnCard>);
 }
 
 

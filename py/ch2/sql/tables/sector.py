@@ -50,7 +50,7 @@ class SectorJournal(GroupedSource):
     }
 
     def time_range(self, s):
-        return self.start, self.finish
+        return self.start_time, self.finish_time
 
     @classmethod
     def clean(cls, s):
@@ -131,7 +131,7 @@ class Sector(Base):
     type = Column(Integer, nullable=False, index=True)  # index needed for fast delete of subtypes
     sector_group_id = Column(Integer, ForeignKey('sector_group.id', ondelete='cascade'), nullable=False)
     sector_group = relationship('SectorGroup')
-    # this used only for debugging (it should not matter)
+    # this used only for debugging (sectors should be independent of original activity)
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id'), index=True)
     route = Column(Geometry('LineString'), nullable=False)
     distance = Column(Float, nullable=False)

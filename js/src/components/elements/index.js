@@ -5,6 +5,7 @@ export {default as DateButtons, ActivityButtons} from './DateButtons';
 export {default as FormatValueUnits} from './FormatValueUnits';
 export {default as Image} from './Image';
 export {default as LatestIcon} from './LatestIcon';
+export {default as LinkIcon} from './LinkIcon';
 export {default as Layout} from './Layout';
 export {default as Map} from './Map';
 export {default as Picker} from './Picker';

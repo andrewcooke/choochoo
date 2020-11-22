@@ -123,15 +123,14 @@ class StatisticsMixin:
 
     def _base_use_query(self, s, statistic):
         cc1, cc2 = aliased(CompositeComponent), aliased(CompositeComponent)
-        sourceq = s.query(cc1.input_source_id). \
-            join(Composite, Composite.id == cc1.output_source_id). \
-            join(cc2, cc2.output_source_id == Composite.id). \
-            filter(cc2.input_source == self,
-                   cc1.input_source != self).subquery()
-        return s.query(StatisticJournal). \
+        query = s.query(StatisticJournal). \
             join(StatisticName). \
-            filter(StatisticName.name == statistic,
-                   StatisticJournal.source_id.in_(sourceq))
+            filter(StatisticName.name == statistic). \
+            join(cc1, StatisticJournal.source_id == cc1.input_source_id). \
+            join(Composite, Composite.id == cc1.output_source_id). \
+            join(cc2, Composite.id == cc2.output_source_id). \
+            filter(cc2.input_source == self)
+        return query
 
     def _get_statistic(self, s, statistic, owner=None, direct=False):
         return self._base_statistic_query(s, statistic, owner=owner, direct=direct).one()
