@@ -16,7 +16,7 @@ YMDTHMS = YMD + 'T' + HMS
 YMD_HM = YMD + ' ' + HM
 
 ALL_DATE_FORMATS = ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S.%f',
-                    '%Y-%m-%dT%H:%M:%S', YMD_HMS, YMD_HMS + '+00',
+                    YMDTHMS, YMD_HMS, YMD_HMS + '+00',
                     '%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', YMD, '%Y')
 
 
@@ -158,6 +158,17 @@ def local_date_to_time(date, none=False):
     return dt.datetime(*ptime.timetuple()[:6], tzinfo=pytz.UTC)
 
 
+def local_time_to_time(time, none=False):
+    if none and time is None: return None
+    for format in ALL_DATE_FORMATS:
+        try:
+            return dt.datetime.strptime(time, format).replace(
+                tzinfo=p.tz.get_local_timezone()).astimezone(pytz.UTC)
+        except ValueError:
+            pass
+    raise ValueError(f'Cannot parse "{time}" as a datetime')
+
+
 def time_to_local_timeq(time, fmt=None, none=False):
     local_time = time_to_local_time(time, fmt=fmt, none=none)
     if local_time:
@@ -175,17 +186,6 @@ def time_to_local_time(time, fmt=None, none=False):
             return time.astimezone(tz=None).strftime(YMD)
         else:
             return local_time
-
-
-def local_time_to_time(time, none=False):
-    if none and time is None: return None
-    for format in ALL_DATE_FORMATS:
-        try:
-            return dt.datetime.strptime(time, format).replace(
-                tzinfo=p.tz.get_local_timezone()).astimezone(pytz.UTC)
-        except ValueError:
-            pass
-    raise ValueError(f'Cannot parse "{time}" as a datetime')
 
 
 def is_local_time(time):

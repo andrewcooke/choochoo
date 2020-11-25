@@ -101,7 +101,7 @@ class ActivityJournal(GroupedSource):
     def at(cls, s, local_time_or_date, activity_group=None):
         try:
             activity_journal = cls.at_local_time(s, local_time_or_date, activity_group=activity_group)
-        except:
+        except ValueError:
             activity_journal = cls.at_date(s, local_time_or_date, activity_group=activity_group)
         if activity_group and activity_journal.activity_group != ActivityGroup.from_name(s, activity_group):
             raise Exception(f'Activity journal from {local_time_or_date} '
@@ -131,7 +131,12 @@ class ActivityJournal(GroupedSource):
         if activity_group:
             activity_group = ActivityGroup.from_name(s, activity_group)
             q = q.filter(ActivityJournal.activity_group_id == activity_group.id)
-        return q.one()
+        if q.count():
+            return q.one()
+        else:
+            msg = f'No activity found at {local_time} ({time})'
+            if activity_group: msg += f' for {activity_group}'
+            raise Exception(msg)
 
     @classmethod
     def before_local_time(cls, s, local_time):

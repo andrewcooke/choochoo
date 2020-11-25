@@ -17,6 +17,8 @@ def rewrite_db(model):
                 model[DB] = db.id
             elif isinstance(db, str):  # images have urls (no they don't - is this still used?)
                 model[DB] = db
+            elif isinstance(db, int):  # direct id
+                model[DB] = db
             else:  # links have tuples
                 model[DB] = [x if str_or_none(x) else x.id for x in db]
         return model

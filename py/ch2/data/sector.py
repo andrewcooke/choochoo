@@ -11,7 +11,7 @@ from ch2.sql.utils import add
 log = getLogger(__name__)
 
 
-HULL_RADIUS = 40
+HULL_RADIUS = 25  # 10 and 15 were too small - climbs did not overlap
 
 
 def find_sector_journals(s, sector_group, ajournal):

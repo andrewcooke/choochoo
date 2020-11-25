@@ -4,6 +4,8 @@ services:
     image: 'andrewcooke/choochoo:latest-localDEV'
     container_name: 'choochoo'
     user: '${ID}'
+    environment:
+      - TZ=${TZ}
     ports:
       - '127.0.0.1:8000:8000'
     volumes:
@@ -21,6 +23,7 @@ services:
     --NotebookApp.allow_root=True'
     environment:
       - NB_UID=0
+      - TZ=${TZ}
     ports:
       - '127.0.0.1:8001:8888'
     volumes:

@@ -116,13 +116,6 @@ class SectorType(IntEnum):
     CLIMB = 1
 
 
-@add_text('''
-alter table sector
-  add constraint sector_optional_exclusion
-  exclude using gist (owner with =,
-                      sector_group_id with =,
-                      exclusion with &&)
-''')
 class Sector(Base):
 
     __tablename__ = 'sector'
@@ -137,7 +130,6 @@ class Sector(Base):
     distance = Column(Float, nullable=False)
     title = Column(Text, nullable=False)
     owner = Column(ShortCls, nullable=False, index=True)
-    exclusion = Column(Geometry)
     # null because set later (calculated from route but stored for efficiency)
     start = Column(Geometry('LineString'))
     finish = Column(Geometry('LineString'))
@@ -160,9 +152,6 @@ class Sector(Base):
                         sjournal.start_time)
         loader.add_data(N.SECTOR_DISTANCE, sjournal, sjournal.finish_distance - sjournal.start_distance,
                         sjournal.start_time)
-
-# st_asewkb(st_setsrid(s.route, WGS84_SRID))
-# loads(bytes(row[0]))
 
     def read_path(self, s):
         sql = text(f'''

@@ -1,4 +1,5 @@
 from collections import namedtuple
+from functools import cmp_to_key
 from itertools import groupby
 from logging import getLogger
 
@@ -181,11 +182,18 @@ def climbs_for_activity(s, ajournal):
         sjournals = list(sjournals)
         climb = {sjournal.statistic_name.name: sjournal for sjournal in sjournals}
         climb['start-distance'] = sjournals[0].source.start_distance
+        climb['id'] = sjournals[0].source.id
         return climb
+
+    def cmp_climb(a, b):
+        if abs(a['start-distance'] - b['start-distance']) / (a['start-distance'] + b['start-distance']) > 0.03:
+            return a['start-distance'] - b['start-distance']
+        else:
+            return a[N.CLIMB_ELEVATION].value - b[N.CLIMB_ELEVATION].value
 
     return total, sorted((make_climb(grouped)
                           for _, grouped in groupby(sjournals, key=lambda sjournal: sjournal.time)),
-                         key=lambda climb: climb['start-distance'])
+                         key=cmp_to_key(cmp_climb))
 
 
 def climb_sources(s, activity_journal, activity_group=None):

@@ -211,7 +211,7 @@ class ActivityDelegate(ActivityJournalDelegate):
                     category = cls.__dict_as_value(climb, N.CLIMB_CATEGORY)
                 else:
                     category = value(T.CLIMB_CATEGORY, '-')
-                yield [text('Climb'),
+                yield [text('Climb', db=climb['id']),
                        value('Climb at', climb['start-distance'], units=U.KM),
                        cls.__thumbnail(climb[N.CLIMB_TIME]),
                        cls.__sparkline(climb[N.CLIMB_TIME]),
