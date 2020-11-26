@@ -17,6 +17,8 @@ from ...sql.utils import add
 
 log = getLogger(__name__)
 
+DISTINCT_CLIMB = 0.5
+
 
 class FindClimbCalculator(ActivityJournalProcessCalculator):
 
@@ -118,7 +120,7 @@ select st_x((point).geom) as x, st_y((point).geom) as y,
         return climb.id
 
     def __prune_climb(self, s, climb_id):
-        sql = text('''
+        sql = text(f'''
   with candidates as (select st_length(st_setsrid(b.route, sg.srid)) as l1,
                              st_length(st_difference(st_setsrid(b.route, sg.srid), st_setsrid(s.hull, sg.srid))) as l2,
                              st_length(st_setsrid(s.route, sg.srid)) as l3,
@@ -133,8 +135,8 @@ select st_x((point).geom) as x, st_y((point).geom) as y,
                          and st_intersects(st_setsrid(b.route, sg.srid), st_setsrid(s.hull, sg.srid)))
 select count(1)
   from candidates as c
- where l2 / l1 < 0.2
-   and l4 / l3 < 0.2
+ where l2 / l1 < {DISTINCT_CLIMB}
+   and l4 / l3 < {DISTINCT_CLIMB}
 ''')
         if s.connection().execute(sql, climb_id=climb_id).scalar():
             log.debug(f'Deleting climb {climb_id}')

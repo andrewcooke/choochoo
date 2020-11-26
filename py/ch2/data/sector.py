@@ -18,7 +18,7 @@ def find_sector_journals(s, sector_group, ajournal):
     sql = text('''
 with srid as (select s.id as sector_id,
                      st_setsrid(s.route, sg.srid) as sector,
-                     st_transform(aj.route_t::geometry, sg.srid) as route_t,
+                     st_transform(aj.route_et::geometry, sg.srid) as route_et,
                      st_transform(aj.route_d::geometry, sg.srid) as route_d,
                      st_setsrid(s.start, sg.srid) as start,
                      st_setsrid(s.finish, sg.srid) as finish
@@ -28,21 +28,21 @@ with srid as (select s.id as sector_id,
                where s.sector_group_id = sg.id
                  and sg.id = :sector_group_id
                  and aj.id = :activity_journal_id
-                 and st_intersects(st_setsrid(s.hull, sg.srid), st_transform(aj.route_t::geometry, sg.srid))),
+                 and st_intersects(st_setsrid(s.hull, sg.srid), st_transform(aj.route_d::geometry, sg.srid))),
      start_point as (select r.sector_id,
-                            r.route_t,
-                            (st_dump(st_multi(st_intersection(r.start, r.route_t)))).geom as point
+                            r.route_et,
+                            (st_dump(st_multi(st_intersection(r.start, st_force2d(r.route_et))))).geom as point
                        from srid as r),
      start_fraction as (select p.sector_id,
-                               st_linelocatepoint(p.route_t, p.point) as fraction
+                               st_linelocatepoint(p.route_et, p.point) as fraction
                           from start_point as p
                          where st_geometrytype(p.point) = 'ST_Point'),  -- small number of cases intersect as lines
      finish_point as (select r.sector_id,
-                             r.route_t,
-                             (st_dump(st_multi(st_intersection(r.finish, r.route_t)))).geom as point
+                             r.route_et,
+                             (st_dump(st_multi(st_intersection(r.finish, st_force2d(r.route_et))))).geom as point
                         from srid as r),
      finish_fraction as (select p.sector_id,
-                                st_linelocatepoint(p.route_t, p.point) as fraction
+                                st_linelocatepoint(p.route_et, p.point) as fraction
                            from finish_point as p
                           where st_geometrytype(p.point) = 'ST_Point'),
      shortest as (select r.sector_id,
@@ -55,16 +55,18 @@ with srid as (select s.id as sector_id,
                    where s.fraction < f.fraction
                      and s.sector_id = f.sector_id
                      and s.sector_id = r.sector_id
-                     and st_length(st_linesubstring(r.route_t, s.fraction, f.fraction))
+                     and st_length(st_linesubstring(r.route_d, s.fraction, f.fraction))
                          between 0.95 * st_length(r.sector) and 1.05 * st_length(r.sector))
 select distinct  -- multiple starts/finishes can lead to duplicates
        s.sector_id,
        s.start_fraction,
        s.finish_fraction,
-       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_t, s.start_fraction)) as start_time,
-       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_t, s.finish_fraction)) as finish_time,
+       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_et, s.start_fraction)) as start_time,
+       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_et, s.finish_fraction)) as finish_time,
        st_m(st_lineinterpolatepoint(r.route_d, s.start_fraction)) as start_distance,
-       st_m(st_lineinterpolatepoint(r.route_d, s.finish_fraction)) as finish_distance
+       st_m(st_lineinterpolatepoint(r.route_d, s.finish_fraction)) as finish_distance,
+       st_z(st_lineinterpolatepoint(r.route_et, s.start_fraction)) as start_elevation,
+       st_z(st_lineinterpolatepoint(r.route_et, s.finish_fraction)) as finish_elevation
   from srid as r,
        shortest as s,
        activity_journal as aj

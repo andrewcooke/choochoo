@@ -43,6 +43,8 @@ class SectorJournal(GroupedSource):
     # this duplicates data because it's useful and a pain to calculate separately
     start_distance = Column(Float, nullable=False)
     finish_distance = Column(Float, nullable=False)
+    start_elevation = Column(Float, nullable=False)
+    finish_elevation = Column(Float, nullable=False)
     UniqueConstraint(sector_id, activity_journal_id, start_fraction, finish_fraction)
 
     __mapper_args__ = {

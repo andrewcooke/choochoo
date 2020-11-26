@@ -178,7 +178,7 @@ def populate_tmp_lines(s, sector_group, parameters):
     '''
     sql = text('''
   with lines as (select aj.id, 
-                        st_transform(aj.route_t::geometry, sg.srid) as line
+                        st_force3dm(st_transform(aj.route_et::geometry, sg.srid)) as line
                    from activity_journal as aj,
                         sector_group as sg
                   where sg.id = :sector_group_id

@@ -69,7 +69,7 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
             self.__create_centre(s, ajournal)
             self.__create_utm_srid(s, ajournal)
         self.__create_route(s, ajournal, df, 'route_a', N._delta(N.AZIMUTH))
-        self.__create_route(s, ajournal, df, 'route_t', N.ELAPSED_TIME)
+        self.__create_route_z(s, ajournal, df, 'route_et', N.ELAPSED_TIME)
         compress_distance_time(df)
         self.__create_route_z(s, ajournal, df, 'route_edt', N.DISTANCE_TIME)
 

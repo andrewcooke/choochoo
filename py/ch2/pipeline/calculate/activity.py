@@ -15,10 +15,12 @@ from ..read.activity import ActivityReader
 from ...data import Statistics
 from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats, \
     direction_stats, copy_times, round_km, MAX_MINUTES
+from ...data.climb import climbs_for_activity
 from ...data.response import response_stats, DIGITS
 from ...lib.data import safe_dict
 from ...names import N, T, S, U, SPACE
 from ...sql import ActivityJournal, StatisticJournal, StatisticJournalType, StatisticName
+from ...sql.tables.sector import SectorJournal
 
 log = getLogger(__name__)
 
@@ -102,20 +104,21 @@ class ActivityCalculator(LoaderMixin, OwnerInMixin, DataFrameCalculatorMixin,
                     drop_prefix(self.response_prefix).df
             else:
                 sdf = None
-            cdf = Statistics(s, start=ajournal.start, finish=ajournal.finish). \
-                by_name(SectorCalculator, N.CLIMB_ELEVATION).df
+            climbs = s.query(SectorJournal). \
+                filter(SectorJournal.activity_journal == ajournal). \
+                all()
             prev = s.query(ActivityJournal). \
                 filter(ActivityJournal.start < ajournal.start). \
                 order_by(desc(ActivityJournal.start)). \
                 first()
             delta = (ajournal.start - prev.start).total_seconds() if prev else None
-            return adf, sdf, cdf, delta
+            return adf, sdf, climbs, delta
         except Exception as e:
             log.warning(f'Failed to generate statistics for activity: {e}')
             raise
 
     def _calculate_stats(self, s, ajournal, data):
-        adf, sdf, cdf, delta = data
+        adf, sdf, climbs, delta = data
         stats = {}
         stats.update(copy_times(ajournal))
         stats.update(active_stats(adf))
@@ -127,9 +130,23 @@ class ActivityCalculator(LoaderMixin, OwnerInMixin, DataFrameCalculatorMixin,
         stats.update(direction_stats(adf))
         if sdf is not None:
             stats.update(response_stats(sdf, delta))
-        if cdf is not None:
-            stats.update({N.TOTAL_CLIMB: cdf[N.CLIMB_ELEVATION].sum()})
+        if climbs:
+            stats.update({N.TOTAL_CLIMB: self._total_climbed(climbs)})
         return data, stats
+
+    def _total_climbed(self, climbs):
+        # total climbed in the biggest non-overlapping climbs
+        span, total = [], 0
+        climbs = sorted(climbs, key=lambda climb: climb.finish_elevation - climb.start_elevation,
+                        reverse=True)
+        for climb in climbs:
+            found = any(start <= climb.finish_distance and finish >= climb.start_distance
+                        for start, finish in span)
+            if not found:
+                total += climb.finish_elevation - climb.start_elevation
+                span.append((climb.start_distance, climb.finish_distance))
+        return total
+
 
     @safe_dict
     def __average_power(self, s, ajournal, active_time):

@@ -66,6 +66,7 @@ class PowerCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityGroupProces
             df = Statistics(s, activity_journal=ajournal, with_timespan=True). \
                 by_name(ActivityReader, N.DISTANCE, N.SPEED, N.CADENCE). \
                 by_name(ElevationCalculator, N.ELEVATION).df
+            df[N.DISTANCE] = df[N.DISTANCE] * 1000  # convert to SI base units (m) - we're doing PHYSICS
             ldf = linear_resample_time(df)
             ldf = add_differentials(ldf, max_gap=1.1 * median_dt(df))
             return df, ldf

@@ -17,7 +17,7 @@ class MapDelegate(ActivityJournalDelegate):
     @optional_text('Map')
     def read_journal_date(self, s, ajournal, date):
         q = text(f'''
-select st_envelope(st_transform(aj.route_t::geometry, {SPHM_SRID}))
+select st_envelope(st_transform(aj.route_et::geometry, {SPHM_SRID}))
   from activity_journal as aj
  where aj.id = :activity_journal_id
 ''')

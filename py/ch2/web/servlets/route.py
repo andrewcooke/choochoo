@@ -23,7 +23,7 @@ class Route(ContentType):
 
     def _read_activity_route(self, s, activity_journal_id):
         q = text(f'''
-select st_force2d(aj.route_t::geometry)
+select st_force2d(aj.route_et::geometry)
   from activity_journal as aj
  where aj.id = :activity_journal_id''')
         return self._wkb_to_latlon(WKBElement(s.connection().execute(q, activity_journal_id=activity_journal_id).fetchone()[0]))

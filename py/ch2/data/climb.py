@@ -186,6 +186,7 @@ def climbs_for_activity(s, ajournal):
         return climb
 
     def cmp_climb(a, b):
+        # if start distances are similar, order by elevation
         if abs(a['start-distance'] - b['start-distance']) / (a['start-distance'] + b['start-distance']) > 0.03:
             return a['start-distance'] - b['start-distance']
         else:
