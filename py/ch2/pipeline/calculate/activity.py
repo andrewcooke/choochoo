@@ -1,5 +1,6 @@
 
 import datetime as dt
+from collections import namedtuple
 from logging import getLogger
 
 from sqlalchemy import desc
@@ -8,19 +9,17 @@ from .elevation import ElevationCalculator
 from .impulse import ImpulseCalculator
 from .power import PowerCalculator
 from .response import ResponseCalculator
-from .sector import SectorCalculator
 from .utils import ActivityJournalProcessCalculator, DataFrameCalculatorMixin
 from ..pipeline import OwnerInMixin, LoaderMixin
 from ..read.activity import ActivityReader
 from ...data import Statistics
 from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats, \
     direction_stats, copy_times, round_km, MAX_MINUTES
-from ...data.climb import climbs_for_activity
 from ...data.response import response_stats, DIGITS
 from ...lib.data import safe_dict
 from ...names import N, T, S, U, SPACE
-from ...sql import ActivityJournal, StatisticJournal, StatisticJournalType, StatisticName
-from ...sql.tables.sector import SectorJournal
+from ...sql import ActivityJournal, StatisticJournal, StatisticJournalType, StatisticName, Sector
+from ...sql.tables.sector import SectorJournal, SectorType
 
 log = getLogger(__name__)
 
@@ -105,7 +104,9 @@ class ActivityCalculator(LoaderMixin, OwnerInMixin, DataFrameCalculatorMixin,
             else:
                 sdf = None
             climbs = s.query(SectorJournal). \
-                filter(SectorJournal.activity_journal == ajournal). \
+                join(Sector). \
+                filter(SectorJournal.activity_journal == ajournal,
+                       Sector.type == SectorType.CLIMB). \
                 all()
             prev = s.query(ActivityJournal). \
                 filter(ActivityJournal.start < ajournal.start). \
@@ -135,18 +136,26 @@ class ActivityCalculator(LoaderMixin, OwnerInMixin, DataFrameCalculatorMixin,
         return data, stats
 
     def _total_climbed(self, climbs):
-        # total climbed in the biggest non-overlapping climbs
-        span, total = [], 0
-        climbs = sorted(climbs, key=lambda climb: climb.finish_elevation - climb.start_elevation,
-                        reverse=True)
-        for climb in climbs:
-            found = any(start <= climb.finish_distance and finish >= climb.start_distance
-                        for start, finish in span)
-            if not found:
-                total += climb.finish_elevation - climb.start_elevation
-                span.append((climb.start_distance, climb.finish_distance))
+        DistanceElevation = namedtuple('DistanceElevation', 'distance,elevation')
+        merged = [(DistanceElevation(climb.start_distance, climb.start_elevation),
+                   DistanceElevation(climb.finish_distance, climb.finish_elevation))
+                  for climb in climbs]
+        merged = sorted(merged, key=lambda pair: pair[0].distance)
+        log.debug(f'Merging climbs: {merged}')
+        i, start, finish = 0, 0, 1
+        while i < len(merged) - 1:
+            left, right = merged[i], merged[i+1]
+            if left[finish].distance >= right[finish].distance:
+                del merged[i+1]
+            elif left[finish].distance >= right[start].distance:
+                merged[i] = (left[start], right[finish])
+                del merged[i+1]
+            else:
+                i += 1
+        log.debug(f'Merged climbs: {merged}')
+        total = sum(finish.elevation - start.elevation for start, finish in merged)
+        log.debug(f'Total {total} from merged climbs: {merged}')
         return total
-
 
     @safe_dict
     def __average_power(self, s, ajournal, active_time):

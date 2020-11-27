@@ -202,13 +202,14 @@ class SectorClimb(Sector):
                            'The climb category (text, "4" to "1" and "HC").')
 
     def add_statistics(self, s, sjournal, loader, power_model=None, **kargs):
-        # note that apart from time these are taken from the sector rather than the journal
-        # this is deliberate - seems like we want these climbs to be consistent.
-        loader.add_data(N.CLIMB_ELEVATION, sjournal, self.elevation, sjournal.start_time)
-        loader.add_data(N.CLIMB_DISTANCE, sjournal, self.distance, sjournal.start_time)
+        # these are taken from the actial activity, not the sector, so will vary from match to match
+        elevation = sjournal.finish_elevation - sjournal.start_elevation
+        distance = sjournal.finish_distance - sjournal.start_distance
+        loader.add_data(N.CLIMB_ELEVATION, sjournal, elevation, sjournal.start_time)
+        loader.add_data(N.CLIMB_DISTANCE, sjournal, distance, sjournal.start_time)
         loader.add_data(N.CLIMB_TIME, sjournal, (sjournal.finish_time - sjournal.start_time).total_seconds(),
                         sjournal.start_time)
-        loader.add_data(N.CLIMB_GRADIENT, sjournal, self.elevation / (10 * self.distance), sjournal.start_time)
+        loader.add_data(N.CLIMB_GRADIENT, sjournal, elevation / (10 * distance), sjournal.start_time)
         if self.category:
             loader.add_data(N.CLIMB_CATEGORY, sjournal, self.category, sjournal.start_time)
         if power_model:
