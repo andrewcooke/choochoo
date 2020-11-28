@@ -5,12 +5,10 @@ from geoalchemy2.shape import to_shape
 from math import log10
 from sqlalchemy import desc, text
 
-# absolute imports to allow invocation from non-root
-from ch2.data import session
-from ch2.data.sector import add_start_finish
-from ch2.sql import ActivityJournal, ClusterInputScratch, ClusterHull, ClusterFragmentScratch, SectorGroup, Sector
-from ch2.sql.tables.sector import SectorType
-from ch2.sql.types import short_cls
+from ..data.sector import add_start_finish
+from ..sql import ActivityJournal, ClusterInputScratch, ClusterHull, ClusterFragmentScratch, SectorGroup, Sector
+from ..sql.tables.sector import SectorType
+from ..sql.types import short_cls
 
 log = getLogger(__name__)
 

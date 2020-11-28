@@ -18,6 +18,8 @@ from ...names import N, T, U, S
 
 log = getLogger(__name__)
 
+DEFAULT_GROUP_RADIUS_KM = 200
+
 
 @add_child_ddl(Source)
 class SectorJournal(GroupedSource):
@@ -129,10 +131,10 @@ class Sector(Base):
     # this used only for debugging (sectors should be independent of original activity)
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id'), index=True)
     route = Column(Geometry('LineString'), nullable=False)
-    distance = Column(Float, nullable=False)
     title = Column(Text, nullable=False)
     owner = Column(ShortCls, nullable=False, index=True)
     # null because set later (calculated from route but stored for efficiency)
+    distance = Column(Float)
     start = Column(Geometry('LineString'))
     finish = Column(Geometry('LineString'))
     hull = Column(Geometry('Polygon'))

@@ -251,7 +251,7 @@ class Data:
         set_times_from_index(self.df)
         return self
 
-    def __coallesce(self, columns, name, delete=False):
+    def __coalesce(self, columns, name, delete=False):
         log.debug(f'Coallescing {columns} for {name}')
         df = self.df[columns].copy()
         df.fillna(method='ffill', axis='columns', inplace=True)
@@ -260,7 +260,7 @@ class Data:
         if delete:
             self.df.drop(columns=columns, inplace=True)
 
-    def coallesce_groups(self, *names, delete=False):
+    def coalesce_groups(self, *names, delete=False):
         '''
         Merge columns named with groups.
         '''
@@ -271,10 +271,10 @@ class Data:
             if name in self.df.columns:
                 raise Exception(f'{name} already exists')
             columns = like(name + ':%', self.df.columns)
-            self.__coallesce(columns, name, delete=delete)
+            self.__coalesce(columns, name, delete=delete)
         return self
 
-    def coallesce_like(self, map, delete=False):
+    def coalesce_like(self, map, delete=False):
         '''
         Merge columns that match.  map is {pattern: result}
         '''
@@ -284,7 +284,7 @@ class Data:
             if name in self.df.columns:
                 raise Exception(f'{name} already exists')
             columns = like(pattern, self.df.columns)
-            self.__coallesce(columns, name, delete=delete)
+            self.__coalesce(columns, name, delete=delete)
         return self
 
 
@@ -320,7 +320,7 @@ def std_health_statistics(s, freq='1h'):
 
     stats = Statistics(s).\
         by_group(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE).with_. \
-        coallesce_groups(N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
+        coalesce_groups(N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
         rename_with_units(N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
         copy({N.ACTIVE_TIME_S: N.ACTIVE_TIME_H}, scale=1 / 3600). \
         into(stats, tolerance='30m')

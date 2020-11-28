@@ -107,16 +107,19 @@ with srid as (select st_setsrid(s.route, sg.srid) as route,
                         st_offsetcurve(start, -:radius) as start_right,
                         st_offsetcurve(finish, :radius) as finish_left,
                         st_offsetcurve(finish, -:radius) as finish_right,
-                        st_buffer(route, :radius, 'endcap=flat') as hull
+                        st_buffer(route, :radius, 'endcap=flat') as hull,
+                        route
                    from ends),
      endcaps as (select st_makeline(st_startpoint(start_left), st_endpoint(start_right)) as start,
                         st_makeline(st_endpoint(finish_left), st_startpoint(finish_right)) as finish,
-                        o.hull
+                        o.hull,
+                        o.route
                    from offsets as o)
 update sector
    set start = e.start,
        finish = e.finish,
-       hull = e.hull
+       hull = e.hull,
+       distance = coalesce(distance, st_length(e.route) / 1000)
   from endcaps as e
  where sector.id = :sector_id
 ''')
