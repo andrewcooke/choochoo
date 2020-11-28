@@ -145,7 +145,8 @@ class WebServer:
             Rule('/api/thumbnail/<int:activity>', endpoint=thumbnail, methods=(GET,)),
             Rule('/api/thumbnail/<int:activity>/<int:sector>', endpoint=thumbnail, methods=(GET,)),
 
-            Rule('/api/route/activity/<int:activity>', endpoint=route, methods=(GET,)),
+            Rule('/api/route/activity/<int:activity>', endpoint=self.check(route.read_activity, empty=False), methods=(GET,)),
+            Rule('/api/route/activity/<int:activity>', endpoint=self.check(route.create_sector, empty=False), methods=(POST,)),
 
             Rule('/api/sparkline/<int:statistic>', endpoint=sparkline, methods=(GET,)),
             Rule('/api/sparkline/<int:statistic>/<int:sector>', endpoint=sparkline, methods=(GET,)),

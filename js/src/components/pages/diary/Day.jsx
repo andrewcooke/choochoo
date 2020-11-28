@@ -176,7 +176,7 @@ function TopLevelPaper(props) {
         if (['activity', 'achievements', 'nearbys'].includes(head.tag)) {
             return (<ColumnCard>{children}</ColumnCard>);
         } else if (head.tag === 'sectors') {
-            return <SectorCard>{children}</SectorCard>;
+            return <SectorCard activity_id={head.db}>{children}</SectorCard>;
         } else {
             return (<ColumnCard header={head.value}>{children}</ColumnCard>);
         }
@@ -185,10 +185,10 @@ function TopLevelPaper(props) {
 
 
 function SectorCard(props) {
-    const {children} = props;
+    const {activity_id, children} = props;
     return (<ColumnCard>
         <Grid item xs={11}><Typography variant='h2'>Sectors</Typography>
-        </Grid><Grid item xs={1}><LinkIcon url={'/sector/new'} icon={<Add/>}/></Grid>
+        </Grid><Grid item xs={1}><LinkIcon url={`/sector/new/${activity_id}`} icon={<Add/>}/></Grid>
         {children}
     </ColumnCard>);
 }

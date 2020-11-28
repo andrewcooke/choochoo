@@ -14,9 +14,9 @@ log = getLogger(__name__)
 
 class Route(ContentType):
 
-    def __call__(self, request, s, activity):
-        return JsonResponse({'latlon': self._read_activity_route(s, activity),
-                             'sectors': list(self._read_sectors(s, activity))})
+    def read_activity(self, request, s, activity):
+        return {'latlon': self._read_activity_route(s, activity),
+                'sectors': list(self._read_sectors(s, activity))}
 
     def _wkb_to_latlon(self, wkb):
         return [(lat, lon) for (lon, lat) in to_shape(wkb).coords]
@@ -41,3 +41,8 @@ select st_transform(st_setsrid(s.route, sg.srid), {WGS84_SRID})
        sector_group as sg
  where s.id = :sector_id''')
         return self._wkb_to_latlon(WKBElement(s.connection().execute(q, sector_id=sector_id).fetchone()[0]))
+
+    def create_sector(self, request, s, activity):
+        data = request.json
+        log.info(data)
+        return {'sector': 1234}

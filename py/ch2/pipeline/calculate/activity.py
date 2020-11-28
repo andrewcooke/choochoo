@@ -132,23 +132,24 @@ class ActivityCalculator(LoaderMixin, OwnerInMixin, DataFrameCalculatorMixin,
         if sdf is not None:
             stats.update(response_stats(sdf, delta))
         if climbs:
-            stats.update({N.TOTAL_CLIMB: self._total_climbed(climbs)})
+            stats.update({N.TOTAL_CLIMB: self.__total_climbed(climbs)})
         return data, stats
 
-    def _total_climbed(self, climbs):
+    def __total_climbed(self, climbs):
         DistanceElevation = namedtuple('DistanceElevation', 'distance,elevation')
         merged = [(DistanceElevation(climb.start_distance, climb.start_elevation),
                    DistanceElevation(climb.finish_distance, climb.finish_elevation))
                   for climb in climbs]
-        merged = sorted(merged, key=lambda pair: pair[0].distance)
+        START, FINISH = 0, 1
+        merged = sorted(merged, key=lambda pair: pair[START].distance)
         log.debug(f'Merging climbs: {merged}')
-        i, start, finish = 0, 0, 1
+        i = 0
         while i < len(merged) - 1:
             left, right = merged[i], merged[i+1]
-            if left[finish].distance >= right[finish].distance:
+            if left[FINISH].distance >= right[FINISH].distance:
                 del merged[i+1]
-            elif left[finish].distance >= right[start].distance:
-                merged[i] = (left[start], right[finish])
+            elif left[FINISH].distance >= right[START].distance:
+                merged[i] = (left[START], right[FINISH])
                 del merged[i+1]
             else:
                 i += 1

@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Loading} from "../../common/elements";
 import {Map, Route} from ".";
+import {handleJson} from "../functions";
 
 
 export default function ActivityMap(props) {
@@ -10,8 +11,7 @@ export default function ActivityMap(props) {
 
     useEffect(() => {
         fetch('/api/route/' + json.db[0] + '/' + encodeURIComponent(json.db[1]))
-            .then(response => response.json())
-            .then(setData);
+            .then(handleJson(history, setData));
     }, [json.db]);
 
     return (data === null ? <Loading/> : <Map latlon={data['latlon']} routes={activity_routes(data)}/>)
