@@ -73,16 +73,15 @@ class ActivityGroupProcessCalculator(ActivityJournalProcessCalculator):
 
 class DataFrameCalculatorMixin:
 
-    def __init__(self, *args, add_serial=True, timestamp_constraint=None, **kargs):
+    def __init__(self, *args, add_serial=True, **kargs):
         self.__add_serial = add_serial
-        self.__timestamp_constraint = timestamp_constraint
         super().__init__(*args, **kargs)
 
     def _run_one(self, missed):
         with self._config.db.session_context() as s:
             log.debug(f'Calculating for {missed}')
             source = self._get_source(s, local_time_to_time(missed))
-            with Timestamp(owner=self.owner_out, source=source, constraint=self.__timestamp_constraint).on_success(s):
+            with Timestamp(owner=self.owner_out, source=source).on_success(s):
                 try:
                     # data may be structured (doesn't have to be simply a dataframe)
                     data = self._read_dataframe(s, source)

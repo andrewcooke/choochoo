@@ -17,6 +17,7 @@ class PipelineType(IntEnum):
     PROCESS = 0
     DISPLAY = 1
     DISPLAY_ACTIVITY = 2
+    SECTOR = 3
 
 
 # todo - possibly this should be expressed as a dependency on services, rather than directly between pipelines.
@@ -89,7 +90,7 @@ class Pipeline(Base):
 
 def sort_pipelines(pipelines):
     '''
-    not only does this order pipelines so that, if run in order, none is blocked.  it also expands the
+    not only does this order pipelines so that, if run in order, none is blocked, it also expands the
     graph so that when the session is disconnected we have all the data we need.
     '''
     included, processed, remaining = set(pipelines), set(), set(pipelines)

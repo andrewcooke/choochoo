@@ -2,7 +2,7 @@ from geoalchemy2.shape import from_shape
 from shapely.geometry import Point
 
 from .garmin import Garmin
-from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_process
+from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_process, add_pipeline
 from ..power import add_simple_power_estimate, add_kit_power_estimate, add_kit_power_model, POWER_MODEL_CNAME
 from ..profile import WALK, SWIM, RUN, BIKE
 from ...commands.args import DEFAULT
@@ -14,7 +14,8 @@ from ...pipeline.calculate import SectorCalculator
 from ...pipeline.calculate.climb import FindClimbCalculator
 from ...pipeline.calculate.cluster import ClusterCalculator
 from ...pipeline.calculate.power import PowerCalculator
-from ...sql import StatisticJournalType, StatisticName, DiaryTopic, DiaryTopicJournal
+from ...pipeline.calculate.sector import NewSectorCalculator
+from ...sql import StatisticJournalType, StatisticName, DiaryTopic, DiaryTopicJournal, PipelineType
 from ...sql.tables.sector import SectorGroup
 from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ...sql.utils import add
@@ -94,6 +95,10 @@ class ACooke(Garmin):
             add_process(s, SectorCalculator, blocked_by=[ClusterCalculator, FindClimbCalculator],
                         power_model=POWER_MODEL_CNAME, activity_group=activity_group)
         return blockers + [SectorCalculator]
+
+    def _load_sector_pipeline(self, s):
+        for activity_group in (ROAD, MTB):
+            add_pipeline(s, NewSectorCalculator, PipelineType.SECTOR, activity_group=activity_group)
 
     def _load_power_statistics(self, s, simple=False):
         # add power estimates for the two bikes

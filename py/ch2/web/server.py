@@ -99,9 +99,9 @@ class WebServer:
         analysis = Analysis()
         configure = Configure(config)
         diary = Diary()
-        jupyter = Jupyter(config, self.__config.args[JUPYTER])
+        jupyter = Jupyter(config)
         kit = Kit()
-        route = Route()
+        route = Route(config)
         static = Static('.static')
         upload = Upload(config)
         thumbnail = Thumbnail(config)
@@ -146,7 +146,8 @@ class WebServer:
             Rule('/api/thumbnail/<int:activity>/<int:sector>', endpoint=thumbnail, methods=(GET,)),
 
             Rule('/api/route/activity/<int:activity>', endpoint=self.check(route.read_activity, empty=False), methods=(GET,)),
-            Rule('/api/route/activity/<int:activity>', endpoint=self.check(route.create_sector, empty=False), methods=(POST,)),
+            Rule('/api/route/sector/<int:sector>', endpoint=self.check(route.read_sector, empty=False), methods=(GET,)),
+            Rule('/api/route/add-sector/<int:activity>', endpoint=self.check(route.create_sector, empty=False), methods=(POST,)),
 
             Rule('/api/sparkline/<int:statistic>', endpoint=sparkline, methods=(GET,)),
             Rule('/api/sparkline/<int:statistic>/<int:sector>', endpoint=sparkline, methods=(GET,)),

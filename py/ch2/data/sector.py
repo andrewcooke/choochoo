@@ -14,7 +14,7 @@ log = getLogger(__name__)
 HULL_RADIUS = 25  # 10 and 15 were too small - climbs did not overlap
 
 
-def find_sector_journals(s, sector_group, ajournal):
+def find_and_add_sector_journals(s, sector_group, ajournal, sector_id=None):
     sql = text('''
 with srid as (select s.id as sector_id,
                      st_setsrid(s.route, sg.srid) as sector,
@@ -26,6 +26,7 @@ with srid as (select s.id as sector_id,
                      activity_journal as aj,
                      sector_group as sg
                where s.sector_group_id = sg.id
+                 and s.id = coalesce(:sector_id, s.id)
                  and sg.id = :sector_group_id
                  and aj.id = :activity_journal_id
                  and st_intersects(st_setsrid(s.hull, sg.srid), st_transform(aj.route_d::geometry, sg.srid))),
@@ -75,7 +76,8 @@ select distinct  -- multiple starts/finishes can lead to duplicates
    and s.finish_fraction - s.start_fraction = s.shortest
 ''')
     log.debug(sql)
-    result = s.connection().execute(sql, sector_group_id=sector_group.id, activity_journal_id=ajournal.id)
+    result = s.connection().execute(sql, sector_group_id=sector_group.id, activity_journal_id=ajournal.id,
+                                    sector_id=sector_id)
     for row in result.fetchall():
         data = {name: value for name, value in zip(result.keys(), row)}
         sjournal = add(s, SectorJournal(activity_journal_id=ajournal.id, activity_group=ajournal.activity_group,

@@ -6,7 +6,8 @@ from sqlalchemy import text
 
 from . import ContentType
 from ...data.sector import add_start_finish
-from ...sql import ActivityJournal, Sector
+from ...pipeline.process import run_pipeline
+from ...sql import ActivityJournal, Sector, PipelineType
 from ...sql.tables.sector import SectorJournal, SectorGroup, DEFAULT_GROUP_RADIUS_KM, SectorType
 from ...sql.types import short_cls, linestringxy
 from ...sql.utils import WGS84_SRID, add
@@ -15,6 +16,10 @@ log = getLogger(__name__)
 
 
 class Route(ContentType):
+
+    def __init__(self, config):
+        super().__init__()
+        self.__config = config
 
     def read_activity(self, request, s, activity):
         return {'latlon': self._read_activity_route(s, activity),
@@ -63,4 +68,8 @@ select st_transform(st_setsrid(s.route, sg.srid), {WGS84_SRID})
         s.flush()
         add_start_finish(s, sector.id)
         s.commit()
+        run_pipeline(self.__config, PipelineType.SECTOR, new_sector_id=sector.id)
         return {'sector': sector.id}
+
+    def read_sector(self, s, sector_id):
+        pass

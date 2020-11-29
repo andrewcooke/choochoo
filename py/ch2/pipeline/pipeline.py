@@ -103,7 +103,7 @@ class ProcessPipeline(BasePipeline):
         '''
         A missing value identities what is to be processed by a worker.  It is typically a file path or
         the start time (local) of an activity.  It is always a string.  It should be quoted if it contains spaces
-        or otherwise needs special hanlding by the shell.
+        or otherwise needs special handling by the shell.
         '''
         with self._config.db.session_context(expire_on_commit=False) as s:
             missing = self._missing(s) or []  # allow None
@@ -119,7 +119,7 @@ class ProcessPipeline(BasePipeline):
         if self.worker:
             missing = self.__args
         else:
-            missing = [missed.strip('"') for missed in self.missing()]  # will call delete if forced
+            missing = [missed.strip('"') for missed in self.missing()]
         for missed in missing:
             self._run_one(missed)
         self.shutdown()

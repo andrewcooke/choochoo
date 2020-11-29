@@ -23,7 +23,7 @@ class ImpulseCalculator(LoaderMixin, OwnerInMixin, DataFrameCalculatorMixin,
     def __init__(self, *args, prefix=None, impulse_constant=None, activity_group=None, **kargs):
         self.impulse_constant_ref = self._assert('impulse_constant', impulse_constant)
         self.prefix = self._assert('prefix', prefix)
-        super().__init__(*args, timestamp_constraint=activity_group, activity_group=activity_group, **kargs)
+        super().__init__(*args, activity_group=activity_group, **kargs)
 
     def _startup(self, s):
         super()._startup(s)

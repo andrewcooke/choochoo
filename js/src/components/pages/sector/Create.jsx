@@ -80,7 +80,7 @@ function CreateMap(props) {
                                fullWidth multiline={false} variant="filled"/>
                 </Grid>
                 <ConfirmedWriteButton xs={3} label='Create' variant='contained' method='post'
-                                      href={`/api/route/activity/${activity}`} setData={redirect}
+                                      href={`/api/route/add-sector/${activity}`} setData={redirect}
                                       json={{start: istart, finish: ifinish, name: name}}>
                     Creating the sector will take time as statistics are calculated.
                 </ConfirmedWriteButton>

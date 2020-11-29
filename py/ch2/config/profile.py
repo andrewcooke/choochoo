@@ -4,7 +4,7 @@ from logging import getLogger
 from .climb import add_climb, CLIMB_CNAME
 from .database import add_activity_group, Counter, add_process, add_displayer, add_constant, \
     add_diary_topic, add_diary_topic_field, add_activity_topic_field, add_activity_displayer_delegate, \
-    add_activity_topic
+    add_activity_topic, add_pipeline
 from .impulse import add_responses, add_impulse
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.inspect import read_package
@@ -20,7 +20,7 @@ from ..pipeline.calculate.heart_rate import RestHRCalculator
 from ..pipeline.calculate.kit import KitCalculator
 from ..pipeline.calculate.nearby import SimilarityCalculator, NearbyCalculator
 from ..pipeline.calculate.response import ResponseCalculator
-from ..pipeline.calculate.sector import SectorCalculator
+from ..pipeline.calculate.sector import SectorCalculator, NewSectorCalculator
 from ..pipeline.calculate.steps import StepsCalculator
 from ..pipeline.calculate.summary import SummaryCalculator
 from ..pipeline.display.activity.achievement import AchievementDelegate
@@ -35,7 +35,7 @@ from ..pipeline.display.response import ResponseDisplayer
 from ..pipeline.read.activity import ActivityReader
 from ..pipeline.read.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..pipeline.read.monitor import MonitorReader
-from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, ActivityTopic
+from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, ActivityTopic, PipelineType
 from ..sql.types import short_cls
 from ..srtm.file import SRTM1_DIR_CNAME
 
@@ -67,6 +67,7 @@ class Profile:
             self._load_read_pipeline(s)
             self._load_calculate_pipeline(s)
             self._load_diary_pipeline(s)
+            self._load_sector_pipeline(s)
             self._load_constants(s)
             self._load_diary_topics(s, Counter())
             self._load_activity_topics(s, Counter())
@@ -209,6 +210,10 @@ your FF-model parameters (fitness and fatigue).
         for delegate in self._activity_displayer_delegates():
             add_activity_displayer_delegate(s, delegate)
         add_displayer(s, DatabaseDisplayer)
+
+    def _load_sector_pipeline(self, s):
+        for activity_group in (BIKE,):
+            add_pipeline(s, NewSectorCalculator, PipelineType.SECTOR, activity_group=activity_group)
 
     def _activity_displayer_delegates(self):
         return [AchievementDelegate, MapDelegate, ActivityDelegate, NearbyDelegate, JupyterDelegate]

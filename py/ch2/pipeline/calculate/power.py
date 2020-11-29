@@ -38,7 +38,7 @@ class PowerCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityGroupProces
     def __init__(self, *args, power_model=None, caloric_eff=0.25, activity_group=None, **kargs):
         self.power_model_ref = power_model
         self.caloric_eff = caloric_eff
-        super().__init__(*args, timestamp_constraint=activity_group, activity_group=activity_group, **kargs)
+        super().__init__(*args, activity_group=activity_group, **kargs)
 
     def _startup(self, s):
         super()._startup(s)
