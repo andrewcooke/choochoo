@@ -148,12 +148,8 @@ your FF-model parameters (fitness and fatigue).
         add_climb(s)  # default climb calculator
         add_responses(s, self._ff_parameters(), prefix=N.DEFAULT)
 
-    def _load_standard_statistics(self, s, blockers=None):
-        add_process(s, FindClimbCalculator, blocked_by=[ElevationCalculator],
-                    owner_in=short_cls(ActivityReader), climb=CLIMB_CNAME)
-        add_process(s, ClusterCalculator, blocked_by=[ElevationCalculator],
-                    owner_in=short_cls(ActivityReader))
-        blockers = self._sector_statistics(s, blockers=blockers)
+    def _load_standard_statistics(self, s, power_statistics=None):
+        blockers = self._sector_statistics(s, power_statistics=power_statistics)
         add_process(s, StepsCalculator, blocked_by=[MonitorReader],
                     owner_in=short_cls(MonitorReader))
         add_process(s, RestHRCalculator, blocked_by=[MonitorReader],
@@ -171,8 +167,12 @@ your FF-model parameters (fitness and fatigue).
         add_process(s, NearbyCalculator, blocked_by=[SimilarityCalculator],
                     owner_in=short_cls(SimilarityCalculator))
 
-    def _sector_statistics(self, s, blockers=None):
-        blockers = blockers or []
+    def _sector_statistics(self, s, power_statistics=None):
+        blockers = power_statistics or []
+        add_process(s, FindClimbCalculator, blocked_by=[ElevationCalculator],
+                    owner_in=short_cls(ActivityReader), climb=CLIMB_CNAME)
+        add_process(s, ClusterCalculator, blocked_by=[ElevationCalculator],
+                    owner_in=short_cls(ActivityReader))
         add_process(s, SectorCalculator, blocked_by=[ClusterCalculator, FindClimbCalculator])
         blockers.append(SectorCalculator)
         return blockers
@@ -194,9 +194,9 @@ your FF-model parameters (fitness and fatigue).
         # order is important here because some pipelines expect values created by others
         # this converts RAW_ELEVATION to ELEVATION, if needed
         add_process(s, ElevationCalculator, blocked_by=[ActivityReader])
-        blockers = self._load_power_statistics(s)
+        power_statistics = self._load_power_statistics(s)
         self._load_ff_statistics(s)
-        self._load_standard_statistics(s, blockers=blockers)
+        self._load_standard_statistics(s, power_statistics=power_statistics)
         self._load_summary_statistics(s)
         add_process(s, AchievementCalculator, blocked_by=[SummaryCalculator],
                     owner_in=short_cls(ActivityCalculator))

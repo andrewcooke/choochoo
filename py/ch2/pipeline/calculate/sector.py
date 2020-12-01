@@ -46,7 +46,7 @@ class SectorCalculator(LoaderMixin, ActivityGroupProcessCalculator):
             else:
                 power_model = None
             log.debug(f'Power: {self.__power_model_ref}: {power_model}')
-            with Timestamp(owner=self.owner_out, source=ajournal, constraint=self.activity_group).on_success(s):
+            with Timestamp(owner=self.owner_out, source=ajournal).on_success(s):
                 self._run_activity_journal(s, ajournal, power_model)
 
     def _run_activity_journal(self, s, ajournal, power_model):

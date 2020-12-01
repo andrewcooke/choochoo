@@ -6,7 +6,7 @@ import pandas as pd
 from sqlalchemy import text, func
 
 from .elevation import expand_distance_time, elapsed_time_to_time
-from .utils import ActivityJournalProcessCalculator
+from .utils import ActivityGroupProcessCalculator
 from ...common.date import local_time_to_time
 from ...common.log import log_current_exception
 from ...data.sector import add_start_finish
@@ -20,7 +20,7 @@ log = getLogger(__name__)
 DISTINCT_CLIMB = 0.5
 
 
-class FindClimbCalculator(ActivityJournalProcessCalculator):
+class FindClimbCalculator(ActivityGroupProcessCalculator):
 
     def __init__(self, *args, climb=None, **kargs):
         super().__init__(*args, **kargs)

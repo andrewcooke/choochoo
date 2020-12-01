@@ -15,6 +15,7 @@ from .servlets.kit import Kit
 from .servlets.route import Route
 from .servlets.search import Search
 from .servlets.image import Thumbnail, Sparkline
+from .servlets.sector import Sector
 from .servlets.upload import Upload
 from .static import Static
 from ..commands.args import LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, WARN, SECURE, IMAGE_DIR, \
@@ -101,7 +102,8 @@ class WebServer:
         diary = Diary()
         jupyter = Jupyter(config)
         kit = Kit()
-        route = Route(config)
+        route = Route()
+        sector = Sector(config)
         static = Static('.static')
         upload = Upload(config)
         thumbnail = Thumbnail(config)
@@ -147,7 +149,9 @@ class WebServer:
 
             Rule('/api/route/activity/<int:activity>', endpoint=self.check(route.read_activity, empty=False), methods=(GET,)),
             Rule('/api/route/sector/<int:sector>', endpoint=self.check(route.read_sector, empty=False), methods=(GET,)),
-            Rule('/api/route/add-sector/<int:activity>', endpoint=self.check(route.create_sector, empty=False), methods=(POST,)),
+
+            Rule('/api/sector', endpoint=self.check(sector.create_sector, empty=False), methods=(POST,)),
+            Rule('/api/sector/<int:sector>', endpoint=self.check(sector.read_sector_journals, empty=False), methods=(GET,)),
 
             Rule('/api/sparkline/<int:statistic>', endpoint=sparkline, methods=(GET,)),
             Rule('/api/sparkline/<int:statistic>/<int:sector>', endpoint=sparkline, methods=(GET,)),

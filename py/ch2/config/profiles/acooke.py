@@ -2,6 +2,7 @@ from geoalchemy2.shape import from_shape
 from shapely.geometry import Point
 
 from .garmin import Garmin
+from ..climb import CLIMB_CNAME
 from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_process, add_pipeline
 from ..power import add_simple_power_estimate, add_kit_power_estimate, add_kit_power_model, POWER_MODEL_CNAME
 from ..profile import WALK, SWIM, RUN, BIKE
@@ -10,14 +11,16 @@ from ...common.names import TIME_ZERO
 from ...diary.model import TYPE, EDIT
 from ...lib import to_time, time_to_local_date
 from ...names import Sports, simple_name, N
-from ...pipeline.calculate import SectorCalculator
+from ...pipeline.calculate import SectorCalculator, ElevationCalculator
 from ...pipeline.calculate.climb import FindClimbCalculator
 from ...pipeline.calculate.cluster import ClusterCalculator
 from ...pipeline.calculate.power import PowerCalculator
 from ...pipeline.calculate.sector import NewSectorCalculator
+from ...pipeline.read.activity import ActivityReader
 from ...sql import StatisticJournalType, StatisticName, DiaryTopic, DiaryTopicJournal, PipelineType
-from ...sql.tables.sector import SectorGroup
+from ...sql.tables.sector import SectorGroup, DEFAULT_GROUP_RADIUS_KM
 from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
+from ...sql.types import short_cls
 from ...sql.utils import add
 
 
@@ -71,7 +74,7 @@ class ACooke(Garmin):
 
     def _load_sector_groups(self, s):
         # note lon, lat for centre
-        SectorGroup.add(s, (-70.7, -33.4), 5000, 'Santiago, Chile')
+        SectorGroup.add(s, (-70.7, -33.4), DEFAULT_GROUP_RADIUS_KM, 'Santiago, Chile')
 
     def _sport_to_activity(self):
 
@@ -89,12 +92,17 @@ class ACooke(Garmin):
                 Sports.SPORT_SWIMMING: simple_name(SWIM),
                 Sports.SPORT_WALKING: simple_name(WALK)}
 
-    def _sector_statistics(self, s, blockers=None):
-        blockers = blockers or []
+    def _sector_statistics(self, s, power_statistics=None):
+        power_statistics = power_statistics or []
+        add_process(s, ClusterCalculator, blocked_by=[ElevationCalculator],
+                    owner_in=short_cls(ActivityReader))
         for activity_group in (ROAD, MTB):
+            add_process(s, FindClimbCalculator, blocked_by=[ElevationCalculator],
+                        owner_in=short_cls(ActivityReader), climb=CLIMB_CNAME,
+                        activity_group=activity_group)
             add_process(s, SectorCalculator, blocked_by=[ClusterCalculator, FindClimbCalculator],
                         power_model=POWER_MODEL_CNAME, activity_group=activity_group)
-        return blockers + [SectorCalculator]
+        return power_statistics + [SectorCalculator]
 
     def _load_sector_pipeline(self, s):
         for activity_group in (ROAD, MTB):

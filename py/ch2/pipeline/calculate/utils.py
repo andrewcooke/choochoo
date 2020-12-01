@@ -29,8 +29,7 @@ class JournalProcessCalculator(ProcessCalculator):
     _journal_type = None
 
     def _missing(self, s):
-        source_ids = self._delimit_timestamp(
-            s.query(Timestamp.source_id).filter(Timestamp.owner == self.owner_out))
+        source_ids = s.query(Timestamp.source_id).filter(Timestamp.owner == self.owner_out)
         q = self._delimit_missing(
             s.query(self._journal_type.start).
                 filter(not_(self._journal_type.id.in_(source_ids))).
@@ -38,9 +37,6 @@ class JournalProcessCalculator(ProcessCalculator):
         return [time_to_local_timeq(row[0]) for row in q]
 
     def _delimit_missing(self, q):
-        return q
-
-    def _delimit_timestamp(self, q):
         return q
 
     def _get_source(self, s, time):
@@ -56,19 +52,11 @@ class ActivityGroupProcessCalculator(ActivityJournalProcessCalculator):
 
     def __init__(self, *args, activity_group=None, **kargs):
         super().__init__(*args, **kargs)
-        self.activity_group = activity_group
+        self.activity_group = self._assert('activity_group', activity_group)
 
     def _delimit_missing(self, q):
-        if self.activity_group:
-            q = q.join(ActivityGroup).filter(ActivityGroup.name == self.activity_group)
-        else:
-            log.warning(f'No activity_group defined for {short_cls(self)}')
+        q = q.join(ActivityGroup).filter(ActivityGroup.name == self.activity_group)
         return log_query(q, 'Missing:')
-
-    def _delimit_timestamp(self, q):
-        if self.activity_group:
-            q = q.filter(Timestamp.constraint == self.activity_group)
-        return q
 
 
 class DataFrameCalculatorMixin:
@@ -179,7 +167,6 @@ class RerunWhenNewActivitiesMixin(OwnerInMixin):
             return ['missing']
         prev_ids = s.query(Timestamp.source_id). \
             filter(Timestamp.owner == self.owner_in,
-                   Timestamp.constraint == None,
                    Timestamp.time < prev.time)
         after = s.query(count(ActivityJournal.id)). \
             join(ActivityGroup). \

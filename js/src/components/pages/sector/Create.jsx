@@ -14,20 +14,6 @@ const useStyles = makeStyles(theme => ({
 }));
 
 
-function Columns(props) {
-
-    const {activity, data, history} = props;
-
-    if (data === null) {
-        return (<>
-            <Loading/>
-        </>);
-    } else {
-        return <CreateMap activity={activity} data={data} history={history}/>;
-    }
-}
-
-
 function CreateMap(props) {
 
     const {activity, data, history} = props;
@@ -80,8 +66,8 @@ function CreateMap(props) {
                                fullWidth multiline={false} variant="filled"/>
                 </Grid>
                 <ConfirmedWriteButton xs={3} label='Create' variant='contained' method='post'
-                                      href={`/api/route/add-sector/${activity}`} setData={redirect}
-                                      json={{start: istart, finish: ifinish, name: name}}>
+                                      href={`/api/sector`} setData={redirect}
+                                      json={{start: istart, finish: ifinish, name: name, activity: activity}}>
                     Creating the sector will take time as statistics are calculated.
                 </ConfirmedWriteButton>
             </ColumnCard>
@@ -105,9 +91,8 @@ export default function Create(props) {
 
     log.debug(`id ${id}`)
 
-    return (
-        <Layout title='New Sector'
-                content={<Columns data={data} activity={id} history={history}/>}
-                errorState={errorState}/>
-    );
+    const content =  data === null ? <Loading/> :
+        <CreateMap activity={id} data={data} history={history}/>;
+
+    return <Layout title='New Sector' content={content} errorState={errorState}/>;
 }

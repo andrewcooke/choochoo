@@ -128,7 +128,8 @@ class Sector(Base):
     type = Column(Integer, nullable=False, index=True)  # index needed for fast delete of subtypes
     sector_group_id = Column(Integer, ForeignKey('sector_group.id', ondelete='cascade'), nullable=False)
     sector_group = relationship('SectorGroup')
-    # this used only for debugging (sectors should be independent of original activity)
+    # this currently used only for debugging (sectors should be independent of original activity)
+    # it could be used to associate sectors with activity groups?
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id'), index=True)
     route = Column(Geometry('LineString'), nullable=False)
     title = Column(Text, nullable=False)
