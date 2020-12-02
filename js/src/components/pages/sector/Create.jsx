@@ -85,7 +85,7 @@ export default function Create(props) {
     const [error, setError] = errorState;
 
     useEffect(() => {
-        fetch('/api/route/activity/' + id)
+        fetch('/api/route/latlon/activity/' + id)
             .then(handleJson(history, setData, setError));
     }, [id]);
 

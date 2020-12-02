@@ -10,7 +10,7 @@ export default function ActivityMap(props) {
     const [data, setData] = useState(null);
 
     useEffect(() => {
-        fetch('/api/route/' + json.db[0] + '/' + encodeURIComponent(json.db[1]))
+        fetch('/api/route/latlon/' + json.db[0] + '/' + encodeURIComponent(json.db[1]))
             .then(handleJson(history, setData));
     }, [json.db]);
 
