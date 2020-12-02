@@ -65,9 +65,9 @@ First, I will add my Cotic bike:
                [-V] [--db-bind ADDRESS] [--db-port PORT] [--user USER]
                [--passwd PASS] [--admin-user USER] [--admin-passwd PASS]
                [--uri URI] [--base DIR] [--data DIR] [--cprofile [DIR]]
-               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,package-fit-profile,show-schedule}
+               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,sparkline,package-fit-profile,show-schedule}
                ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'show-schedule')
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'sparkline', 'package-fit-profile', 'show-schedule')
 
 
 We're introducing a completely new *group* (bike) and so the `--force`
@@ -81,9 +81,9 @@ Now I have a bike I am going to add some inner tubes at various dates.
                [-V] [--db-bind ADDRESS] [--db-port PORT] [--user USER]
                [--passwd PASS] [--admin-user USER] [--admin-passwd PASS]
                [--uri URI] [--base DIR] [--data DIR] [--cprofile [DIR]]
-               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,package-fit-profile,show-schedule}
+               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,sparkline,package-fit-profile,show-schedule}
                ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'show-schedule')
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'sparkline', 'package-fit-profile', 'show-schedule')
 
 
 Again the system catches the first use of `front-tube` so we flag that
@@ -94,9 +94,9 @@ it is OK with `--force`.
                [-V] [--db-bind ADDRESS] [--db-port PORT] [--user USER]
                [--passwd PASS] [--admin-user USER] [--admin-passwd PASS]
                [--uri URI] [--base DIR] [--data DIR] [--cprofile [DIR]]
-               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,package-fit-profile,show-schedule}
+               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,sparkline,package-fit-profile,show-schedule}
                ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'show-schedule')
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'sparkline', 'package-fit-profile', 'show-schedule')
 
 
 Previous tubes are *retired* as new ones are added.  You don't need to
@@ -108,9 +108,9 @@ times should align correctly.
                [-V] [--db-bind ADDRESS] [--db-port PORT] [--user USER]
                [--passwd PASS] [--admin-user USER] [--admin-passwd PASS]
                [--uri URI] [--base DIR] [--data DIR] [--cprofile [DIR]]
-               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,package-fit-profile,show-schedule}
+               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,sparkline,package-fit-profile,show-schedule}
                ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'show-schedule')
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'sparkline', 'package-fit-profile', 'show-schedule')
 
 
 That's three different inner tubes on the front.  The last uses
@@ -124,9 +124,9 @@ Now we can see the statistics:
                [-V] [--db-bind ADDRESS] [--db-port PORT] [--user USER]
                [--passwd PASS] [--admin-user USER] [--admin-passwd PASS]
                [--uri URI] [--base DIR] [--data DIR] [--cprofile [DIR]]
-               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,package-fit-profile,show-schedule}
+               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,sparkline,package-fit-profile,show-schedule}
                ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'package-fit-profile', 'show-schedule')
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'sparkline', 'package-fit-profile', 'show-schedule')
 
 
 In this example (which is auto-generated from the commands) there were
