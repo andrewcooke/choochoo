@@ -42,7 +42,7 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'shapely',
                      'sklearn',
                      'sqlalchemy-utils',
-                     'sqlalchemy',
+                     'sqlalchemy==1.3.20',
                      'sqlalchemy-batch-inserts',
                      'uritools',
                      'werkzeug',
