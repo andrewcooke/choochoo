@@ -53,9 +53,11 @@ select st_transform(st_setsrid(s.route, sg.srid), {WGS84_SRID})
     def read_sector_edt(self, request, s, sector):
         # this is actually sector_journal
         df = self._read_clipped_d_et(s, sector)
-        return {'elevation': df[N.ELEVATION].tolist(),
-                'distance': (df[N.DISTANCE] - df[N.DISTANCE].iloc[0]).tolist(),
-                'time': (df[N.ELAPSED_TIME] - df[N.ELAPSED_TIME].iloc[0]).tolist()}
+        return {
+            # 'elevation': (df[N.ELEVATION] - df[N.ELEVATION].min()).tolist(),
+            'elevation': df[N.ELEVATION].tolist(),
+            'distance': (df[N.DISTANCE] - df[N.DISTANCE].iloc[0]).tolist(),
+            'time': (df[N.ELAPSED_TIME] - df[N.ELAPSED_TIME].iloc[0]).tolist()}
 
     def _read_clipped_d_et(self, s, sector_journal_id):
         # cannot use route_edt because we need to substring / interpolate

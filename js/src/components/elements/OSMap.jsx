@@ -15,7 +15,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 
-export default function Map(props) {
+export default function OSMap(props) {
 
     const classes = useStyles();
 

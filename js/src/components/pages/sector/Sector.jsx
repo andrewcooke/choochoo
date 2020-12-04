@@ -1,10 +1,92 @@
 import React, {useEffect, useState} from 'react';
-import {FormatValueUnits, Layout, Map, Route} from "../../elements";
+import {FormatValueUnits, Layout, OSMap, Route} from "../../elements";
 import {ColumnCard, ColumnList, Loading, Text} from "../../../common/elements";
 import {Grid, Link, Radio, Tooltip} from "@material-ui/core";
 import {handleJson} from "../../functions";
 import {FMT_DAY_TIME} from "../../../constants";
+import {last} from "../../../common/functions";
 import {format, parse} from 'date-fns';
+import log from "loglevel";
+import {Area, ComposedChart, Line, XAxis, YAxis} from "recharts";
+
+
+function Plot(props) {
+
+    const {fast, slow, fColour, sColour} = props;
+    const data = resample(fast, slow, 1000, 'distance', ['elevation', 'time']);
+    log.debug(JSON.stringify(data));
+    log.debug(`fColour ${fColour} sColour ${sColour}`);
+
+    return (<ComposedChart width={500} height={300} data={data}>
+        <XAxis dataKey='distance'/>
+        <YAxis yAxisId='left' units='s'/>
+        <YAxis yAxisId='right' units='m' orientation='right' domain={['dataMin', 'dataMax']}/>
+        <Area dataKey='fast_elevation' dot={false} fill={fColour} fillOpacity={0.1} yAxisId='right'/>
+        <Area dataKey='slow_elevation' dot={false} fill={sColour} fillOpacity={0.1} yAxisId='right'/>
+        <Line dataKey='fast_time' dot={false} stroke={fColour} strokeOpacity={1} strokeWidth={2} yAxisId='left'/>
+        <Line dataKey='slow_time' dot={false} stroke={sColour} strokeOpacity={1} strokeWidth={2} yAxisId='left'/>
+    </ComposedChart>);
+}
+
+
+function resample(fast, slow, n, ref, fields=[]) {
+    const data = [];
+    const [lo, hi] = [fast[ref][0], last(fast[ref])];
+    let [i_fast, i_slow] = [0, 0];
+    for (let i = 0; i < n; i++) {
+        const datum = {}
+        const x = lo + (hi - lo) * (i / (n - 1));
+        datum[ref] = x;
+        while (i_fast+1 < fast[ref].length && fast[ref][i_fast+1] <= x) i_fast++;
+        const c = fast[ref][i_fast+1] - fast[ref][i_fast];
+        const [a, b] = [(fast[ref][i_fast+1] - x) / c, (x - fast[ref][i_fast]) / c];
+        for (let field of fields) {
+            datum[`fast_${field}`] = fast[field][i_fast] * a + fast[field][i_fast+1] * b;
+        }
+        while (i_slow+1 < slow[ref].length && slow[ref][i_slow+1] <= x) i_slow++;
+        if (slow[ref][i_slow] <= x && x <= slow[ref][i_slow+1]) {
+            const c = slow[ref][i_slow+1] - slow[ref][i_slow];
+            const [a, b] = [(slow[ref][i_slow+1] - x) / c, (x - slow[ref][i_slow]) / c];
+            for (let field of fields) {
+                datum[`slow_${field}`] = slow[field][i_slow] * a + slow[field][i_slow+1] * b;
+            }
+        }
+        data.push(datum);
+    }
+    return data;
+}
+
+
+function LoadPlot(props) {
+
+    const {sector1, sector2, history} = props;
+    const [data1, setData1] = useState(null);
+    const [data2, setData2] = useState(null);
+    const errorState = useState(null);
+    const [error, setError] = errorState;
+
+    useEffect(() => {
+        fetch('/api/route/edt/sector/' + sector1)
+            .then(handleJson(history, setData1, setError));
+    }, [sector1]);
+
+    useEffect(() => {
+        fetch('/api/route/edt/sector/' + sector2)
+            .then(handleJson(history, setData2, setError));
+    }, [sector2]);
+
+    if (data1 === null || data2 === null) return <Loading/>;
+
+    const fast = last(data1.time) > last(data2.time) ? data2 : data1;
+    const slow = last(data1.time) > last(data2.time) ? data1 : data2;
+    const colours = new Map();
+    colours.set(data1, 'orange');
+    colours.set(data2, 'cyan');
+
+    return  (<ColumnCard><Grid item xs={12}>
+        <Plot fast={fast} slow={slow} fColour={colours.get(fast)} sColour={colours.get(slow)}/>
+    </Grid></ColumnCard>);
+}
 
 
 function LoadMap(props) {
@@ -21,7 +103,7 @@ function LoadMap(props) {
 
     return  (data === null ? <Loading/> :
         <ColumnCard><Grid item xs={12}>
-            <Map latlon={data['latlon']} routes={<Route latlon={data['latlon']}/>}/>
+            <OSMap latlon={data['latlon']} routes={<Route latlon={data['latlon']}/>}/>
         </Grid></ColumnCard>);
 }
 
@@ -88,6 +170,8 @@ function SectorContent(props) {
         <SectorJournal json={sector} sort={sort} key={k} i={i} setI={setI} j={j} setJ={setJ}/>);
 
     return (<ColumnList>
+        <LoadPlot sector1={data.sector_journals[i].db} sector2={data.sector_journals[j].db}
+                  history={history}/>
         {sectorJournals}
         <LoadMap sector={sector} history={history}/>
     </ColumnList>);

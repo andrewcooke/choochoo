@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ConfirmedWriteButton, Layout, Map, Route} from "../../elements";
+import {ConfirmedWriteButton, Layout, OSMap, Route} from "../../elements";
 import {ColumnCard, ColumnList, Loading, Text} from "../../../common/elements";
 import {handleJson} from "../../functions";
 import {Grid, Slider, TextField} from "@material-ui/core";
@@ -57,7 +57,7 @@ function CreateMap(props) {
             </ColumnCard>
             <ColumnCard>
                 <Grid item xs={12}>
-                    <Map latlon={latlon} routes={<Route latlon={latlon}/>}/>
+                    <OSMap latlon={latlon} routes={<Route latlon={latlon}/>}/>
                     <Slider value={ends} onChange={handleSlider} min={0} max={1} step={0.001}
                             getAriaLabel={(index) => (index === 0 ? 'Start' : 'Finish')}/>
                 </Grid>

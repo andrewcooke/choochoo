@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Loading} from "../../common/elements";
-import {Map, Route} from ".";
+import {OSMap, Route} from ".";
 import {handleJson} from "../functions";
 
 
@@ -14,7 +14,7 @@ export default function ActivityMap(props) {
             .then(handleJson(history, setData));
     }, [json.db]);
 
-    return (data === null ? <Loading/> : <Map latlon={data['latlon']} routes={activity_routes(data)}/>)
+    return (data === null ? <Loading/> : <OSMap latlon={data['latlon']} routes={activity_routes(data)}/>)
 }
 
 
