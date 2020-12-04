@@ -1,13 +1,13 @@
 import React, {useEffect, useState} from 'react';
 import {FormatValueUnits, Layout, OSMap, Route} from "../../elements";
 import {ColumnCard, ColumnList, Loading, Text} from "../../../common/elements";
+import {last} from "../../../common/functions";
 import {Grid, Link, Radio, Tooltip} from "@material-ui/core";
 import {handleJson} from "../../functions";
 import {FMT_DAY_TIME} from "../../../constants";
-import {last} from "../../../common/functions";
 import {format, parse} from 'date-fns';
 import log from "loglevel";
-import {Area, ComposedChart, Line, XAxis, YAxis} from "recharts";
+import {AreaSeries, LineSeries, XAxis, XYPlot, YAxis} from "react-vis";
 
 
 function Plot(props) {
@@ -16,16 +16,25 @@ function Plot(props) {
     const data = resample(fast, slow, 1000, 'distance', ['elevation', 'time']);
     log.debug(JSON.stringify(data));
     log.debug(`fColour ${fColour} sColour ${sColour}`);
+    log.debug(JSON.stringify(xy(data, 'fast_time')));
 
-    return (<ComposedChart width={500} height={300} data={data}>
-        <XAxis dataKey='distance'/>
-        <YAxis yAxisId='left' units='s'/>
-        <YAxis yAxisId='right' units='m' orientation='right' domain={['dataMin', 'dataMax']}/>
-        <Area dataKey='fast_elevation' dot={false} fill={fColour} fillOpacity={0.1} yAxisId='right'/>
-        <Area dataKey='slow_elevation' dot={false} fill={sColour} fillOpacity={0.1} yAxisId='right'/>
-        <Line dataKey='fast_time' dot={false} stroke={fColour} strokeOpacity={1} strokeWidth={2} yAxisId='left'/>
-        <Line dataKey='slow_time' dot={false} stroke={sColour} strokeOpacity={1} strokeWidth={2} yAxisId='left'/>
-    </ComposedChart>);
+    return (<XYPlot width={500} height={300}>
+        <XAxis/>
+        <YAxis/>
+        {/*<AreaSeries data={xy(data, 'fast_elevation')}*/}
+        {/*            fill={fColour} opacity={0.1} yAxisId='right'/>*/}
+        {/*<AreaSeries data={xy(data, 'slow_elevation')}*/}
+        {/*            fill={sColour} opacity={0.1} yAxisId='right'/>*/}
+        <LineSeries data={xy(data, 'fast_time')}
+                    stroke={fColour} opacity={1} strokeWidth={2} curve='curveLinear'/>
+        {/*<LineSeries data={xy(data, 'slow_time')}*/}
+        {/*            stroke={sColour} opacity={1} strokeWidth={2}/>*/}
+    </XYPlot>);
+}
+
+
+function xy(data, field) {
+    return data.filter(d => field in d && d[field]).map(d => ({x: d.x, y: d[field]}));
 }
 
 
@@ -36,7 +45,7 @@ function resample(fast, slow, n, ref, fields=[]) {
     for (let i = 0; i < n; i++) {
         const datum = {}
         const x = lo + (hi - lo) * (i / (n - 1));
-        datum[ref] = x;
+        datum['x'] = x;
         while (i_fast+1 < fast[ref].length && fast[ref][i_fast+1] <= x) i_fast++;
         const c = fast[ref][i_fast+1] - fast[ref][i_fast];
         const [a, b] = [(fast[ref][i_fast+1] - x) / c, (x - fast[ref][i_fast]) / c];
@@ -80,8 +89,8 @@ function LoadPlot(props) {
     const fast = last(data1.time) > last(data2.time) ? data2 : data1;
     const slow = last(data1.time) > last(data2.time) ? data1 : data2;
     const colours = new Map();
-    colours.set(data1, 'orange');
-    colours.set(data2, 'cyan');
+    colours.set(data1, '#dd2c00');
+    colours.set(data2, '#00b8d4');
 
     return  (<ColumnCard><Grid item xs={12}>
         <Plot fast={fast} slow={slow} fColour={colours.get(fast)} sColour={colours.get(slow)}/>
