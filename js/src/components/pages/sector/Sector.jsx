@@ -7,7 +7,7 @@ import {handleJson} from "../../functions";
 import {FMT_DAY_TIME} from "../../../constants";
 import {format, parse} from 'date-fns';
 import log from "loglevel";
-import {AreaSeries, LineSeries, XAxis, XYPlot, YAxis} from "react-vis";
+import {AreaSeries, LineSeries, LineSeriesCanvas, XAxis, XYPlot, YAxis} from "react-vis";
 
 
 function Plot(props) {
@@ -25,8 +25,8 @@ function Plot(props) {
         {/*            fill={fColour} opacity={0.1} yAxisId='right'/>*/}
         {/*<AreaSeries data={xy(data, 'slow_elevation')}*/}
         {/*            fill={sColour} opacity={0.1} yAxisId='right'/>*/}
-        <LineSeries data={xy(data, 'fast_time')}
-                    stroke={fColour} opacity={1} strokeWidth={2} curve='curveLinear'/>
+        <LineSeriesCanvas data={xy(data, 'fast_time')}
+                    stroke={fColour} fill={null} opacity={1} strokeWidth={2} curve='curveLinear'/>
         {/*<LineSeries data={xy(data, 'slow_time')}*/}
         {/*            stroke={sColour} opacity={1} strokeWidth={2}/>*/}
     </XYPlot>);
