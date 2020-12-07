@@ -7,7 +7,7 @@ import {FMT_DAY_TIME} from "../../../constants";
 import {last} from "../../../common/functions";
 import {format, parse} from 'date-fns';
 import log from "loglevel";
-import {Area, ComposedChart, Line, Scatter, XAxis, YAxis} from "recharts";
+import {Area, ComposedChart, Label, Line, Scatter, XAxis, YAxis, Text as XText} from "recharts";
 import {sprintf} from 'sprintf-js';
 
 
@@ -39,9 +39,11 @@ function Plot(props) {
                                fill: theme.palette.text.secondary, offset: -10}}/>
                 <YAxis yAxisId='elevation' unit='m' orientation='right'
                        type='number' domain={[min_elevation, max_elevation]} scale='linear'
-                       stroke={theme.palette.text.primary}
-                       label={{value: 'Elevation', angle: -90, position: 'insideRight',
-                               fill: theme.palette.text.secondary, offset: 0}}/>
+                       stroke={theme.palette.text.primary}>
+                    <Label angle={-90} position='insideRight' fill={theme.palette.text.secondary} offset={0}>
+                        <XText value='Foo' textAnchor='middle'/>
+                    </Label>
+                </YAxis>
                 <Area data={zslow} dataKey='elevation' dot={false} xAxisId='distance' yAxisId='elevation'
                       stroke={null} fill={sColour} fillOpacity={0.1} animationDuration={0}/>
                 <Area data={zfast} dataKey='elevation' dot={false} xAxisId='distance' yAxisId='elevation'
