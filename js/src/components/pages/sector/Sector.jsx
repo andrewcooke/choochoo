@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {FormatValueUnits, Layout, OSMap, Route} from "../../elements";
 import {ColumnCard, ColumnList, Loading, Text} from "../../../common/elements";
-import {Grid, Link, makeStyles, Radio, Slider, Tooltip, useTheme} from "@material-ui/core";
+import {last} from "../../../common/functions";
+import {Grid, Link, Radio, Tooltip} from "@material-ui/core";
 import {handleJson} from "../../functions";
 import {FMT_DAY_TIME} from "../../../constants";
-import {last} from "../../../common/functions";
 import {format, parse} from 'date-fns';
 import log from "loglevel";
 import {Area, ComposedChart, Label, Line, Scatter, XAxis, YAxis, Text as XText} from "recharts";

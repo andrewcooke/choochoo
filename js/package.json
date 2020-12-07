@@ -33,6 +33,8 @@
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.57",
     "@material-ui/pickers": "^3.2.10",
+    "@nivo/core": "^0.66.0",
+    "@nivo/line": "^0.66.0",
     "acorn": "^7.4.1",
     "core-js": "^3.8.0",
     "date-fns": "^2.16.1",
@@ -42,7 +44,6 @@
     "minimist": ">=1.2.3",
     "react-leaflet": "^3.0.2",
     "react-router-dom": "^5.2.0",
-    "recharts": "^1.8.5",
     "regenerator-runtime": "^0.13.7",
     "sprintf-js": "^1.1.2"
   }
