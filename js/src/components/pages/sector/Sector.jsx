@@ -1,59 +1,117 @@
 import React, {useEffect, useState} from 'react';
 import {FormatValueUnits, Layout, OSMap, Route} from "../../elements";
 import {ColumnCard, ColumnList, Loading, Text} from "../../../common/elements";
-import {Grid, Link, Radio, Tooltip} from "@material-ui/core";
+import {Grid, Link, makeStyles, Radio, Slider, Tooltip, useTheme} from "@material-ui/core";
 import {handleJson} from "../../functions";
 import {FMT_DAY_TIME} from "../../../constants";
 import {last} from "../../../common/functions";
 import {format, parse} from 'date-fns';
 import log from "loglevel";
-import {Area, ComposedChart, Line, XAxis, YAxis} from "recharts";
+import {Area, ComposedChart, Line, Scatter, XAxis, YAxis} from "recharts";
+import {sprintf} from 'sprintf-js';
 
 
 function Plot(props) {
 
-    const {fast, slow, fColour, sColour} = props;
-    const data = resample(fast, slow, 1000, 'distance', ['elevation', 'time']);
-    log.debug(JSON.stringify(data));
-    log.debug(`fColour ${fColour} sColour ${sColour}`);
+    const {fast, slow, fColour, sColour, n=100} = props;
+    const zfast = zip(fast);
+    const zslow = zip(slow);
+    const max_distance = Math.max(...fast.distance, ...slow.distance);
+    const max_time = Math.max(...fast.time, ...slow.time);
+    const elevation = fast.elevation.concat(slow.elevation);
+    const min_elevation = Math.min(...elevation);
+    const max_elevation = Math.max(...elevation);
 
-    return (<ComposedChart width={500} height={300} data={data}>
-        <XAxis dataKey='distance'/>
-        <YAxis yAxisId='left' units='s'/>
-        <YAxis yAxisId='right' units='m' orientation='right' domain={['dataMin', 'dataMax']}/>
-        <Area dataKey='fast_elevation' dot={false} fill={fColour} fillOpacity={0.1} yAxisId='right'/>
-        <Area dataKey='slow_elevation' dot={false} fill={sColour} fillOpacity={0.1} yAxisId='right'/>
-        <Line dataKey='fast_time' dot={false} stroke={fColour} strokeOpacity={1} strokeWidth={2} yAxisId='left'/>
-        <Line dataKey='slow_time' dot={false} stroke={sColour} strokeOpacity={1} strokeWidth={2} yAxisId='left'/>
-    </ComposedChart>);
+    const [slider, setSlider] = useState(0);
+    const sfast = interpolate(zfast, slider * max_distance, 'distance');
+    const sslow = interpolate(zslow, sfast.time, 'time');
+
+    const theme = useTheme();
+
+    return (<>
+        <Grid item xs={12}>
+            <ComposedChart width={500} height={300} margin={{top:10, bottom: 10, left:10, right: 10}}>
+                <XAxis xAxisId='distance' dataKey='distance' unit='km'
+                       type='number' domain={[0, max_distance]} scale='linear'
+                       tickFormatter={x => sprintf('%.2f', x)}
+                       stroke={theme.palette.text.primary}
+                       label={{value: 'Distance', position: 'insideBottom',
+                               fill: theme.palette.text.secondary, offset: -10}}/>
+                <YAxis yAxisId='elevation' unit='m' orientation='right'
+                       type='number' domain={[min_elevation, max_elevation]} scale='linear'
+                       stroke={theme.palette.text.primary}
+                       label={{value: 'Elevation', angle: -90, position: 'insideRight',
+                               fill: theme.palette.text.secondary, offset: 0}}/>
+                <Area data={zslow} dataKey='elevation' dot={false} xAxisId='distance' yAxisId='elevation'
+                      stroke={null} fill={sColour} fillOpacity={0.1} animationDuration={0}/>
+                <Area data={zfast} dataKey='elevation' dot={false} xAxisId='distance' yAxisId='elevation'
+                      stroke={null} fill={fColour} fillOpacity={0.1} animationDuration={0}/>
+                <YAxis yAxisId='time' unit='s'
+                       type='number' domain={[0, max_time]} scale='linear'
+                       stroke={theme.palette.text.primary}
+                       label={{value: 'Time', angle:-90, position: 'insideLeft',
+                               fill: theme.palette.text.secondary, offset: 0}}/>
+                <Scatter data={[sslow]} dataKey='time' xAxisId='distance' yAxisId='time'
+                         stroke={sColour} strokeOpacity={1} strokeWidth={2}
+                         fill={sColour} animationDuration={0}/>
+                <Line data={zslow} dataKey='time' dot={false} xAxisId='distance' yAxisId='time'
+                      stroke={sColour} strokeOpacity={1} strokeWidth={2} animationDuration={0}/>
+                <Scatter data={[sfast]} dataKey='time' xAxisId='distance' yAxisId='time'
+                         stroke={fColour} strokeOpacity={1} strokeWidth={2}
+                         fill={fColour} animationDuration={0}/>
+                <Line data={zfast} dataKey='time' dot={false} xAxisId='distance' yAxisId='time'
+                      stroke={fColour} strokeOpacity={1} strokeWidth={2} animationDuration={0}/>
+            </ComposedChart>
+        </Grid>
+        <Grid item xs={12}>
+            <Slider value={slider} onChange={(event, value) => setSlider(value)}
+                    min={0} max={1} step={1/n}/>
+        </Grid>
+    </>);
 }
 
 
-function resample(fast, slow, n, ref, fields=[]) {
-    const data = [];
-    const [lo, hi] = [fast[ref][0], last(fast[ref])];
-    let [i_fast, i_slow] = [0, 0];
-    for (let i = 0; i < n; i++) {
-        const datum = {}
-        const x = lo + (hi - lo) * (i / (n - 1));
-        datum[ref] = x;
-        while (i_fast+1 < fast[ref].length && fast[ref][i_fast+1] <= x) i_fast++;
-        const c = fast[ref][i_fast+1] - fast[ref][i_fast];
-        const [a, b] = [(fast[ref][i_fast+1] - x) / c, (x - fast[ref][i_fast]) / c];
-        for (let field of fields) {
-            datum[`fast_${field}`] = fast[field][i_fast] * a + fast[field][i_fast+1] * b;
+function interpolate(data, value, key) {
+    const [i, j, norm, iweight, jweight] = bracket(data, value, key);
+    log.debug(i, j, norm, iweight, jweight);
+    const result = {};
+    Object.keys(data[0]).forEach(key => {
+        result[key] = (data[i][key] * iweight + data[j][key] * jweight) / norm;
+    })
+    return result;
+}
+
+
+function bracket(data, value, key) {
+    log.debug(value, key);
+    let a = 0;
+    let c = data.length-1;
+    while (c - a > 1) {
+        const b = Math.floor(0.5 + 0.5 * (a + c));
+        if (data[b][key] > value) {
+            c = b;
+        } else {
+            a = b;
         }
-        while (i_slow+1 < slow[ref].length && slow[ref][i_slow+1] <= x) i_slow++;
-        if (slow[ref][i_slow] <= x && x <= slow[ref][i_slow+1]) {
-            const c = slow[ref][i_slow+1] - slow[ref][i_slow];
-            const [a, b] = [(slow[ref][i_slow+1] - x) / c, (x - slow[ref][i_slow]) / c];
-            for (let field of fields) {
-                datum[`slow_${field}`] = slow[field][i_slow] * a + slow[field][i_slow+1] * b;
-            }
-        }
-        data.push(datum);
     }
-    return data;
+    return [a, c, data[c][key] - data[a][key], data[c][key] - value, value - data[a][key]];
+}
+
+
+function zip(input) {
+    const output = [];
+    Object.keys(input).forEach(key => {
+        if (output.length === 0) {
+            input[key].forEach(x => {
+                const obj = {};
+                obj[key] = x;
+                output.push(obj)
+            });
+        } else {
+            input[key].forEach((x, i) => output[i][key] = x);
+        }
+    });
+    return output;
 }
 
 
@@ -64,6 +122,7 @@ function LoadPlot(props) {
     const [data2, setData2] = useState(null);
     const errorState = useState(null);
     const [error, setError] = errorState;
+    const theme = useTheme();
 
     useEffect(() => {
         fetch('/api/route/edt/sector/' + sector1)
@@ -80,8 +139,8 @@ function LoadPlot(props) {
     const fast = last(data1.time) > last(data2.time) ? data2 : data1;
     const slow = last(data1.time) > last(data2.time) ? data1 : data2;
     const colours = new Map();
-    colours.set(data1, 'orange');
-    colours.set(data2, 'cyan');
+    colours.set(data1, theme.palette.secondary.main);
+    colours.set(data2, theme.palette.primary.main);
 
     return  (<ColumnCard><Grid item xs={12}>
         <Plot fast={fast} slow={slow} fColour={colours.get(fast)} sColour={colours.get(slow)}/>
@@ -123,7 +182,7 @@ function SectorJournal(props) {
                 <Link onClick={() => sort('activity_group')}><Text>{json.activity_group}</Text></Link>
             </Tooltip>
         </Grid>
-        <Grid item xs={1}><Radio checked={i == json.index} onChange={() => setI(json.index)}/></Grid>
+        <Grid item xs={1}><Radio checked={i == json.index} onChange={() => setI(json.index)} color='secondary'/></Grid>
         <Grid item xs={5}>
             <Tooltip title='Sort by date' placement='top'>
                 <Link onClick={() => sort('date')}><Text>{format(json.date, FMT_DAY_TIME)}</Text></Link>
@@ -144,7 +203,7 @@ function SectorJournal(props) {
                 <Link onClick={() => sort('elevation')}><FormatValueUnits value={json.elevation} units='m'/></Link>
             </Tooltip>
         </Grid>
-        <Grid item xs={1}><Radio checked={j == json.index} onChange={() => setJ(json.index)}/></Grid>
+        <Grid item xs={1}><Radio checked={j == json.index} onChange={() => setJ(json.index)} color='primary'/></Grid>
     </ColumnCard>);
 }
 

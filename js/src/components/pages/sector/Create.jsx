@@ -58,7 +58,7 @@ function CreateMap(props) {
             <ColumnCard>
                 <Grid item xs={12}>
                     <OSMap latlon={latlon} routes={<Route latlon={latlon}/>}/>
-                    <Slider value={ends} onChange={handleSlider} min={0} max={1} step={0.001}
+                    <Slider value={ends} onChange={handleSlider} min={0} max={1} step={1/1000}
                             getAriaLabel={(index) => (index === 0 ? 'Start' : 'Finish')}/>
                 </Grid>
                 <Grid item xs={9}>

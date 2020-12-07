@@ -1,6 +1,6 @@
 from matplotlib.pyplot import figure
 
-ORANGE = '#dd2c00'
+ORANGE = '#ff3d00'
 LIME = '#cddc39'
 CYAN = '#00b8d4'
 

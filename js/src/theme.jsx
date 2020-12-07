@@ -1,5 +1,5 @@
 import createMuiTheme from "@material-ui/core/styles/createMuiTheme";
-import {deepOrange, lime} from "@material-ui/core/colors";
+import {cyan, deepOrange, lime} from "@material-ui/core/colors";
 
 
 export const theme =  createMuiTheme({
@@ -7,6 +7,7 @@ export const theme =  createMuiTheme({
     type: 'dark',
     primary: lime,
     secondary: deepOrange,
+    tertiary: cyan,
   },
 });
 
