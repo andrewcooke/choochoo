@@ -16,7 +16,7 @@ import {useDimensions} from "react-recipes";
 function Plot(props) {
 
     const {width, height, fast, slow, fColour, sColour, n=100} = props;
-    log.debug(`width ${width} height ${height}`)
+    log.debug(`height ${height}`)
     const zfast = zip(fast);
     const zslow = zip(slow);
     const max_distance = Math.max(...fast.distance, ...slow.distance);
@@ -37,7 +37,7 @@ function Plot(props) {
     const theme = useTheme();
     log.debug(zslow);
 
-    return (<div style={{height: height ? height : 300}}><svg width='100%' height={height-5}>
+    return (<svg width='100%' height={height-5}>
         <Group>
             <LinePath data={zslow}
                       x={slow => distanceScale(slow.distance)}
@@ -45,7 +45,7 @@ function Plot(props) {
                       stroke={sColour}
             />
         </Group>
-    </svg></div>);
+    </svg>);
             {/*<ComposedChart width={500} height={300} margin={{top:10, bottom: 10, left:10, right: 10}}>*/}
             {/*    <XAxis xAxisId='distance' dataKey='distance' unit='km'*/}
             {/*           type='number' domain={[0, max_distance]} scale='linear'*/}
@@ -132,8 +132,8 @@ function zip(input) {
 function WidthPlot(props) {
     const {fast, slow, fColour, sColour} = props;
     const [ref, dim] = useDimensions();
-    return (<div ref={ref}>
-        <Plot width={dim.width} height={dim.height} fast={fast} slow={slow} fColour={fColour} sColour={sColour}/>
+    return (<div ref={ref} style={{height: dim.height ? dim.height : 300}}>
+        <Plot width={dim.width} height={dim.height-5} fast={fast} slow={slow} fColour={fColour} sColour={sColour}/>
     </div>);
 }
 
