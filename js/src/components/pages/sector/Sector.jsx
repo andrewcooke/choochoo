@@ -7,13 +7,16 @@ import {handleJson} from "../../functions";
 import {FMT_DAY_TIME} from "../../../constants";
 import {format, parse} from 'date-fns';
 import log from "loglevel";
-import {Area, ComposedChart, Label, Line, Scatter, XAxis, YAxis, Text as XText} from "recharts";
 import {sprintf} from 'sprintf-js';
+import {Group, LinePath} from '@visx/visx';
+import {scaleLinear} from "d3-scale";
+import {useDimensions} from "react-recipes";
 
 
 function Plot(props) {
 
-    const {fast, slow, fColour, sColour, n=100} = props;
+    const {width, height, fast, slow, fColour, sColour, n=100} = props;
+    log.debug(`width ${width} height ${height}`)
     const zfast = zip(fast);
     const zslow = zip(slow);
     const max_distance = Math.max(...fast.distance, ...slow.distance);
@@ -26,50 +29,59 @@ function Plot(props) {
     const sfast = interpolate(zfast, slider * max_distance, 'distance');
     const sslow = interpolate(zslow, sfast.time, 'time');
 
-    const theme = useTheme();
+    const distanceScale = scaleLinear([0, max_distance], [0, width]);
+    // note inversion of y axis
+    const timeScale = scaleLinear([0, max_time], [height, 0]);
+    const elevationScale = scaleLinear([min_elevation, max_elevation], [width, 0]);
 
-    return (<>
-        <Grid item xs={12}>
-            <ComposedChart width={500} height={300} margin={{top:10, bottom: 10, left:10, right: 10}}>
-                <XAxis xAxisId='distance' dataKey='distance' unit='km'
-                       type='number' domain={[0, max_distance]} scale='linear'
-                       tickFormatter={x => sprintf('%.2f', x)}
-                       stroke={theme.palette.text.primary}
-                       label={{value: 'Distance', position: 'insideBottom',
-                               fill: theme.palette.text.secondary, offset: -10}}/>
-                <YAxis yAxisId='elevation' unit='m' orientation='right'
-                       type='number' domain={[min_elevation, max_elevation]} scale='linear'
-                       stroke={theme.palette.text.primary}>
-                    <Label angle={-90} position='insideRight' fill={theme.palette.text.secondary} offset={0}>
-                        <XText value='Foo' textAnchor='middle'/>
-                    </Label>
-                </YAxis>
-                <Area data={zslow} dataKey='elevation' dot={false} xAxisId='distance' yAxisId='elevation'
-                      stroke={null} fill={sColour} fillOpacity={0.1} animationDuration={0}/>
-                <Area data={zfast} dataKey='elevation' dot={false} xAxisId='distance' yAxisId='elevation'
-                      stroke={null} fill={fColour} fillOpacity={0.1} animationDuration={0}/>
-                <YAxis yAxisId='time' unit='s'
-                       type='number' domain={[0, max_time]} scale='linear'
-                       stroke={theme.palette.text.primary}
-                       label={{value: 'Time', angle:-90, position: 'insideLeft',
-                               fill: theme.palette.text.secondary, offset: 0}}/>
-                <Scatter data={[sslow]} dataKey='time' xAxisId='distance' yAxisId='time'
-                         stroke={sColour} strokeOpacity={1} strokeWidth={2}
-                         fill={sColour} animationDuration={0}/>
-                <Line data={zslow} dataKey='time' dot={false} xAxisId='distance' yAxisId='time'
-                      stroke={sColour} strokeOpacity={1} strokeWidth={2} animationDuration={0}/>
-                <Scatter data={[sfast]} dataKey='time' xAxisId='distance' yAxisId='time'
-                         stroke={fColour} strokeOpacity={1} strokeWidth={2}
-                         fill={fColour} animationDuration={0}/>
-                <Line data={zfast} dataKey='time' dot={false} xAxisId='distance' yAxisId='time'
-                      stroke={fColour} strokeOpacity={1} strokeWidth={2} animationDuration={0}/>
-            </ComposedChart>
-        </Grid>
-        <Grid item xs={12}>
-            <Slider value={slider} onChange={(event, value) => setSlider(value)}
-                    min={0} max={1} step={1/n}/>
-        </Grid>
-    </>);
+    const theme = useTheme();
+    log.debug(zslow);
+
+    return (<div style={{height: height ? height : 300}}><svg width='100%' height={height-5}>
+        <Group>
+            <LinePath data={zslow}
+                      x={slow => distanceScale(slow.distance)}
+                      y={slow => timeScale(slow.time)}
+                      stroke={sColour}
+            />
+        </Group>
+    </svg></div>);
+            {/*<ComposedChart width={500} height={300} margin={{top:10, bottom: 10, left:10, right: 10}}>*/}
+            {/*    <XAxis xAxisId='distance' dataKey='distance' unit='km'*/}
+            {/*           type='number' domain={[0, max_distance]} scale='linear'*/}
+            {/*           tickFormatter={x => sprintf('%.2f', x)}*/}
+            {/*           stroke={theme.palette.text.primary}*/}
+            {/*           label={{value: 'Distance', position: 'insideBottom',*/}
+            {/*                   fill: theme.palette.text.secondary, offset: -10}}/>*/}
+            {/*    <YAxis yAxisId='elevation' unit='m' orientation='right'*/}
+            {/*           type='number' domain={[min_elevation, max_elevation]} scale='linear'*/}
+            {/*           stroke={theme.palette.text.primary}>*/}
+            {/*        <Label angle={-90} position='insideRight' fill={theme.palette.text.secondary} offset={0}>*/}
+            {/*            <XText value='Foo' textAnchor='middle'/>*/}
+            {/*        </Label>*/}
+            {/*    </YAxis>*/}
+            {/*    <Area data={zslow} dataKey='elevation' dot={false} xAxisId='distance' yAxisId='elevation'*/}
+            {/*          stroke={null} fill={sColour} fillOpacity={0.1} animationDuration={0}/>*/}
+            {/*    <Area data={zfast} dataKey='elevation' dot={false} xAxisId='distance' yAxisId='elevation'*/}
+            {/*          stroke={null} fill={fColour} fillOpacity={0.1} animationDuration={0}/>*/}
+            {/*    <YAxis yAxisId='time' unit='s'*/}
+            {/*           type='number' domain={[0, max_time]} scale='linear'*/}
+            {/*           stroke={theme.palette.text.primary}*/}
+            {/*           label={{value: 'Time', angle:-90, position: 'insideLeft',*/}
+            {/*                   fill: theme.palette.text.secondary, offset: 0}}/>*/}
+            {/*    <Scatter data={[sslow]} dataKey='time' xAxisId='distance' yAxisId='time'*/}
+            {/*             stroke={sColour} strokeOpacity={1} strokeWidth={2}*/}
+            {/*             fill={sColour} animationDuration={0}/>*/}
+            {/*    <Line data={zslow} dataKey='time' dot={false} xAxisId='distance' yAxisId='time'*/}
+            {/*          stroke={sColour} strokeOpacity={1} strokeWidth={2} animationDuration={0}/>*/}
+            {/*    <Scatter data={[sfast]} dataKey='time' xAxisId='distance' yAxisId='time'*/}
+            {/*             stroke={fColour} strokeOpacity={1} strokeWidth={2}*/}
+            {/*             fill={fColour} animationDuration={0}/>*/}
+            {/*    <Line data={zfast} dataKey='time' dot={false} xAxisId='distance' yAxisId='time'*/}
+            {/*          stroke={fColour} strokeOpacity={1} strokeWidth={2} animationDuration={0}/>*/}
+            {/*</ComposedChart>*/}
+        {/*<Slider value={slider} onChange={(event, value) => setSlider(value)}*/}
+        {/*        min={0} max={1} step={1/n}/>*/}
 }
 
 
@@ -117,6 +129,15 @@ function zip(input) {
 }
 
 
+function WidthPlot(props) {
+    const {fast, slow, fColour, sColour} = props;
+    const [ref, dim] = useDimensions();
+    return (<div ref={ref}>
+        <Plot width={dim.width} height={dim.height} fast={fast} slow={slow} fColour={fColour} sColour={sColour}/>
+    </div>);
+}
+
+
 function LoadPlot(props) {
 
     const {sector1, sector2, history} = props;
@@ -145,7 +166,7 @@ function LoadPlot(props) {
     colours.set(data2, theme.palette.primary.main);
 
     return  (<ColumnCard><Grid item xs={12}>
-        <Plot fast={fast} slow={slow} fColour={colours.get(fast)} sColour={colours.get(slow)}/>
+        <WidthPlot fast={fast} slow={slow} fColour={colours.get(fast)} sColour={colours.get(slow)}/>
     </Grid></ColumnCard>);
 }
 
