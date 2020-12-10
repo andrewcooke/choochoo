@@ -8,14 +8,15 @@ import {FMT_DAY_TIME} from "../../../constants";
 import {format, parse} from 'date-fns';
 import log from "loglevel";
 import {sprintf} from 'sprintf-js';
-import {Group, LinePath} from '@visx/visx';
+import {Group, LinePath, Area, AxisLeft, AxisRight, AxisBottom} from '@visx/visx';
 import {scaleLinear} from "d3-scale";
 import {useDimensions} from "react-recipes";
 
 
 function Plot(props) {
 
-    const {width, height, fast, slow, fColour, sColour, n=100} = props;
+    const {width, height, fast, slow, fColour, sColour, n=100,
+        margin={top: 10, bottom: 40, left: 30, right: 30}} = props;
     log.debug(`height ${height}`)
     const zfast = zip(fast);
     const zslow = zip(slow);
@@ -29,21 +30,52 @@ function Plot(props) {
     const sfast = interpolate(zfast, slider * max_distance, 'distance');
     const sslow = interpolate(zslow, sfast.time, 'time');
 
-    const distanceScale = scaleLinear([0, max_distance], [0, width]);
+    const distanceScale = scaleLinear([0, max_distance], [margin.left, width-margin.right]);
     // note inversion of y axis
-    const timeScale = scaleLinear([0, max_time], [height, 0]);
-    const elevationScale = scaleLinear([min_elevation, max_elevation], [width, 0]);
+    const timeScale = scaleLinear([0, max_time], [height-margin.bottom, margin.top]);
+    const elevationScale = scaleLinear([min_elevation, max_elevation], [height-margin.bottom, margin.top]);
 
     const theme = useTheme();
-    log.debug(zslow);
+    const fg = theme.palette.text.secondary;
+    function tlp(anchor, dy=0) {
+        return () => ({fill: fg, fontSize: 9, textAnchor: anchor, dy: dy});
+    }
 
-    return (<svg width='100%' height={height-5}>
+    return (<svg width='100%' height={height}>
         <Group>
+            <Area data={zfast}
+                  x={fast => distanceScale(fast.distance)}
+                  y1={fast => elevationScale(fast.elevation)}
+                  y0={fast => height-margin.bottom}
+                  fill={fColour} opacity={0.2}
+            />
+            <Area data={sfast}
+                  x={slow => distanceScale(slow.distance)}
+                  y1={slow => elevationScale(slow.elevation)}
+                  y0={slow => height-margin.bottom}
+                  fill={sColour} opacity={0.2}
+            />
+            <LinePath data={zfast}
+                      x={fast => distanceScale(fast.distance)}
+                      y={fast => timeScale(fast.time)}
+                      stroke={fColour}
+            />
             <LinePath data={zslow}
                       x={slow => distanceScale(slow.distance)}
                       y={slow => timeScale(slow.time)}
                       stroke={sColour}
             />
+            <AxisLeft scale={timeScale} left={margin.left} stroke={fg}
+                      tickStroke={fg} tickLabelProps={tlp('end', '0.25em')}/>
+            <text x={0} y={0} transform={`translate(${margin.left+15},${margin.top})\nrotate(-90)`} fontSize={9}
+                  textAnchor='end' fill={fg}>Time / s</text>
+            <AxisRight scale={elevationScale} left={width-margin.right} stroke={fg}
+                       tickStroke={fg} tickLabelProps={tlp('start', '0.25em')}/>
+            <text x={0} y={0} transform={`translate(${width-margin.right-10},${margin.top})\nrotate(-90)`} fontSize={9}
+                  textAnchor='end' fill={fg}>Elevation / m</text>
+            <AxisBottom scale={distanceScale} top={height-margin.bottom} stroke={fg}
+                        tickStroke={fg} tickLabelProps={tlp('middle')}
+                        labelProps={{fill: fg, fontSize: 9, textAnchor: 'middle'}} label='Distance / km'/>
         </Group>
     </svg>);
             {/*<ComposedChart width={500} height={300} margin={{top:10, bottom: 10, left:10, right: 10}}>*/}
@@ -132,6 +164,9 @@ function zip(input) {
 function WidthPlot(props) {
     const {fast, slow, fColour, sColour} = props;
     const [ref, dim] = useDimensions();
+    // if we pass width/height directly we get a loop with progressive growth
+    // if we pass height-5 alone we get progressive shrinkage
+    // this hack appears to be stable
     return (<div ref={ref} style={{height: dim.height ? dim.height : 300}}>
         <Plot width={dim.width} height={dim.height-5} fast={fast} slow={slow} fColour={fColour} sColour={sColour}/>
     </div>);
