@@ -7,113 +7,87 @@ import {handleJson} from "../../functions";
 import {FMT_DAY_TIME} from "../../../constants";
 import {format, parse} from 'date-fns';
 import log from "loglevel";
-import {sprintf} from 'sprintf-js';
-import {Group, LinePath, Area, AxisLeft, AxisRight, AxisBottom} from '@visx/visx';
+import {Area, AxisBottom, AxisLeft, AxisRight, Group, LinePath, Line, Circle} from '@visx/visx';
 import {scaleLinear} from "d3-scale";
 import {useDimensions} from "react-recipes";
+import {sprintf} from "sprintf-js";
 
 
 function Plot(props) {
 
-    const {width, height, fast, slow, fColour, sColour, n=100,
+    const {width, height, slider, fast, slow, min, max, fColour, sColour, n=100,
         margin={top: 10, bottom: 40, left: 30, right: 30}} = props;
-    log.debug(`height ${height}`)
-    const zfast = zip(fast);
-    const zslow = zip(slow);
-    const max_distance = Math.max(...fast.distance, ...slow.distance);
-    const max_time = Math.max(...fast.time, ...slow.time);
-    const elevation = fast.elevation.concat(slow.elevation);
-    const min_elevation = Math.min(...elevation);
-    const max_elevation = Math.max(...elevation);
 
-    const [slider, setSlider] = useState(0);
-    const sfast = interpolate(zfast, slider * max_distance, 'distance');
-    const sslow = interpolate(zslow, sfast.time, 'time');
+    const slider_fast = interpolate(fast, slider * last(fast).distance, 'distance');
+    const slow_at_time = interpolate(slow, slider_fast.time, 'time');
+    const slow_at_distance = interpolate(slow, slider_fast.distance, 'distance');
 
-    const distanceScale = scaleLinear([0, max_distance], [margin.left, width-margin.right]);
+    const distanceScale = scaleLinear([0, max.distance], [margin.left, width-margin.right]);
     // note inversion of y axis
-    const timeScale = scaleLinear([0, max_time], [height-margin.bottom, margin.top]);
-    const elevationScale = scaleLinear([min_elevation, max_elevation], [height-margin.bottom, margin.top]);
+    const timeScale = scaleLinear([0, max.time], [height-margin.bottom, margin.top]);
+    const elevationScale = scaleLinear([min.elevation, max.elevation], [height-margin.bottom, margin.top]);
 
     const theme = useTheme();
     const fg = theme.palette.text.secondary;
+    const fs = 10;
     function tlp(anchor, dy=0) {
-        return () => ({fill: fg, fontSize: 9, textAnchor: anchor, dy: dy});
+        return () => ({fill: fg, fontSize: fs, textAnchor: anchor, dy: dy});
     }
+
+    log.debug(`rendering at height ${height}`)
 
     return (<svg width='100%' height={height}>
         <Group>
-            <Area data={zfast}
+            <Area data={fast}
                   x={fast => distanceScale(fast.distance)}
                   y1={fast => elevationScale(fast.elevation)}
                   y0={fast => height-margin.bottom}
-                  fill={fColour} opacity={0.2}
-            />
-            <Area data={sfast}
+                  fill={fColour} opacity={0.2}/>
+            <Area data={slow}
                   x={slow => distanceScale(slow.distance)}
                   y1={slow => elevationScale(slow.elevation)}
                   y0={slow => height-margin.bottom}
-                  fill={sColour} opacity={0.2}
-            />
-            <LinePath data={zfast}
+                  fill={sColour} opacity={0.2}/>
+            <LinePath data={fast}
                       x={fast => distanceScale(fast.distance)}
                       y={fast => timeScale(fast.time)}
-                      stroke={fColour}
-            />
-            <LinePath data={zslow}
+                      stroke={fColour} strokeWidth={2}/>
+            <LinePath data={slow}
                       x={slow => distanceScale(slow.distance)}
                       y={slow => timeScale(slow.time)}
-                      stroke={sColour}
-            />
+                      stroke={sColour} strokeWidth={2}/>
+            <Line from={{x: distanceScale(slow_at_time.distance), y: margin.top}}
+                  to={{x: distanceScale(slow_at_time.distance), y: height-margin.bottom}}
+                  stroke={sColour} opacity={0.5}/>
+            <Circle cx={distanceScale(slow_at_time.distance)} cy={timeScale(slow_at_time.time)} r={3} fill={sColour}/>
+            <Line from={{x: margin.left, y: timeScale(slow_at_distance.time)}}
+                  to={{x: width-margin.right, y: timeScale(slow_at_distance.time)}}
+                  stroke={sColour} opacity={0.5}/>
+            <Circle cx={distanceScale(slow_at_distance.distance)} cy={timeScale(slow_at_distance.time)} r={3} fill={sColour}/>
+            <Line from={{x: distanceScale(slider_fast.distance), y: margin.top}}
+                  to={{x: distanceScale(slider_fast.distance), y: height-margin.bottom}}
+                  stroke={fColour} opacity={0.5}/>
+            <Line from={{x: margin.left, y: timeScale(slider_fast.time)}}
+                  to={{x: width-margin.right, y: timeScale(slider_fast.time)}}
+                  stroke={fColour} opacity={0.5}/>
+            <Circle cx={distanceScale(slider_fast.distance)} cy={timeScale(slider_fast.time)} r={3} fill={fColour}/>
+            <text x={0.9 * width} y={0.8 * height} fontSize={fs} fill={fg} textAnchor='end'>
+                {sprintf('%.1fs / %.1fm', slow_at_distance.time - slider_fast.time,
+                    1000 * (slider_fast.distance - slow_at_time.distance))}
+            </text>
             <AxisLeft scale={timeScale} left={margin.left} stroke={fg}
                       tickStroke={fg} tickLabelProps={tlp('end', '0.25em')}/>
-            <text x={0} y={0} transform={`translate(${margin.left+15},${margin.top})\nrotate(-90)`} fontSize={9}
+            <text x={0} y={0} transform={`translate(${margin.left+15},${margin.top})\nrotate(-90)`} fontSize={fs}
                   textAnchor='end' fill={fg}>Time / s</text>
             <AxisRight scale={elevationScale} left={width-margin.right} stroke={fg}
                        tickStroke={fg} tickLabelProps={tlp('start', '0.25em')}/>
-            <text x={0} y={0} transform={`translate(${width-margin.right-10},${margin.top})\nrotate(-90)`} fontSize={9}
+            <text x={0} y={0} transform={`translate(${width-margin.right-10},${margin.top})\nrotate(-90)`} fontSize={fs}
                   textAnchor='end' fill={fg}>Elevation / m</text>
             <AxisBottom scale={distanceScale} top={height-margin.bottom} stroke={fg}
                         tickStroke={fg} tickLabelProps={tlp('middle')}
-                        labelProps={{fill: fg, fontSize: 9, textAnchor: 'middle'}} label='Distance / km'/>
+                        labelProps={{fill: fg, fontSize: fs, textAnchor: 'middle'}} label='Distance / km'/>
         </Group>
     </svg>);
-            {/*<ComposedChart width={500} height={300} margin={{top:10, bottom: 10, left:10, right: 10}}>*/}
-            {/*    <XAxis xAxisId='distance' dataKey='distance' unit='km'*/}
-            {/*           type='number' domain={[0, max_distance]} scale='linear'*/}
-            {/*           tickFormatter={x => sprintf('%.2f', x)}*/}
-            {/*           stroke={theme.palette.text.primary}*/}
-            {/*           label={{value: 'Distance', position: 'insideBottom',*/}
-            {/*                   fill: theme.palette.text.secondary, offset: -10}}/>*/}
-            {/*    <YAxis yAxisId='elevation' unit='m' orientation='right'*/}
-            {/*           type='number' domain={[min_elevation, max_elevation]} scale='linear'*/}
-            {/*           stroke={theme.palette.text.primary}>*/}
-            {/*        <Label angle={-90} position='insideRight' fill={theme.palette.text.secondary} offset={0}>*/}
-            {/*            <XText value='Foo' textAnchor='middle'/>*/}
-            {/*        </Label>*/}
-            {/*    </YAxis>*/}
-            {/*    <Area data={zslow} dataKey='elevation' dot={false} xAxisId='distance' yAxisId='elevation'*/}
-            {/*          stroke={null} fill={sColour} fillOpacity={0.1} animationDuration={0}/>*/}
-            {/*    <Area data={zfast} dataKey='elevation' dot={false} xAxisId='distance' yAxisId='elevation'*/}
-            {/*          stroke={null} fill={fColour} fillOpacity={0.1} animationDuration={0}/>*/}
-            {/*    <YAxis yAxisId='time' unit='s'*/}
-            {/*           type='number' domain={[0, max_time]} scale='linear'*/}
-            {/*           stroke={theme.palette.text.primary}*/}
-            {/*           label={{value: 'Time', angle:-90, position: 'insideLeft',*/}
-            {/*                   fill: theme.palette.text.secondary, offset: 0}}/>*/}
-            {/*    <Scatter data={[sslow]} dataKey='time' xAxisId='distance' yAxisId='time'*/}
-            {/*             stroke={sColour} strokeOpacity={1} strokeWidth={2}*/}
-            {/*             fill={sColour} animationDuration={0}/>*/}
-            {/*    <Line data={zslow} dataKey='time' dot={false} xAxisId='distance' yAxisId='time'*/}
-            {/*          stroke={sColour} strokeOpacity={1} strokeWidth={2} animationDuration={0}/>*/}
-            {/*    <Scatter data={[sfast]} dataKey='time' xAxisId='distance' yAxisId='time'*/}
-            {/*             stroke={fColour} strokeOpacity={1} strokeWidth={2}*/}
-            {/*             fill={fColour} animationDuration={0}/>*/}
-            {/*    <Line data={zfast} dataKey='time' dot={false} xAxisId='distance' yAxisId='time'*/}
-            {/*          stroke={fColour} strokeOpacity={1} strokeWidth={2} animationDuration={0}/>*/}
-            {/*</ComposedChart>*/}
-        {/*<Slider value={slider} onChange={(event, value) => setSlider(value)}*/}
-        {/*        min={0} max={1} step={1/n}/>*/}
 }
 
 
@@ -144,6 +118,40 @@ function bracket(data, value, key) {
 }
 
 
+function WidthPlot(props) {
+
+    const {slider, fast, slow, min, max, fColour, sColour} = props;
+    const [ref, dim] = useDimensions();
+
+    // if we pass width/height directly we get a loop with progressive growth
+    // if we pass height-5 alone we get progressive shrinkage
+    // this hack appears to be stable
+    return (<div ref={ref} style={{height: dim.height ? dim.height : 300}}>
+        <Plot width={dim.width} height={dim.height-5}
+              slider={slider} fast={fast} slow={slow} min={min} max={max} fColour={fColour} sColour={sColour}/>
+    </div>);
+}
+
+
+function SliderPlot(props) {
+
+    const {fast, slow, min, max, fColour, sColour, n=100} = props;
+    const [slider, setSlider] = useState(0);
+    const theme = useTheme();
+
+    return (<>
+        <Grid item xs={12}>
+            <WidthPlot slider={slider} fast={fast} slow={slow} min={min} max={max} fColour={fColour} sColour={sColour}/>
+        </Grid>
+        <Grid item xs={12}>
+            <Slider value={slider} onChange={(event, value) => setSlider(value)}
+                    min={0} max={1} step={1 / n}
+                    color={fColour === theme.palette.primary.main ? 'primary' : 'secondary'}/>
+        </Grid>
+    </>);
+}
+
+
 function zip(input) {
     const output = [];
     Object.keys(input).forEach(key => {
@@ -158,18 +166,6 @@ function zip(input) {
         }
     });
     return output;
-}
-
-
-function WidthPlot(props) {
-    const {fast, slow, fColour, sColour} = props;
-    const [ref, dim] = useDimensions();
-    // if we pass width/height directly we get a loop with progressive growth
-    // if we pass height-5 alone we get progressive shrinkage
-    // this hack appears to be stable
-    return (<div ref={ref} style={{height: dim.height ? dim.height : 300}}>
-        <Plot width={dim.width} height={dim.height-5} fast={fast} slow={slow} fColour={fColour} sColour={sColour}/>
-    </div>);
 }
 
 
@@ -200,9 +196,22 @@ function LoadPlot(props) {
     colours.set(data1, theme.palette.secondary.main);
     colours.set(data2, theme.palette.primary.main);
 
-    return  (<ColumnCard><Grid item xs={12}>
-        <WidthPlot fast={fast} slow={slow} fColour={colours.get(fast)} sColour={colours.get(slow)}/>
-    </Grid></ColumnCard>);
+    log.debug(`fast ends at ${last(fast.time)}; slow ends at ${last(slow.time)}`);
+
+    const zfast = zip(fast);
+    const zslow = zip(slow);
+    const elevation = fast.elevation.concat(slow.elevation);
+    const min = {distance: 0, time: 0, elevation:  Math.min(...elevation)};
+    const max = {distance: Math.max(...fast.distance, ...slow.distance),
+        time: Math.max(...fast.time, ...slow.time),
+        elevation: Math.max(...elevation)};
+
+    log.debug(`fast ends at ${last(zfast).time}; slow ends at ${last(zslow).time}`);
+
+    return  (<ColumnCard>
+        <SliderPlot fast={zfast} slow={zslow} min={min} max={max}
+                    fColour={colours.get(fast)} sColour={colours.get(slow)}/>
+    </ColumnCard>);
 }
 
 
@@ -266,6 +275,22 @@ function SectorJournal(props) {
 }
 
 
+function Introduction(props) {
+    return (<ColumnCard header='Introduction'><Grid item xs={12}>
+        <Text>
+            <p>A sector is defined from an activity.
+                Other activities match if they enter / leave the same area and spend a large portion of time
+                close to the original activity's route.</p>
+            <p>The plots here show the observed data for each activity.
+                GPS errors and small variations in routes mean that matching activities have different total
+                distances (as well as different times because of different speeds).</p>
+            <p>Moving the slider selects a point on the faster activity and displays the time and distance
+                difference to the slower activity at the same distance or time, respectively.</p>
+        </Text>
+    </Grid></ColumnCard>);
+}
+
+
 function SectorContent(props) {
 
     // todo - what if 0 or 1 sectors matched?
@@ -287,6 +312,7 @@ function SectorContent(props) {
         <SectorJournal json={sector} sort={sort} key={k} i={i} setI={setI} j={j} setJ={setJ}/>);
 
     return (<ColumnList>
+        <Introduction/>
         <LoadPlot sector1={data.sector_journals[i].db} sector2={data.sector_journals[j].db}
                   history={history}/>
         {sectorJournals}
