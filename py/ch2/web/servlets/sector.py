@@ -1,5 +1,6 @@
 from logging import getLogger
 
+import pandas as pd
 from geoalchemy2 import WKBElement
 from geoalchemy2.shape import to_shape
 from sqlalchemy import text, desc
@@ -8,10 +9,9 @@ from . import ContentType
 from ...common.date import time_to_local_time
 from ...data.sector import add_start_finish
 from ...diary.model import DB
-from ...lib.utils import timing
+from ...names import N
 from ...pipeline.process import run_pipeline
-from ...sql import ActivityJournal, PipelineType, SectorJournal, StatisticJournal, StatisticName, ActivityTopic, \
-    ActivityTopicField, ActivityTopicJournal, StatisticJournalText
+from ...sql import ActivityJournal, PipelineType, SectorJournal
 from ...sql.tables.sector import SectorGroup, DEFAULT_GROUP_RADIUS_KM, SectorType
 from ...sql.types import linestringxy
 from ...sql.utils import WGS84_SRID, add
@@ -129,4 +129,46 @@ SELECT statistic_journal_text.value AS statistic_journal_text_value
                    'activity_group': sjournal.activity_journal.activity_group.title,
                    'distance': sjournal.finish_distance - sjournal.start_distance,
                    'time': (sjournal.finish_time - sjournal.start_time).total_seconds(),
-                   'elevation': sjournal.finish_elevation - sjournal.start_elevation}
+                   'elevation': sjournal.finish_elevation - sjournal.start_elevation,
+                   'edt': self._read_sector_journal_edt(s, sjournal.id)}
+
+    def _read_sector_journal_edt(self, s, sector_journal_id):
+        df = self._read_clipped_d_et(s, sector_journal_id)
+        return {
+            'elevation': df[N.ELEVATION].tolist(),
+            'distance': (df[N.DISTANCE] - df[N.DISTANCE].iloc[0]).tolist(),
+            'time': (df[N.ELAPSED_TIME] - df[N.ELAPSED_TIME].iloc[0]).tolist()}
+
+    def _read_clipped_d_et(self, s, sector_journal_id):
+        # cannot use route_edt because we need to substring / interpolate
+        sql = text(f'''
+  with points as (select st_dumppoints(
+                            st_linesubstring(
+                              aj.route_d::geometry, sj.start_fraction, sj.finish_fraction)) as point
+                    from activity_journal as aj,
+                         sector_journal as sj
+                   where sj.id = :sector_journal_id
+                     and aj.id = sj.activity_journal_id)
+select st_x((point).geom) as x, st_y((point).geom) as y, st_m((point).geom) as {N.DISTANCE}
+  from points;
+''')
+        log.debug(sql)
+        df_d = pd.read_sql(sql, s.connection(),
+                           params={'sector_journal_id': sector_journal_id})
+        sql = text(f'''
+  with points as (select st_dumppoints(
+                            st_linesubstring(
+                              aj.route_et::geometry, sj.start_fraction, sj.finish_fraction)) as point
+                    from activity_journal as aj,
+                         sector_journal as sj
+                   where sj.id = :sector_journal_id
+                     and aj.id = sj.activity_journal_id)
+select st_x((point).geom) as x, st_y((point).geom) as y, st_z((point).geom) as {N.ELEVATION},
+       st_m((point).geom) as "{N.ELAPSED_TIME}"
+  from points;
+''')
+        log.debug(sql)
+        df_et = pd.read_sql(sql, s.connection(),
+                            params={'sector_journal_id': sector_journal_id})
+        df = pd.merge(df_et, df_d, how='left', left_on=['x', 'y'], right_on=['x', 'y']).dropna()
+        return df

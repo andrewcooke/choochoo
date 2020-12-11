@@ -175,34 +175,16 @@ function zip(input) {
 }
 
 
-function LoadPlot(props) {
+function PrepareData(props) {
 
     const {sector1, sector2, history} = props;
-    const [data1, setData1] = useState(null);
-    const [data2, setData2] = useState(null);
-    const errorState = useState(null);
-    const [error, setError] = errorState;
     const theme = useTheme();
 
-    useEffect(() => {
-        fetch('/api/route/edt/sector/' + sector1)
-            .then(handleJson(history, setData1, setError));
-    }, [sector1]);
-
-    useEffect(() => {
-        fetch('/api/route/edt/sector/' + sector2)
-            .then(handleJson(history, setData2, setError));
-    }, [sector2]);
-
-    if (data1 === null || data2 === null) return <Loading/>;
-
-    const fast = last(data1.time) > last(data2.time) ? data2 : data1;
-    const slow = last(data1.time) > last(data2.time) ? data1 : data2;
+    const fast = last(sector1.edt.time) > last(sector2.edt.time) ? sector2.edt : sector1.edt;
+    const slow = last(sector1.edt.time) > last(sector2.edt.time) ? sector1.edt : sector2.edt;
     const colours = new Map();
-    colours.set(data1, theme.palette.secondary.main);
-    colours.set(data2, theme.palette.primary.main);
-
-    log.debug(`fast ends at ${last(fast.time)}; slow ends at ${last(slow.time)}`);
+    colours.set(sector1.edt, theme.palette.secondary.main);
+    colours.set(sector2.edt, theme.palette.primary.main);
 
     const zfast = zip(fast);
     const zslow = zip(slow);
@@ -211,8 +193,6 @@ function LoadPlot(props) {
     const max = {distance: Math.max(...fast.distance, ...slow.distance),
         time: Math.max(...fast.time, ...slow.time),
         elevation: Math.max(...elevation)};
-
-    log.debug(`fast ends at ${last(zfast).time}; slow ends at ${last(zslow).time}`);
 
     return  (<ColumnCard>
         <SliderPlot fast={zfast} slow={zslow} min={min} max={max}
@@ -317,8 +297,7 @@ function SectorContent(props) {
 
     return (<ColumnList>
         <Introduction/>
-        <LoadPlot sector1={data.sector_journals[i].db} sector2={data.sector_journals[j].db}
-                  history={history}/>
+        <PrepareData sector1={data.sector_journals[i]} sector2={data.sector_journals[j]} history={history}/>
         {sectorJournals}
         <LoadMap sector={sector} history={history}/>
     </ColumnList>);

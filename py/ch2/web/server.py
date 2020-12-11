@@ -149,7 +149,6 @@ class WebServer:
 
             Rule('/api/route/latlon/activity/<int:activity>', endpoint=self.check(route.read_activity_latlon, empty=False), methods=(GET,)),
             Rule('/api/route/latlon/sector/<int:sector>', endpoint=self.check(route.read_sector_latlon, empty=False), methods=(GET,)),
-            Rule('/api/route/edt/sector/<int:sector>', endpoint=self.check(route.read_sector_edt, empty=False), methods=(GET,)),
 
             Rule('/api/sector', endpoint=self.check(sector.create_sector, empty=False), methods=(POST,)),
             Rule('/api/sector/<int:sector>', endpoint=self.check(sector.read_sector_journals, empty=False), methods=(GET,)),
