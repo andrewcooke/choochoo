@@ -184,7 +184,7 @@ def climbs_for_activity(s, ajournal):
         sjournals = list(sjournals)
         climb = {sjournal.statistic_name.name: sjournal for sjournal in sjournals}
         climb['start-distance'] = sjournals[0].source.start_distance
-        climb['id'] = sjournals[0].source.sector.id
+        climb['sector-id'] = sjournals[0].source.sector_id
         return climb
 
     def cmp_climb(a, b):

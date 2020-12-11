@@ -147,7 +147,7 @@ def sectors_for_activity(s, ajournal):
         sjournals = list(sjournals)
         sector = {sjournal.statistic_name.name: sjournal for sjournal in sjournals}
         sector['start-distance'] = sjournals[0].source.start_distance
-        sector['id'] = sjournals[0].source.sector.id
+        sector['sector-id'] = sjournals[0].source.sector_id
         return sector
 
     return sorted((make_sector(grouped)

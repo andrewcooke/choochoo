@@ -13,10 +13,20 @@ import {useDimensions} from "react-recipes";
 import {sprintf} from "sprintf-js";
 
 
+function hms(seconds) {
+    const s = seconds % 60;
+    const m = Math.round(((seconds - s) / 60) % 60);
+    const h = Math.round(((seconds - s) / 60 - m) / 60);
+    if (h > 0) return sprintf('%0d:%02d:%02d', h, m, s);
+    if (m > 0) return sprintf('%d:%02d', m, s);
+    return sprintf('%d', s);
+}
+
+
 function Plot(props) {
 
     const {width, height, slider, fast, slow, min, max, fColour, sColour, n=100,
-        margin={top: 10, bottom: 40, left: 30, right: 30}} = props;
+        margin={top: 10, bottom: 40, left: 40, right: 40}} = props;
 
     const slider_fast = interpolate(fast, slider * last(fast).distance, 'distance');
     const slow_at_time = interpolate(slow, slider_fast.time, 'time');
@@ -68,9 +78,9 @@ function Plot(props) {
                     1000 * (slider_fast.distance - slow_at_time.distance))}
             </text>
             <AxisLeft scale={timeScale} left={margin.left} stroke={fg}
-                      tickStroke={fg} tickLabelProps={tlp('end', '0.25em')}/>
+                      tickStroke={fg} tickLabelProps={tlp('end', '0.25em')} tickFormat={hms}/>
             <text x={0} y={0} transform={`translate(${margin.left+15},${margin.top})\nrotate(-90)`} fontSize={fs}
-                  textAnchor='end' fill={fg}>Time / s</text>
+                  textAnchor='end' fill={fg}>Time / hms</text>
             <AxisRight scale={elevationScale} left={width-margin.right} stroke={fg}
                        tickStroke={fg} tickLabelProps={tlp('start', '0.25em')}/>
             <text x={0} y={0} transform={`translate(${width-margin.right-10},${margin.top})\nrotate(-90)`} fontSize={fs}
@@ -139,6 +149,10 @@ function SliderPlot(props) {
             <Slider value={slider} onChange={(event, value) => setSlider(value)}
                     min={0} max={1} step={1 / n}
                     color={fColour === theme.palette.primary.main ? 'primary' : 'secondary'}/>
+            <Text>
+                <p>Moving the slider selects a point on the faster activity and displays the time and distance
+                    difference to the slower activity at the same distance or time, respectively.</p>
+            </Text>
         </Grid>
     </>);
 }
@@ -244,7 +258,7 @@ function SectorJournal(props) {
         <Grid item xs={1}><Radio checked={i == json.index} onChange={() => setI(json.index)} color='secondary'/></Grid>
         <Grid item xs={5}>
             <Tooltip title='Sort by date' placement='top'>
-                <Link onClick={() => sort('date')}><Text>{format(json.date, FMT_DAY_TIME)}</Text></Link>
+                <Link onClick={() => sort('date', true)}><Text>{format(json.date, FMT_DAY_TIME)}</Text></Link>
             </Tooltip>
         </Grid>
         <Grid item xs={2}>
@@ -276,8 +290,6 @@ function Introduction(props) {
             <p>The plots here show the observed data for each activity.
                 GPS errors and small variations in routes mean that matching activities have different total
                 distances (as well as different times because of different speeds).</p>
-            <p>Moving the slider selects a point on the faster activity and displays the time and distance
-                difference to the slower activity at the same distance or time, respectively.</p>
         </Text>
     </Grid></ColumnCard>);
 }

@@ -2,7 +2,7 @@ from logging import getLogger
 
 from geoalchemy2 import WKBElement
 from geoalchemy2.shape import to_shape
-from sqlalchemy import text
+from sqlalchemy import text, desc
 
 from . import ContentType
 from ...common.date import time_to_local_time
@@ -96,7 +96,7 @@ SELECT statistic_journal_text.value AS statistic_journal_text_value
         for sjournal in s.query(SectorJournal). \
                 filter(SectorJournal.sector_id == sector). \
                 join(ActivityJournal, SectorJournal.activity_journal_id == ActivityJournal.id). \
-                order_by(ActivityJournal.start).all():
+                order_by(desc(ActivityJournal.start)).all():
             # q = s.query(StatisticJournalText.value). \
             #     join(StatisticName, StatisticName.id == StatisticJournalText.statistic_name_id). \
             #     join(ActivityTopicField, ActivityTopicField.statistic_name_id == StatisticName.id). \
