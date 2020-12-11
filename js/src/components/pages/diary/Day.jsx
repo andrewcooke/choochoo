@@ -102,9 +102,9 @@ function Header(props) {
         childrenFromRest(head, rest, writer, level + 1, history);
 
     if (head.tag === 'climb') {
-        return (<ClimbField json={json}/>);
+        return (<ClimbField json={json} history={history}/>);
     } else if (head.tag === 'sector') {
-        return (<SectorField json={json}/>);
+        return (<SectorField json={json} history={history}/>);
     } else if (head.tag === 'nearby-links') {
         return (<NearbyMenu json={json} history={history}/>);
     } else {

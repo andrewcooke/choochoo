@@ -130,7 +130,9 @@ update sector
 
 
 def sectors_for_activity(s, ajournal):
+
     from ..pipeline.calculate.sector import SectorCalculator
+
     query = s.query(StatisticJournal). \
         join(StatisticName, Source). \
         join(SectorJournal, SectorJournal.id == Source.id). \
@@ -145,6 +147,7 @@ def sectors_for_activity(s, ajournal):
         sjournals = list(sjournals)
         sector = {sjournal.statistic_name.name: sjournal for sjournal in sjournals}
         sector['start-distance'] = sjournals[0].source.start_distance
+        sector['id'] = sjournals[0].source.sector.id
         return sector
 
     return sorted((make_sector(grouped)

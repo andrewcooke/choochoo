@@ -38,39 +38,31 @@ function Plot(props) {
 
     return (<svg width='100%' height={height}>
         <Group>
-            <Area data={fast}
-                  x={fast => distanceScale(fast.distance)}
-                  y1={fast => elevationScale(fast.elevation)}
-                  y0={fast => height-margin.bottom}
-                  fill={fColour} opacity={0.2}/>
-            <Area data={slow}
+            <Area data={slow} fill={sColour} opacity={0.05}
                   x={slow => distanceScale(slow.distance)}
-                  y1={slow => elevationScale(slow.elevation)}
-                  y0={slow => height-margin.bottom}
-                  fill={sColour} opacity={0.2}/>
-            <LinePath data={fast}
-                      x={fast => distanceScale(fast.distance)}
-                      y={fast => timeScale(fast.time)}
-                      stroke={fColour} strokeWidth={2}/>
-            <LinePath data={slow}
-                      x={slow => distanceScale(slow.distance)}
-                      y={slow => timeScale(slow.time)}
-                      stroke={sColour} strokeWidth={2}/>
-            <Line from={{x: distanceScale(slow_at_time.distance), y: margin.top}}
-                  to={{x: distanceScale(slow_at_time.distance), y: height-margin.bottom}}
-                  stroke={sColour} opacity={0.5}/>
-            <Circle cx={distanceScale(slow_at_time.distance)} cy={timeScale(slow_at_time.time)} r={3} fill={sColour}/>
-            <Line from={{x: margin.left, y: timeScale(slow_at_distance.time)}}
-                  to={{x: width-margin.right, y: timeScale(slow_at_distance.time)}}
-                  stroke={sColour} opacity={0.5}/>
-            <Circle cx={distanceScale(slow_at_distance.distance)} cy={timeScale(slow_at_distance.time)} r={3} fill={sColour}/>
-            <Line from={{x: distanceScale(slider_fast.distance), y: margin.top}}
-                  to={{x: distanceScale(slider_fast.distance), y: height-margin.bottom}}
-                  stroke={fColour} opacity={0.5}/>
-            <Line from={{x: margin.left, y: timeScale(slider_fast.time)}}
-                  to={{x: width-margin.right, y: timeScale(slider_fast.time)}}
-                  stroke={fColour} opacity={0.5}/>
-            <Circle cx={distanceScale(slider_fast.distance)} cy={timeScale(slider_fast.time)} r={3} fill={fColour}/>
+                  y1={slow => elevationScale(slow.elevation)} y0={slow => height-margin.bottom}/>
+            <Area data={fast} fill={fColour} opacity={0.05}
+                  x={fast => distanceScale(fast.distance)}
+                  y1={fast => elevationScale(fast.elevation)} y0={fast => height-margin.bottom}/>
+            <LinePath data={slow} stroke={sColour} strokeWidth={2}
+                      x={slow => distanceScale(slow.distance)} y={slow => timeScale(slow.time)}/>
+            <LinePath data={fast} stroke={fColour} strokeWidth={2}
+                      x={fast => distanceScale(fast.distance)} y={fast => timeScale(fast.time)}/>
+            <Line stroke={sColour} opacity={0.5}
+                  from={{x: distanceScale(slow_at_time.distance), y: margin.top}}
+                  to={{x: distanceScale(slow_at_time.distance), y: height-margin.bottom}}/>
+            <Circle fill={sColour} cx={distanceScale(slow_at_time.distance)} cy={timeScale(slow_at_time.time)} r={3}/>
+            <Line stroke={sColour} opacity={0.5}
+                  from={{x: margin.left, y: timeScale(slow_at_distance.time)}}
+                  to={{x: width-margin.right, y: timeScale(slow_at_distance.time)}}/>
+            <Circle fill={sColour} cx={distanceScale(slow_at_distance.distance)} cy={timeScale(slow_at_distance.time)} r={3}/>
+            <Line stroke={fColour} opacity={0.5}
+                  from={{x: distanceScale(slider_fast.distance), y: margin.top}}
+                  to={{x: distanceScale(slider_fast.distance), y: height-margin.bottom}}/>
+            <Line stroke={fColour} opacity={0.5}
+                  from={{x: margin.left, y: timeScale(slider_fast.time)}}
+                  to={{x: width-margin.right, y: timeScale(slider_fast.time)}}/>
+            <Circle fill={fColour} cx={distanceScale(slider_fast.distance)} cy={timeScale(slider_fast.time)} r={3}/>
             <text x={0.9 * width} y={0.8 * height} fontSize={fs} fill={fg} textAnchor='end'>
                 {sprintf('%.1fs / %.1fm', slow_at_distance.time - slider_fast.time,
                     1000 * (slider_fast.distance - slow_at_time.distance))}
@@ -127,7 +119,7 @@ function WidthPlot(props) {
     // if we pass height-5 alone we get progressive shrinkage
     // this hack appears to be stable
     return (<div ref={ref} style={{height: dim.height ? dim.height : 300}}>
-        <Plot width={dim.width} height={dim.height-5}
+        <Plot width={dim.width ? dim.width : 500} height={dim.height-5}
               slider={slider} fast={fast} slow={slow} min={min} max={max} fColour={fColour} sColour={sColour}/>
     </div>);
 }

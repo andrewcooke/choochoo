@@ -1,5 +1,5 @@
 import React from 'react';
-import {Grid, InputLabel, Typography} from "@material-ui/core";
+import {Grid, InputLabel, Link, Tooltip, Typography} from "@material-ui/core";
 import {sprintf} from "sprintf-js";
 import {FormatValueUnits, Image} from '../../../elements';
 import {Text} from '../../../../common/elements';
@@ -22,16 +22,29 @@ const useStyles = makeStyles(theme => ({
     },
     thumbnail: {
         marginRight: '10px',
+        padding: '1px',
+        '&:hover': {
+            border: '1px solid white',
+            padding: '0px',
+        },
     },
 }));
 
 
 export default function ClimbField(prop) {
 
-    const {json} = prop;
-    const [, location, thumbnail, sparkline, category, elevation, distance, time, gradient, power] = json;
+    const {json, history} = prop;
+    const [title, location, thumbnail, sparkline, category, elevation, distance, time, gradient, power] = json;
     const classes = useStyles();
     const cat = category.value === '' ? '' : 'Category ' + category.value;
+
+    function onClick() {
+        history.push(`/sector/${title.db}`);
+    }
+
+    function onAuxClick() {
+        window.open(`/sector/${title.db}`, '_blank');
+    }
 
     return (<>
         <Grid container item xs={4} className={classes.left}>
@@ -53,7 +66,11 @@ export default function ClimbField(prop) {
                 <Image url={sparkline.value} className={classes.sparkline}/>
             </Grid>
             <Grid item xs={3}>
-                <Image url={thumbnail.value} className={classes.thumbnail}/>
+                <Tooltip title='Display sector analysis' placement='top'>
+                    <Link onClick={onClick} onAuxClick={onAuxClick}>
+                        <Image url={thumbnail.value} className={classes.thumbnail}/>
+                    </Link>
+                </Tooltip>
             </Grid>
             <Grid item xs={12} className={classes.right}>
                 <Measures measures={elevation.measures}/>

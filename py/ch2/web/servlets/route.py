@@ -90,5 +90,5 @@ select st_x((point).geom) as x, st_y((point).geom) as y, st_z((point).geom) as {
         log.debug(sql)
         df_et = pd.read_sql(sql, s.connection(),
                             params={'sector_journal_id': sector_journal_id})
-        df = pd.concat([df_et, df_d], axis=1)
+        df = pd.merge(df_et, df_d, how='left', left_on=['x', 'y'], right_on=['x', 'y']).dropna()
         return df

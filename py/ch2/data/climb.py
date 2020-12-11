@@ -159,8 +159,10 @@ def search(df, params=Climb(), grid=False):
 
 
 def climbs_for_activity(s, ajournal):
+
     from ..pipeline.calculate.sector import SectorCalculator
     from ..pipeline.calculate import ActivityCalculator
+
     total = s.query(StatisticJournal). \
         join(StatisticName, Source). \
         filter(StatisticName.name == N.TOTAL_CLIMB,
@@ -182,7 +184,7 @@ def climbs_for_activity(s, ajournal):
         sjournals = list(sjournals)
         climb = {sjournal.statistic_name.name: sjournal for sjournal in sjournals}
         climb['start-distance'] = sjournals[0].source.start_distance
-        climb['id'] = sjournals[0].source.id
+        climb['id'] = sjournals[0].source.sector.id
         return climb
 
     def cmp_climb(a, b):

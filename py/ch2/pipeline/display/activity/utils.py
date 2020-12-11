@@ -227,7 +227,7 @@ class ActivityDelegate(ActivityJournalDelegate):
     def __read_sectors(cls, s, ajournal, date):
         sectors = sectors_for_activity(s, ajournal)
         for sector in sectors:
-            yield [text('Sector'),
+            yield [text('Sector', db=sector['id']),
                    value('Sector at', sector['start-distance'], units=U.KM),
                    cls.__thumbnail(sector[N.SECTOR_TIME]),
                    cls.__sparkline(sector[N.SECTOR_TIME]),
