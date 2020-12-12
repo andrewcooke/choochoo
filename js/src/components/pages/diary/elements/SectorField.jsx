@@ -41,11 +41,11 @@ export default function SectorField(prop) {
     const classes = useStyles();
 
     function onClick() {
-        history.push(`/sector/${title.db}`);
+        history.push(`/sector/${title.db[0]}?from=${title.db[1]}`);
     }
 
     function onAuxClick() {
-        window.open(`/sector/${title.db}`, '_blank');
+        window.open(`/sector/${title.db[0]}?from=${title.db[1]}`, '_blank');
     }
 
     return (<>

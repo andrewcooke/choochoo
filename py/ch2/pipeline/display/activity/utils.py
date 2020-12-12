@@ -212,7 +212,7 @@ class ActivityDelegate(ActivityJournalDelegate):
                     category = cls.__dict_as_value(climb, N.CLIMB_CATEGORY)
                 else:
                     category = value(T.CLIMB_CATEGORY, '-')
-                yield [text('Climb', db=climb['sector-id']),
+                yield [text('Climb', db=(climb['sector-id'], climb['sector-journal-id'])),
                        value('Climb at', climb['start-distance'], units=U.KM),
                        cls.__thumbnail(climb[N.CLIMB_TIME]),
                        cls.__sparkline(climb[N.CLIMB_TIME]),
@@ -227,7 +227,7 @@ class ActivityDelegate(ActivityJournalDelegate):
     def __read_sectors(cls, s, ajournal, date):
         sectors = sectors_for_activity(s, ajournal)
         for sector in sectors:
-            yield [text('Sector', db=sector['sector-id']),
+            yield [text('Sector', db=(sector['sector-id'], sector['sector-journal-id'])),
                    value('Sector at', sector['start-distance'], units=U.KM),
                    cls.__thumbnail(sector[N.SECTOR_TIME]),
                    cls.__sparkline(sector[N.SECTOR_TIME]),

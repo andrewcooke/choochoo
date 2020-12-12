@@ -3,8 +3,8 @@ from ..model import DB
 from ...sql import StatisticJournal, Source
 
 
-def str_or_none(x):
-    return x is None or isinstance(x, str)
+def str_or_int_or_none(x):
+    return x is None or isinstance(x, str) or isinstance(x, int)
 
 
 def rewrite_db(model):
@@ -20,5 +20,5 @@ def rewrite_db(model):
             elif isinstance(db, int):  # direct id
                 model[DB] = db
             else:  # links have tuples
-                model[DB] = [x if str_or_none(x) else x.id for x in db]
+                model[DB] = [x if str_or_int_or_none(x) else x.id for x in db]
         return model

@@ -11,6 +11,7 @@ import {Area, AxisBottom, AxisLeft, AxisRight, Group, LinePath, Line, Circle} fr
 import {scaleLinear} from "d3-scale";
 import {useDimensions} from "react-recipes";
 import {sprintf} from "sprintf-js";
+import {useLocation} from "react-router-dom";
 
 
 function hms(seconds) {
@@ -48,12 +49,11 @@ function Plot(props) {
 
     return (<svg width='100%' height={height}>
         <Group>
-            <Area data={slow} fill={sColour} opacity={0.05}
-                  x={slow => distanceScale(slow.distance)}
-                  y1={slow => elevationScale(slow.elevation)} y0={slow => height-margin.bottom}/>
-            <Area data={fast} fill={fColour} opacity={0.05}
+            <Area data={fast} fill={fg} opacity={0.05}
                   x={fast => distanceScale(fast.distance)}
                   y1={fast => elevationScale(fast.elevation)} y0={fast => height-margin.bottom}/>
+            <LinePath data={fast} stroke={fg} strokeWidth={1} opacity={0.2}
+                      x={fast => distanceScale(fast.distance)} y={fast => elevationScale(fast.elevation)}/>
             <LinePath data={slow} stroke={sColour} strokeWidth={2}
                       x={slow => distanceScale(slow.distance)} y={slow => timeScale(slow.time)}/>
             <LinePath data={fast} stroke={fColour} strokeWidth={2}
@@ -135,29 +135,6 @@ function WidthPlot(props) {
 }
 
 
-function SliderPlot(props) {
-
-    const {fast, slow, min, max, fColour, sColour, n=100} = props;
-    const [slider, setSlider] = useState(0);
-    const theme = useTheme();
-
-    return (<>
-        <Grid item xs={12}>
-            <WidthPlot slider={slider} fast={fast} slow={slow} min={min} max={max} fColour={fColour} sColour={sColour}/>
-        </Grid>
-        <Grid item xs={12}>
-            <Slider value={slider} onChange={(event, value) => setSlider(value)}
-                    min={0} max={1} step={1 / n}
-                    color={fColour === theme.palette.primary.main ? 'primary' : 'secondary'}/>
-            <Text>
-                <p>Moving the slider selects a point on the faster activity and displays the time and distance
-                    difference to the slower activity at the same distance or time, respectively.</p>
-            </Text>
-        </Grid>
-    </>);
-}
-
-
 function zip(input) {
     const [first, ...rest] = Object.keys(input);
     const output = input[first].map(value => ({[first]: value}));
@@ -166,11 +143,11 @@ function zip(input) {
 }
 
 
-function PrepareData(props) {
+function SliderPlot(props) {
 
-    const {sector1, sector2} = props;
+    const {sector1, sector2, n=100} = props;
+    const [slider, setSlider] = useState(0);
     const theme = useTheme();
-
     const [fast, zfast, fColour, slow, zslow, sColour] = last(sector1.edt.time) > last(sector2.edt.time) ?
         [sector2.edt, sector2.zipped_edt, theme.palette.primary.main,
          sector1.edt, sector1.zipped_edt, theme.palette.secondary.main] :
@@ -182,8 +159,19 @@ function PrepareData(props) {
         time: Math.max(...fast.time, ...slow.time),
         elevation: Math.max(...elevation)};
 
-    return  (<ColumnCard>
-        <SliderPlot fast={zfast} slow={zslow} min={min} max={max} fColour={fColour} sColour={sColour}/>
+    return (<ColumnCard>
+        <Grid item xs={12}>
+            <WidthPlot slider={slider} fast={zfast} slow={zslow} min={min} max={max} fColour={fColour} sColour={sColour}/>
+        </Grid>
+        <Grid item xs={12}>
+            <Slider value={slider} onChange={(event, value) => setSlider(value)}
+                    min={0} max={1} step={1 / n}
+                    color={fColour === theme.palette.primary.main ? 'primary' : 'secondary'}/>
+            <Text>
+                <p>Moving the slider selects a point on the faster activity and displays the time and distance
+                    difference to the slower activity at the same distance or time, respectively.</p>
+            </Text>
+        </Grid>
     </ColumnCard>);
 }
 
@@ -265,11 +253,38 @@ function Introduction(props) {
 function SectorContent(props) {
 
     // todo - what if 0 or 1 sectors matched?
-    const {sector, data, history} = props;
-    const [sectors, setSectors] = useState(data['sector_journals']);
+    const {sector, data, history, from} = props;
+    const [sectors, setSectors] = useState(data.sector_journals);
     const [showDistance, setShowDistance] = useState(true);
-    const [i, setI] = useState(0);
-    const [j, setJ] = useState(1);
+    const [i, setI] = useState(-1);
+    const [j, setJ] = useState(-1);
+
+    if (i === -1) {  // set to fastest
+        let [fastest, fastest_time] = [0, last(sectors[0].edt.time)];
+        sectors.forEach((sj, i) => {
+            const time = last(sj.edt.time);
+            if (time < fastest_time) {
+                fastest = i;
+                fastest_time = time;
+            }});
+        setI(fastest);
+    }
+
+    if (j === -1) {
+        let found = false;
+        if (from) {  // set to source
+            sectors.forEach((sj, i) => {
+                if (sj.db === parseInt(from)) {
+                    setJ(i);
+                    found = true;
+                }
+            });
+        }
+        if (! found) {
+            log.warn(`Could not find from (${from})`)
+            setJ(0);
+        }
+    }
 
     function sort(key, reverse = false) {
         let copy = sectors.slice();
@@ -284,10 +299,15 @@ function SectorContent(props) {
 
     return (<ColumnList>
         <Introduction/>
-        <PrepareData sector1={data.sector_journals[i]} sector2={data.sector_journals[j]}/>
+        <SliderPlot sector1={data.sector_journals[i]} sector2={data.sector_journals[j]}/>
         {sectorJournals}
         <LoadMap sector={sector} history={history}/>
     </ColumnList>);
+}
+
+
+function useQuery() {
+    return new URLSearchParams(useLocation().search);
 }
 
 
@@ -298,6 +318,8 @@ export default function Sector(props) {
     const [data, setData] = useState(null);
     const errorState = useState(null);
     const [error, setError] = errorState;
+    const query = useQuery();
+    const from = query.get("from");
 
     function setJson(json) {
         setData(fixJournals(json));
@@ -311,7 +333,7 @@ export default function Sector(props) {
     }
 
     function fixDatum(row, i) {
-        log.debug(`fixing ${row.name}`);
+        log.debug(`fixing ${row.name} / ${row.db}`);
         row.date = parse(row.date, FMT_DAY_TIME, new Date());
         row.index = i;
         row.zipped_edt = zip(row.edt);
@@ -324,7 +346,7 @@ export default function Sector(props) {
     }, [id]);
 
     const content = data === null ? <Loading/> :
-        <SectorContent sector={id} data={data} history={history}/>;
+        <SectorContent sector={id} data={data} history={history} from={from}/>;
 
     return <Layout title='Sector Analysis' content={content} errorState={errorState}/>;
 }
