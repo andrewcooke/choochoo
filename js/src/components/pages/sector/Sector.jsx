@@ -159,35 +159,23 @@ function SliderPlot(props) {
 
 
 function zip(input) {
-    const output = [];
-    Object.keys(input).forEach(key => {
-        if (output.length === 0) {
-            input[key].forEach(x => {
-                const obj = {};
-                obj[key] = x;
-                output.push(obj)
-            });
-        } else {
-            input[key].forEach((x, i) => output[i][key] = x);
-        }
-    });
+    const [first, ...rest] = Object.keys(input);
+    const output = input[first].map(value => ({[first]: value}));
+    rest.forEach(key => input[key].forEach((x, i) => output[i][key] = x));
     return output;
 }
 
 
 function PrepareData(props) {
 
-    const {sector1, sector2, history} = props;
+    const {sector1, sector2} = props;
     const theme = useTheme();
 
-    const fast = last(sector1.edt.time) > last(sector2.edt.time) ? sector2.edt : sector1.edt;
-    const slow = last(sector1.edt.time) > last(sector2.edt.time) ? sector1.edt : sector2.edt;
-    const colours = new Map();
-    colours.set(sector1.edt, theme.palette.secondary.main);
-    colours.set(sector2.edt, theme.palette.primary.main);
-
-    const zfast = zip(fast);
-    const zslow = zip(slow);
+    const [fast, zfast, fColour, slow, zslow, sColour] = last(sector1.edt.time) > last(sector2.edt.time) ?
+        [sector2.edt, sector2.zipped_edt, theme.palette.primary.main,
+         sector1.edt, sector1.zipped_edt, theme.palette.secondary.main] :
+        [sector1.edt, sector1.zipped_edt, theme.palette.secondary.main,
+         sector2.edt, sector2.zipped_edt, theme.palette.primary.main];
     const elevation = fast.elevation.concat(slow.elevation);
     const min = {distance: 0, time: 0, elevation:  Math.min(...elevation)};
     const max = {distance: Math.max(...fast.distance, ...slow.distance),
@@ -195,8 +183,7 @@ function PrepareData(props) {
         elevation: Math.max(...elevation)};
 
     return  (<ColumnCard>
-        <SliderPlot fast={zfast} slow={zslow} min={min} max={max}
-                    fColour={colours.get(fast)} sColour={colours.get(slow)}/>
+        <SliderPlot fast={zfast} slow={zslow} min={min} max={max} fColour={fColour} sColour={sColour}/>
     </ColumnCard>);
 }
 
@@ -297,7 +284,7 @@ function SectorContent(props) {
 
     return (<ColumnList>
         <Introduction/>
-        <PrepareData sector1={data.sector_journals[i]} sector2={data.sector_journals[j]} history={history}/>
+        <PrepareData sector1={data.sector_journals[i]} sector2={data.sector_journals[j]}/>
         {sectorJournals}
         <LoadMap sector={sector} history={history}/>
     </ColumnList>);
@@ -313,19 +300,21 @@ export default function Sector(props) {
     const [error, setError] = errorState;
 
     function setJson(json) {
-        setData(fixData(json));
+        setData(fixJournals(json));
     }
 
-    function fixData(json) {
+    function fixJournals(json) {
         if (json !== null && json.sector_journals !== undefined) {
-            json.sector_journals = json.sector_journals.map(fixDatum)
+            json.sector_journals = json.sector_journals.map(fixDatum);
         }
         return json;
     }
 
     function fixDatum(row, i) {
+        log.debug(`fixing ${row.name}`);
         row.date = parse(row.date, FMT_DAY_TIME, new Date());
         row.index = i;
+        row.zipped_edt = zip(row.edt);
         return row;
     }
 
