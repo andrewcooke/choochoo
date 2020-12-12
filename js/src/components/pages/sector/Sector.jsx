@@ -73,7 +73,7 @@ function Plot(props) {
                   from={{x: margin.left, y: timeScale(slider_fast.time)}}
                   to={{x: width-margin.right, y: timeScale(slider_fast.time)}}/>
             <Circle fill={fColour} cx={distanceScale(slider_fast.distance)} cy={timeScale(slider_fast.time)} r={3}/>
-            <text x={0.9 * width} y={0.8 * height} fontSize={fs} fill={fg} textAnchor='end'>
+            <text x={0.87 * width} y={0.8 * height} fontSize={fs+2} fill={fg} textAnchor='end'>
                 {sprintf('%.1fs / %.1fm', slow_at_distance.time - slider_fast.time,
                     1000 * (slider_fast.distance - slow_at_time.distance))}
             </text>
