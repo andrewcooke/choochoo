@@ -23,7 +23,7 @@ function hms(seconds) {
 }
 
 
-function Plot(props) {
+function Comparison(props) {
 
     const {width, height, slider, fast, slow, min, max, fColour, sColour, n=100,
         margin={top: 10, bottom: 40, left: 40, right: 40}} = props;
@@ -119,16 +119,6 @@ function bracket(data, value, key) {
 }
 
 
-function WidthPlot(props) {
-    const {slider, fast, slow, min, max, fColour, sColour} = props;
-    return (<ParentSize>
-        {({ width: visWidth, height: visHeight }) =>
-            <Plot width={visWidth} height={300}
-                  slider={slider} fast={fast} slow={slow} min={min} max={max} fColour={fColour} sColour={sColour}/>}
-    </ParentSize>);
-}
-
-
 function zip(input) {
     const [first, ...rest] = Object.keys(input);
     const output = input[first].map(value => ({[first]: value}));
@@ -137,7 +127,7 @@ function zip(input) {
 }
 
 
-function SliderPlot(props) {
+function SliderComparsion(props) {
 
     const {sector1, sector2, n=100} = props;
     const [slider, setSlider] = useState(0);
@@ -148,14 +138,18 @@ function SliderPlot(props) {
         [sector1.edt, sector1.zipped_edt, theme.palette.secondary.main,
          sector2.edt, sector2.zipped_edt, theme.palette.primary.main];
     const elevation = fast.elevation.concat(slow.elevation);
-    const min = {distance: 0, time: 0, elevation:  Math.min(...elevation)};
+    const min = {distance: 0, time: 0, elevation: Math.min(...elevation)};
     const max = {distance: Math.max(...fast.distance, ...slow.distance),
         time: Math.max(...fast.time, ...slow.time),
         elevation: Math.max(...elevation)};
 
     return (<ColumnCard>
         <Grid item xs={12}>
-            <WidthPlot slider={slider} fast={zfast} slow={zslow} min={min} max={max} fColour={fColour} sColour={sColour}/>
+            <ParentSize>
+                {({ width: visWidth, height: visHeight }) =>
+                    <Comparison width={visWidth} height={300} slider={slider} fast={zfast} slow={zslow}
+                                min={min} max={max} fColour={fColour} sColour={sColour}/>}
+            </ParentSize>
         </Grid>
         <Grid item xs={12}>
             <Slider value={slider} onChange={(event, value) => setSlider(value)}
@@ -293,7 +287,7 @@ function SectorContent(props) {
 
     return (<ColumnList>
         <Introduction/>
-        <SliderPlot sector1={data.sector_journals[i]} sector2={data.sector_journals[j]}/>
+        <SliderComparsion sector1={data.sector_journals[i]} sector2={data.sector_journals[j]}/>
         {sectorJournals}
         <LoadMap sector={sector} history={history}/>
     </ColumnList>);
