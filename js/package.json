@@ -42,7 +42,6 @@
     "loglevel": "^1.7.1",
     "minimist": ">=1.2.3",
     "react-leaflet": "^3.0.2",
-    "react-recipes": "^1.1.1",
     "react-router-dom": "^5.2.0",
     "regenerator-runtime": "^0.13.7",
     "sprintf-js": "^1.1.2"

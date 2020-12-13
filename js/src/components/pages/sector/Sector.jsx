@@ -7,9 +7,8 @@ import {handleJson} from "../../functions";
 import {FMT_DAY_TIME} from "../../../constants";
 import {format, parse} from 'date-fns';
 import log from "loglevel";
-import {Area, AxisBottom, AxisLeft, AxisRight, Group, LinePath, Line, Circle} from '@visx/visx';
+import {Area, AxisBottom, AxisLeft, AxisRight, Circle, Group, Line, LinePath, ParentSize} from '@visx/visx';
 import {scaleLinear} from "d3-scale";
-import {useDimensions} from "react-recipes";
 import {sprintf} from "sprintf-js";
 import {useLocation} from "react-router-dom";
 
@@ -121,17 +120,12 @@ function bracket(data, value, key) {
 
 
 function WidthPlot(props) {
-
     const {slider, fast, slow, min, max, fColour, sColour} = props;
-    const [ref, dim] = useDimensions();
-
-    // if we pass width/height directly we get a loop with progressive growth
-    // if we pass height-5 alone we get progressive shrinkage
-    // this hack appears to be stable
-    return (<div ref={ref} style={{height: dim.height ? dim.height : 300}}>
-        <Plot width={dim.width ? dim.width : 500} height={dim.height-5}
-              slider={slider} fast={fast} slow={slow} min={min} max={max} fColour={fColour} sColour={sColour}/>
-    </div>);
+    return (<ParentSize>
+        {({ width: visWidth, height: visHeight }) =>
+            <Plot width={visWidth} height={300}
+                  slider={slider} fast={fast} slow={slow} min={min} max={max} fColour={fColour} sColour={sColour}/>}
+    </ParentSize>);
 }
 
 
