@@ -30,10 +30,14 @@ function between(start, date, finish) {
 
 function Scatter(props) {
 
-    const {width, height, sectors, start=null, finish=null, brush=false, setRange=null,
+    const {width, height, sectors, sector1=null, sector2=null,
+        start=null, finish=null, brush=false, setRange=null,
         margin={top: 10, bottom: 20, left: 40, right: 40}} = props;
 
     function speed(s) {return 1000 * s.distance / s.time;}
+    const groups = [];
+    if (sector1) groups.push(sector1.activity_group);
+    if (sector2) groups.push(sector2.activity_group);
 
     const filtered = sectors.filter(s => between(start, s.date, finish));
     const min = {speed: Math.min(...filtered.map(s => speed(s))), date: Math.min(...filtered.map(s => s.date))};
@@ -41,10 +45,10 @@ function Scatter(props) {
     const speedScale = scaleLinear([min.speed, max.speed], [height-margin.bottom, margin.top]);
     const dateScale = scaleTime([start ? start : min.date, finish ? finish : max.date],
         [margin.left, width-margin.right]);
+
     // brush doesn't handle margins correctly, so we do it ourselves (see Group)
     const brushWidth = width - margin.left - margin.right;
     const brushScale = scaleTime([start ? start : min.date, finish ? finish : max.date], [0, brushWidth]);
-    log.debug(min);
 
     const theme = useTheme();
     const fg = theme.palette.text.secondary;
@@ -52,11 +56,17 @@ function Scatter(props) {
     function tlp(anchor, dy=0) {
         return () => ({fill: fg, fontSize: fs, textAnchor: anchor, dy: dy});
     }
+    function fill(s) {
+        if (sector1 && sector1.db === s.db) return theme.palette.secondary.main;
+        if (sector2 && sector2.db === s.db) return theme.palette.primary.main;
+        if (!groups.length || groups.includes(s.activity_group)) return fg;
+        return null;
+    }
 
     return (<svg width='100%' height={height}>
-        {filtered.map(s => <Circle fill={fg} cx={dateScale(s.date)} cy={speedScale(speed(s))} r={3}/>)}
+        {filtered.map(s => <Circle fill={fill(s)} cx={dateScale(s.date)} cy={speedScale(speed(s))} r={3}/>)}
         {brush ? (<Group left={margin.left}>
-                <PatternLines id='pattern' height={8} width={8} stroke='white' strokeWidth={1}
+                <PatternLines id='pattern' height={8} width={8} stroke={fg} strokeWidth={1}
                               orientation={['diagonal']}/>
                 <Brush xScale={brushScale} yScale={speedScale} width={brushWidth} height={height}
                        margin={margin} handleSize={8} resizeTriggerAreas={['left', 'right']}
@@ -64,7 +74,7 @@ function Scatter(props) {
                        initialBrushPosition={{start: {x: brushScale(min.date)}, end: {x: brushScale(max.date)}}}
                        onChange={(domain) => {if (domain) setRange([domain.x0, domain.x1]);}}
                        onClick={() => setRange([min.date, max.date])}
-                       selectedBoxStyle={{fill: 'url(#pattern)', stroke: 'white'}}/>
+                       selectedBoxStyle={{fill: 'url(#pattern)', stroke: fg}}/>
             </Group>) : (<>
                 <AxisLeft scale={speedScale} left={margin.left} stroke={fg}
                           tickStroke={fg} tickLabelProps={tlp('end', '0.25em')}/>
@@ -79,16 +89,13 @@ function Scatter(props) {
 
 
 function BrushScatter(props) {
-
-    const {sectors} = props;
+    const {sectors, sector1, sector2} = props;
     const [range, setRange] = useState([null, null]);
-    const start = Math.min(...sectors.map(s => s.date));
-    const finish = Math.max(...sectors.map(s => s.date));
-
     return (<ColumnCard><Grid item xs={12}>
-        <Scatter height={300} width={500} sectors={sectors} start={range[0]} finish={range[1]}/>
-        <Scatter height={50} width={500} sectors={sectors} setRange={setRange}
-                 brush={true} margin={{top: 10, bottom: 0, left: 40, right: 40}}/>
+        <Scatter height={300} width={500} sectors={sectors} sector1={sector1} sector2={sector2}
+                 start={range[0]} finish={range[1]}/>
+        <Scatter height={50} width={500} sectors={sectors} sector1={sector1} sector2={sector2}
+                 setRange={setRange} brush={true} margin={{top: 10, bottom: 0, left: 40, right: 40}}/>
     </Grid></ColumnCard>);
 }
 
@@ -356,7 +363,8 @@ function SectorContent(props) {
 
     return (<ColumnList>
         <Introduction/>
-        <BrushScatter sectors={data.sector_journals}/>
+        <BrushScatter sectors={data.sector_journals}
+                      sector1={data.sector_journals[i]} sector2={data.sector_journals[j]}/>
         <SliderComparison sector1={data.sector_journals[i]} sector2={data.sector_journals[j]}/>
         {sectorJournals}
         <LoadMap sector={sector} history={history}/>
