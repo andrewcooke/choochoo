@@ -7,8 +7,8 @@ import {handleJson} from "../../functions";
 import {FMT_DAY_TIME} from "../../../constants";
 import {format, parse} from 'date-fns';
 import log from "loglevel";
-import {Area, AxisBottom, AxisLeft, AxisRight, Circle, Group, Line, LinePath, ParentSize} from '@visx/visx';
-import {scaleLinear} from "d3-scale";
+import {Area, AxisBottom, AxisLeft, AxisRight, Brush, Circle, Group, Line, LinePath, ParentSize, PatternLines} from '@visx/visx';
+import {scaleLinear, scaleTime} from "d3-scale";
 import {sprintf} from "sprintf-js";
 import {useLocation} from "react-router-dom";
 
@@ -23,14 +23,84 @@ function hms(seconds) {
 }
 
 
+function between(start, date, finish) {
+    return (start === null || start <= date) && (finish === null || date <= finish);
+}
+
+
+function Scatter(props) {
+
+    const {width, height, sectors, start=null, finish=null, brush=false, setRange=null,
+        margin={top: 10, bottom: 20, left: 40, right: 40}} = props;
+
+    function speed(s) {return 1000 * s.distance / s.time;}
+
+    const filtered = sectors.filter(s => between(start, s.date, finish));
+    const min = {speed: Math.min(...filtered.map(s => speed(s))), date: Math.min(...filtered.map(s => s.date))};
+    const max = {speed: Math.max(...filtered.map(s => speed(s))), date: Math.max(...filtered.map(s => s.date))};
+    const speedScale = scaleLinear([min.speed, max.speed], [height-margin.bottom, margin.top]);
+    const dateScale = scaleTime([start ? start : min.date, finish ? finish : max.date],
+        [margin.left, width-margin.right]);
+    // brush doesn't handle margins correctly, so we do it ourselves (see Group)
+    const brushWidth = width - margin.left - margin.right;
+    const brushScale = scaleTime([start ? start : min.date, finish ? finish : max.date], [0, brushWidth]);
+    log.debug(min);
+
+    const theme = useTheme();
+    const fg = theme.palette.text.secondary;
+    const fs = 10;
+    function tlp(anchor, dy=0) {
+        return () => ({fill: fg, fontSize: fs, textAnchor: anchor, dy: dy});
+    }
+
+    return (<svg width='100%' height={height}>
+        {filtered.map(s => <Circle fill={fg} cx={dateScale(s.date)} cy={speedScale(speed(s))} r={3}/>)}
+        {brush ? (<Group left={margin.left}>
+                <PatternLines id='pattern' height={8} width={8} stroke='white' strokeWidth={1}
+                              orientation={['diagonal']}/>
+                <Brush xScale={brushScale} yScale={speedScale} width={brushWidth} height={height}
+                       margin={margin} handleSize={8} resizeTriggerAreas={['left', 'right']}
+                       brushDirection="horizontal"
+                       initialBrushPosition={{start: {x: brushScale(min.date)}, end: {x: brushScale(max.date)}}}
+                       onChange={(domain) => {if (domain) setRange([domain.x0, domain.x1]);}}
+                       onClick={() => setRange([min.date, max.date])}
+                       selectedBoxStyle={{fill: 'url(#pattern)', stroke: 'white'}}/>
+            </Group>) : (<>
+                <AxisLeft scale={speedScale} left={margin.left} stroke={fg}
+                          tickStroke={fg} tickLabelProps={tlp('end', '0.25em')}/>
+                <text x={0} y={0} transform={`translate(${margin.left+15},${margin.top})\nrotate(-90)`} fontSize={fs}
+                      textAnchor='end' fill={fg}>Speed / m/s</text>
+                <AxisBottom scale={dateScale} top={height-margin.bottom} stroke={fg}
+                            tickStroke={fg} tickLabelProps={tlp('middle')}
+                            labelProps={{fill: fg, fontSize: fs, textAnchor: 'middle'}}/>
+            </>)}
+    </svg>);
+}
+
+
+function BrushScatter(props) {
+
+    const {sectors} = props;
+    const [range, setRange] = useState([null, null]);
+    const start = Math.min(...sectors.map(s => s.date));
+    const finish = Math.max(...sectors.map(s => s.date));
+
+    return (<ColumnCard><Grid item xs={12}>
+        <Scatter height={300} width={500} sectors={sectors} start={range[0]} finish={range[1]}/>
+        <Scatter height={50} width={500} sectors={sectors} setRange={setRange}
+                 brush={true} margin={{top: 10, bottom: 0, left: 40, right: 40}}/>
+    </Grid></ColumnCard>);
+}
+
+
 function Comparison(props) {
 
     const {width, height, slider, fast, slow, min, max, fColour, sColour, n=100,
         margin={top: 10, bottom: 40, left: 40, right: 40}} = props;
 
-    const slider_fast = interpolate(fast, slider * last(fast).distance, 'distance');
-    const slow_at_time = interpolate(slow, slider_fast.time, 'time');
-    const slow_at_distance = interpolate(slow, slider_fast.distance, 'distance');
+    const sliderFast = interpolate(fast, slider * last(fast).distance, 'distance');
+    const slowAtTime = interpolate(slow, sliderFast.time, 'time');
+    const slowAtDistance = interpolate(slow, sliderFast.distance, 'distance');
 
     const distanceScale = scaleLinear([0, max.distance], [margin.left, width-margin.right]);
     // note inversion of y axis
@@ -47,47 +117,46 @@ function Comparison(props) {
     log.debug(`rendering at height ${height}`)
 
     return (<svg width='100%' height={height}>
-        <Group>
-            <Area data={fast} fill={fg} opacity={0.05}
-                  x={fast => distanceScale(fast.distance)}
-                  y1={fast => elevationScale(fast.elevation)} y0={fast => height-margin.bottom}/>
-            <LinePath data={fast} stroke={fg} strokeWidth={1} opacity={0.2}
-                      x={fast => distanceScale(fast.distance)} y={fast => elevationScale(fast.elevation)}/>
-            <LinePath data={slow} stroke={sColour} strokeWidth={2}
-                      x={slow => distanceScale(slow.distance)} y={slow => timeScale(slow.time)}/>
-            <LinePath data={fast} stroke={fColour} strokeWidth={2}
-                      x={fast => distanceScale(fast.distance)} y={fast => timeScale(fast.time)}/>
-            <Line stroke={sColour} opacity={0.5}
-                  from={{x: distanceScale(slow_at_time.distance), y: margin.top}}
-                  to={{x: distanceScale(slow_at_time.distance), y: height-margin.bottom}}/>
-            <Circle fill={sColour} cx={distanceScale(slow_at_time.distance)} cy={timeScale(slow_at_time.time)} r={3}/>
-            <Line stroke={sColour} opacity={0.5}
-                  from={{x: margin.left, y: timeScale(slow_at_distance.time)}}
-                  to={{x: width-margin.right, y: timeScale(slow_at_distance.time)}}/>
-            <Circle fill={sColour} cx={distanceScale(slow_at_distance.distance)} cy={timeScale(slow_at_distance.time)} r={3}/>
-            <Line stroke={fColour} opacity={0.5}
-                  from={{x: distanceScale(slider_fast.distance), y: margin.top}}
-                  to={{x: distanceScale(slider_fast.distance), y: height-margin.bottom}}/>
-            <Line stroke={fColour} opacity={0.5}
-                  from={{x: margin.left, y: timeScale(slider_fast.time)}}
-                  to={{x: width-margin.right, y: timeScale(slider_fast.time)}}/>
-            <Circle fill={fColour} cx={distanceScale(slider_fast.distance)} cy={timeScale(slider_fast.time)} r={3}/>
-            <text x={0.87 * width} y={0.8 * height} fontSize={fs+2} fill={fg} textAnchor='end'>
-                {sprintf('%.1fs / %.1fm', slow_at_distance.time - slider_fast.time,
-                    1000 * (slider_fast.distance - slow_at_time.distance))}
-            </text>
-            <AxisLeft scale={timeScale} left={margin.left} stroke={fg}
-                      tickStroke={fg} tickLabelProps={tlp('end', '0.25em')} tickFormat={hms}/>
-            <text x={0} y={0} transform={`translate(${margin.left+15},${margin.top})\nrotate(-90)`} fontSize={fs}
-                  textAnchor='end' fill={fg}>Time / hms</text>
-            <AxisRight scale={elevationScale} left={width-margin.right} stroke={fg}
-                       tickStroke={fg} tickLabelProps={tlp('start', '0.25em')}/>
-            <text x={0} y={0} transform={`translate(${width-margin.right-10},${margin.top})\nrotate(-90)`} fontSize={fs}
-                  textAnchor='end' fill={fg}>Elevation / m</text>
-            <AxisBottom scale={distanceScale} top={height-margin.bottom} stroke={fg}
-                        tickStroke={fg} tickLabelProps={tlp('middle')}
-                        labelProps={{fill: fg, fontSize: fs, textAnchor: 'middle'}} label='Distance / km'/>
-        </Group>
+        <Area data={fast} fill={fg} opacity={0.05}
+              x={fast => distanceScale(fast.distance)}
+              y1={fast => elevationScale(fast.elevation)} y0={fast => height-margin.bottom}/>
+        <LinePath data={fast} stroke={fg} strokeWidth={1} opacity={0.2}
+                  x={fast => distanceScale(fast.distance)} y={fast => elevationScale(fast.elevation)}/>
+        <LinePath data={slow} stroke={sColour} strokeWidth={2}
+                  x={slow => distanceScale(slow.distance)} y={slow => timeScale(slow.time)}/>
+        <LinePath data={fast} stroke={fColour} strokeWidth={2}
+                  x={fast => distanceScale(fast.distance)} y={fast => timeScale(fast.time)}/>
+        <Line stroke={sColour} opacity={0.5}
+              from={{x: distanceScale(slowAtTime.distance), y: margin.top}}
+              to={{x: distanceScale(slowAtTime.distance), y: height-margin.bottom}}/>
+        <Circle fill={sColour} cx={distanceScale(slowAtTime.distance)} cy={timeScale(slowAtTime.time)} r={3}/>
+        <Line stroke={sColour} opacity={0.5}
+              from={{x: margin.left, y: timeScale(slowAtDistance.time)}}
+              to={{x: width-margin.right, y: timeScale(slowAtDistance.time)}}/>
+        <Circle fill={sColour} cx={distanceScale(slowAtDistance.distance)} cy={timeScale(slowAtDistance.time)}
+                r={3}/>
+        <Line stroke={fColour} opacity={0.5}
+              from={{x: distanceScale(sliderFast.distance), y: margin.top}}
+              to={{x: distanceScale(sliderFast.distance), y: height-margin.bottom}}/>
+        <Line stroke={fColour} opacity={0.5}
+              from={{x: margin.left, y: timeScale(sliderFast.time)}}
+              to={{x: width-margin.right, y: timeScale(sliderFast.time)}}/>
+        <Circle fill={fColour} cx={distanceScale(sliderFast.distance)} cy={timeScale(sliderFast.time)} r={3}/>
+        <text x={0.87 * width} y={0.8 * height} fontSize={fs+2} fill={fg} textAnchor='end'>
+            {sprintf('%.1fs / %.1fm', slowAtDistance.time - sliderFast.time,
+                1000 * (sliderFast.distance - slowAtTime.distance))}
+        </text>
+        <AxisLeft scale={timeScale} left={margin.left} stroke={fg}
+                  tickStroke={fg} tickLabelProps={tlp('end', '0.25em')} tickFormat={hms}/>
+        <text x={0} y={0} transform={`translate(${margin.left+15},${margin.top})\nrotate(-90)`} fontSize={fs}
+              textAnchor='end' fill={fg}>Time / hms</text>
+        <AxisRight scale={elevationScale} left={width-margin.right} stroke={fg}
+                   tickStroke={fg} tickLabelProps={tlp('start', '0.25em')}/>
+        <text x={0} y={0} transform={`translate(${width-margin.right-10},${margin.top})\nrotate(-90)`} fontSize={fs}
+              textAnchor='end' fill={fg}>Elevation / m</text>
+        <AxisBottom scale={distanceScale} top={height-margin.bottom} stroke={fg}
+                    tickStroke={fg} tickLabelProps={tlp('middle')}
+                    labelProps={{fill: fg, fontSize: fs, textAnchor: 'middle'}} label='Distance / km'/>
     </svg>);
 }
 
@@ -127,7 +196,7 @@ function zip(input) {
 }
 
 
-function SliderComparsion(props) {
+function SliderComparison(props) {
 
     const {sector1, sector2, n=100} = props;
     const [slider, setSlider] = useState(0);
@@ -287,7 +356,8 @@ function SectorContent(props) {
 
     return (<ColumnList>
         <Introduction/>
-        <SliderComparsion sector1={data.sector_journals[i]} sector2={data.sector_journals[j]}/>
+        <BrushScatter sectors={data.sector_journals}/>
+        <SliderComparison sector1={data.sector_journals[i]} sector2={data.sector_journals[j]}/>
         {sectorJournals}
         <LoadMap sector={sector} history={history}/>
     </ColumnList>);
