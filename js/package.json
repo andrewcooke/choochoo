@@ -44,6 +44,7 @@
     "react-leaflet": "^3.0.2",
     "react-router-dom": "^5.2.0",
     "regenerator-runtime": "^0.13.7",
+    "simple-statistics": "^7.4.0",
     "sprintf-js": "^1.1.2"
   }
 }

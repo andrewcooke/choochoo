@@ -7,10 +7,24 @@ import {handleJson} from "../../functions";
 import {FMT_DAY_TIME} from "../../../constants";
 import {format, parse} from 'date-fns';
 import log from "loglevel";
-import {Area, AxisBottom, AxisLeft, AxisRight, Brush, Circle, Group, Line, LinePath, ParentSize, PatternLines} from '@visx/visx';
+import {
+    Area,
+    AxisBottom,
+    AxisLeft,
+    AxisRight,
+    Brush,
+    Circle,
+    Group,
+    Line,
+    LinePath,
+    ParentSize,
+    PatternLines,
+    RectClipPath
+} from '@visx/visx';
 import {scaleLinear, scaleTime} from "d3-scale";
 import {sprintf} from "sprintf-js";
 import {useLocation} from "react-router-dom";
+import {linearRegression} from "simple-statistics";
 
 
 function hms(seconds) {
@@ -38,6 +52,7 @@ function Scatter(props) {
     const groups = [];
     if (sector1) groups.push(sector1.activity_group);
     if (sector2) groups.push(sector2.activity_group);
+    const inGroup = (s) => (!groups.length || groups.includes(s.activity_group));
 
     const filtered = sectors.filter(s => between(start, s.date, finish));
     const min = {speed: Math.min(...filtered.map(s => speed(s))), date: Math.min(...filtered.map(s => s.date))};
@@ -45,6 +60,11 @@ function Scatter(props) {
     const speedScale = scaleLinear([min.speed, max.speed], [height-margin.bottom, margin.top]);
     const dateScale = scaleTime([start ? start : min.date, finish ? finish : max.date],
         [margin.left, width-margin.right]);
+
+    const toFit = filtered.filter(inGroup).map(s => [dateScale(s.date), speedScale(speed(s))]);
+    log.debug(toFit);
+    const fit = linearRegression(toFit);
+    log.debug(fit);
 
     // brush doesn't handle margins correctly, so we do it ourselves (see Group)
     const brushWidth = width - margin.left - margin.right;
@@ -59,7 +79,7 @@ function Scatter(props) {
     function fill(s) {
         if (sector1 && sector1.db === s.db) return theme.palette.secondary.main;
         if (sector2 && sector2.db === s.db) return theme.palette.primary.main;
-        if (!groups.length || groups.includes(s.activity_group)) return fg;
+        if (inGroup(s)) return fg;
         return null;
     }
 
@@ -76,6 +96,14 @@ function Scatter(props) {
                        onClick={() => setRange([min.date, max.date])}
                        selectedBoxStyle={{fill: 'url(#pattern)', stroke: fg}}/>
             </Group>) : (<>
+                {fit && fit.m && fit.b ?
+                    (<>
+                      <RectClipPath id='regression' x={margin.left} width={brushWidth} y={margin.top}
+                                    height={height - margin.top - margin.bottom}/>
+                      <Group clipPath='url(#regression)'>
+                         <Line stroke={fg} from={{x: 0, y: fit.b}} to={{x: width, y: fit.m * width + fit.b}}/>
+                      </Group>
+                     </>) : null}
                 <AxisLeft scale={speedScale} left={margin.left} stroke={fg}
                           tickStroke={fg} tickLabelProps={tlp('end', '0.25em')}/>
                 <text x={0} y={0} transform={`translate(${margin.left+15},${margin.top})\nrotate(-90)`} fontSize={fs}
