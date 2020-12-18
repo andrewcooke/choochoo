@@ -35,8 +35,6 @@ const useStyles = makeStyles(theme => ({
 export default function SectorField(prop) {
 
     const {json, history} = prop;
-    log.debug('this reaches sector field');
-    log.debug(json);
     const [title, location, thumbnail, sparkline, distance, time] = json;
     const classes = useStyles();
 

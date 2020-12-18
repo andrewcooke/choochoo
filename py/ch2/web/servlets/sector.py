@@ -127,6 +127,7 @@ SELECT statistic_journal_text.value AS statistic_journal_text_value
                    'date': time_to_local_time(sjournal.activity_journal.start),
                    'name': activity_name,
                    'activity_group': sjournal.activity_journal.activity_group.title,
+                   'activity_id': sjournal.activity_journal.id,
                    'distance': sjournal.finish_distance - sjournal.start_distance,
                    'time': (sjournal.finish_time - sjournal.start_time).total_seconds(),
                    'elevation': sjournal.finish_elevation - sjournal.start_elevation,
