@@ -19,17 +19,7 @@ from ...sql.utils import WGS84_SRID, add
 log = getLogger(__name__)
 
 
-class ActivityBase(ContentType):
-
-    def _read_activity_route_wkb(self, s, activity_journal_id):
-        q = text(f'''
-select st_force2d(aj.route_et::geometry)
-  from activity_journal as aj
- where aj.id = :activity_journal_id''')
-        return WKBElement(s.connection().execute(q, activity_journal_id=activity_journal_id).fetchone()[0])
-
-
-class Sector(ActivityBase):
+class Sector(ContentType):
 
     def __init__(self, config):
         super().__init__()
@@ -55,6 +45,13 @@ class Sector(ActivityBase):
         s.commit()
         run_pipeline(self.__config, PipelineType.SECTOR, new_sector_id=sector.id)
         return {'sector': sector.id}
+
+    def _read_activity_route_wkb(self, s, activity_journal_id):
+        q = text(f'''
+select st_force2d(aj.route_et::geometry)
+  from activity_journal as aj
+ where aj.id = :activity_journal_id''')
+        return WKBElement(s.connection().execute(q, activity_journal_id=activity_journal_id).fetchone()[0])
 
     def read_sector_journals(self, request, s, sector):
         from ...sql import Sector

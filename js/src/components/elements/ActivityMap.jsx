@@ -14,7 +14,8 @@ export default function ActivityMap(props) {
             .then(handleJson(history, setData));
     }, [json.db]);
 
-    return (data === null ? <Loading/> : <OSMap latlon={data['latlon']} routes={activity_routes(data)}/>)
+    return (data === null || ! data['latlon'] || ! data['latlon'][0] ?
+        <Loading/> : <OSMap latlon={data['latlon']} routes={activity_routes(data)}/>)
 }
 
 

@@ -39,8 +39,6 @@ function Comparison(props) {
         return () => ({fill: fg, fontSize: fs, textAnchor: anchor, dy: dy});
     }
 
-    log.debug(`rendering at height ${height}`)
-
     return (<svg width='100%' height={height}>
         <Area data={fast} fill={fg} opacity={0.05}
               x={fast => distanceScale(fast.distance)}

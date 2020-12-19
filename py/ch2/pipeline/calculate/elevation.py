@@ -44,6 +44,7 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
             raise
 
     def _calculate_stats(self, s, ajournal, df):
+        df.dropna(inplace=True)   # so all routes should be aligned (fractional positions should correspond)
         if not present(df, N.ELEVATION):
             if present(df, N.RAW_ELEVATION):
                 df = smooth_elevation(df, smooth=self.smooth)

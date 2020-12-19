@@ -65,7 +65,7 @@ class ActivityJournal(GroupedSource):
     centre = Column(Geography('Point', srid=WGS84_SRID))
     utm_srid = Column(Integer)
     # used to detect folding back
-    route_a = Column(Geography('LineStringM', srid=WGS84_SRID))  # azimuth
+    route_a = Column(Geography('LineStringM', srid=WGS84_SRID))  # delta azimuth
     # used to calculate values from offsets
     route_d = Column(Geography('LineStringM', srid=WGS84_SRID))  # distance
     route_et = Column(Geography('LineStringZM', srid=WGS84_SRID))  # time
