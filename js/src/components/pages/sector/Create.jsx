@@ -21,11 +21,17 @@ function Elevation(props) {
     const {elevation, start, finish, width, height,
         margin={top: 10, bottom: 40, left: 40, right: 40}} = props;
 
+    const n = Math.max(10, finish - start);
+    const contextStart = Math.max(0, start - 0.2 * n);
+    const contextFinish = Math.min(elevation.length-1, finish + 0.2 * n);
+    const context = elevation.slice(contextStart, contextFinish);
+    const highlight = elevation.slice(start, finish);
+
     const distanceScale = scaleLinear(
-        [0, last(elevation)[0]],
+        [context[0][0], last(context)[0]],
         [margin.left, width-margin.right]);
     const elevationScale = scaleLinear(
-        [Math.min(...elevation.map(([d, e]) => e)), Math.max(...elevation.map(([d, e]) => e))],
+        [Math.min(...context.map(([d, e]) => e)), Math.max(...context.map(([d, e]) => e))],
         [height-margin.bottom, margin.top]);
 
     const theme = useTheme();
@@ -36,14 +42,14 @@ function Elevation(props) {
     }
 
     return (<svg width='100%' height={height}>
-        <Area data={elevation} fill={fg} opacity={0.05}
+        <Area data={context} fill={fg} opacity={0.05}
               x={elevation => distanceScale(elevation[0])}
               y1={elevation => elevationScale(elevation[1])}
               y0={elevation => height-margin.bottom}/>
-        <LinePath data={elevation.slice(start, finish)} stroke={fg} strokeWidth={1} opacity={1}
+        <LinePath data={highlight} stroke={fg} strokeWidth={1} opacity={1}
                   x={elevation => distanceScale(elevation[0])}
                   y={elevation => elevationScale(elevation[1])}/>
-        <AxisLeft scale={elevationScale} left={margin.left} stroke={fg}
+        <AxisLeft scale={elevationScale} left={margin.left} stroke={fg} numTicks={5}
                   tickStroke={fg} tickLabelProps={tlp('end', '0.25em')}/>
         <text x={0} y={0} transform={`translate(${margin.left+15},${margin.top})\nrotate(-90)`} fontSize={fs}
               textAnchor='end' fill={fg}>Elevation / m</text>
