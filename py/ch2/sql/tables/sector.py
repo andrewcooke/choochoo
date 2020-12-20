@@ -132,7 +132,7 @@ class Sector(Base):
     # it could be used to associate sectors with activity groups?
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id'), index=True)
     route = Column(Geometry('LineString'), nullable=False)
-    title = Column(Text, nullable=False)
+    title = Column(Text)  # null will have name generated on display
     owner = Column(ShortCls, nullable=False, index=True)
     # null because set later (calculated from route but stored for efficiency)
     distance = Column(Float)

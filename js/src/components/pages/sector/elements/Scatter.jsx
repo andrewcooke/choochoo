@@ -19,9 +19,7 @@ function Scatter(props) {
         start=null, finish=null, brush=false, setRange=null,
         margin={top: 10, bottom: 20, left: 40, right: 40}} = props;
 
-    log.debug(`Rendering with width ${width}`);
-
-    function speed(s) {return 1000 * s.distance / s.time;}
+    function speed(s) {return 3500 * s.distance / s.time;}
     const groups = [];
     if (sector1) groups.push(sector1.activity_group);
     if (sector2) groups.push(sector2.activity_group);
@@ -35,9 +33,7 @@ function Scatter(props) {
         [margin.left, width-margin.right]);
 
     const toFit = filtered.filter(inGroup).map(s => [dateScale(s.date), speedScale(speed(s))]);
-    log.debug(toFit);
     const fit = linearRegression(toFit);
-    log.debug(fit);
 
     // brush doesn't handle margins correctly, so we do it ourselves (see Group)
     const brushWidth = width - margin.left - margin.right;
@@ -80,7 +76,7 @@ function Scatter(props) {
             <AxisLeft scale={speedScale} left={margin.left} stroke={fg}
                       tickStroke={fg} tickLabelProps={tlp('end', '0.25em')}/>
             <text x={0} y={0} transform={`translate(${margin.left+15},${margin.top})\nrotate(-90)`} fontSize={fs}
-                  textAnchor='end' fill={fg}>Speed / m/s</text>
+                  textAnchor='end' fill={fg}>Speed / km/h</text>
             <AxisBottom scale={dateScale} top={height-margin.bottom} stroke={fg}
                         tickStroke={fg} tickLabelProps={tlp('middle')}
                         labelProps={{fill: fg, fontSize: fs, textAnchor: 'middle'}}/>

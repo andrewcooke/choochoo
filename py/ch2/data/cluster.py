@@ -305,8 +305,8 @@ def identify_sectors(s, sector_group):
                       and m.length = f.length
                       and n > 2
                       and m.length > 500)
-insert into sector (type, sector_group_id, activity_journal_id, route, distance, title, owner)
-select :sector_type, :sector_group_id, activity_journal_id, st_force2d(fragment), length / 1000, 'Cluster', :owner
+insert into sector (type, sector_group_id, activity_journal_id, route, distance, owner)
+select :sector_type, :sector_group_id, activity_journal_id, st_force2d(fragment), length / 1000, :owner
   from typical;
 ''')
     log.debug(sql)

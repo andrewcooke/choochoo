@@ -129,7 +129,7 @@ update sector
     s.connection().execute(sql, sector_id=sector_id, radius=HULL_RADIUS)
 
 
-def sectors_for_activity(s, ajournal):
+def sector_stats_for_activity(s, ajournal):
 
     from ..pipeline.calculate.sector import SectorCalculator
 
@@ -143,14 +143,12 @@ def sectors_for_activity(s, ajournal):
                Source.activity_group == ajournal.activity_group).order_by(StatisticJournal.time)
     sjournals = query.all()
 
-    def make_sector(sjournals):
+    def make_stats(sjournals):
         sjournals = list(sjournals)
-        sector = {sjournal.statistic_name.name: sjournal for sjournal in sjournals}
-        sector['start-distance'] = sjournals[0].source.start_distance
-        sector['sector-journal-id'] = sjournals[0].source.id
-        sector['sector-id'] = sjournals[0].source.sector_id
-        return sector
+        stats = {sjournal.statistic_name.name: sjournal for sjournal in sjournals}
+        stats['sector-journal'] = sjournals[0].source
+        return stats
 
-    return sorted((make_sector(grouped)
+    return sorted((make_stats(grouped)
                    for _, grouped in groupby(sjournals, key=lambda sjournal: sjournal.time)),
-                  key=lambda sector: sector['start-distance'])
+                   key=lambda stat: stat['sector-journal'].start_distance)

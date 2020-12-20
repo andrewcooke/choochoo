@@ -49,7 +49,7 @@ export default function SectorField(prop) {
     return (<>
         <Grid container item xs={4} className={classes.left}>
             <Grid item xs={12}>
-                <InputLabel shrink>Sector at {sprintf('%2.1f', location.value)}{location.units}</InputLabel>
+                <InputLabel shrink>{location.value}</InputLabel>
                 <FormatValueUnits value={distance.value} units={distance.units}/>
                 <Text secondary> </Text>
                 <FormatValueUnits value={time.value} units={time.units}/>

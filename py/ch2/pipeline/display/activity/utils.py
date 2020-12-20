@@ -11,7 +11,7 @@ from ...calculate.power import PowerCalculator
 from ....common.date import YMD_HM, HM, format_minutes, add_date, MONTH, YMD, YEAR, YM
 from ....common.log import log_current_exception
 from ....data.climb import climbs_for_activity
-from ....data.sector import sectors_for_activity
+from ....data.sector import sector_stats_for_activity
 from ....diary.database import interval_column
 from ....diary.model import optional_text, text, from_field, value, image
 from ....lib import local_date_to_time, time_to_local_time, to_time, to_date, time_to_local_date
@@ -225,14 +225,17 @@ class ActivityDelegate(ActivityJournalDelegate):
 
     @classmethod
     def __read_sectors(cls, s, ajournal, date):
-        sectors = sectors_for_activity(s, ajournal)
-        for sector in sectors:
-            yield [text('Sector', db=(sector['sector-id'], sector['sector-journal-id'])),
-                   value('Sector at', sector['start-distance'], units=U.KM),
-                   cls.__thumbnail(sector[N.SECTOR_TIME]),
-                   cls.__sparkline(sector[N.SECTOR_TIME]),
-                   cls.__dict_as_value(sector, N.SECTOR_DISTANCE),
-                   cls.__dict_as_value(sector, N.SECTOR_TIME)]
+        stats = sector_stats_for_activity(s, ajournal)
+        for stat in stats:
+            sector_journal = stat['sector-journal']
+            sector = sector_journal.sector
+            title = sector.title if sector.title else f'Sector at {sector_journal.start_distance:f.1} {U.KM}'
+            yield [text('Sector', db=(sector.id, sector_journal.id)),
+                   text(title),
+                   cls.__thumbnail(stat[N.SECTOR_TIME]),
+                   cls.__sparkline(stat[N.SECTOR_TIME]),
+                   cls.__dict_as_value(stat, N.SECTOR_DISTANCE),
+                   cls.__dict_as_value(stat, N.SECTOR_TIME)]
 
     def __read_template(self, s, ajournal, template, re, date):
         sjournals = s.query(StatisticJournal).join(StatisticName). \
