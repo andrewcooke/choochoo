@@ -19,6 +19,13 @@ from ...sql.utils import WGS84_SRID, add
 log = getLogger(__name__)
 
 
+class UserDefined:
+    '''
+    Owner for user defined sectors.
+    '''
+    pass
+
+
 class Sector(ContentType):
 
     def __init__(self, config):
@@ -37,9 +44,8 @@ class Sector(ContentType):
         new_route = full_route.coords[data['start']:data['finish']]
         ls_route = linestringxy(new_route)
         srid_route = f'st_transform(st_setsrid({ls_route}, {WGS84_SRID}), {sector_group.srid})'
-        sector = add(s, Sector(type=SectorType.SECTOR, sector_group=sector_group,
-                               activity_journal_id=activity, route=text(srid_route),
-                               title=data['name'], owner=self))
+        sector = add(s, Sector(type=SectorType.SECTOR, sector_group=sector_group, route=text(srid_route),
+                               title=data['name'], owner=UserDefined))
         s.flush()
         add_start_finish(s, sector.id)
         s.commit()

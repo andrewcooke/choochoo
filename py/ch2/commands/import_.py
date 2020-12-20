@@ -1,14 +1,14 @@
 from collections import defaultdict
 from logging import getLogger
 
-from .args import SOURCE, SEGMENTS, CONSTANTS, KIT, ACTIVITIES, DIARY, \
-    infer_flags
+from .args import SOURCE, SEGMENTS, CONSTANTS, KIT, ACTIVITIES, DIARY, SECTORS, infer_flags
 from ..common.names import LIST, URI
 from ..import_ import available_versions
 from ..import_.activity import import_activity
 from ..import_.constant import import_constant
 from ..import_.diary import import_diary
 from ..import_.kit import import_kit
+from ..import_.sector import import_sector
 from ..lib.log import Record
 from ..sql.database import ReflectedDatabase
 
@@ -48,7 +48,7 @@ Import everything but diary entries.
                 source = local[0]
             else:
                 raise Exception('No versions found locally')
-        flags = infer_flags(config.args, DIARY, ACTIVITIES, KIT, CONSTANTS, SEGMENTS)
+        flags = infer_flags(config.args, DIARY, ACTIVITIES, KIT, CONSTANTS, SEGMENTS, SECTORS)
         import_source(config, Record(log), source, flags=flags)
 
 
@@ -67,6 +67,7 @@ def import_source(config, record, source, flags=None):
         if flags[ACTIVITIES]: import_activity(record, old, config.db)
         if flags[KIT]: import_kit(record, old, config.db)
         if flags[CONSTANTS]: import_constant(record, old, config.db)
+        if flags[SECTORS]: import_sector(record, old, config.db)
 
 
 def infer_uri(config, source):

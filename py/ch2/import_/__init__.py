@@ -1,16 +1,14 @@
 from collections import namedtuple
 from logging import getLogger
 
-from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm.exc import NoResultFound
 
 from ..commands.args import DB_VERSION, URI_DEFAULT, URI_PREVIOUS
+from ..common.names import TIME_ZERO
 from ..lib import format_date, time_to_local_date, to_time
 from ..sql import StatisticJournal, StatisticName, StatisticJournalType
-from ..common.sql import database_really_exists
 from ..sql.database import Database, CannotConnect
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
-from ..common.names import TIME_ZERO
 from ..sql.types import short_cls
 from ..sql.utils import add
 

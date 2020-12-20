@@ -78,8 +78,8 @@ class SectorGroup(Base):
     srid = Column(Integer, nullable=False)
     centre = Column(Geography('Point', srid=WGS84_SRID), nullable=False)
     radius = Column(Float, nullable=False)  # metres
-    title = Column(Text, nullable=False)
-    UniqueConstraint(centre, radius, title)
+    title = Column(Text, nullable=False, unique=True)
+    UniqueConstraint(centre, radius)
 
     @classmethod
     def add(cls, s, centre, radius_km, title, delete=False):
@@ -112,7 +112,7 @@ class SectorGroup(Base):
 
 class SectorType(IntEnum):
     '''
-    different owners don't need to defin their own types.
+    different owners don't need to define their own types.
     the subclasses are mainly for display (climb has elevation and category and is displayed differently)
     '''
 
@@ -128,9 +128,6 @@ class Sector(Base):
     type = Column(Integer, nullable=False, index=True)  # index needed for fast delete of subtypes
     sector_group_id = Column(Integer, ForeignKey('sector_group.id', ondelete='cascade'), nullable=False)
     sector_group = relationship('SectorGroup')
-    # this currently used only for debugging (sectors should be independent of original activity)
-    # it could be used to associate sectors with activity groups?
-    activity_journal_id = Column(Integer, ForeignKey('activity_journal.id'), index=True)
     route = Column(Geometry('LineString'), nullable=False)
     title = Column(Text)  # null will have name generated on display
     owner = Column(ShortCls, nullable=False, index=True)

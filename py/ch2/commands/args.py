@@ -183,6 +183,7 @@ SCHEMA = 'schema'
 SCHEMAS = 'schemas'
 SECURE = 'secure'
 SECTOR = 'sector'
+SECTORS = 'sectors'
 SHOW = 'show'
 SINGLE = 'single'
 SLICES = 'slices'
@@ -466,6 +467,7 @@ def make_parser(with_noop=False):
     import_.add_argument(mm(KIT), action='store_true', help='enable (or disable) import of kit data')
     import_.add_argument(mm(CONSTANTS), action='store_true', help='enable (or disable) import of constant data')
     import_.add_argument(mm(SEGMENTS), action='store_true', help='enable (or disable) import of segment data')
+    import_.add_argument(mm(SECTORS), action='store_true', help='enable (or disable) import of sector data')
 
     delete = commands.add_parser(DELETE, help='delete an activity')
     delete.add_argument(DATE, help='date of activity to delete')

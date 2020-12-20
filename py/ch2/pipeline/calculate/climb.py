@@ -112,8 +112,7 @@ select st_x((point).geom) as x, st_y((point).geom) as y,
             title = f'Climb (uncat)'
         category = climb.get(N.CLIMB_CATEGORY, None)
         # text because we're passing in direct SQL functions, not EWKT
-        climb = add(s, SectorClimb(sector_group=sector_group, activity_journal_id=activity_journal_id,
-                                   route=text(route), title=title, owner=self,
+        climb = add(s, SectorClimb(sector_group=sector_group, route=text(route), title=title, owner=self,
                                    distance=climb[N.CLIMB_DISTANCE], category=category,
                                    elevation=climb[N.CLIMB_ELEVATION]))
         s.flush()
