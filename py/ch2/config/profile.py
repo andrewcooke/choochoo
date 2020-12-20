@@ -170,10 +170,12 @@ your FF-model parameters (fitness and fatigue).
     def _sector_statistics(self, s, power_statistics=None):
         blockers = power_statistics or []
         add_process(s, FindClimbCalculator, blocked_by=[ElevationCalculator],
-                    owner_in=short_cls(ActivityReader), climb=CLIMB_CNAME)
+                    owner_in=short_cls(ActivityReader), climb=CLIMB_CNAME,
+                    activity_group=BIKE)
         add_process(s, ClusterCalculator, blocked_by=[ElevationCalculator],
                     owner_in=short_cls(ActivityReader))
-        add_process(s, SectorCalculator, blocked_by=[ClusterCalculator, FindClimbCalculator])
+        add_process(s, SectorCalculator, blocked_by=[ClusterCalculator, FindClimbCalculator],
+                    activity_group=BIKE)
         blockers.append(SectorCalculator)
         return blockers
 

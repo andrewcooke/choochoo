@@ -27,7 +27,7 @@ class TestModel(LogTestCase):
                 for i, x in enumerate(model):
                     print(i, x)
                 [title, diary, shrimp, activity, database] = model
-                activity = activity[1][2]  # multiple now supported
+                activity = activity[1][3]  # multiple now supported
                 print(activity)
                 name = activity[1]
                 print(name)

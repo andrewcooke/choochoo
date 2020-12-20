@@ -22,7 +22,8 @@ class TestActivities(LogTestCase):
 
         user = random_test_user()
         bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
-        config = bootstrap_db(user, m(V), '5', 'constants', 'set', 'SRTM1.dir', '/home/andrew/archive/srtm1', mm(FORCE))
+        config = bootstrap_db(user, m(V), '5', 'constants', 'set', 'SRTM1.dir',
+                              '/home/andrew/archive/srtm1', mm(FORCE))
         constants(config)
 
         with TemporaryDirectory() as f:

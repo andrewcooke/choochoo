@@ -44,7 +44,6 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
             raise
 
     def _calculate_stats(self, s, ajournal, df):
-        df.dropna(inplace=True)   # so all routes should be aligned (fractional positions should correspond)
         if not present(df, N.ELEVATION):
             if present(df, N.RAW_ELEVATION):
                 df = smooth_elevation(df, smooth=self.smooth)
@@ -66,6 +65,7 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
     def __create_postgis(self, s, ajournal, df):
         # this includes things that could have been created earlier, but if we build them from SQL
         # queries then it's significantly slower
+        df.dropna(inplace=True)   # so all routes should be aligned (fractional positions should correspond)
         if self.__create_route(s, ajournal, df, 'route_d', N.DISTANCE):
             self.__create_centre(s, ajournal)
             self.__create_utm_srid(s, ajournal)

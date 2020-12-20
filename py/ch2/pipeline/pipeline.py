@@ -52,7 +52,7 @@ class BasePipeline:
 
     def _assert(self, name, value):
         if value is None:
-            raise Exception(f'Undefined {name}')
+            raise Exception(f'Undefined {name} for {short_cls(self)}')
         else:
             return value
 
