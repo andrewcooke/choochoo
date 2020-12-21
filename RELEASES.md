@@ -1,6 +1,11 @@
 
 ## Latest Changes
 
+### v0.38.0
+
+Adding some graphics to web.  Maps + plots.  Also, easy definition of sectors,
+which are carried across versions.
+
 ### v0.37.0
 
 Started exploiting PostGIS: climbs are recognised across activities; common
