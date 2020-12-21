@@ -26,7 +26,6 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'colorama',
                      'colorlog',
                      'geoalchemy2',
-                     'nbformat',
                      'jupyter',
                      'matplotlib',
                      'numpy',
