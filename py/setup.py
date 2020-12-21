@@ -26,7 +26,7 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'colorama',
                      'colorlog',
                      'geoalchemy2',
-                     'nbformat==5.0.8',   # https://github.com/jupyter/nbformat/issues/200
+                     'nbformat',
                      'jupyter',
                      'matplotlib',
                      'numpy',
@@ -43,7 +43,7 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'shapely',
                      'sklearn',
                      'sqlalchemy-utils',
-                     'sqlalchemy==1.3.20',
+                     'sqlalchemy',
                      'uritools',
                      'werkzeug',
                      ],

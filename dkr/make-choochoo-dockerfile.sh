@@ -47,9 +47,6 @@ done
 
 source ../py/env/bin/activate
 
-# https://stackoverflow.com/a/40167445
-pip freeze | grep -v choochoo | grep -v pkg-resources > requirements.txt
-
 # basic image and support
 # (we need to install db libs whatever db we are using because of python deps)
 cat > $FILE <<EOF
@@ -58,15 +55,6 @@ from $BASE
 workdir /tmp
 run apt-get update
 run apt-get -y install sqlite3 libsqlite3-dev libpq-dev $JS_PKG gcc emacs
-EOF
-
-# python libs that are needed in all cases
-cat >> $FILE <<EOF
-copy dkr/requirements.txt /tmp
-run $MOUNT \\
-    pip install --upgrade pip && \\
-    pip install wheel && \\
-    pip install -r requirements.txt
 EOF
 
 if (( HAVE_JS )); then
