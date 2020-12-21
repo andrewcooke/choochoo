@@ -229,7 +229,7 @@ class ActivityDelegate(ActivityJournalDelegate):
         for stat in stats:
             sector_journal = stat['sector-journal']
             sector = sector_journal.sector
-            title = sector.title if sector.title else f'Sector at {sector_journal.start_distance:f.1} {U.KM}'
+            title = sector.title if sector.title else f'Sector at {sector_journal.start_distance:.1f} {U.KM}'
             yield [text('Sector', db=(sector.id, sector_journal.id)),
                    text(title),
                    cls.__thumbnail(stat[N.SECTOR_TIME]),
