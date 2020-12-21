@@ -32,10 +32,11 @@ To check for errors in `myfile.fit`:
 
     > ch2 fix-fit myfile.fit --discard
     [37m    INFO: [37mLogging to /home/andrew/.ch2/0-38/logs/fix-fit.log[0m
+    [37m WARNING: [36mCould not connect to database[0m
     
      Welcome to Choochoo.
     
-     You must configure the database before use (no schema).
+     You must configure the database before use (no uri).
     
      Please use the ch2 database command.
     
@@ -54,7 +55,7 @@ only (with `-v 0` we would see no logging, just the file names).
     
      Welcome to Choochoo.
     
-     You must configure the database before use (no schema).
+     You must configure the database before use (no uri).
     
      Please use the ch2 database command.
     
@@ -67,10 +68,11 @@ records:
 
     > ch2 fix-fit myfile.fit --max-delta-t 60 --discard
     [37m    INFO: [37mLogging to /home/andrew/.ch2/0-38/logs/fix-fit.log[0m
+    [37m WARNING: [36mCould not connect to database[0m
     
      Welcome to Choochoo.
     
-     You must configure the database before use (no schema).
+     You must configure the database before use (no uri).
     
      Please use the ch2 database command.
     
@@ -92,10 +94,11 @@ The command to drop data is (see notes below):
 
     > ch2 fix-fit myfile.fit --max-delta-t 60 --drop --fix-header --fix-checksum --max-fwd-len 500 -o fixed.fit
     [37m    INFO: [37mLogging to /home/andrew/.ch2/0-38/logs/fix-fit.log[0m
+    [37m WARNING: [36mCould not connect to database[0m
     
      Welcome to Choochoo.
     
-     You must configure the database before use (no schema).
+     You must configure the database before use (no uri).
     
      Please use the ch2 database command.
     
@@ -120,10 +123,11 @@ can see what records that affected as follows:
 
     > ch2 fit records --after-bytes 4975 myfile.fit
     [37m    INFO: [37mLogging to /home/andrew/.ch2/0-38/logs/fit.log[0m
+    [37m WARNING: [36mCould not connect to database[0m
     
      Welcome to Choochoo.
     
-     You must configure the database before use (no schema).
+     You must configure the database before use (no uri).
     
      Please use the ch2 database command.
     
@@ -145,10 +149,11 @@ present.  We can display those too:
 
     > ch2 fit records --after-bytes 4975 --internal myfile.fit
     [37m    INFO: [37mLogging to /home/andrew/.ch2/0-38/logs/fit.log[0m
+    [37m WARNING: [36mCould not connect to database[0m
     
      Welcome to Choochoo.
     
-     You must configure the database before use (no schema).
+     You must configure the database before use (no uri).
     
      Please use the ch2 database command.
     
@@ -161,10 +166,11 @@ We can also see the same data in binary form.  For example:
 
     > ch2 fit tokens --after-bytes 4975 myfile.fit
     [37m    INFO: [37mLogging to /home/andrew/.ch2/0-38/logs/fit.log[0m
+    [37m WARNING: [36mCould not connect to database[0m
     
      Welcome to Choochoo.
     
-     You must configure the database before use (no schema).
+     You must configure the database before use (no uri).
     
      Please use the ch2 database command.
     
@@ -183,10 +189,11 @@ follows:
 
     > ch2 fix-fit myfile.fit --slices :05069,05317: --fix-header --fix-checksum -o sliced.fit
     [37m    INFO: [37mLogging to /home/andrew/.ch2/0-38/logs/fix-fit.log[0m
+    [37m WARNING: [36mCould not connect to database[0m
     
      Welcome to Choochoo.
     
-     You must configure the database before use (no schema).
+     You must configure the database before use (no uri).
     
      Please use the ch2 database command.
     
@@ -199,10 +206,11 @@ file (to the best of its ability).
 
     > ch2 fix-fit myfile.fit --start '2018-01-01 12:00:00' --fix-checksum -o fixed.fit
     [37m    INFO: [37mLogging to /home/andrew/.ch2/0-38/logs/fix-fit.log[0m
+    [37m WARNING: [36mCould not connect to database[0m
     
      Welcome to Choochoo.
     
-     You must configure the database before use (no schema).
+     You must configure the database before use (no uri).
     
      Please use the ch2 database command.
     
