@@ -9,7 +9,7 @@ VERSION=`grep 'CH2_VERSION =' ../py/ch2/commands/args.py | sed -e "s/.*CH2_VERSI
 VERSION=`echo $VERSION | sed -e s/\\\\./-/g`
 CMD=$0
 
-BASE=python:3.8.3-slim-buster
+BASE=python:3.9.1-slim-buster
 COMMENT="# syntax=docker/dockerfile:experimental"
 MOUNT="--mount=type=cache,target=/root/.cache/pip"
 JS_PKG="npm"
