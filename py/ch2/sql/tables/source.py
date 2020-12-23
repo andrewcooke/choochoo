@@ -273,7 +273,10 @@ class Composite(Source):
     __tablename__ = 'composite_source'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    components = relationship('Source', secondary='composite_component')
+    # viewonly below was in response to:
+    # home/andrew/project/choochoo/py/env/lib/python3.9/site-packages/SQLAlchemy-1.4.0b1-py3.9-linux-x86_64.egg/sqlalchemy/orm/relationships.py:3428: SAWarning: relationship 'Composite.components' will copy column composite_source.id to column composite_component.output_source_id, which conflicts with relationship(s): 'CompositeComponent.output_source' (copies composite_source.id to composite_component.output_source_id). If this is not the intention, consider if these relationships should be linked with back_populates, or if viewonly=True should be applied to one or more if they are read-only. For the less common case that foreign key constraints are partially overlapping, the orm.foreign() annotation can be used to isolate the columns that should be written towards.   The 'overlaps' parameter may be used to remove this warning.
+    # /home/andrew/project/choochoo/py/env/lib/python3.9/site-packages/SQLAlchemy-1.4.0b1-py3.9-linux-x86_64.egg/sqlalchemy/orm/relationships.py:3428: SAWarning: relationship 'Composite.components' will copy column source.id to column composite_component.input_source_id, which conflicts with relationship(s): 'CompositeComponent.input_source' (copies source.id to composite_component.input_source_id). If this is not the intention, consider if these relationships should be linked with back_populates, or if viewonly=True should be applied to one or more if they are read-only. For the less common case that foreign key constraints are partially overlapping, the orm.foreign() annotation can be used to isolate the columns that should be written towards.   The 'overlaps' parameter may be used to remove this warning.
+    components = relationship('Source', secondary='composite_component', viewonly=True)
     n_components = Column(Integer, nullable=False)
 
     __mapper_args__ = {
