@@ -101,12 +101,13 @@ class ActivityJournal(GroupedSource):
     def at(cls, s, local_time_or_date, activity_group=None):
         try:
             activity_journal = cls.at_local_time(s, local_time_or_date, activity_group=activity_group)
-        except ValueError:
+        except Exception as e:
+            log.debug(e)
             activity_journal = cls.at_date(s, local_time_or_date, activity_group=activity_group)
         if activity_group and activity_journal.activity_group != ActivityGroup.from_name(s, activity_group):
             raise Exception(f'Activity journal from {local_time_or_date} '
                             f'does not match activity group {activity_group}')
-        log.debug(f'Resolved {local_time_or_date} / {activity_group} to {activity_journal}')
+        log.info(f'Resolved {local_time_or_date} / {activity_group} to {activity_journal}')
         return activity_journal
 
     @classmethod
@@ -118,9 +119,13 @@ class ActivityJournal(GroupedSource):
             activity_group = ActivityGroup.from_name(s, activity_group)
             journals = [journal for journal in journals if journal.activity_group == activity_group]
         if not journals:
-            raise Exception(f'No activity journal found at {date} for activity group {activity_group}')
+            msg = f'No activity journal found at {date}'
+            if activity_group: msg += f' for {activity_group}'
+            raise Exception(msg)
         elif len(journals) > 1:
-            raise Exception(f'Multiple activity journals found at {date} for activity group {activity_group}')
+            msg = f'Multiple activity journals found at {date}'
+            if activity_group: msg += f' for {activity_group}'
+            raise Exception(msg)
         else:
             return journals[0]
 

@@ -65,6 +65,8 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
     def __create_postgis(self, s, ajournal, df):
         # this includes things that could have been created earlier, but if we build them from SQL
         # queries then it's significantly slower
+        # skip non-essential and possibly nan values
+        df = df.loc[:, [N.DISTANCE, N._delta(N.AZIMUTH), N.ELAPSED_TIME, N.LONGITUDE, N.LATITUDE, N.ELEVATION]]
         df.dropna(inplace=True)   # so all routes should be aligned (fractional positions should correspond)
         if self.__create_route(s, ajournal, df, 'route_d', N.DISTANCE):
             self.__create_centre(s, ajournal)

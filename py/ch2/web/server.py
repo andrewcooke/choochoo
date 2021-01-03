@@ -16,6 +16,7 @@ from .servlets.route import Route
 from .servlets.search import Search
 from .servlets.image import Thumbnail, Sparkline
 from .servlets.sector import Sector
+from .servlets.statistics import Statistics
 from .servlets.upload import Upload
 from .static import Static
 from ..commands.args import LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, WARN, SECURE, IMAGE_DIR, \
@@ -105,6 +106,7 @@ class WebServer:
         route = Route()
         sector = Sector(config)
         static = Static('.static')
+        statistics = Statistics()
         upload = Upload(config)
         thumbnail = Thumbnail(config)
         sparkline = Sparkline(config)
@@ -159,6 +161,9 @@ class WebServer:
             Rule('/api/isparkline/<int:statistic>', endpoint=sparkline, methods=(GET,), defaults={'invert': True}),
             Rule('/api/isparkline/<int:statistic>/<int:sector>', endpoint=sparkline, methods=(GET,), defaults={'invert': True}),
             Rule('/api/isparkline/<int:statistic>/<int:sector>/<int:activity>', endpoint=sparkline, methods=(GET,), defaults={'invert': True}),
+
+            Rule('/api/statistics/plottable', endpoint=self.check(statistics.read_all_plottable), methods=(GET,)),
+            Rule('/api/statistics/by-date/<name>', endpoint=self.check(statistics.read_values), methods=(GET,)),
 
             Rule('/api/static/<path:path>', endpoint=static, methods=(GET,)),
 

@@ -48,13 +48,13 @@ class ActivityReader(LoaderMixin, ProcessFitReader):
             self._provides(s, title, STATISTIC_JOURNAL_TYPES[cls], units, None,
                            f'The value of field {field} in the FIT record.')
         self._provides(s, T.ELAPSED_TIME, StatisticJournalType.FLOAT, U.S, None,
-                       'The time since the start of teh activity')
+                       'The time since the start of the activity')
         self._provides(s, T.SPHERICAL_MERCATOR_X, StatisticJournalType.FLOAT, U.M, None,
                        'The Web Mercator EPSG:3857 X coordinate')
         self._provides(s, T.SPHERICAL_MERCATOR_Y, StatisticJournalType.FLOAT, U.M, None,
                        'The Web Mercator EPSG:3857 Y coordinate')
         self._provides(s, T.RAW_ELEVATION, StatisticJournalType.FLOAT, U.M, None,
-                       'The elevation from SRTM1 at this location')
+                       'The elevation from the FIT file at this location')
         self._provides(s, T.KIT, StatisticJournalType.TEXT, None, None,
                        'The kit used in the activity')
         # also coverages - see _read

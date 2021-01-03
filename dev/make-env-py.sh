@@ -9,4 +9,6 @@ source env/bin/activate
 
 pip install --upgrade pip setuptools wheel twine
 source env/bin/activate
-python setup.py develop
+#python setup.py develop
+pip install -e .
+

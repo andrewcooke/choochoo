@@ -45,7 +45,7 @@ def month(month):
             yield Div(text=f'<h2>{day_name[i]}</h2>')
 
         day = month_start - dt.timedelta(days=month_start.weekday())
-        while day.month <= month_start.month:
+        while day.replace(day=1) <= month_start:
             for weekday in range(7):
                 if day.month == month_start.month:
                     contents = [Div(text=f'<h1>{day.strftime("%d")}</h1>')]

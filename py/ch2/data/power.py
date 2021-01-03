@@ -100,6 +100,7 @@ def add_power_estimate(df):
 
 
 def evaluate(df, model, quiet=True):
+    # used in fitting
     if not quiet: log.debug(f'Evaluating {model}')
     df = add_energy_budget(df, model.bike_weight)
     df = add_loss_estimate(df, model.bike_weight, cda=model.cda, crr=model.crr)
