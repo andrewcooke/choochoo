@@ -10,7 +10,7 @@ import {
     NearbyActivities,
     SimilarActivities,
     SomeActivities
-} from "./analysis";
+} from "./jupyter";
 import {handleJson} from "../functions";
 import {Layout} from "../elements";
 
@@ -41,7 +41,7 @@ function Columns(props) {
 }
 
 
-export default function Analysis(props) {
+export default function Jupyter(props) {
 
     const {history} = props;
     const [params, setParams] = useState(null);
@@ -50,11 +50,11 @@ export default function Analysis(props) {
 
     useEffect(() => {
         setParams(null);
-        fetch('/api/analysis/parameters')
+        fetch('/api/jupyter/parameters')
             .then(handleJson(history, setParams, setError));
     }, [1]);
 
     return (
-        <Layout title='Analysis' content={<Columns params={params}/>} errorState={errorState}/>
+        <Layout title='Jupyter' content={<Columns params={params}/>} errorState={errorState}/>
     );
 }

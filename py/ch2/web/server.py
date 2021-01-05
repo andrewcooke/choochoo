@@ -7,7 +7,6 @@ from werkzeug.routing import Map, Rule
 from werkzeug.wrappers.json import JSONMixin
 
 from .json import JsonResponse
-from .servlets.analysis import Analysis
 from .servlets.configure import Configure
 from .servlets.diary import Diary
 from .servlets.jupyter import Jupyter
@@ -98,7 +97,6 @@ class WebServer:
         self.__warn_data = warn_data
         self.__warn_secure = warn_secure
 
-        analysis = Analysis()
         configure = Configure(config)
         diary = Diary()
         jupyter = Jupyter(config)
@@ -113,8 +111,6 @@ class WebServer:
         search = Search()
 
         self.url_map = Map([
-
-            Rule('/api/analysis/parameters', endpoint=self.check(analysis.read_parameters), methods=(GET,)),
 
             Rule('/api/configure/profiles', endpoint=self.check(configure.read_profiles, config=False), methods=(GET,)),
             Rule('/api/configure/initial', endpoint=self.check(configure.write_profile, config=False), methods=(POST,)),
@@ -135,6 +131,7 @@ class WebServer:
             Rule('/api/search/activity/<query>', endpoint=search.query_activity, methods=(GET,)),
             Rule('/api/search/activity-terms', endpoint=search.read_activity_terms, methods=(GET,)),
 
+            Rule('/api/jupyter/parameters', endpoint=self.check(jupyter.read_parameters), methods=(GET,)),
             Rule('/api/jupyter/<template>', endpoint=jupyter, methods=(GET,)),
 
             Rule('/api/kit/edit', endpoint=self.check(kit.read_edit, empty=False), methods=(GET,)),

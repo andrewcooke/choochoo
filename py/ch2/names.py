@@ -107,7 +107,7 @@ class Titles(TitlesBase):
     DIRECTION = 'Direction'
     DISTANCE = 'Distance'
     DISTANCE_TIME = 'Distance & Time'
-    EARNED_D = 'Earned %d'
+    EARNED_D = 'Earned %dd'
     EARNED_D_ANY= 'Earned %'
     ELAPSED_TIME = 'Elapsed Time'
     ELEVATION = 'Elevation'

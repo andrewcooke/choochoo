@@ -18,4 +18,4 @@ dist
 node_modules
 \#*
 .#*
-dev/set-constants.sh
+nohup.out

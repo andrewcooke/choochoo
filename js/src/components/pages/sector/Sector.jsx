@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {FormatValueUnits, Image, Layout, OSMap, Route} from "../../elements";
 import {ColumnCard, ColumnList, Loading, Text} from "../../../common/elements";
-import {last} from "../../../common/functions";
+import {last, useQuery} from "../../../common/functions";
 import {FormControl, Grid, InputLabel, Link, MenuItem, Radio, Select, Tooltip} from "@material-ui/core";
 import {handleJson} from "../../functions";
 import {FMT_DAY, FMT_DAY_TIME} from "../../../constants";
@@ -190,11 +190,6 @@ function SectorContent(props) {
 }
 
 
-function useQuery() {
-    return new URLSearchParams(useLocation().search);
-}
-
-
 function zip(input) {
     const [first, ...rest] = Object.keys(input);
     const output = input[first].map(value => ({[first]: value}));
@@ -239,5 +234,5 @@ export default function Sector(props) {
 
     const content = data ? <SectorContent sector={id} data={data} history={history} from={from}/> : <Loading/>;
 
-    return <Layout title='Sector Analysis' content={content} errorState={errorState}/>;
+    return <Layout title='Sector Jupyter' content={content} errorState={errorState}/>;
 }

@@ -6,7 +6,7 @@ import {ListItemButton, ListItemLink} from "./../common/elements";
 import {format} from 'date-fns';
 import {FMT_DAY, FMT_MONTH} from "../constants";
 import {useHistory, useLocation} from 'react-router-dom';
-import {DiaryMenu} from "./menu";
+import {DiaryMenu, StatisticsMenu} from "./menu";
 import {ListItemExpand} from "../common/elements";
 
 
@@ -35,11 +35,13 @@ export default function Menu(props) {
     const isMonth = match(/^\/\d+-\d+$/);
     const isYear = match(/^\/\d+$/);
     const isKit = match(/^\/kit\/.*$/);
+    const isStatistics = match(/^\/statistics(\/.*)?$/);
     const isConfigure = match(/\/configure\/.*$/);
 
     // diary is 0 for closed, 1 for open d/m/y and 2 for dedicated menu
     const [diaryOpen, setDiaryOpen] = useState(isDiary(location) ? 2 : 0);
     const [kitOpen, setKitOpen] = useState(isKit(location));
+    const [statisticsOpen, setStatisticsOpen] = useState(isStatistics(location))
     const [configureOpen, setConfigureOpen] = useState(isConfigure(location));
 
     function closeAll() {
@@ -50,9 +52,12 @@ export default function Menu(props) {
 
     if (diaryOpen === 2 && isDiary(location)) {
         return <DiaryMenu setDiaryOpen={setDiaryOpen}/>
+    } else if (statisticsOpen) {
+        return <StatisticsMenu setStatisticsOpen={setStatisticsOpen}/>
     } else {
         return (<List component="nav" className={classes.list}>
             <ListItemLink primary='Choochoo' to='/'/>
+            <ListItemLink primary='Upload' to='/upload'/>
             <ListItemExpand label='Diary' isExpanded={diaryOpen > 0}
                             onClick={() => {closeAll(); setDiaryOpen(diaryOpen > 0 ? 0 : 1);}}>
                 <ListItemButton primary='Day' onClick={() => {
@@ -82,9 +87,9 @@ export default function Menu(props) {
                     }
                 }} icon={<KeyboardArrowRight/>}/>
             </ListItemExpand>
-            <ListItemLink primary='Analysis' to='/analysis'/>
+            <ListItemLink primary='Statistics' to='/statistics' also={() => setStatisticsOpen(1)}/>
             <ListItemLink primary='Search' to='/search'/>
-            <ListItemLink primary='Upload' to='/upload'/>
+            <ListItemLink primary='Jupyter' to='/jupyter'/>
             <ListItemExpand label='Kit' isExpanded={kitOpen}
                             onClick={() => {closeAll(); setKitOpen(!kitOpen);}}>
                 <ListItemLink primary='Snapshot' to={'/kit/' + format(new Date(), FMT_DAY)}/>

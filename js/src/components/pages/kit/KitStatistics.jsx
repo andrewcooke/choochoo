@@ -61,7 +61,7 @@ function Columns(props) {
 }
 
 
-export default function Statistics(props) {
+export default function KitStatistics(props) {
 
     const {history} = props;
     const [components, setComponents] = useState(null);
