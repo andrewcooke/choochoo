@@ -36,6 +36,7 @@ export default function Menu(props) {
     const isYear = match(/^\/\d+$/);
     const isKit = match(/^\/kit\/.*$/);
     const isStatistics = match(/^\/statistics(\/.*)?$/);
+    const isNamedStatistics = match(/^\/statistics\/.+$/)(location);
     const isConfigure = match(/\/configure\/.*$/);
 
     // diary is 0 for closed, 1 for open d/m/y and 2 for dedicated menu
@@ -87,7 +88,9 @@ export default function Menu(props) {
                     }
                 }} icon={<KeyboardArrowRight/>}/>
             </ListItemExpand>
-            <ListItemLink primary='Statistics' to='/statistics' also={() => setStatisticsOpen(1)}/>
+            <ListItemLink primary='Statistics'
+                          to={isNamedStatistics ? location : '/statistics'}
+                          also={() => setStatisticsOpen(1)}/>
             <ListItemLink primary='Search' to='/search'/>
             <ListItemLink primary='Jupyter' to='/jupyter'/>
             <ListItemExpand label='Kit' isExpanded={kitOpen}

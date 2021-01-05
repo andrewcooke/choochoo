@@ -29,10 +29,9 @@ export default function Statistics(props) {
     }
 
     useEffect(() => {
-        let url = '/api/statistics/' + name;
+        let url = '/api/statistics/by-date/' + name;
         if (owner) url += '?owner=' + owner;
-        fetch('/api/statistics/' + name)
-            .then(handleJson(history, setData, setError));
+        fetch(url).then(handleJson(history, setData, setError));
     }, [name, owner]);
 
     const content = data ? <StatisticsContent data={data} history={history}/> : <Loading/>;
