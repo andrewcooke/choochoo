@@ -34,8 +34,14 @@ export default function StatisticsMenu(props) {
         fetch('/api/statistics/plottable').then(handleJson(history, setStatistics));
     }, []);
 
+    const makeUrl = statistic => {
+        let url = `/statistics/${statistic.name}`
+        if (statistic.owner) url = url + `?owner=${statistic.owner}`
+        return url;
+    }
+
     const children = statistics ?
-        statistics.map(statistic => <ListItemLink primary={statistic.title} to={`/statistics/${statistic.name}`}/>) :
+        statistics.map(statistic => <ListItemLink primary={statistic.title} to={makeUrl(statistic)}/>) :
         <Loading/>;
 
     return (<List component="nav" className={classes.root}>

@@ -1,5 +1,3 @@
-import {sprintf} from "sprintf-js";
-import log from "loglevel";
 import {scaleLinear, scaleTime} from "d3-scale";
 import {linearRegression} from "simple-statistics";
 import {Grid, useTheme} from "@material-ui/core";
