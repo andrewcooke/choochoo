@@ -26,7 +26,7 @@ function StatisticsPlot(props) {
 
     // brush doesn't handle margins correctly, so we do it ourselves (see Group)
     const brushWidth = width - margin.left - margin.right;
-    const brushScale = scaleTime([start ? start : min.x, finish ? finish : max.x], 
+    const brushScale = scaleTime([start ? start : min.x, finish ? finish : max.x],
         [0, brushWidth]);
 
     const theme = useTheme();
