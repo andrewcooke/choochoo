@@ -9,7 +9,7 @@ VERSION=`grep 'CH2_VERSION =' ../py/ch2/commands/args.py | sed -e "s/.*CH2_VERSI
 VERSION=`echo $VERSION | sed -e s/\\\\./-/g`
 CMD=$0
 
-BASE=jupyter/scipy-notebook:latest
+BASE=jupyterhub/jupyterhub
 COMMENT="# syntax=docker/dockerfile:experimental"
 MOUNT="--mount=type=cache,target=/root/.cache/pip"
 FILE="Dockerfile.jupyter"
@@ -49,17 +49,29 @@ run apt-get update
 run apt-get -y install libpq-dev gcc emacs
 EOF
 
+<<<<<<< Updated upstream
+=======
+# create admin user
+cat >> $FILE <<EOF
+RUN useradd -m -p $(openssl passwd -1 password) choo_choo_admin
+EOF
+
+# python libs that are needed in all cases
+cat >> $FILE <<EOF
+copy dkr/requirements.txt /tmp
+run $MOUNT \\
+    pip install --upgrade pip && \\
+    pip install wheel jupyter && \\
+    pip install -r requirements.txt
+EOF
+
+>>>>>>> Stashed changes
 # python install of ch2 package
 cat >> $FILE <<EOF
 workdir /app/py
 copy py/ch2 /app/py/ch2
 copy py/setup.py py/MANIFEST.in /app/py/
 run pip install .
-EOF
-
-# revert directory where tree is mounted
-cat >> $FILE <<EOF
-workdir /home/jovyan/work
 EOF
 
 echo -e "\ncreated $FILE for $VERSION\n"

@@ -16,16 +16,14 @@ services:
   jp:
     image: 'andrewcooke/jupyter:latest-localDEV'
     container_name: 'jupyter'
-    user: '${ID}'
-    command: 'start-notebook.sh
-    --NotebookApp.notebook_dir=/data/VERSION/notebook
-    --NotebookApp.token=''''
-    --NotebookApp.allow_root=True'
+    command: 
+      - jupyterhub
+      - --c.Authenticator.admin_users = {'choo_choo_admin'}
     environment:
       - NB_UID=0
       - TZ=${TZ}
     ports:
-      - '127.0.0.1:8001:8888'
+      - 8000:8000
     volumes:
       - 'choochoo-data:/data'
   pg:
