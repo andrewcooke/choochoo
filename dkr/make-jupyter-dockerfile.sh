@@ -49,8 +49,6 @@ run apt-get update
 run apt-get -y install libpq-dev gcc emacs
 EOF
 
-<<<<<<< Updated upstream
-=======
 # create admin user
 cat >> $FILE <<EOF
 RUN useradd -m -p $(openssl passwd -1 password) choo_choo_admin
@@ -65,7 +63,6 @@ run $MOUNT \\
     pip install -r requirements.txt
 EOF
 
->>>>>>> Stashed changes
 # python install of ch2 package
 cat >> $FILE <<EOF
 workdir /app/py
