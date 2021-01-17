@@ -3,7 +3,7 @@ import {ColumnCard, ColumnList, Loading} from "../../../common/elements";
 import {Grid, Typography} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {StatisticsValues} from "./elements";
-import {handleJson} from "../../functions";
+import {csrfFetch, handleJson} from "../../functions";
 import {Layout} from "../../elements";
 
 
@@ -70,7 +70,7 @@ export default function Statistics(props) {
 
     useEffect(() => {
         setComponents(null);
-        fetch('/api/kit/statistics')
+        csrfFetch('/api/kit/statistics')
             .then(handleJson(history, setComponents, setError));
     });
 

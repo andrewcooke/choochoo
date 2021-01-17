@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Loading} from "../../common/elements";
 import {OSMap, Route} from ".";
-import {handleJson} from "../functions";
+import {csrfFetch, handleJson} from "../functions";
 
 
 export default function ActivityMap(props) {
@@ -10,7 +10,7 @@ export default function ActivityMap(props) {
     const [data, setData] = useState(null);
 
     useEffect(() => {
-        fetch('/api/route/latlon/' + json.db[0] + '/' + encodeURIComponent(json.db[1]))
+        csrfFetch('/api/route/latlon/' + json.db[0] + '/' + encodeURIComponent(json.db[1]))
             .then(handleJson(history, setData));
     }, [json.db]);
 

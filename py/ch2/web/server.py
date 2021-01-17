@@ -7,6 +7,7 @@ from werkzeug.routing import Map, Rule
 from werkzeug.wrappers.json import JSONMixin
 
 from .json import JsonResponse
+from .middleware import CsrfCheck
 from .servlets.analysis import Analysis
 from .servlets.configure import Configure
 from .servlets.diary import Diary
@@ -64,11 +65,9 @@ class WebController(BaseController):
         return cmd, log_name
 
     def _run(self):
-        # todo - repeat this elsewhere if database not present
-        # self._config.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self._bind, self._port), force=True)
         log.debug(f'Binding to {self._bind}:{self._port}')
         run_simple(self._bind, self._port,
-                   WebServer(self._config, warn_data=self.__warn_data, warn_secure=self.__warn_secure),
+                   CsrfCheck(WebServer(self._config, warn_data=self.__warn_data, warn_secure=self.__warn_secure)),
                    use_debugger=self._dev, use_reloader=self._dev)
 
     def _cleanup(self):

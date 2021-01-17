@@ -1,5 +1,6 @@
 
 import log from "loglevel";
+import {csrfFetch} from "../components/functions";
 
 
 // a worker that receives dictionaries and sends them to the server.
@@ -44,10 +45,10 @@ function write() {
         Object.entries(data).forEach(([key, value]) => {
             log.debug(`write ${key}:${value}`);
         });
-        fetch('/api/diary/statistics',
+        csrfFetch('/api/diary/statistics',
             {method: 'put',
-                  headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
-                  body: JSON.stringify(data)})
+                headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+                body: JSON.stringify(data)})
             .then((response) => {
                 if (response.ok) {
                     onSuccess(response);

@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {Dialog, DialogContent, DialogContentText, DialogTitle, Grid, TextField} from "@material-ui/core";
 import {ConfirmedWriteButton, Layout} from "../../elements";
 import {ColumnCard, ColumnList, Loading, P, Text, TextCard, Warning} from "../../../common/elements";
-import {handleJson} from "../../functions";
+import {csrfFetch, handleJson} from "../../functions";
 import {Autocomplete} from "@material-ui/lab";
 import log from "loglevel";
 
@@ -153,7 +153,7 @@ export default function Initial(props) {
     }
 
     useEffect(() => {
-        fetch('/api/configure/profiles')
+        csrfFetch('/api/configure/profiles')
             .then(handleJson(history, setData, setError))
             .catch(reason => {
                 log.warn('configure/profiles:', reason);

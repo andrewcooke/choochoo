@@ -4,6 +4,7 @@ import {ColumnCard, ColumnList, P, Warning} from "../../common/elements";
 import {BusyWarning, Layout} from "../elements";
 import handleJson from "../functions/handleJson";
 import {useHistory} from "react-router-dom";
+import {csrfFetch} from "../functions";
 
 
 function ConfigWarning(props) {
@@ -23,7 +24,7 @@ function Warnings(props) {
     const history = useHistory()
 
     useEffect(() => {
-        fetch('/api/warnings').then(handleJson(history, setWarnings, setError));
+        csrfFetch('/api/warnings').then(handleJson(history, setWarnings, setError));
     }, [1]);
 
     return warnings.map((warning, i) => <ConfigWarning warning={warning} key={i}/>);

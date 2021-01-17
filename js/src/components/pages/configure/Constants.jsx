@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {ConfirmedWriteButton, Layout} from "../../elements";
 import {ColumnCard, ColumnList, Loading, TextCard} from "../../../common/elements";
-import {handleJson} from "../../functions";
+import {csrfFetch, handleJson} from "../../functions";
 import {Grid, Paper, TextField} from "@material-ui/core";
 import {FMT_DAY_TIME} from "../../../constants";
 import format from 'date-fns/format';
@@ -262,7 +262,7 @@ export default function Constants(props) {
 
     useEffect(() => {
         setConstants(null);
-        fetch('/api/configure/constants')
+        csrfFetch('/api/configure/constants')
             .then(handleJson(history, constants => setConstants(annotateConstants(constants)), setError));
     }, [edits]);
 

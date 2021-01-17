@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {csrfFetch} from "../functions";
 
 
 export default function Image(props) {
@@ -7,7 +8,7 @@ export default function Image(props) {
     const [image, setImage] = useState(null);
 
     useEffect(() => {
-        fetch(url)
+        csrfFetch(url)
             .then(response => response.blob())
             .then(setImage);
     }, [url]);

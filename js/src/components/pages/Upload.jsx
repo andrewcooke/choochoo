@@ -5,7 +5,7 @@ import {Button, Grid, IconButton, TextField, FormControlLabel, Checkbox, Link} f
 import {makeStyles} from "@material-ui/core/styles";
 import {Autocomplete} from "@material-ui/lab";
 import {Clear} from '@material-ui/icons';
-import {handleJson} from "../functions";
+import {csrfFetch, handleJson} from "../functions";
 import {Link as RouterLink} from "react-router-dom";
 import {Layout} from "../elements";
 
@@ -162,7 +162,7 @@ export default function Upload(props) {
     }
 
     useEffect(() => {
-        fetch('/api/kit/items').then(handleJson(history, setItems, setError));
+        csrfFetch('/api/kit/items').then(handleJson(history, setItems, setError));
     }, [reads]);
 
     return (

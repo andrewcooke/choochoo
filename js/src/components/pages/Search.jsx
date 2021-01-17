@@ -5,6 +5,7 @@ import {Button, Checkbox, Collapse, FormControlLabel, Grid, IconButton, TextFiel
 import {makeStyles} from "@material-ui/styles";
 import {ExpandLess, ExpandMore} from "@material-ui/icons";
 import {Layout} from "../elements";
+import {csrfFetch} from "../functions";
 
 
 const useStyles = makeStyles(theme => ({
@@ -38,7 +39,7 @@ function SearchTerms(props) {
     const [terms, setTerms] = termsState;
 
     useEffect(() => {
-        fetch('/api/search/activity-terms').
+        csrfFetch('/api/search/activity-terms').
             then(response => response.json()).
             then(response => setTerms(response))
     }, [1]);
