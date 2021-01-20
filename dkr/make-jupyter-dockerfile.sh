@@ -46,12 +46,12 @@ from $BASE
 user root
 workdir /tmp
 run apt-get update
-run apt-get -y install libpq-dev gcc emacs
+run apt-get -y install libpq-dev gcc emacs python3-dev
 EOF
 
 # create admin user
 cat >> $FILE <<EOF
-RUN useradd -m -p $(openssl passwd -1 password) choo_choo_admin
+RUN useradd -m -p "$(openssl passwd -1 password)" choo_choo_admin
 EOF
 
 # python libs that are needed in all cases
