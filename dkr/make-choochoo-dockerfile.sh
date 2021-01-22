@@ -54,7 +54,7 @@ $COMMENT
 from $BASE
 workdir /tmp
 run apt-get update
-run apt-get -y install sqlite3 libsqlite3-dev libpq-dev $JS_PKG gcc emacs
+run apt-get -y install sqlite3 libsqlite3-dev libpq-dev $JS_PKG gcc emacs gdal-bin libgdal-dev
 EOF
 
 if ((HAVE_JS)); then

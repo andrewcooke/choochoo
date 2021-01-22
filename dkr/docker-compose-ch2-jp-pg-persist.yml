@@ -19,11 +19,12 @@ services:
     command: 
       - jupyterhub
       - --c.Authenticator.admin_users = {'choo_choo_admin'}
+      - --port=8002
     environment:
       - NB_UID=0
       - TZ=${TZ}
     ports:
-      - 8000:8000
+      - 8002:8002
     volumes:
       - 'choochoo-data:/data'
   pg:
