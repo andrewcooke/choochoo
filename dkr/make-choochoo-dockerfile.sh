@@ -52,6 +52,7 @@ source ../py/env/bin/activate
 cat >$FILE <<EOF
 $COMMENT
 from $BASE
+run mkdir -m777 /data
 workdir /tmp
 run apt-get update
 run apt-get -y install sqlite3 libsqlite3-dev libpq-dev $JS_PKG gcc emacs gdal-bin libgdal-dev

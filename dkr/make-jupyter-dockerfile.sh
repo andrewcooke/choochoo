@@ -9,7 +9,7 @@ VERSION=`grep 'CH2_VERSION =' ../py/ch2/commands/args.py | sed -e "s/.*CH2_VERSI
 VERSION=`echo $VERSION | sed -e s/\\\\./-/g`
 CMD=$0
 
-BASE=jupyterhub/jupyterhub
+BASE=jupyter/scipy-notebook:latest
 COMMENT="# syntax=docker/dockerfile:experimental"
 MOUNT="--mount=type=cache,target=/root/.cache/pip"
 FILE="Dockerfile.jupyter"
@@ -38,6 +38,9 @@ done
 
 source ../py/env/bin/activate
 
+# https://stackoverflow.com/a/40167445
+pip freeze | grep -v choochoo | grep -v pkg-resources > requirements.txt
+
 # basic image and support
 # (we need to install db libs whatever db we are using because of python deps)
 cat > $FILE <<EOF
@@ -46,12 +49,7 @@ from $BASE
 user root
 workdir /tmp
 run apt-get update
-run apt-get -y install libpq-dev gcc emacs python3-dev
-EOF
-
-# create admin user
-cat >> $FILE <<EOF
-RUN useradd -m -p "$(openssl passwd -1 password)" choo_choo_admin
+run apt-get -y install libpq-dev gcc emacs
 EOF
 
 # python libs that are needed in all cases
@@ -59,7 +57,7 @@ cat >> $FILE <<EOF
 copy dkr/requirements.txt /tmp
 run $MOUNT \\
     pip install --upgrade pip && \\
-    pip install wheel jupyter && \\
+    pip install wheel && \\
     pip install -r requirements.txt
 EOF
 
@@ -69,6 +67,11 @@ workdir /app/py
 copy py/ch2 /app/py/ch2
 copy py/setup.py py/MANIFEST.in /app/py/
 run pip install .
+EOF
+
+# revert directory where tree is mounted
+cat >> $FILE <<EOF
+workdir /home/jovyan/work
 EOF
 
 echo -e "\ncreated $FILE for $VERSION\n"

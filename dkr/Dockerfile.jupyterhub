@@ -1,0 +1,36 @@
+FROM jupyterhub/jupyterhub
+
+ARG PIP_CACHE
+
+USER root
+
+WORKDIR /tmp
+
+RUN apt-get update && \
+    apt-get -y install \
+        git \
+        libpq-dev \
+        gcc \
+        emacs \
+        python3-dev
+
+COPY dkr/requirements.txt /tmp
+
+RUN ${PIP_CACHE} \
+    pip install --upgrade pip && \
+    pip install wheel jupyter && \
+    pip install -r requirements.txt
+
+WORKDIR /app/py
+
+COPY py/ch2 /app/py/ch2
+
+COPY py/setup.py py/MANIFEST.in /app/py/
+
+RUN pip install .
+
+COPY dkr/jupyterhub_config.py /app/py/
+
+RUN git clone https://github.com/jupyterhub/nativeauthenticator.git \
+    && cd nativeauthenticator \
+    && pip install -e .

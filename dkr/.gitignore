@@ -1,5 +1,2 @@
 auto-prune
 postgres.conf
-Dockerfile*
-docker-compose.yml
-requirements.txt

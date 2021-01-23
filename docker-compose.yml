@@ -1,0 +1,46 @@
+version: '3'
+services:
+  ch2:
+    image: 'andrewcooke/choochoo:latest-localDEV'
+    container_name: 'choochoo'
+    user: ${ID}
+    environment:
+      - TZ=${TZ}
+    ports:
+      - '127.0.0.1:8000:8000'
+    volumes:
+      - 'choochoo-data:/data'
+    depends_on:
+      - 'pg'
+      - 'jp'
+  jp:
+    container_name: 'jupyter'
+    build:
+      context: ./
+      dockerfile: ./dkr/Dockerfile.jupyterhub
+    command: jupyterhub -f /app/py/jupyterhub_config.py
+    environment:
+      - NB_UID=0
+      - TZ=${TZ}
+    ports:
+      - 8002:8002
+    volumes:
+      - choochoo-data:/data
+  pg:
+    image: 'postgis/postgis:13-3.0-alpine'
+    container_name: 'postgresql'
+    shm_size: '1g'
+    command: '-c config_file=/etc/postgresql/postgresql.conf'
+    environment:
+      - 'POSTGRES_HOST_AUTH_METHOD=trust'
+    volumes:
+      - 'postgresql-dataDEV:/var/lib/postgresql/data'
+      - 'postgresql-logDEV:/var/log'
+      - './postgres.conf:/etc/postgresql/postgresql.conf'
+volumes:
+  choochoo-data:
+    external: true
+  postgresql-dataDEV:
+    external: true
+  postgresql-logDEV:
+    external: true
