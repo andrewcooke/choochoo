@@ -1,6 +1,6 @@
 FROM jupyterhub/jupyterhub
 
-ARG PIP_CACHE
+ARG MOUNT
 
 USER root
 
@@ -16,7 +16,7 @@ RUN apt-get update && \
 
 COPY dkr/requirements.txt /tmp
 
-RUN ${PIP_CACHE} \
+RUN ${MOUNT} \
     pip install --upgrade pip && \
     pip install wheel jupyter && \
     pip install -r requirements.txt

@@ -1,0 +1,7 @@
+FROM postgis/postgis:13-3.0-alpine
+
+ARG PG_CONFIG_FILE
+
+RUN mkdir /var/log/postgresql
+RUN chown postgres /var/log/postgresql
+COPY ./dkr/${PG_CONFIG_FILE} /etc/postgresql/postgresql.conf
