@@ -8,6 +8,8 @@ log = getLogger(__name__)
 
 class CsrfCheck:
 
+    # https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html
+
     def __init__(self, app):
         self.app = app
 
