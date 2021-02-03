@@ -140,10 +140,11 @@ function SectorContent(props) {
     const [display, setDisplay] = useState('Map');
 
     if (i === -1) {  // set to fastest
-        let [fastest, fastest_time] = [0, last(sectors[0].edt.time)];
+        let [fastest, fastest_time] = [0, sectors[0].time];
         sectors.forEach((sj, i) => {
-            const time = last(sj.edt.time);
+            const time = sj.time;
             if (time < fastest_time) {
+                log.debug(`Possible fastest time at ${i}: ${sj.time}`);
                 fastest = i;
                 fastest_time = time;
             }});
