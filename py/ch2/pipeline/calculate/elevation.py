@@ -47,6 +47,8 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
         if not present(df, N.ELEVATION):
             if present(df, N.RAW_ELEVATION):
                 df = smooth_elevation(df, smooth=self.smooth)
+                # not used and may be nulls, breaking geo
+                df.drop(columns=[N.ALTITUDE], errors='ignore', inplace=True)
             elif present(df, N.ALTITUDE):
                 log.warning(f'Using {N.ALTITUDE} as {N.ELEVATION}')
                 df[N.ELEVATION] = df[N.ALTITUDE]

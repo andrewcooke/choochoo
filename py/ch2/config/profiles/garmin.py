@@ -28,5 +28,6 @@ class Garmin(Profile):
         monitor_reader = add_process(s, MonitorReader)
         # add these, chained so that we load available data (know what is missing),
         # download new data, and load new data
-        garmin_reader = add_process(s, GarminReader, blocked_by=[monitor_reader])
+        garmin_reader = add_process(s, GarminReader, blocked_by=[monitor_reader],
+                                    force_all=True, max_days=365)
         add_process(s, MonitorReader, blocked_by=[garmin_reader])
