@@ -1,10 +1,10 @@
-from weakref import WeakSet
 from collections import defaultdict
 from itertools import groupby
 from logging import getLogger
+from weakref import WeakSet
 
 from sqlalchemy import Sequence, select, text, inspect
-from sqlalchemy.event import listens_for, listen
+from sqlalchemy.event import listen
 
 log = getLogger(__name__)
 
@@ -54,6 +54,7 @@ class BatchLoader:
                     self.warning(f'Unexpected key type for {mapper}')
             except Exception as e:
                 # only debug here because we know this occurs with user-defined types
+                # (like system constant)
                 self.debug(f'Batch error with key {key}: {e!r}')
         else:
             self.warning(f'Composite primary key for {mapper}')

@@ -29,7 +29,7 @@ MONITORING_INFO_ATTR = 'monitoring_info'
 STEPS_ATTR = 'steps'
 
 
-def missing_dates(s, force=False):
+def missing_dates(s, force=False, max_days=30):
     # we don't try to be perfect here.  the idea is that it's called to get the latest
     # updates, rather than fill in all gaps (do the bulk download thing for that).
     # we also don't try to get fractional data.
@@ -44,7 +44,7 @@ def missing_dates(s, force=False):
     seconds = (latest.finish - latest.start).total_seconds() / 2
     start = time_to_local_date(latest.start + dt.timedelta(seconds=seconds))
     days = (time_to_local_date(now()) - start).days
-    if days > 14 and not force:
+    if days > max_days and not force:
         raise Exception('Too many days (%d) - ' % days +
                         'do a bulk download instead: https://www.garmin.com/en-US/account/datamanagement/')
     if days:

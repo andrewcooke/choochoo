@@ -65,6 +65,9 @@ class SectorCalculator(LoaderMixin, ActivityGroupProcessCalculator):
 
 
 class NewSectorCalculator(LoaderMixin, ProcessCalculator):
+    '''
+    Called when a new sector is added via the GUI.
+    '''
 
     def __init__(self, *args, activity_group=None, new_sector_id=None, **kargs):
         super().__init__(*args, **kargs)

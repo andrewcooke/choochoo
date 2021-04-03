@@ -5,7 +5,7 @@ import {Grid, List, ListItem, Typography} from "@material-ui/core";
 import {FMT_DAY} from "../../../constants";
 import {format} from 'date-fns';
 import {makeStyles} from "@material-ui/core/styles";
-import {handleJson} from "../../functions";
+import {csrfFetch, handleJson} from "../../functions";
 import {StatisticsValues} from "./elements";
 
 
@@ -103,7 +103,7 @@ export default function Snapshot(props) {
 
     useEffect(() => {
         setGroups(null);
-        fetch('/api/kit/' + date)
+        csrfFetch('/api/kit/' + date)
             .then(handleJson(history, setGroups, setError));
     }, [date]);
 

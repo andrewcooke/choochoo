@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Layout} from "../../elements";
 import {parse} from 'date-fns';
-import {handleJson} from "../../functions";
+import {csrfFetch, handleJson} from "../../functions";
 import {Schedule} from "./elements";
 import {FMT_MONTH} from "../../../constants";
 
@@ -17,7 +17,7 @@ export default function Month(props) {
 
     useEffect(() => {
         setJson(null);
-        fetch('/api/diary/' + date)
+        csrfFetch('/api/diary/' + date)
             .then(handleJson(history, setJson, setError));
     }, [date]);
 

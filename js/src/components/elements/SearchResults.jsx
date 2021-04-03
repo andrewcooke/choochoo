@@ -3,6 +3,7 @@ import SearchResult from "./SearchResult";
 import {FMT_DAY_TIME} from "../../constants";
 import {parse} from 'date-fns';
 import {Loading, TextCard} from "../../common/elements";
+import {csrfFetch} from "../functions";
 
 
 function SearchError(props) {
@@ -39,7 +40,7 @@ export default function SearchResults(props) {
     useEffect(() => {
         if (query !== null && query !== '') {
             if (json !== null) setJson(null);
-            fetch('/api/search/activity/' + encodeURIComponent(query) + '?advanced=' + advanced)
+            csrfFetch('/api/search/activity/' + encodeURIComponent(query) + '?advanced=' + advanced)
                 .then(response => response.json())
                 .then(fixDate)
                 .then(setJson);

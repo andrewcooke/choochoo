@@ -1,6 +1,3 @@
-from geoalchemy2.shape import from_shape
-from shapely.geometry import Point
-
 from .garmin import Garmin
 from ..climb import CLIMB_CNAME
 from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_process, add_pipeline

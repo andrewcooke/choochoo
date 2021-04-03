@@ -46,7 +46,8 @@ with srid as (select s.id as sector_id,
                                 st_linelocatepoint(p.route_et, p.point) as fraction
                            from finish_point as p
                           where st_geometrytype(p.point) = 'ST_Point'),
-     shortest as (select r.sector_id,
+     shortest as (select distinct  -- multiple starts/finishes can lead to duplicates
+                         r.sector_id,
                          s.fraction as start_fraction,
                          f.fraction as finish_fraction,
                          min(f.fraction - s.fraction) over (partition by r.sector_id) as shortest
@@ -58,8 +59,7 @@ with srid as (select s.id as sector_id,
                      and s.sector_id = r.sector_id
                      and st_length(st_linesubstring(r.route_d, s.fraction, f.fraction))
                          between 0.95 * st_length(r.sector) and 1.05 * st_length(r.sector))
-select distinct  -- multiple starts/finishes can lead to duplicates
-       s.sector_id,
+select s.sector_id,
        s.start_fraction,
        s.finish_fraction,
        aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_et, s.start_fraction)) as start_time,
@@ -80,6 +80,8 @@ select distinct  -- multiple starts/finishes can lead to duplicates
                                     sector_id=sector_id)
     for row in result.fetchall():
         data = {name: value for name, value in zip(result.keys(), row)}
+        log.debug(f'Adding SectorJournal for activity_journal_id {ajournal.id}, '
+                  f'activity_group {ajournal.activity_group}: {data}')
         sjournal = add(s, SectorJournal(activity_journal_id=ajournal.id, activity_group=ajournal.activity_group,
                                         **data))
         s.flush()

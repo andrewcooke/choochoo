@@ -3,7 +3,7 @@ import {FormatValueUnits, Image, Layout, OSMap, Route} from "../../elements";
 import {ColumnCard, ColumnList, Loading, Text} from "../../../common/elements";
 import {last, useQuery} from "../../../common/functions";
 import {FormControl, Grid, InputLabel, Link, MenuItem, Radio, Select, Tooltip} from "@material-ui/core";
-import {handleJson} from "../../functions";
+import {csrfFetch, handleJson} from "../../functions";
 import {FMT_DAY, FMT_DAY_TIME} from "../../../constants";
 import {format, parse} from 'date-fns';
 import log from "loglevel";
@@ -32,7 +32,7 @@ function LoadMap(props) {
     const [error, setError] = errorState;
 
     useEffect(() => {
-        fetch('/api/route/latlon/sector/' + sector)
+        csrfFetch('/api/route/latlon/sector/' + sector)
             .then(handleJson(history, setData, setError));
     }, [sector]);
 
@@ -140,10 +140,11 @@ function SectorContent(props) {
     const [display, setDisplay] = useState('Map');
 
     if (i === -1) {  // set to fastest
-        let [fastest, fastest_time] = [0, last(sectors[0].edt.time)];
+        let [fastest, fastest_time] = [0, sectors[0].time];
         sectors.forEach((sj, i) => {
-            const time = last(sj.edt.time);
+            const time = sj.time;
             if (time < fastest_time) {
+                log.debug(`Possible fastest time at ${i}: ${sj.time}`);
                 fastest = i;
                 fastest_time = time;
             }});
@@ -228,7 +229,7 @@ export default function Sector(props) {
     }
 
     useEffect(() => {
-        fetch('/api/sector/' + id)
+        csrfFetch('/api/sector/' + id)
             .then(handleJson(history, setJson, setError));
     }, [id]);
 

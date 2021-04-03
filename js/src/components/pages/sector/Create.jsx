@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {ConfirmedWriteButton, Layout, OSMap, Route} from "../../elements";
 import {ColumnCard, ColumnList, Loading, Text} from "../../../common/elements";
 import {last} from "../../../common/functions";
-import {handleJson} from "../../functions";
+import {csrfFetch, handleJson} from "../../functions";
 import {Grid, Slider, TextField, useTheme} from "@material-ui/core";
 import log from "loglevel";
 import {makeStyles} from "@material-ui/styles";
@@ -143,7 +143,7 @@ export default function Create(props) {
     const [error, setError] = errorState;
 
     useEffect(() => {
-        fetch('/api/route/latlon/activity/' + id)
+        csrfFetch('/api/route/latlon/activity/' + id)
             .then(handleJson(history, setData, setError));
     }, [id]);
 

@@ -19,8 +19,9 @@ GARMIN_PASSWORD = 'garmin_password'
 
 class GarminReader(ProcessPipeline):
 
-    def __init__(self, *args, force_all=False, **kargs):
+    def __init__(self, *args, force_all=False, max_days=100, **kargs):
         self.__force_all = force_all
+        self.__max_days = max_days
         self.__user = None
         self.__password = None
         super().__init__(*args, **kargs)
@@ -38,7 +39,8 @@ class GarminReader(ProcessPipeline):
             log.warning(f'Too soon since previous call ({last}; 12 hours minimum)')
         else:
             try:
-                dates = [format_dateq(date) for date in missing_dates(s, force=self.__force_all)]
+                dates = [format_dateq(date)
+                         for date in missing_dates(s, force=self.__force_all, max_days=self.__max_days)]
                 if dates:
                     log.debug(f'Download Garmin from {dates[0]}')
                     return dates[:1]  # dates[0] in a list

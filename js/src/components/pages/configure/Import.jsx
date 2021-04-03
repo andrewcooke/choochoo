@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {ConfirmedWriteButton, Layout} from "../../elements";
 import {ColumnCard, ColumnList, Loading, ScrollableListCard, Text, TextCard} from "../../../common/elements";
-import {handleJson} from "../../functions";
+import {csrfFetch, handleJson} from "../../functions";
 import {Autocomplete} from "@material-ui/lab";
 import {Grid, TextField} from "@material-ui/core";
 import log from "loglevel";
@@ -104,7 +104,7 @@ export default function Import(props) {
     const [error, setError] = errorState;
 
     useEffect(() => {
-        fetch('/api/configure/import')
+        csrfFetch('/api/configure/import')
             .then(handleJson(history, setData, setError))
             .catch(reason => {
                 log.warn('configure/profiles:', reason);

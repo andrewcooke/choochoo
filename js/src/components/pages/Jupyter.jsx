@@ -11,7 +11,7 @@ import {
     SimilarActivities,
     SomeActivities
 } from "./jupyter";
-import {handleJson} from "../functions";
+import {csrfFetch, handleJson} from "../functions";
 import {Layout} from "../elements";
 
 
@@ -50,7 +50,7 @@ export default function Jupyter(props) {
 
     useEffect(() => {
         setParams(null);
-        fetch('/api/jupyter/parameters')
+        csrfFetch('/api/analysis/parameters')
             .then(handleJson(history, setParams, setError));
     }, [1]);
 

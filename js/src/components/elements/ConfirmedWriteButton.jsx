@@ -10,7 +10,7 @@ import {
     useTheme
 } from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
-import {handleJson} from "../functions";
+import {csrfFetch, handleJson} from "../functions";
 import log from "loglevel";
 
 
@@ -84,7 +84,7 @@ export default function ConfirmedWriteButton(props) {
     function handleOk() {
         handleCancel();
         setOpenWait(true);
-        fetch(href, buildRequest())
+        csrfFetch(href, buildRequest())
             .then(handleWrite)
             .catch(handleWrite);
     }

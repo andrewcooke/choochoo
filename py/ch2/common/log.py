@@ -17,7 +17,7 @@ def configure_log(name, path, verbosity, levels=None):
     levels = levels or {}
 
     if not getLogger(name).handlers:
-        file_formatter = Formatter('%(levelname)-8s %(asctime)s: %(message)s')
+        file_formatter = Formatter('%(levelname)-7s %(asctime)s: %(message)s')
         file_handler = RotatingFileHandler(path, maxBytes=1e6, backupCount=10)
         file_handler.setLevel(DEBUG)
         file_handler.setFormatter(file_formatter)
@@ -27,7 +27,7 @@ def configure_log(name, path, verbosity, levels=None):
             log.addHandler(file_handler)
 
         if verbosity:
-            stderr_formatter = Formatter('%(levelname)8s: %(message)s')
+            stderr_formatter = Formatter('%(levelname)7s: %(message)s')
             STDERR_HANDLER = StreamHandler()
             STDERR_HANDLER.setLevel(10 * (6 - verbosity))
             STDERR_HANDLER.setFormatter(stderr_formatter)

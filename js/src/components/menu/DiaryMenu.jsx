@@ -9,6 +9,7 @@ import {Calendar, Months} from ".";
 import ListItemText from "@material-ui/core/ListItemText";
 import {KeyboardArrowLeft} from "@material-ui/icons";
 import {useHistory, useLocation} from 'react-router-dom';
+import {csrfFetch} from "../functions";
 
 
 const useStyles = makeStyles(theme => ({
@@ -28,7 +29,7 @@ function ActiveDays(props) {
     const [json, setJson] = useState(null);
     useEffect(() => {
         setJson(null);
-        fetch('/api/diary/active-days/' + date)
+        csrfFetch('/api/diary/active-days/' + date)
             .then(response => response.json())
             .then(json => setJson(json));
     }, [date]);
@@ -41,7 +42,7 @@ function ActiveMonths(props) {
     const [json, setJson] = useState(null);
     useEffect(() => {
         setJson(null);
-        fetch('/api/diary/active-months/' + date)
+        csrfFetch('/api/diary/active-months/' + date)
             .then(response => response.json())
             .then(json => setJson(json));
     }, [date]);

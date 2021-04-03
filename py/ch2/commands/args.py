@@ -13,7 +13,7 @@ from ..lib.utils import parse_bool
 log = getLogger(__name__)
 
 # this can be modified during development.  it will be reset from setup.py on release.
-CH2_VERSION = '0.38.1'
+CH2_VERSION = '0.38.2'
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 

@@ -2,6 +2,7 @@ import React from "react";
 import {IconButton, Tooltip} from "@material-ui/core";
 import {Event} from '@material-ui/icons';
 import {useHistory} from 'react-router-dom';
+import {csrfFetch} from "../functions";
 
 
 export default function LatestIcon(props) {
@@ -15,7 +16,7 @@ export default function LatestIcon(props) {
     }
 
     function onClick() {
-        fetch('/api/diary/latest').
+        csrfFetch('/api/diary/latest').
             then(response => response.json()).
             then(updateHistory);
     }

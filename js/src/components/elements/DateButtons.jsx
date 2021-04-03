@@ -5,6 +5,7 @@ import React, {useEffect, useState} from "react";
 import {add, parse} from "date-fns";
 import TodayIcon from "@material-ui/icons/Today";
 import DateRangeIcon from "@material-ui/icons/DateRange";
+import {csrfFetch} from "../functions";
 
 
 function BeforeNextButtonsBase(props) {
@@ -56,7 +57,7 @@ export function ActivityButtons(props) {
     }
 
     useEffect(() => {
-        fetch('/api/diary/neighbour-activities/' + date)
+        csrfFetch('/api/diary/neighbour-activities/' + date)
             .then(response => response.json())
             .then(setContent);
     }, [date]);
