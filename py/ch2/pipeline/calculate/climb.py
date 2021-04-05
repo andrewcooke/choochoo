@@ -36,8 +36,8 @@ class FindClimbCalculator(ActivityGroupProcessCalculator):
         if not self.worker:
             log.info('Checking for extra prunes')
             n_climbs, n_prunes = 0, 0
-            for climb_id in s.query(SectorClimb.id).all():
-                if self.__prune_climb(s, climb_id):
+            for row in s.query(SectorClimb.id).all():
+                if self.__prune_climb(s, row.id):
                     n_prunes += 1
                 else:
                     n_climbs += 1

@@ -136,7 +136,7 @@ def sector_stats_for_activity(s, ajournal):
     from ..pipeline.calculate.sector import SectorCalculator
 
     query = s.query(StatisticJournal). \
-        join(StatisticName, Source). \
+        join(StatisticName).join(Source). \
         join(SectorJournal, SectorJournal.id == Source.id). \
         filter(StatisticName.name.like(N.SECTOR_ANY),
                StatisticJournal.time >= ajournal.start,

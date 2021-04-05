@@ -246,7 +246,7 @@ class StatisticJournal(Base):
         from . import ActivityGroup, Source
         start = local_date_to_time(date)
         finish = start + dt.timedelta(days=1)
-        q = s.query(StatisticJournal).join(StatisticName, Source). \
+        q = s.query(StatisticJournal).join(StatisticName).join(Source). \
             filter(StatisticName.name == name,
                    StatisticJournal.time >= start,
                    StatisticJournal.time < finish,
@@ -259,7 +259,7 @@ class StatisticJournal(Base):
     @classmethod
     def at(cls, s, time, name, owner, activity_group):
         from . import ActivityGroup, Source
-        return s.query(StatisticJournal).join(StatisticName, Source). \
+        return s.query(StatisticJournal).join(StatisticName).join(Source). \
             filter(StatisticName.name == name,
                    StatisticJournal.time == time,
                    StatisticName.owner == owner,
@@ -268,7 +268,7 @@ class StatisticJournal(Base):
     @classmethod
     def at_like(cls, s, time, name, owner, activity_group):
         from . import ActivityGroup, Source
-        return s.query(StatisticJournal).join(StatisticName, Source). \
+        return s.query(StatisticJournal).join(StatisticName).join(Source). \
             filter(StatisticName.name.like(name),
                    StatisticJournal.time == time,
                    StatisticName.owner == owner,
@@ -277,7 +277,7 @@ class StatisticJournal(Base):
     @classmethod
     def before(cls, s, time, name, owner, activity_group):
         from . import ActivityGroup, Source
-        return s.query(StatisticJournal).join(StatisticName, Source). \
+        return s.query(StatisticJournal).join(StatisticName).join(Source). \
             filter(StatisticName.name == name,
                    StatisticJournal.time <= time,
                    StatisticName.owner == owner,
@@ -305,7 +305,7 @@ class StatisticJournal(Base):
     @classmethod
     def after(cls, s, time, name, owner, activity_group):
         from . import ActivityGroup, Source
-        return s.query(StatisticJournal).join(StatisticName, Source). \
+        return s.query(StatisticJournal).join(StatisticName).join(Source). \
             filter(StatisticName.name == name,
                    StatisticJournal.time >= time,
                    StatisticName.owner == owner,
@@ -314,7 +314,7 @@ class StatisticJournal(Base):
 
     @classmethod
     def at_interval(cls, s, start, schedule, statistic_owner, statistic_name, interval_owner):
-        return s.query(StatisticJournal).join(StatisticName, Interval). \
+        return s.query(StatisticJournal).join(StatisticName).join(Interval). \
                     filter(StatisticJournal.statistic_name_id == StatisticName.id,
                            Interval.schedule == schedule,
                            Interval.start == start,
@@ -327,7 +327,7 @@ class StatisticJournal(Base):
     @classmethod
     def for_source(cls, s, source_id, name, owner, activity_group):
         from . import ActivityGroup, Source
-        return s.query(StatisticJournal).join(StatisticName, Source). \
+        return s.query(StatisticJournal).join(StatisticName).join(Source). \
             filter(StatisticName.name == name,
                    StatisticName.owner == owner,
                    Source.activity_group == ActivityGroup.from_name(s, activity_group),

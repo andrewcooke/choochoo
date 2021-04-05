@@ -164,13 +164,13 @@ def climbs_for_activity(s, ajournal):
     from ..pipeline.calculate import ActivityCalculator
 
     total = s.query(StatisticJournal). \
-        join(StatisticName, Source). \
+        join(StatisticName).join(Source). \
         filter(StatisticName.name == N.TOTAL_CLIMB,
                StatisticJournal.time == ajournal.start,
                StatisticName.owner == ActivityCalculator,
                Source.activity_group == ajournal.activity_group).order_by(StatisticJournal.time).one_or_none()
     query = s.query(StatisticJournal). \
-        join(StatisticName, Source). \
+        join(StatisticName).join(Source). \
         join(SectorJournal, SectorJournal.id == Source.id). \
         filter(or_(StatisticName.name.like(N.CLIMB_ANY),
                    StatisticName.name == N.VERTICAL_POWER),
