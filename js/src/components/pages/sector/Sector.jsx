@@ -235,5 +235,5 @@ export default function Sector(props) {
 
     const content = data ? <SectorContent sector={id} data={data} history={history} from={from}/> : <Loading/>;
 
-    return <Layout title='Sector Jupyter' content={content} errorState={errorState}/>;
+    return <Layout title='Sector Analysis' content={content} errorState={errorState}/>;
 }

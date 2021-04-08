@@ -50,7 +50,7 @@ class SimpleType(AbstractType):
 
 class StructSupport(SimpleType):
     '''
-    Most base types use stucts to unpack data.
+    Most base types use structs to unpack data.
     '''
 
     def _pack_bad(self, value):
