@@ -194,7 +194,7 @@ your FF-model parameters (fitness and fatigue).
 
     def _load_calculate_pipeline(self, s):
         # order is important here because some pipelines expect values created by others
-        # this converts RAW_ELEVATION to ELEVATION, if needed
+        # this converts SRTM1_ELEVATION to ELEVATION, if needed
         add_process(s, ElevationCalculator, blocked_by=[ActivityReader])
         power_statistics = self._load_power_statistics(s)
         self._load_ff_statistics(s)

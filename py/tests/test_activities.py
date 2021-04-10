@@ -34,7 +34,7 @@ class TestActivities(LogTestCase):
         with config.db.session_context() as s:
             n_raw = s.query(count(StatisticJournalFloat.id)). \
                 join(StatisticName). \
-                filter(StatisticName.name == N.RAW_ELEVATION).scalar()
+                filter(StatisticName.name == N.SRTM1_ELEVATION).scalar()
             self.assertEqual(2099, n_raw)
             n_fix = s.query(count(StatisticJournalFloat.id)). \
                 join(StatisticName). \

@@ -42,7 +42,7 @@ class ActivityReader(LoaderMixin, ProcessFitReader):
         super().__init__(*args, sub_dir=ACTIVITY, **kargs)
 
     def _startup(self, s):
-        self.__oracle = bilinear_elevation_from_constant(s)
+        self.__srtm1 = bilinear_elevation_from_constant(s)
         super()._startup(s)
         for field, title, units, cls in self.record_to_db:
             self._provides(s, title, STATISTIC_JOURNAL_TYPES[cls], units, None,
@@ -53,13 +53,16 @@ class ActivityReader(LoaderMixin, ProcessFitReader):
                        'The Web Mercator EPSG:3857 X coordinate')
         self._provides(s, T.SPHERICAL_MERCATOR_Y, StatisticJournalType.FLOAT, U.M, None,
                        'The Web Mercator EPSG:3857 Y coordinate')
-        self._provides(s, T.RAW_ELEVATION, StatisticJournalType.FLOAT, U.M, None,
-                       'The elevation from the FIT file at this location')
+        self._provides(s, T.SRTM1_ELEVATION, StatisticJournalType.FLOAT, U.M, None,
+                       'The elevation from SRTM1 at the GPS location')
         self._provides(s, T.KIT, StatisticJournalType.TEXT, None, None,
                        'The kit used in the activity')
+        self._provides(s, T.DEVICE, StatisticJournalType.TEXT, None, None,
+                       'The device used to record the activity')
         # also coverages - see _read
 
-    def _read_kit(self, path):
+    @staticmethod
+    def _read_kit(path):
         _, kit = split_fit_path(path)
         if kit:
             return kit
@@ -67,12 +70,20 @@ class ActivityReader(LoaderMixin, ProcessFitReader):
             log.debug(f'No {N.KIT} in {path}')
             return None
 
+    @staticmethod
+    def _read_device(records):
+        for record in records:
+            if record.name == 'device_info' and 'garmin_product' in record.data:
+                return record.value.garmin_product
+        return None
+
     def _read_data(self, s, file_scan):
         log.info('Reading activity data from %s' % file_scan)
         records = self.parse_records(read_fit(file_scan.path))
         kit = self._read_kit(file_scan.path)
+        device = self._read_device(records)
         ajournal, activity_group, first_timestamp = self._create_activity(s, file_scan, kit, records)
-        return ajournal, (ajournal, activity_group, first_timestamp, file_scan, kit, records)
+        return ajournal, (ajournal, activity_group, first_timestamp, file_scan, kit, device, records)
 
     @staticmethod
     def parse_records(data):
@@ -177,23 +188,24 @@ class ActivityReader(LoaderMixin, ProcessFitReader):
 
     def _load_data(self, s, loader, data):
 
-        ajournal, activity_group, first_timestamp, file_scan, kit, records = data
+        ajournal, activity_group, first_timestamp, file_scan, kit, device, records = data
         timespan, warned, logged, last_timestamp = None, 0, 0, to_time(0.0)
 
         log.debug(f'Loading {self.record_to_db}')
 
         def is_event(record, *types):
-            event = False
-            if record.name == 'event':
-                event = record.value.event == 'timer' and record.value.event_type in types
-                if event: log.debug(f'{types} at {record.timestamp}')
-            return event
+            if record.name == 'event' and record.value.event == 'timer' and record.value.event_type in types:
+                log.debug(f'{types} at {record.timestamp}')
+                return True
+            else:
+                return False
 
         have_timespan = any(is_event(record, 'start') for record in records)
         only_records = list(filter(lambda x: x.name == 'record', records))
         final_timestamp = only_records[-1].timestamp
 
         if kit: loader.add_data(N.KIT, ajournal, kit, ajournal.start)
+        if device: loader.add_data(N.DEVICE, ajournal, device, ajournal.start)
 
         self._save_name(s, ajournal, file_scan)
         self.__ajournal = ajournal
@@ -240,9 +252,9 @@ class ActivityReader(LoaderMixin, ProcessFitReader):
                         loader.add_data(N.SPHERICAL_MERCATOR_X, ajournal, x, timestamp)
                         loader.add_data(N.SPHERICAL_MERCATOR_Y, ajournal, y, timestamp)
                         if self.add_elevation:
-                            elevation = self.__oracle.elevation(lat, lon)
+                            elevation = self.__srtm1.elevation(lat, lon)
                             if elevation:
-                                loader.add_data(N.RAW_ELEVATION, ajournal, elevation, timestamp)
+                                loader.add_data(N.SRTM1_ELEVATION, ajournal, elevation, timestamp)
                 else:
                     log.warning('Ignoring duplicate record data for %s at %s - some data may be missing' %
                                 (file_scan.path, record.value.timestamp))

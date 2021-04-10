@@ -13,7 +13,7 @@ from ...data.activity import add_delta_azimuth
 from ...data.elevation import smooth_elevation
 from ...data.frame import present
 from ...names import N, T, U
-from ...sql import StatisticJournalType, ActivityJournal
+from ...sql import StatisticJournalType, ActivityJournal, StatisticJournal
 from ...sql.types import linestringxyzm, linestringxym
 
 log = getLogger(__name__)
@@ -35,17 +35,23 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
     def _read_dataframe(self, s, ajournal):
         from ..owners import ActivityReader
         try:
+            device = StatisticJournal.at(s, ajournal.start, N.DEVICE, ActivityReader,
+                                         ajournal.activity_group)
             return Statistics(s, activity_journal=ajournal, with_timespan=True). \
                 by_name(ActivityReader, N.LATITUDE, N.LONGITUDE, N.DISTANCE, N.ELAPSED_TIME,
-                        N.RAW_ELEVATION, N.ELEVATION, N.ALTITUDE,
-                        N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y).df
+                        N.SRTM1_ELEVATION, N.ELEVATION, N.ALTITUDE,
+                        N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y).df, device
         except Exception as e:
             log.warning(f'Failed to generate statistics for elevation: {e}')
             raise
 
-    def _calculate_stats(self, s, ajournal, df):
+    def _calculate_stats(self, s, ajournal, data):
+        df, device = data
         if not present(df, N.ELEVATION):
-            if present(df, N.RAW_ELEVATION):
+            if device and device.value == 'Edge_130' and present(df, N.ALTITUDE):
+                log.info(f'Using {N.ALTITUDE} directly (barometer)')
+                df[N.ELEVATION] = df[N.ALTITUDE]
+            elif present(df, N.SRTM1_ELEVATION):
                 df = smooth_elevation(df, smooth=self.smooth)
                 # not used and may be nulls, breaking geo
                 df.drop(columns=[N.ALTITUDE], errors='ignore', inplace=True)
