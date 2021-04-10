@@ -1,6 +1,6 @@
-
 from logging import getLogger
 
+import numpy as np
 from scipy.interpolate import UnivariateSpline
 
 from .frame import present
@@ -25,8 +25,14 @@ def smooth_elevation(df, smooth=4):
         # 2 - no guarantee of consistency between routes (or even on the same routine retracing a path)
         spline = UnivariateSpline(unique[N.DISTANCE], unique[N.SRTM1_ELEVATION], s=len(unique) * smooth)
         df[N.ELEVATION] = spline(df[N.DISTANCE])
-        df[N.GRADE] = (spline.derivative()(df[N.DISTANCE]) / 10)  # distance in km
+        df[N.GRADE] = (spline.derivative()(df[N.DISTANCE]) / 10)  # distance in km, but percentage
         df[N.GRADE] = df[N.GRADE].rolling(5, center=True).median().ffill().bfill()
         # avoid extrapolation / interpolation
         df.loc[df[N.SRTM1_ELEVATION].isna(), [N.ELEVATION]] = None
     return df
+
+
+def add_gradient(df):
+    # not used above, but used for barometer based data
+    df[N.GRADE] = df[N.ELEVATION].rolling(3, center=True).mean().diff() / (10 * df[N.DISTANCE].diff())
+    df[N.GRADE].replace([np.inf, -np.inf], np.nan, inplace=True)

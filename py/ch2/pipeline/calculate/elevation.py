@@ -10,7 +10,7 @@ from ...common.geo import utm_srid
 from ...common.math import is_nan
 from ...data import Statistics
 from ...data.activity import add_delta_azimuth
-from ...data.elevation import smooth_elevation
+from ...data.elevation import smooth_elevation, add_gradient
 from ...data.frame import present
 from ...names import N, T, U
 from ...sql import StatisticJournalType, ActivityJournal, StatisticJournal
@@ -51,6 +51,7 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
             if device and device.value == 'Edge_130' and present(df, N.ALTITUDE):
                 log.info(f'Using {N.ALTITUDE} directly (barometer)')
                 df[N.ELEVATION] = df[N.ALTITUDE]
+                add_gradient(df)
             elif present(df, N.SRTM1_ELEVATION):
                 df = smooth_elevation(df, smooth=self.smooth)
                 # not used and may be nulls, breaking geo
@@ -58,6 +59,7 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
             elif present(df, N.ALTITUDE):
                 log.warning(f'Using {N.ALTITUDE} as {N.ELEVATION}')
                 df[N.ELEVATION] = df[N.ALTITUDE]
+                add_gradient(df)
             return add_delta_azimuth(df)
         else:
             return None
