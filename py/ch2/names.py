@@ -10,6 +10,7 @@ MED_WINDOW = '60s'
 class Units:
 
     BPM = 'bpm'
+    C = 'C'
     D = 'd'
     DEG = 'deg'
     FF = 'FF'
@@ -172,6 +173,7 @@ class Titles(TitlesBase):
     STEPS = 'Steps'
     SRTM1_ELEVATION = 'SRTM1 Elevation'
     REST_HR = 'Rest HR'
+    TEMPERATURE = 'Temperature'
     TIME = 'Time'
     TIME_IN_Z = 'Time in Z%d'
     TIME_IN_Z_ANY = 'Time in Z%'

@@ -113,7 +113,8 @@ class Profile:
                 'enhanced_speed': (T.SPEED, U.MS, StatisticJournalType.FLOAT),
                 'distance': (T.DISTANCE, U.KM, StatisticJournalType.FLOAT),
                 'enhanced_altitude': (T.ALTITUDE, U.M, StatisticJournalType.FLOAT),
-                'cadence': (T.CADENCE, U.RPM, StatisticJournalType.INTEGER)}
+                'cadence': (T.CADENCE, U.RPM, StatisticJournalType.INTEGER),
+                'temperature': (T.TEMPERATURE, U.C, StatisticJournalType.FLOAT)}
 
     def _load_read_pipeline(self, s):
         sport_to_activity = self._sport_to_activity()
