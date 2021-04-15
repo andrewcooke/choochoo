@@ -26,7 +26,8 @@ class LogTestCase(TestCase):
             'sentinelsat': DEBUG,
             'werkzeug': DEBUG,
             'ch2': DEBUG,
-            '__main__': DEBUG
+            '__main__': DEBUG,
+            'tests': DEBUG
         })
 
 

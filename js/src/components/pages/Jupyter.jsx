@@ -50,7 +50,7 @@ export default function Jupyter(props) {
 
     useEffect(() => {
         setParams(null);
-        csrfFetch('/api/analysis/parameters')
+        csrfFetch('/api/jupyter/parameters')
             .then(handleJson(history, setParams, setError));
     }, [1]);
 

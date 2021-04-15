@@ -76,26 +76,23 @@ Set the name on the activity at the given time (again, using the dot syntax).
     args = config.args
     if args[SHOW] and args[SET]:
         raise Exception(f'Give at most one of {mm(SHOW)} and {mm(SET)}')
-    cmd = args[SUB_COMMAND]
-    with config.db.session_context() as s:
+    return do_search(config.db, args[QUERY], cmd=args[SUB_COMMAND], show=args[SHOW], set=args[SET])
+
+
+def do_search(db, words, cmd=ACTIVITIES, show=None, set=None):
+    with db.session_context() as s:
         if cmd == TEXT:
             query = ' and '.join([f'(ActivityTopic.name = "{word}" or ActivityTopic.notes = "{word}")'
-                                  for word in args[QUERY]])
+                                  for word in words])
             conversion = activity_conversion
         else:
-            query = ' '.join(args[QUERY])
+            query = ' '.join(words)
             if cmd == ACTIVITIES:
                 conversion = activity_conversion
             else:
                 conversion = None
         results = constrained_sources(s, query, conversion=conversion)
-        process_results(s, results, show=args[SHOW], set=args[SET], activity=bool(conversion))
-
-
-def text_search(s, words):
-    query = ' and '.join([f'(ActivityTopic.name = "{word}" or ActivityTopic.notes = "{word}")'
-                          for word in words])
-    return constrained_sources(s, query, activity_conversion)
+        process_results(s, results, show=show, set=set, activity=bool(conversion))
 
 
 def process_results(s, sources, show=None, set=None, activity=False):

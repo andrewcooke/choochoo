@@ -1,9 +1,8 @@
 from logging import getLogger
 
-from sqlalchemy import func, distinct
+from sqlalchemy import distinct
 
 from ..json import JsonResponse
-from ...commands.search import text_search
 from ...data import constrained_sources
 from ...data.constraint import activity_conversion
 from ...diary.model import VALUE, UNITS, DB
@@ -11,7 +10,7 @@ from ...lib import time_to_local_time
 from ...lib.utils import parse_bool
 from ...names import N
 from ...pipeline.calculate import ActivityCalculator
-from ...sql import StatisticName, ActivityGroup, StatisticJournal, Source, ActivityTopicField, ActivityTopic
+from ...sql import StatisticName, StatisticJournal, Source, ActivityTopic
 from ...sql.tables.source import SourceType
 
 log = getLogger(__name__)
@@ -56,7 +55,9 @@ def search(s, query, advanced):
     if advanced:
         activities = constrained_sources(s, query, conversion=activity_conversion)
     else:
-        activities = text_search(s, query)
+        query = ' and '.join([f'(ActivityTopic.name = "{word}" or ActivityTopic.notes = "{word}")'
+                              for word in query.split()])
+        activities = constrained_sources(s, query, activity_conversion)
     return [expand_activity(s, activity) for activity in sorted(activities, key=lambda x: x.start)]
 
 

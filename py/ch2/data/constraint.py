@@ -181,9 +181,9 @@ def build_constraints(s, ast, attrs, conversion=None):
 @trace
 def build_join(op, lcte, rcte):
     if op == OR:
-        return aliased(union(lcte, rcte)).select()
+        return union(lcte, rcte).subquery().select()
     else:
-        return aliased(intersect(lcte, rcte)).select()
+        return intersect(lcte, rcte).subquery().select()
 
 
 @trace
@@ -215,9 +215,9 @@ def build_comparisons(s, ast, with_conversion):
         if op == '=':
             return get_source_ids_for_null(s, owner, name, group, with_conversion), True
         else:
-            return aliased(union(*[get_source_ids(s, owner, name, op, value, group, type)
-                                   for type in StatisticJournalType
-                                   if type != StatisticJournalType.STATISTIC])).select(), False
+            return union(*[get_source_ids(s, owner, name, op, value, group, type)
+                           for type in StatisticJournalType
+                           if type != StatisticJournalType.STATISTIC]).subquery().select(), False
     elif isinstance(value, str):
         return get_source_ids(s, owner, name, op, value, group, StatisticJournalType.TEXT), False
     elif isinstance(value, dt.datetime):
@@ -225,7 +225,7 @@ def build_comparisons(s, ast, with_conversion):
     else:
         qint = get_source_ids(s, owner, name, op, value, group, StatisticJournalType.INTEGER)
         qfloat = get_source_ids(s, owner, name, op, value, group, StatisticJournalType.FLOAT)
-        return aliased(union(qint, qfloat)).select(), False
+        return union(qint, qfloat).subquery().select(), False
 
 
 def get_op_attr(op, value):
@@ -303,14 +303,14 @@ def activity_conversion(s, source_ids, null):
 
     # for most queries, we have some source IDs and we want to know if they are activityjournal ids
     # (which we pass through) or activitytopicjournal ids (in which case we convert to activityjournal).
-    source_ids = source_ids.cte()
+    # source_ids = source_ids.cte()
     q_direct = s.query(ActivityJournal.id). \
-        filter(ActivityJournal.id.in_(source_ids))
+        filter(ActivityJournal.id.in_(source_ids.subquery()))
     q_via_topic = s.query(ActivityJournal.id). \
         join(FileHash). \
         join(ActivityTopicJournal). \
-        filter(ActivityTopicJournal.id.in_(source_ids))
-    q = aliased(union(q_direct, q_via_topic)).select()
+        filter(ActivityTopicJournal.id.in_(source_ids.subquery()))
+    q = union(q_direct, q_via_topic).subquery().select()
 
     if null:
         # for 'is null' queries we are really asking if the data are missing (since values are not null constrained)
