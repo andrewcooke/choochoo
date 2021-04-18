@@ -33,7 +33,7 @@ def all_activities(start, finish):
                              by_name(ActivityCalculator, N.ACTIVE_DISTANCE, N.ACTIVE_TIME).df
                          for aj in s.query(ActivityJournal).
                              filter(ActivityJournal.start >= local_date_to_time(start),
-                                    ActivityJournal.start < local_date_to_time(finish)).
+                                    ActivityJournal.start <= local_date_to_time(finish)).
                              order_by(ActivityJournal.start.desc()).all())
             if len(data[N.SPHERICAL_MERCATOR_X].dropna()) > 10]
     print(f'Found {len(maps)} activities')

@@ -93,6 +93,7 @@ def do_search(db, words, cmd=ACTIVITIES, show=None, set=None):
                 conversion = None
         results = constrained_sources(s, query, conversion=conversion)
         process_results(s, results, show=show, set=set, activity=bool(conversion))
+        return results  # for tests
 
 
 def process_results(s, sources, show=None, set=None, activity=False):

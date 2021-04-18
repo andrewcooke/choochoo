@@ -212,7 +212,7 @@ def sectors_from_hulls(s, sector_group):
                    Sector.start == None,
                    Sector.finish == None,
                    Sector.owner == short_cls(ClusterCalculator)).all():
-        add_start_finish(s, id)
+        add_start_finish(s, id[0])
     delete_tmp_fragments(s, sector_group)
     log.info(f'Finished finding sectors for clusters for {sector_group.title}')
 

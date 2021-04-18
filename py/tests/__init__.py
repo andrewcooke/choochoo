@@ -1,5 +1,8 @@
 import datetime as dt
+from contextlib import contextmanager
 from logging import getLogger, WARNING, INFO, DEBUG
+from shutil import rmtree
+from tempfile import mkdtemp
 from unittest import TestCase
 
 from ch2 import PROGNAME
@@ -41,3 +44,16 @@ def random_test_user(args=(mm(USER), 'postgres')):
     log.info('Creating tables')
     Base.metadata.create_all(user_config.db.engine)
     return user
+
+
+@contextmanager
+def TempDirOnSuccess():
+    dir = mkdtemp()
+    try:
+        yield dir
+    except:
+        log.warning(f'Leaving {dir} for inspection')
+        dir = None
+        raise
+    finally:
+        if dir: rmtree(dir)

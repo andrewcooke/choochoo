@@ -1,16 +1,15 @@
 
 from logging import getLogger
-from tempfile import TemporaryDirectory
 
 from sqlalchemy import create_engine, Integer, Column, union, select
-from sqlalchemy.orm import declarative_base, sessionmaker, aliased
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 from ch2 import upload, BASE
-from ch2.commands.args import V, bootstrap_db, DEV, UPLOAD
+from ch2.commands.args import V, bootstrap_db, DEV, UPLOAD, TEXT
 from ch2.commands.search import do_search
 from ch2.common.args import m, mm
 from ch2.config.profiles.acooke import acooke
-from tests import LogTestCase, random_test_user
+from tests import LogTestCase, random_test_user, TempDirOnSuccess
 
 log = getLogger(__name__)
 
@@ -20,16 +19,17 @@ class TestSearch(LogTestCase):
     def test_search(self):
 
         user = random_test_user()
-        with TemporaryDirectory() as f:
+        with TempDirOnSuccess() as f:
             config = bootstrap_db(user, mm(BASE), f, m(V), '5', configurator=acooke)
 
             with self.assertRaisesRegex(Exception, 'could not be validated'):
                 do_search(config.db, ['active-distance > 100'])
 
             config = bootstrap_db(user, mm(BASE), f, m(V), '5', mm(DEV), UPLOAD,
-                                  'data/test/source/personal/25822184777.fit')
+                                  'data/test/source/personal/2018-03-04-qdp.fit')
             upload(config)
-            do_search(config.db, ['active-distance > 100'])
+            self.assertTrue(do_search(config.db, ['active-distance > 100']))
+            self.assertTrue(do_search(config.db, ['2018-03-04T07:16:33'], cmd=TEXT))
 
 
 class SQLAlchemyTest(LogTestCase):
