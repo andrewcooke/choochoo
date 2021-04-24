@@ -1,4 +1,5 @@
 from logging import getLogger
+from math import sqrt
 
 import pandas as pd
 from geoalchemy2.shape import to_shape
@@ -51,6 +52,7 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
             if device and device.value == 'Edge_130' and present(df, N.ALTITUDE):
                 log.info(f'Using {N.ALTITUDE} directly (barometer)')
                 df[N.ELEVATION] = df[N.ALTITUDE]
+                if present(df, N.SRTM1_ELEVATION): self.__improve(df)
                 add_gradient(df)
             elif present(df, N.SRTM1_ELEVATION):
                 df = smooth_elevation(df, smooth=self.smooth)
@@ -63,6 +65,18 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
             return add_delta_azimuth(df)
         else:
             return None
+
+    def __improve(self, df):
+        correction = df[N.SRTM1_ELEVATION].median() - df[N.ALTITUDE].median()
+        log.info(f'Correcting {N.ELEVATION} by {correction:.1f}m')
+        df[N.ELEVATION] += correction
+        sd = sqrt((df[N.ELEVATION] - df[N.SRTM1_ELEVATION]).var())
+        if sd > 10:
+            log.warning(f'Large difference between measured altitude and SRTM1 data ({sd:.1f}m)')
+            log.warning(f'Replacing measured altitude with SRTM1 data')
+            df[N.ELEVATION] = df[N.SRTM1_ELEVATION]
+        else:
+            log.info(f'SD of difference between corrected altitude and SRTM1 is {sd:.1f}m')
 
     def _copy_results(self, s, ajournal, loader, df):
         for time, row in df.iterrows():

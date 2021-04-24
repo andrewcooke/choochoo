@@ -190,6 +190,7 @@ class Data:
             self.df[name] = self.df[name] * scale
         if median:
             self.df[name] = self.df[name].rolling(median, min_periods=1).median()
+        return self
 
     def __rename(self, name, new_name, scale=1.0, median=None):
         log.debug(f'{name} -> {new_name}')
