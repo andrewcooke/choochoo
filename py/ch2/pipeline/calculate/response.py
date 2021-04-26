@@ -165,7 +165,7 @@ class ResponseCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
     def __read_data(self, s):
         from ..owners import ImpulseCalculator
         name = self.prefix + SPACE + N.HR_IMPULSE_10
-        df = Statistics(s, with_source=True).by_name(ImpulseCalculator, name).with_. \
+        df = Statistics(s, with_sources=True).by_name(ImpulseCalculator, name).with_. \
             rename({name: N.HR_IMPULSE_10, N._src(name): N._src(N.HR_IMPULSE_10)}).df
         name = N._cov(N.HEART_RATE)
         df = Statistics(s).by_name(ActivityReader, name).with_. \

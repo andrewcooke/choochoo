@@ -14,7 +14,7 @@ from ..data import read_query
 from ..data import session, present
 from ..lib import time_to_local_time
 from ..lib.utils import timing
-from ..names import Names as N, like, MED_WINDOW, SPACE
+from ..names import Names as N, like, MED_WINDOW, SPACE, simple_name
 from ..sql import StatisticName, ActivityGroup, StatisticJournal, ActivityTimespan, ActivityJournal, Source
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ..sql.types import short_cls
@@ -24,7 +24,7 @@ log = getLogger(__name__)
 
 class Statistics:
 
-    def __init__(self, s, start=None, finish=None, sources=None, with_timespan=False, with_source=False,
+    def __init__(self, s, start=None, finish=None, sources=None, with_timespan=False, with_sources=False,
                  activity_journal=None, activity_group=None, bookmarks=None, warn_over=1):
         '''
         Specify any general constraints when constructing the object, then request particular statistics
@@ -44,7 +44,7 @@ class Statistics:
                 activity_journal = ActivityJournal.at(s, activity_journal, activity_group=activity_group)
             self.__sources.append(activity_journal)
         self.__with_timespan = with_timespan
-        self.__with_source = with_source
+        self.__with_sources = with_sources
         self.__activity_group = activity_group
         self.__warn_over = warn_over
         self.__statistic_names = {}
@@ -79,7 +79,7 @@ class Statistics:
 
     def __columns(self, type_class, label):
         columns = [type_class.time.label(N.INDEX), type_class.value.label(label)]
-        if self.__with_source:
+        if self.__with_sources:
             columns += [type_class.source_id.label(N._src(label))]
         return columns
 
@@ -286,6 +286,45 @@ class Data:
                 raise Exception(f'{name} already exists')
             columns = like(pattern, self.df.columns)
             self.__coalesce(columns, name, delete=delete)
+        return self
+
+    def __any_source(self):
+        prefix = simple_name(N._src(''))
+        for name in self.df.columns:
+            if name.startswith(prefix):
+                return name
+        raise Exception('No sources (use with_sources=True)')
+
+    def __concat_sources(self, name, gap, drop_index):
+        src = self.__any_source()
+        self.df.dropna(subset=[src], inplace=True)
+        self.df.sort_index(inplace=True)
+        self.df['index'] = self.df.index
+        irows = list(self.df.groupby(src).agg({'index': ['min', 'max']}).iterrows())
+        ilo, ihi = zip(*[row[1] for row in reversed(irows)])
+        for iend, istart in zip(ihi[1:], ilo):
+            end = self.df[name][self.df['index'] == iend][0]
+            start = self.df[name][self.df['index'] == istart][0]
+            subset = self.df['index'] > iend
+            self.df.loc[subset, name] = self.df.loc[subset, name] - (start - end - gap)
+        if drop_index:
+            self.df.drop(columns=['index'], inplace=True)
+
+    def concat(self, name, gap):
+        self.__concat_sources(name, gap, True)
+        return self
+
+    def concat_index(self, gap):
+        self.__concat_sources('index', dt.timedelta(seconds=gap), False)
+        self.df.set_index('index', inplace=True)
+        return self
+
+    def without_sources(self):
+        prefix = simple_name(N._src(''))
+        for name in self.df.columns:
+            if name.startswith(prefix):
+                log.debug(f'Dropping {name}')
+                self.df.drop(columns=[name], inplace=True)
         return self
 
 

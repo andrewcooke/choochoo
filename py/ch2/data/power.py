@@ -91,9 +91,6 @@ def add_power_estimate(df):
     energy = (df[N.POWER_ESTIMATE].iloc[1:] * df[N.DELTA_TIME].iloc[1:]).cumsum()
     df[N.ENERGY] = 0.0
     df.loc[:, [N.ENERGY]].iloc[1:] = energy
-    # A value is trying to be set on a copy of a slice from a DataFrame.
-    # Try using .loc[row_indexer,col_indexer] = value instead
-    # df.iloc[1:][N.ENERGY] = energy
     return df
 
 

@@ -3,7 +3,6 @@ from bokeh.io import show, output_file
 from bokeh.layouts import gridplot
 from scipy.integrate import trapz
 from scipy.interpolate import interp1d
-from scipy.stats import stats
 
 from ch2.data import *
 from ch2.data.impulse import hr_zone, impulse_10
@@ -12,6 +11,7 @@ from ch2.jupyter.decorator import template
 from ch2.names import N
 from ch2.pipeline.calculate.impulse import HRImpulse
 from ch2.pipeline.owners import *
+from ch2.sql import ActivityJournal
 
 
 @template
@@ -31,13 +31,19 @@ def power_v_hr(local_time, activity_group):
     Open a connection to the database and load the data we require.
     '''
 
+    local_times = ['2021-04-18 05:50:52', '2021-04-11 05:52:16', '2021-04-03 05:59:03']
     dt = 60
 
     s = session('-v2')
-    df = Statistics(s, activity_journal=local_time, activity_group=activity_group, with_timespan=True). \
-        by_name(ElevationCalculator, N.ELEVATION, N.GRADE). \
+    # stats = Statistics(s, activity_journal=local_time, activity_group=activity_group, with_timespan=True)
+    sources = [ActivityJournal.at(s, local_time, activity_group=activity_group) for local_time in local_times]
+    stats = Statistics(s, sources=sources, with_timespan=True, with_sources=True)
+    df = stats.by_name(ElevationCalculator, N.ELEVATION, N.GRADE). \
         by_name(ActivityReader, N.DISTANCE, N.SPEED, N.HEART_RATE). \
-        with_.transform(N.DISTANCE, scale=1000).df
+        with_.transform(N.DISTANCE, scale=1000). \
+        concat(N.DISTANCE, 100). \
+        concat_index(300). \
+        without_sources().df
     # TODO - change default to use just the N.HR_IMPULSE_10
     fthr_df = Statistics(s).by_name(Constant, N.FTHR).df
     hr_zones = hr_zones_from_database(s, local_time, activity_group)
@@ -62,11 +68,11 @@ def power_v_hr(local_time, activity_group):
         mdf = add_energy_budget(mdf, mass)
         mdf = add_loss_estimate(mdf, mass, cda=params['cda'], crr=params['crr'])
         mdf = add_power_estimate(mdf)
+        mdf[N.POWER_ESTIMATE].clip(lower=0, inplace=True)
         return mdf
 
     def cost(mdf):
-        # slope, intercept, r_value, p_value, std_err = stats.linregress(mdf[N.HR_IMPULSE_10], mdf[N.POWER_ESTIMATE])
-        # return -1 * r_value   # negative because minimizing
+        # this fits a line through the origin (the param 'zero' is the offset, effectively)
         mdf.dropna(inplace=True)
         x = np.array(mdf[N.HR_IMPULSE_10])[:, np.newaxis]
         y = mdf[N.POWER_ESTIMATE]
