@@ -111,11 +111,11 @@ class SQLAlchemyTest(TestCase):
                 filter(StatisticName.name.like('start')). \
                 filter(StatisticJournalTimestamp.value > value)
             q_direct = s.query(ActivityJournal.id). \
-                filter(ActivityJournal.id.in_(q.subquery()))
+                filter(ActivityJournal.id.in_(q.subquery().select()))
             q_via_topic = s.query(ActivityJournal.id). \
                 join(FileHash). \
                 join(ActivityTopicJournal). \
-                filter(ActivityTopicJournal.id.in_(q.subquery()))
+                filter(ActivityTopicJournal.id.in_(q.subquery().select()))
             constraints = union(q_direct, q_via_topic).subquery().select()
             return s.query(Source).filter(Source.id.in_(constraints))
 
