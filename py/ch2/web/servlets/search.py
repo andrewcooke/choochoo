@@ -53,11 +53,13 @@ class Search:
 
 def search(s, query, advanced):
     if advanced:
+        import pdb; pdb.set_trace()
         activities = constrained_sources(s, query, conversion=activity_conversion)
     else:
         query = ' and '.join([f'(ActivityTopic.name = "{word}" or ActivityTopic.notes = "{word}")'
                               for word in query.split()])
         activities = constrained_sources(s, query, activity_conversion)
+    log.debug(f'Have {len(activities)} activities')
     return [expand_activity(s, activity) for activity in sorted(activities, key=lambda x: x.start)]
 
 

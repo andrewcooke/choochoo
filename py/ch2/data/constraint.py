@@ -5,12 +5,12 @@ from logging import getLogger
 from re import escape
 
 from sqlalchemy import union, intersect, not_
-from sqlalchemy.orm import aliased
+from sqlalchemy.dialects import postgresql
 
+from ..common.names import UNDEF
 from ..lib import local_time_to_time, to_time
 from ..lib.peg import transform, choice, pattern, sequence, Recursive, drop, exhaustive, single
 from ..lib.utils import timing
-from ..common.names import UNDEF
 from ..sql import ActivityJournal, StatisticName, StatisticJournalType, ActivityGroup, ActivityTopicJournal, Source, \
     FileHash, StatisticJournal
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
@@ -107,7 +107,9 @@ def constrained_sources(s, query, conversion=None):
     log.debug('Checked constraints')
     with timing('build SQL'):
         q = build_source_query(s, ast, attrs, conversion=conversion)
-    log.debug(f'Query: {q}')
+    sql = q.statement.compile(dialect=postgresql.dialect())
+    log.debug(f'Query: {sql}')
+    log.debug(f'Params: {sql.params}')
     with timing('execute SQL'):
         return q.all()
 
