@@ -82,4 +82,5 @@ rm -f docker-compose.yml
 cp docker-compose-ch2-jp-pg-persist.yml docker-compose.yml
 sed -i s/DEV/$DEV/ docker-compose.yml 
 sed -i s/VERSION/$VERSION/ docker-compose.yml
+docker volume create --name=choochoo-data || true
 TZ=$TZ ID="$(id -u):$(id -g)" docker-compose up

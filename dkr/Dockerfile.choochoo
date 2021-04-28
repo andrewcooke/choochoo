@@ -1,0 +1,44 @@
+FROM python:3.9.1-slim-buster
+
+ARG MOUNT
+
+RUN mkdir -m777 /data
+WORKDIR /tmp
+RUN apt-get update
+RUN apt-get -y install \
+    sqlite3 \
+    libsqlite3-dev \
+    libpq-dev \
+    npm \
+    gcc \
+    emacs \
+    gdal-bin \
+    libgdal-dev
+COPY js/package.json js/package-lock.json js/webpack.config.js js/.babelrc      /app/js/
+
+COPY dkr/requirements.txt /tmp
+RUN ${MOUNT} \
+    pip install --upgrade pip && \
+    pip install wheel && \
+    pip install -r requirements.txt
+
+WORKDIR /app/js
+RUN npm install -g npm@next
+RUN npm install
+# do this after install so that we use a separate layer
+COPY js/src /app/js/src
+RUN npm run build
+
+WORKDIR /app/py
+COPY py/ch2 /app/py/ch2
+COPY py/setup.py py/MANIFEST.in /app/py/
+RUN pip install .
+
+WORKDIR /app
+COPY data/sdk/Profile.xlsx /app
+RUN ch2 package-fit-profile ./Profile.xlsx
+
+WORKDIR /
+EXPOSE 8000 8001
+COPY dkr/start-docker.sh .
+CMD ./start-docker.sh

@@ -1,0 +1,55 @@
+version: '3'
+services:
+  ch2:
+    build:
+      context: ./
+      dockerfile: ./dkr/Dockerfile.choochoo
+      args:
+        MOUNT: ${MOUNT}
+    container_name: 'choochoo'
+    user: ${ID}
+    environment:
+      - TZ=${TZ}
+    ports:
+      - 8000:8000
+    volumes:
+      - 'choochoo-data:/data'
+    depends_on:
+      - 'pg'
+      - 'jp'
+  jp:
+    container_name: 'jupyter'
+    build:
+      context: ./
+      dockerfile: ./dkr/Dockerfile.jupyterhub
+      args: 
+        MOUNT: ${MOUNT}
+    command: jupyterhub -f /app/py/jupyterhub_config.py
+    environment:
+      - NB_UID=0
+      - TZ=${TZ}
+    ports:
+      - 8002:8002
+    volumes:
+      - choochoo-data:/data
+  pg:
+    build:
+      context: ./
+      dockerfile: ./dkr/Dockerfile.postgres
+      args: 
+        PG_CONFIG_FILE: ${PG_CONFIG_FILE}
+    container_name: 'postgresql'
+    shm_size: '1g'
+    command: '-c config_file=/etc/postgresql/postgresql.conf'
+    environment:
+      - 'POSTGRES_HOST_AUTH_METHOD=trust'
+    volumes:
+      - 'postgresql-data:/var/lib/postgresql/data'
+      - 'postgresql-log:/var/log'
+volumes:
+  choochoo-data:
+    external: false
+  postgresql-data:
+    external: false
+  postgresql-log:
+    external: false

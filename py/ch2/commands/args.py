@@ -23,7 +23,7 @@ URI_PREVIOUS = 'postgresql://{user}:{passwd}@{db-bind}:{db-port}/activity-{versi
 PROGNAME = 'ch2'
 
 WEB_PORT = 8000
-JUPYTER_PORT = 8001
+JUPYTER_PORT = 8002
 
 CONSTANTS = 'constants'
 DATABASE = 'database'
