@@ -44,7 +44,6 @@ class SQLAlchemyTest(TestCase):
         class FileHash(Base):
             __tablename__ = 'file_hash'
             id = Column(Integer, primary_key=True)
-            hash = Column(Text, nullable=False, index=True, unique=True)
 
         class Source(Base):
             __tablename__ = 'source'
