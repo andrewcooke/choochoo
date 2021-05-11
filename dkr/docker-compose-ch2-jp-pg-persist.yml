@@ -9,7 +9,7 @@ services:
     ports:
       - '127.0.0.1:8000:8000'
     volumes:
-      - 'choochoo-data:/data'
+      - '~/.ch2:/data'
     depends_on:
       - 'pg'
       - 'jp'

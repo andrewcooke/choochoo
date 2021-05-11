@@ -30,7 +30,7 @@ done
 docker volume rm -f "postgresql-log$DEV"
 docker volume create "postgresql-log$DEV"
 docker volume ls
-docker run --rm -i -v "postgresql-log$DEV":/var/log postgres:11.8-alpine /bin/bash <<EOF
+docker run --rm -i -v "postgresql-log$DEV":/var/log postgis/postgis:13-3.0-alpine /bin/bash <<EOF
 mkdir /var/log/postgresql
 chown postgres /var/log/postgresql
 EOF

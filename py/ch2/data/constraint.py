@@ -307,11 +307,11 @@ def activity_conversion(s, source_ids, null):
     # (which we pass through) or activitytopicjournal ids (in which case we convert to activityjournal).
     # source_ids = source_ids.cte()
     q_direct = s.query(ActivityJournal.id). \
-        filter(ActivityJournal.id.in_(source_ids.subquery()))
+        filter(ActivityJournal.id.in_(source_ids.subquery().select()))
     q_via_topic = s.query(ActivityJournal.id). \
         join(FileHash). \
         join(ActivityTopicJournal). \
-        filter(ActivityTopicJournal.id.in_(source_ids.subquery()))
+        filter(ActivityTopicJournal.id.in_(source_ids.subquery().select()))
     q = union(q_direct, q_via_topic).subquery().select()
 
     if null:
