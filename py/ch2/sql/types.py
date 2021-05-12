@@ -21,6 +21,7 @@ CLS_CACHE = {}
 class Cls(TypeDecorator):
 
     impl = Text
+    cache_ok = True
 
     def process_literal_param(self, cls, dialect):
         return long_cls(cls)
@@ -55,6 +56,7 @@ def lookup_cls(value):
 class ShortCls(TypeDecorator):
 
     impl = Text
+    cache_ok = True
 
     def process_literal_param(self, cls, dialect):
         return short_cls(cls)
@@ -80,6 +82,7 @@ class NullText(TypeDecorator):
     '''
 
     impl = Text
+    cache_ok = True
 
     def process_literal_param(self, value, dialect):
         return str(value)
@@ -92,6 +95,7 @@ class NullText(TypeDecorator):
 class Json(TypeDecorator):
 
     impl = Text
+    cache_ok = True
 
     def process_literal_param(self, value, dialect):
         return dumps(value)
@@ -105,6 +109,7 @@ class Json(TypeDecorator):
 class Sched(TypeDecorator):
 
     impl = Text
+    cache_ok = True
 
     def process_literal_param(self, sched, dialect):
         from ..lib.schedule import Schedule
@@ -125,6 +130,8 @@ class Sched(TypeDecorator):
 
 class OpenSched(Sched):
 
+    cache_ok = True
+
     def process_literal_param(self, sched, dialect):
         from ..lib.schedule import Schedule
         if sched is None:
@@ -141,6 +148,7 @@ class OpenSched(Sched):
 class Sort(TypeDecorator):
 
     impl = Integer
+    cache_ok = True
 
     def process_literal_param(self, value, dialect):
         if callable(value):
@@ -153,6 +161,7 @@ class Sort(TypeDecorator):
 class Name(TypeDecorator):
 
     impl = Text
+    cache_ok = True
 
     def process_literal_param(self, value, dialect):
         return simple_name(value)
@@ -163,6 +172,7 @@ class Name(TypeDecorator):
 class QualifiedName(TypeDecorator):
 
     impl = Text
+    cache_ok = True
 
     def process_literal_param(self, value, dialect):
         if value and ':' in value:
@@ -253,6 +263,7 @@ def name_and_title(kargs):
 class UTC(TypeDecorator):
 
     impl = DateTime(timezone=True)
+    cache_ok = True
 
     def process_result_value(self, value, dialect):
         if value is None:

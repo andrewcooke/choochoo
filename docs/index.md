@@ -3,10 +3,10 @@
 
 * [Danger Ahead](#danger-ahead)
 * [OS-Specific Instructions](#os-specific-instructions)
+  * [Linux (OpenSuse)](#linux-opensuse)
   * [Github Codespaces](#github-codespaces)
   * [MacOS](#macos)
   * [Ubuntu](#ubuntu)
-  * [Other Linux](#other-linux)
   * [Windows](#windows)
 * [General Guidance](#general-guidance)
 * [Initial Configuration](#initial-configuration)
@@ -26,12 +26,31 @@ direction. Good luck!
 
 ## OS-Specific Instructions
 
+### Linux (OpenSuse)
+
+This is what I have to do, on my development machine.  For me, once all
+required software packages are installed, it is quite simple:
+
+    > dkr/make-images.sh
+    > dkr/make-postgresql-log-volume.sh --dev
+    > dkr/make-postgresql-data-volume.sh --dev
+
+At this point, if I am ecovering from a backup, I update the `~/.ch2`
+directory and the Postgres volume (ie replace the contents of the new volume
+just created with the old volume from backup).  Then run
+
+    > dkr/run-ch2-jp-pg-persist.sh --dev
+
+The GUI should then be visible at http://localhost:8000
+
+The above uses Docker and Docker Compose.  It keeps logs and FIT files in
+`~/.ch2` and the database in a Docker volume.
+
 ### Github Codespaces
 
-*Warning - Experimental*
+*Warning - Experimental and Unsupported (contributed by 3rd party)*
 
-If you have access to Github Codespaces, This is the quickest way to get up
-and running with a development environment. Clone the Choochoo repo to your
+If you have access to Github Codespaces, clone the Choochoo repo to your
 account, select the branch you want to use, and run the "Code -> Open with
 Codespaces" flow.  Once in there, open up a terminal and move on to the Ubuntu
 instructions.
@@ -66,9 +85,9 @@ vm:
 
 ### Ubuntu
 
-The following started up the system on an Ubuntu 20 virtual machine (new
-install, with only gcc, perl and make already added to support the VirtualBox
-client tools):
+The following (some time ago) started up the system on an Ubuntu 20 virtual
+machine (new install, with only gcc, perl and make already added to support
+the VirtualBox client tools):
 
 ```
 git clone https://github.com/andrewcooke/choochoo.git
@@ -98,7 +117,7 @@ sudo usermod -aG docker $USER
 
 # build and start the docker images (takes a long time)
 cd choochoo
-FORCE_NEW_DISK=1 dkr/run-ch2-jp-pg-persist.sh --reset
+dkr/run-ch2-jp-pg-persist.sh --reset
 
 # eventually choochoo is visible at http://0.0.0.0:8000/
 
@@ -106,32 +125,22 @@ Ctrl-C
 dkr/run-ch2-jp-pg-persist.sh   # normal use
 ```
 
-### Other Linux
-
-See Ubuntu above.  Other than installing different packages, it *should* work
-(I develop in OpenSuse).
-
 ### Windows
 
 No idea.  Sorry.
 
 ## General Guidance
 
-The system runs within docker.  It requires three images and three virtual
-volumes.
+The system runs within docker.  It requires three images and two virtual
+volumes.  The permanent data are stored at `~/.ch2` and mapped into docker.
 
 Clone the repo (the master branch is more likely to work, but the dev branch
 has the latest code).  In the dkr directory are various scripts (in general a
 script will display help if given the `-h` argument).
 
-Once (only) you need to create a disk (virtual volume) where the permanent
-data (FIT files) are stored:
-
-    FORCE_NEW_DISK=1 dkr/make-choochoo-data-volume.sh
-
 Do not repeat this or you will lose all previous uploads.
 
-Then use `run-ch2-jp-pg-persist.sh` to start everything.  Use `--reset` to
+Use `run-ch2-jp-pg-persist.sh` to start everything.  Use `--reset` to
 build disks (virtual volumes) for the first use.
 
     dkr/run-ch2-jp-pg-persist.sh --reset
