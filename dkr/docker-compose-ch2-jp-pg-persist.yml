@@ -27,7 +27,7 @@ services:
     ports:
       - '127.0.0.1:8001:8888'
     volumes:
-      - 'choochoo-data:/data'
+      - '~/.ch2:/data'
   pg:
     image: 'postgis/postgis:13-3.0-alpine'
     container_name: 'postgresql'
