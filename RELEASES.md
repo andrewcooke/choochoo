@@ -1,6 +1,11 @@
 
 ## Latest Changes
 
+### v0.39.0
+
+Lots of small fixes and an updated FIT file parser (generated from the latest
+ANT specs).  Simplified an dupdated install / usage instructions.
+
 ### v0.38.0
 
 Adding some graphics to web.  Maps + plots.  Also, easy definition of sectors,
