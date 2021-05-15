@@ -50,11 +50,12 @@ run apt-get -y install libpq-dev gcc emacs
 EOF
 
 # python install of ch2 package
+# https://pythonspeed.com/articles/docker-cache-pip-downloads/
 cat >> $FILE <<EOF
 workdir /app/py
 copy py/ch2 /app/py/ch2
 copy py/setup.py py/MANIFEST.in /app/py/
-run pip install .
+run --mount=type=cache,target=~/.cache/pip pip install .
 EOF
 
 # revert directory where tree is mounted

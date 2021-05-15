@@ -1,6 +1,7 @@
 #!/bin/bash
 
 PYTHON=python3.9
+#PYTHON=python3.8
 
 pushd py
 rm -fr env

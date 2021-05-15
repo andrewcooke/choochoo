@@ -20,7 +20,9 @@ services:
     command: 'start-notebook.sh
     --NotebookApp.notebook_dir=/data/VERSION/notebook
     --NotebookApp.token=''''
-    --NotebookApp.allow_root=True'
+    --NotebookApp.allow_root=True
+    --NotebookNotary.data_dir=/data/VERSION/notebook
+    --NotebookApp.disable_check_xsrf=True'
     environment:
       - NB_UID=0
       - TZ=${TZ}
