@@ -26,9 +26,10 @@ lap
   max_power: 691watts,    message_index: 0,   sport: cycling,
   start_position_lat: 0.0°,   start_position_long: 0.0°,
   start_time: 2017-10-05 00:04:06+00:00,  timestamp: 2017-10-05 00:34:13+00:00s,
-  total_ascent: 0m,   total_calories: 0kcal,  total_cycles: 0cycles,
-  total_descent: 0m,  total_distance: 13400.14m,  total_elapsed_time: 1807.0s,
-  total_fat_calories: 0kcal,  total_timer_time: 1808.0s
+  total_ascent: 0m,   total_calories: 0kcal,  total_descent: 0m,
+  total_distance: 13400.14m,  total_elapsed_time: 1807.0s,
+  total_fat_calories: 0kcal,  total_strokes: 0strokes,
+  total_timer_time: 1808.0s
 
 session
   avg_cadence: 84rpm,     avg_heart_rate: 0bpm,   avg_power: 123watts,
@@ -40,9 +41,9 @@ session
   start_position_long: 0.0°,  start_time: 2017-10-05 00:04:06+00:00,
   sub_sport: virtual_activity,    swc_lat: 0.0°,  swc_long: 0.0°,
   timestamp: 2017-10-05 00:34:49+00:00s,  total_ascent: 92m,
-  total_calories: 212kcal,    total_cycles: 0cycles,  total_descent: 0m,
-  total_distance: 13400.14m,  total_elapsed_time: 1807.0s,
-  total_fat_calories: 0kcal,  total_timer_time: 1808.0s,
+  total_calories: 212kcal,    total_descent: 0m,  total_distance: 13400.14m,
+  total_elapsed_time: 1807.0s,    total_fat_calories: 0kcal,
+  total_strokes: 0strokes,    total_timer_time: 1808.0s,
   total_training_effect: 0.0,     trigger: activity_end
 
 activity

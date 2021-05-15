@@ -44,9 +44,9 @@ lap
   start_position_long: -70.60930059291422°,
   start_time: 2018-03-04 10:16:33+00:00,  sub_sport: generic,
   timestamp: 2018-03-04 16:41:41+00:00s,  total_ascent: 1336m,
-  total_calories: 1919kcal,   total_cycles: 22593cycles,  total_descent: 1422m,
+  total_calories: 1919kcal,   total_descent: 1422m,
   total_distance: 102708.06m,     total_elapsed_time: 22698.25s,
-  total_timer_time: 18736.264s
+  total_strokes: 22593strokes,    total_timer_time: 18736.264s
 
 session
   avg_cadence: 92rpm,     avg_fractional_cadence: 0.8359375rpm,
@@ -61,10 +61,10 @@ session
   start_time: 2018-03-04 10:16:33+00:00,  sub_sport: generic,
   swc_lat: -33.54953127913177°,   swc_long: -70.9499382879585°,
   timestamp: 2018-03-04 16:41:41+00:00s,  total_ascent: 1336m,
-  total_calories: 1919kcal,   total_cycles: 22593cycles,  total_descent: 1422m,
+  total_calories: 1919kcal,   total_descent: 1422m,
   total_distance: 102708.06m,     total_elapsed_time: 22698.25s,
-  total_timer_time: 18736.264s,   total_training_effect: 3.5,
-  trigger: activity_end
+  total_strokes: 22593strokes,    total_timer_time: 18736.264s,
+  total_training_effect: 3.5,     trigger: activity_end
 
 activity
   event: activity,    event_type: stop,   local_timestamp: 2018-03-04 13:41:41,

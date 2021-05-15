@@ -234,7 +234,7 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
                 filter(StatisticJournal.time.in_(times),
                        StatisticJournal.statistic_name == steps).scalar()
             log.warning(f'Deleting {n} {N.STEPS} entries')
-            s.query(StatisticJournal.id). \
+            s.query(StatisticJournal). \
                 filter(StatisticJournal.time.in_(times),
                        StatisticJournal.statistic_name == steps).delete(synchronize_session=False)
         loader = self._get_loader(s, owner=self.owner_out, add_serial=False)

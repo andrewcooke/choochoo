@@ -1,6 +1,6 @@
 
 file_id
-  garmin_product: 2158,   manufacturer: garmin,   serial_number: 3924789282,
+  garmin_product: fr735xt,    manufacturer: garmin,   serial_number: 3924789282,
   time_created: 2017-06-13 13:42:30+00:00,    type: activity
 
 file_creator
@@ -11,7 +11,7 @@ event
   timestamp: 2017-06-13 13:42:30+00:00s
 
 device_info
-  device_index: creator,  garmin_product: 2158,   manufacturer: garmin,
+  device_index: creator,  garmin_product: fr735xt,    manufacturer: garmin,
   serial_number: 3924789282,  software_version: 8.2,  source_type: local,
   timestamp: 2017-06-13 13:42:30+00:00s
 
@@ -46,12 +46,12 @@ session
   avg_stroke_distance: 2.15m,     enhanced_avg_speed: 0.945m/s,
   enhanced_max_speed: 1.316m/s,   event: lap,     event_type: stop,
   first_lap_index: 0,     max_heart_rate: 161bpm,     message_index: 0,
-  num_active_lengths: 114lengths,     num_laps: 99,   pool_length: 22.86m,
-  pool_length_unit: statute,  sport: swimming,
+  num_active_lengths: 114lengths,     num_laps: 99,   num_lengths: 116lengths,
+  pool_length: 22.86m,    pool_length_unit: statute,  sport: swimming,
   start_time: 2017-06-13 13:42:30+00:00,  sub_sport: lap_swimming,
   timestamp: 2017-06-13 14:58:39+00:00s,  total_calories: 268kcal,
-  total_cycles: 1168cycles,   total_distance: 2606.04m,
-  total_elapsed_time: 4567.485s,  total_timer_time: 4371.56s,
+  total_distance: 2606.04m,   total_elapsed_time: 4567.485s,
+  total_strokes: 1168strokes,     total_timer_time: 4371.56s,
   total_training_effect: 2.8,     trigger: activity_end
 
 activity
@@ -5132,10 +5132,9 @@ lap
     normalized_power,   num_active_lengths,     num_lengths,    sport,   
     stand_count,    start_position_lat,     start_position_long, 
     start_time,                 sub_sport,      swim_stroke,    time_standing,
-    total_ascent,   total_calories,     total_cycles,       total_descent,
-    total_distance,     total_elapsed_time,     total_fat_calories,
-    total_fractional_cycles,    total_timer_time,   total_work, 
-    wkt_step_index
+    total_ascent,   total_calories,     total_descent,      total_distance,
+    total_elapsed_time,     total_fat_calories,     total_fractional_cycles,
+    total_strokes,      total_timer_time,   total_work,     wkt_step_index
   2017-06-13 13:48:07+00:00s,   24rpm,          -                    
     -                               -                           120bpm,        
     -               -                         
@@ -5156,10 +5155,9 @@ lap
     -                   12lengths,              12lengths,      swimming,
     -               -                       -                    
     2017-06-13 13:42:30+00:00,  lap_swimming,   freestyle,      -             
-    -               23kcal,             134cycles,          -             
-    274.32m,            335.842s,               -                  
-    -                           335.842s,           -           
-    -             
+    -               23kcal,             -                   274.32m,       
+    335.842s,               -                       -                       
+    134strokes,         335.842s,           -               -             
   2017-06-13 13:49:25+00:00s,   0rpm,           -                    
     -                               -                           80bpm,         
     -               -                         
@@ -5180,10 +5178,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:48:06+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               77.556s,                -                  
-    -                           77.556s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    77.556s,                -                       -                       
+    0strokes,           77.556s,            -               -             
   2017-06-13 13:50:21+00:00s,   0rpm,           -                    
     -                               -                           107bpm,        
     -               -                         
@@ -5204,10 +5201,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:49:23+00:00,  lap_swimming,   drill,          -             
-    -               3kcal,              0cycles,            -             
-    45.72m,             50.999s,                -                  
-    -                           50.999s,            -           
-    -             
+    -               3kcal,              -                   45.72m,        
+    50.999s,                -                       -                       
+    0strokes,           50.999s,            -               -             
   2017-06-13 13:50:27+00:00s,   0rpm,           -                    
     -                               -                           122bpm,        
     -               -                         
@@ -5228,10 +5224,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:50:14+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               10.683s,                -                  
-    -                           10.683s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    10.683s,                -                       -                       
+    0strokes,           10.683s,            -               -             
   2017-06-13 13:51:22+00:00s,   0rpm,           -                    
     -                               -                           115bpm,        
     -               -                         
@@ -5252,10 +5247,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:50:25+00:00,  lap_swimming,   drill,          -             
-    -               3kcal,              0cycles,            -             
-    45.72m,             51.634s,                -                  
-    -                           51.634s,            -           
-    -             
+    -               3kcal,              -                   45.72m,        
+    51.634s,                -                       -                       
+    0strokes,           51.634s,            -               -             
   2017-06-13 13:51:56+00:00s,   0rpm,           -                    
     -                               -                           101bpm,        
     -               -                         
@@ -5276,10 +5270,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:51:17+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               37.711s,                -                  
-    -                           37.711s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    37.711s,                -                       -                       
+    0strokes,           37.711s,            -               -             
   2017-06-13 13:52:21+00:00s,   19rpm,          -                    
     -                               -                           115bpm,        
     -               -                         
@@ -5300,10 +5293,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:51:54+00:00,  lap_swimming,   freestyle,      -             
-    -               1kcal,              8cycles,            -             
-    22.86m,             24.97s,                 -                  
-    -                           24.97s,             -           
-    -             
+    -               1kcal,              -                   22.86m,        
+    24.97s,                 -                       -                       
+    8strokes,           24.97s,             -               -             
   2017-06-13 13:52:29+00:00s,   0rpm,           -                    
     -                               -                           121bpm,        
     -               -                         
@@ -5324,10 +5316,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:52:19+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               7.919s,                 -                  
-    -                           7.919s,             -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    7.919s,                 -                       -                       
+    0strokes,           7.919s,             -               -             
   2017-06-13 13:52:51+00:00s,   22rpm,          -                    
     -                               -                           127bpm,        
     -               -                         
@@ -5348,10 +5339,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:52:27+00:00,  lap_swimming,   freestyle,      -             
-    -               2kcal,              8cycles,            -             
-    22.86m,             22.309s,                -                  
-    -                           22.309s,            -           
-    -             
+    -               2kcal,              -                   22.86m,        
+    22.309s,                -                       -                       
+    8strokes,           22.309s,            -               -             
   2017-06-13 13:52:59+00:00s,   0rpm,           -                    
     -                               -                           129bpm,        
     -               -                         
@@ -5372,10 +5362,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:52:50+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               8.401s,                 -                  
-    -                           8.401s,             -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    8.401s,                 -                       -                       
+    0strokes,           8.401s,             -               -             
   2017-06-13 13:53:21+00:00s,   25rpm,          -                    
     -                               -                           135bpm,        
     -               -                         
@@ -5396,10 +5385,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:52:58+00:00,  lap_swimming,   freestyle,      -             
-    -               2kcal,              9cycles,            -             
-    22.86m,             21.224s,                -                  
-    -                           21.224s,            -           
-    -             
+    -               2kcal,              -                   22.86m,        
+    21.224s,                -                       -                       
+    9strokes,           21.224s,            -               -             
   2017-06-13 13:53:32+00:00s,   0rpm,           -                    
     -                               -                           137bpm,        
     -               -                         
@@ -5420,10 +5408,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:53:19+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               11.628s,                -                  
-    -                           11.628s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    11.628s,                -                       -                       
+    0strokes,           11.628s,            -               -             
   2017-06-13 13:53:52+00:00s,   24rpm,          -                    
     -                               -                           140bpm,        
     -               -                         
@@ -5444,10 +5431,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:53:31+00:00,  lap_swimming,   freestyle,      -             
-    -               2kcal,              8cycles,            -             
-    22.86m,             19.837s,                -                  
-    -                           19.837s,            -           
-    -             
+    -               2kcal,              -                   22.86m,        
+    19.837s,                -                       -                       
+    8strokes,           19.837s,            -               -             
   2017-06-13 13:55:08+00:00s,   0rpm,           -                    
     -                               -                           106bpm,        
     -               -                         
@@ -5468,10 +5454,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:53:51+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               75.486s,                -                  
-    -                           75.486s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    75.486s,                -                       -                       
+    0strokes,           75.486s,            -               -             
   2017-06-13 13:55:27+00:00s,   31rpm,          -                    
     -                               -                           131bpm,        
     -               -                         
@@ -5492,10 +5477,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:55:06+00:00,  lap_swimming,   freestyle,      -             
-    -               1kcal,              10cycles,           -             
-    22.86m,             19.47s,                 -                  
-    -                           19.47s,             -           
-    -             
+    -               1kcal,              -                   22.86m,        
+    19.47s,                 -                       -                       
+    10strokes,          19.47s,             -               -             
   2017-06-13 13:55:38+00:00s,   0rpm,           -                    
     -                               -                           137bpm,        
     -               -                         
@@ -5516,10 +5500,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:55:26+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               10.629s,                -                  
-    -                           10.629s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    10.629s,                -                       -                       
+    0strokes,           10.629s,            -               -             
   2017-06-13 13:55:58+00:00s,   26rpm,          -                    
     -                               -                           141bpm,        
     -               -                         
@@ -5540,10 +5523,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:55:36+00:00,  lap_swimming,   freestyle,      -             
-    -               2kcal,              9cycles,            -             
-    22.86m,             20.642s,                -                  
-    -                           20.642s,            -           
-    -             
+    -               2kcal,              -                   22.86m,        
+    20.642s,                -                       -                       
+    9strokes,           20.642s,            -               -             
   2017-06-13 13:56:13+00:00s,   0rpm,           -                    
     -                               -                           -              
     -               -                         
@@ -5564,10 +5546,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:55:57+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               14.414s,                -                  
-    -                           14.414s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    14.414s,                -                       -                       
+    0strokes,           14.414s,            -               -             
   2017-06-13 13:58:07+00:00s,   0rpm,           -                    
     -                               -                           -              
     -               -                         
@@ -5588,10 +5569,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:57:22+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               43.496s,                -                  
-    -                           43.496s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    43.496s,                -                       -                       
+    0strokes,           43.496s,            -               -             
   2017-06-13 13:58:16+00:00s,   0rpm,           -                    
     -                               -                           -              
     -               -                         
@@ -5612,10 +5592,9 @@ lap
     -                   0lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:58:05+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               9.828s,                 -                  
-    -                           9.828s,             -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    9.828s,                 -                       -                       
+    0strokes,           9.828s,             -               -             
   2017-06-13 13:58:34+00:00s,   0rpm,           -                    
     -                               -                           134bpm,        
     -               -                         
@@ -5636,10 +5615,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:58:15+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               18.045s,                -                  
-    -                           18.045s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    18.045s,                -                       -                       
+    0strokes,           18.045s,            -               -             
   2017-06-13 13:59:18+00:00s,   29rpm,          -                    
     -                               -                           141bpm,        
     -               -                         
@@ -5660,10 +5638,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:58:33+00:00,  lap_swimming,   freestyle,      -             
-    -               5kcal,              21cycles,           -             
-    45.72m,             43.295s,                -                  
-    -                           43.295s,            -           
-    -             
+    -               5kcal,              -                   45.72m,        
+    43.295s,                -                       -                       
+    21strokes,          43.295s,            -               -             
   2017-06-13 13:59:33+00:00s,   0rpm,           -                    
     -                               -                           145bpm,        
     -               -                         
@@ -5684,10 +5661,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:59:16+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               15.749s,                -                  
-    -                           15.749s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    15.749s,                -                       -                       
+    0strokes,           15.749s,            -               -             
   2017-06-13 14:00:18+00:00s,   29rpm,          -                    
     -                               -                           145bpm,        
     -               -                         
@@ -5708,10 +5684,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 13:59:32+00:00,  lap_swimming,   freestyle,      -             
-    -               6kcal,              22cycles,           -             
-    45.72m,             44.919s,                -                  
-    -                           44.919s,            -           
-    -             
+    -               6kcal,              -                   45.72m,        
+    44.919s,                -                       -                       
+    22strokes,          44.919s,            -               -             
   2017-06-13 14:00:35+00:00s,   0rpm,           -                    
     -                               -                           143bpm,        
     -               -                         
@@ -5732,10 +5707,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:00:17+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               16.556s,                -                  
-    -                           16.556s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    16.556s,                -                       -                       
+    0strokes,           16.556s,            -               -             
   2017-06-13 14:01:20+00:00s,   27rpm,          -                    
     -                               -                           145bpm,        
     -               -                         
@@ -5756,10 +5730,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:00:34+00:00,  lap_swimming,   freestyle,      -             
-    -               6kcal,              20cycles,           -             
-    45.72m,             44.57s,                 -                  
-    -                           44.57s,             -           
-    -             
+    -               6kcal,              -                   45.72m,        
+    44.57s,                 -                       -                       
+    20strokes,          44.57s,             -               -             
   2017-06-13 14:03:22+00:00s,   0rpm,           -                    
     -                               -                           108bpm,        
     -               -                         
@@ -5780,10 +5753,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:01:18+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               122.859s,               -                  
-    -                           122.859s,           -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    122.859s,               -                       -                       
+    0strokes,           122.859s,           -               -             
   2017-06-13 14:03:42+00:00s,   28rpm,          -                    
     -                               -                           131bpm,        
     -               -                         
@@ -5804,10 +5776,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:03:21+00:00,  lap_swimming,   freestyle,      -             
-    -               1kcal,              9cycles,            -             
-    22.86m,             19.543s,                -                  
-    -                           19.543s,            -           
-    -             
+    -               1kcal,              -                   22.86m,        
+    19.543s,                -                       -                       
+    9strokes,           19.543s,            -               -             
   2017-06-13 14:03:53+00:00s,   0rpm,           -                    
     -                               -                           137bpm,        
     -               -                         
@@ -5828,10 +5799,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:03:40+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               11.444s,                -                  
-    -                           11.444s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    11.444s,                -                       -                       
+    0strokes,           11.444s,            -               -             
   2017-06-13 14:04:14+00:00s,   24rpm,          -                    
     -                               -                           141bpm,        
     -               -                         
@@ -5852,10 +5822,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:03:52+00:00,  lap_swimming,   freestyle,      -             
-    -               2kcal,              8cycles,            -             
-    22.86m,             20.362s,                -                  
-    -                           20.362s,            -           
-    -             
+    -               2kcal,              -                   22.86m,        
+    20.362s,                -                       -                       
+    8strokes,           20.362s,            -               -             
   2017-06-13 14:04:25+00:00s,   0rpm,           -                    
     -                               -                           144bpm,        
     -               -                         
@@ -5876,10 +5845,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:04:12+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               11.556s,                -                  
-    -                           11.556s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    11.556s,                -                       -                       
+    0strokes,           11.556s,            -               -             
   2017-06-13 14:05:11+00:00s,   26rpm,          -                    
     -                               -                           146bpm,        
     -               -                         
@@ -5900,10 +5868,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:04:24+00:00,  lap_swimming,   freestyle,      -             
-    -               6kcal,              20cycles,           -             
-    45.72m,             45.574s,                -                  
-    -                           45.574s,            -           
-    -             
+    -               6kcal,              -                   45.72m,        
+    45.574s,                -                       -                       
+    20strokes,          45.574s,            -               -             
   2017-06-13 14:05:28+00:00s,   0rpm,           -                    
     -                               -                           142bpm,        
     -               -                         
@@ -5924,10 +5891,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:05:09+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               16.981s,                -                  
-    -                           16.981s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    16.981s,                -                       -                       
+    0strokes,           16.981s,            -               -             
   2017-06-13 14:06:12+00:00s,   27rpm,          -                    
     -                               -                           145bpm,        
     -               -                         
@@ -5948,10 +5914,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:05:26+00:00,  lap_swimming,   freestyle,      -             
-    -               5kcal,              20cycles,           -             
-    45.72m,             44.044s,                -                  
-    -                           44.044s,            -           
-    -             
+    -               5kcal,              -                   45.72m,        
+    44.044s,                -                       -                       
+    20strokes,          44.044s,            -               -             
   2017-06-13 14:06:28+00:00s,   0rpm,           -                    
     -                               -                           148bpm,        
     -               -                         
@@ -5972,10 +5937,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:06:10+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               15.911s,                -                  
-    -                           15.911s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    15.911s,                -                       -                       
+    0strokes,           15.911s,            -               -             
   2017-06-13 14:07:11+00:00s,   29rpm,          -                    
     -                               -                           149bpm,        
     -               -                         
@@ -5996,10 +5960,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:06:26+00:00,  lap_swimming,   freestyle,      -             
-    -               6kcal,              21cycles,           -             
-    45.72m,             43.414s,                -                  
-    -                           43.414s,            -           
-    -             
+    -               6kcal,              -                   45.72m,        
+    43.414s,                -                       -                       
+    21strokes,          43.414s,            -               -             
   2017-06-13 14:07:27+00:00s,   0rpm,           -                    
     -                               -                           151bpm,        
     -               -                         
@@ -6020,10 +5983,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:07:10+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               15.713s,                -                  
-    -                           15.713s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    15.713s,                -                       -                       
+    0strokes,           15.713s,            -               -             
   2017-06-13 14:08:11+00:00s,   30rpm,          -                    
     -                               -                           151bpm,        
     -               -                         
@@ -6044,10 +6006,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:07:25+00:00,  lap_swimming,   freestyle,      -             
-    -               6kcal,              22cycles,           -             
-    45.72m,             44.304s,                -                  
-    -                           44.304s,            -           
-    -             
+    -               6kcal,              -                   45.72m,        
+    44.304s,                -                       -                       
+    22strokes,          44.304s,            -               -             
   2017-06-13 14:10:10+00:00s,   0rpm,           -                    
     -                               -                           111bpm,        
     -               -                         
@@ -6068,10 +6029,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:08:10+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               118.315s,               -                  
-    -                           118.315s,           -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    118.315s,               -                       -                       
+    0strokes,           118.315s,           -               -             
   2017-06-13 14:10:29+00:00s,   27rpm,          -                    
     -                               -                           134bpm,        
     -               -                         
@@ -6092,10 +6052,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:10:08+00:00,  lap_swimming,   freestyle,      -             
-    -               1kcal,              9cycles,            -             
-    22.86m,             19.716s,                -                  
-    -                           19.716s,            -           
-    -             
+    -               1kcal,              -                   22.86m,        
+    19.716s,                -                       -                       
+    9strokes,           19.716s,            -               -             
   2017-06-13 14:10:40+00:00s,   0rpm,           -                    
     -                               -                           139bpm,        
     -               -                         
@@ -6116,10 +6075,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:10:28+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               10.581s,                -                  
-    -                           10.581s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    10.581s,                -                       -                       
+    0strokes,           10.581s,            -               -             
   2017-06-13 14:10:59+00:00s,   25rpm,          -                    
     -                               -                           141bpm,        
     -               -                         
@@ -6140,10 +6098,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:10:38+00:00,  lap_swimming,   freestyle,      -             
-    -               2kcal,              8cycles,            -             
-    22.86m,             19.578s,                -                  
-    -                           19.578s,            -           
-    -             
+    -               2kcal,              -                   22.86m,        
+    19.578s,                -                       -                       
+    8strokes,           19.578s,            -               -             
   2017-06-13 14:11:11+00:00s,   0rpm,           -                    
     -                               -                           145bpm,        
     -               -                         
@@ -6164,10 +6121,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:10:58+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               11.107s,                -                  
-    -                           11.107s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    11.107s,                -                       -                       
+    0strokes,           11.107s,            -               -             
   2017-06-13 14:11:55+00:00s,   27rpm,          -                    
     -                               -                           148bpm,        
     -               -                         
@@ -6188,10 +6144,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:11:09+00:00,  lap_swimming,   freestyle,      -             
-    -               6kcal,              20cycles,           -             
-    45.72m,             43.975s,                -                  
-    -                           43.975s,            -           
-    -             
+    -               6kcal,              -                   45.72m,        
+    43.975s,                -                       -                       
+    20strokes,          43.975s,            -               -             
   2017-06-13 14:12:11+00:00s,   0rpm,           -                    
     -                               -                           151bpm,        
     -               -                         
@@ -6212,10 +6167,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:11:53+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               16.946s,                -                  
-    -                           16.946s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    16.946s,                -                       -                       
+    0strokes,           16.946s,            -               -             
   2017-06-13 14:12:56+00:00s,   27rpm,          -                    
     -                               -                           150bpm,        
     -               -                         
@@ -6236,10 +6190,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:12:10+00:00,  lap_swimming,   freestyle,      -             
-    -               6kcal,              20cycles,           -             
-    45.72m,             44.284s,                -                  
-    -                           44.284s,            -           
-    -             
+    -               6kcal,              -                   45.72m,        
+    44.284s,                -                       -                       
+    20strokes,          44.284s,            -               -             
   2017-06-13 14:13:12+00:00s,   0rpm,           -                    
     -                               -                           152bpm,        
     -               -                         
@@ -6260,10 +6213,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:12:54+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               16.422s,                -                  
-    -                           16.422s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    16.422s,                -                       -                       
+    0strokes,           16.422s,            -               -             
   2017-06-13 14:13:57+00:00s,   28rpm,          -                    
     -                               -                           152bpm,        
     -               -                         
@@ -6284,10 +6236,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:13:11+00:00,  lap_swimming,   freestyle,      -             
-    -               6kcal,              21cycles,           -             
-    45.72m,             45.051s,                -                  
-    -                           45.051s,            -           
-    -             
+    -               6kcal,              -                   45.72m,        
+    45.051s,                -                       -                       
+    21strokes,          45.051s,            -               -             
   2017-06-13 14:14:14+00:00s,   0rpm,           -                    
     -                               -                           152bpm,        
     -               -                         
@@ -6308,10 +6259,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:13:56+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               16.595s,                -                  
-    -                           16.595s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    16.595s,                -                       -                       
+    0strokes,           16.595s,            -               -             
   2017-06-13 14:14:58+00:00s,   27rpm,          -                    
     -                               -                           153bpm,        
     -               -                         
@@ -6332,10 +6282,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:14:12+00:00,  lap_swimming,   freestyle,      -             
-    -               6kcal,              20cycles,           -             
-    45.72m,             43.76s,                 -                  
-    -                           43.76s,             -           
-    -             
+    -               6kcal,              -                   45.72m,        
+    43.76s,                 -                       -                       
+    20strokes,          43.76s,             -               -             
   2017-06-13 14:16:59+00:00s,   0rpm,           -                    
     -                               -                           111bpm,        
     -               -                         
@@ -6356,10 +6305,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:14:56+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               121.615s,               -                  
-    -                           121.615s,           -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    121.615s,               -                       -                       
+    0strokes,           121.615s,           -               -             
   2017-06-13 14:18:31+00:00s,   29rpm,          -                    
     -                               -                           148bpm,        
     -               -                         
@@ -6380,10 +6328,9 @@ lap
     -                   4lengths,               4lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:16:58+00:00,  lap_swimming,   freestyle,      -             
-    -               10kcal,             45cycles,           -             
-    91.44m,             91.59s,                 -                  
-    -                           91.59s,             -           
-    -             
+    -               10kcal,             -                   91.44m,        
+    91.59s,                 -                       -                       
+    45strokes,          91.59s,             -               -             
   2017-06-13 14:18:47+00:00s,   0rpm,           -                    
     -                               -                           154bpm,        
     -               -                         
@@ -6404,10 +6351,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:18:29+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               15.907s,                -                  
-    -                           15.907s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    15.907s,                -                       -                       
+    0strokes,           15.907s,            -               -             
   2017-06-13 14:22:25+00:00s,   26rpm,          -                    
     -                               -                           144bpm,        
     -               -                         
@@ -6428,10 +6374,9 @@ lap
     -                   8lengths,               8lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:18:45+00:00,  lap_swimming,   freestyle,      -             
-    -               24kcal,             94cycles,           -             
-    182.88m,            218.283s,               -                  
-    -                           218.283s,           -           
-    -             
+    -               24kcal,             -                   182.88m,       
+    218.283s,               -                       -                       
+    94strokes,          218.283s,           -               -             
   2017-06-13 14:22:54+00:00s,   0rpm,           -                    
     -                               -                           137bpm,        
     -               -                         
@@ -6452,10 +6397,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:22:24+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               29.331s,                -                  
-    -                           29.331s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    29.331s,                -                       -                       
+    0strokes,           29.331s,            -               -             
   2017-06-13 14:24:30+00:00s,   28rpm,          -                    
     -                               -                           154bpm,        
     -               -                         
@@ -6476,10 +6420,9 @@ lap
     -                   4lengths,               4lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:22:53+00:00,  lap_swimming,   freestyle,      -             
-    -               11kcal,             45cycles,           -             
-    91.44m,             95.578s,                -                  
-    -                           95.578s,            -           
-    -             
+    -               11kcal,             -                   91.44m,        
+    95.578s,                -                       -                       
+    45strokes,          95.578s,            -               -             
   2017-06-13 14:25:31+00:00s,   0rpm,           -                    
     -                               -                           121bpm,        
     -               -                         
@@ -6500,10 +6443,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:24:28+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               61.261s,                -                  
-    -                           61.261s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    61.261s,                -                       -                       
+    0strokes,           61.261s,            -               -             
   2017-06-13 14:27:09+00:00s,   28rpm,          -                    
     -                               -                           147bpm,        
     -               -                         
@@ -6524,10 +6466,9 @@ lap
     -                   4lengths,               4lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:25:30+00:00,  lap_swimming,   freestyle,      -             
-    -               11kcal,             45cycles,           -             
-    91.44m,             97.755s,                -                  
-    -                           97.755s,            -           
-    -             
+    -               11kcal,             -                   91.44m,        
+    97.755s,                -                       -                       
+    45strokes,          97.755s,            -               -             
   2017-06-13 14:27:22+00:00s,   0rpm,           -                    
     -                               -                           150bpm,        
     -               -                         
@@ -6548,10 +6489,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:27:07+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               12.966s,                -                  
-    -                           12.966s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    12.966s,                -                       -                       
+    0strokes,           12.966s,            -               -             
   2017-06-13 14:31:03+00:00s,   25rpm,          -                    
     -                               -                           146bpm,        
     -               -                         
@@ -6572,10 +6512,9 @@ lap
     -                   8lengths,               8lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:27:20+00:00,  lap_swimming,   freestyle,      -             
-    -               24kcal,             93cycles,           -             
-    182.88m,            221.292s,               -                  
-    -                           221.292s,           -           
-    -             
+    -               24kcal,             -                   182.88m,       
+    221.292s,               -                       -                       
+    93strokes,          221.292s,           -               -             
   2017-06-13 14:31:32+00:00s,   0rpm,           -                    
     -                               -                           135bpm,        
     -               -                         
@@ -6596,10 +6535,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:31:02+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               29.268s,                -                  
-    -                           29.268s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    29.268s,                -                       -                       
+    0strokes,           29.268s,            -               -             
   2017-06-13 14:33:09+00:00s,   28rpm,          -                    
     -                               -                           154bpm,        
     -               -                         
@@ -6620,10 +6558,9 @@ lap
     -                   4lengths,               4lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:31:31+00:00,  lap_swimming,   freestyle,      -             
-    -               11kcal,             45cycles,           -             
-    91.44m,             96.225s,                -                  
-    -                           96.225s,            -           
-    -             
+    -               11kcal,             -                   91.44m,        
+    96.225s,                -                       -                       
+    45strokes,          96.225s,            -               -             
   2017-06-13 14:34:08+00:00s,   0rpm,           -                    
     -                               -                           124bpm,        
     -               -                         
@@ -6644,10 +6581,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:33:07+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               59.827s,                -                  
-    -                           59.827s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    59.827s,                -                       -                       
+    0strokes,           59.827s,            -               -             
   2017-06-13 14:34:28+00:00s,   24rpm,          -                    
     -                               -                           144bpm,        
     -               -                         
@@ -6668,10 +6604,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:34:07+00:00,  lap_swimming,   freestyle,      -             
-    -               1kcal,              8cycles,            -             
-    22.86m,             19.767s,                -                  
-    -                           19.767s,            -           
-    -             
+    -               1kcal,              -                   22.86m,        
+    19.767s,                -                       -                       
+    8strokes,           19.767s,            -               -             
   2017-06-13 14:35:08+00:00s,   0rpm,           -                    
     -                               -                           116bpm,        
     -               -                         
@@ -6692,10 +6627,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:34:27+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               39.624s,                -                  
-    -                           39.624s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    39.624s,                -                       -                       
+    0strokes,           39.624s,            -               -             
   2017-06-13 14:35:27+00:00s,   25rpm,          -                    
     -                               -                           138bpm,        
     -               -                         
@@ -6716,10 +6650,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:35:06+00:00,  lap_swimming,   freestyle,      -             
-    -               1kcal,              8cycles,            -             
-    22.86m,             19.524s,                -                  
-    -                           19.524s,            -           
-    -             
+    -               1kcal,              -                   22.86m,        
+    19.524s,                -                       -                       
+    8strokes,           19.524s,            -               -             
   2017-06-13 14:36:07+00:00s,   0rpm,           -                    
     -                               -                           120bpm,        
     -               -                         
@@ -6740,10 +6673,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:35:26+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               39.791s,                -                  
-    -                           39.791s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    39.791s,                -                       -                       
+    0strokes,           39.791s,            -               -             
   2017-06-13 14:36:26+00:00s,   25rpm,          -                    
     -                               -                           142bpm,        
     -               -                         
@@ -6764,10 +6696,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:36:06+00:00,  lap_swimming,   freestyle,      -             
-    -               1kcal,              8cycles,            -             
-    22.86m,             19.118s,                -                  
-    -                           19.118s,            -           
-    -             
+    -               1kcal,              -                   22.86m,        
+    19.118s,                -                       -                       
+    8strokes,           19.118s,            -               -             
   2017-06-13 14:37:05+00:00s,   0rpm,           -                    
     -                               -                           122bpm,        
     -               -                         
@@ -6788,10 +6719,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:36:25+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               38.641s,                -                  
-    -                           38.641s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    38.641s,                -                       -                       
+    0strokes,           38.641s,            -               -             
   2017-06-13 14:37:24+00:00s,   28rpm,          -                    
     -                               -                           144bpm,        
     -               -                         
@@ -6812,10 +6742,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:37:03+00:00,  lap_swimming,   freestyle,      -             
-    -               1kcal,              9cycles,            -             
-    22.86m,             19.13s,                 -                  
-    -                           19.13s,             -           
-    -             
+    -               1kcal,              -                   22.86m,        
+    19.13s,                 -                       -                       
+    9strokes,           19.13s,             -               -             
   2017-06-13 14:38:02+00:00s,   0rpm,           -                    
     -                               -                           127bpm,        
     -               -                         
@@ -6836,10 +6765,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:37:23+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               37.912s,                -                  
-    -                           37.912s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    37.912s,                -                       -                       
+    0strokes,           37.912s,            -               -             
   2017-06-13 14:38:21+00:00s,   25rpm,          -                    
     -                               -                           145bpm,        
     -               -                         
@@ -6860,10 +6788,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:38:01+00:00,  lap_swimming,   freestyle,      -             
-    -               1kcal,              8cycles,            -             
-    22.86m,             18.887s,                -                  
-    -                           18.887s,            -           
-    -             
+    -               1kcal,              -                   22.86m,        
+    18.887s,                -                       -                       
+    8strokes,           18.887s,            -               -             
   2017-06-13 14:38:59+00:00s,   0rpm,           -                    
     -                               -                           127bpm,        
     -               -                         
@@ -6884,10 +6811,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:38:19+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               38.382s,                -                  
-    -                           38.382s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    38.382s,                -                       -                       
+    0strokes,           38.382s,            -               -             
   2017-06-13 14:39:17+00:00s,   23rpm,          -                    
     -                               -                           148bpm,        
     -               -                         
@@ -6908,10 +6834,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:38:58+00:00,  lap_swimming,   freestyle,      -             
-    -               1kcal,              7cycles,            -             
-    22.86m,             17.96s,                 -                  
-    -                           17.96s,             -           
-    -             
+    -               1kcal,              -                   22.86m,        
+    17.96s,                 -                       -                       
+    7strokes,           17.96s,             -               -             
   2017-06-13 14:39:54+00:00s,   0rpm,           -                    
     -                               -                           133bpm,        
     -               -                         
@@ -6932,10 +6857,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:39:16+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               37.076s,                -                  
-    -                           37.076s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    37.076s,                -                       -                       
+    0strokes,           37.076s,            -               -             
   2017-06-13 14:40:13+00:00s,   26rpm,          -                    
     -                               -                           146bpm,        
     -               -                         
@@ -6956,10 +6880,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:39:53+00:00,  lap_swimming,   freestyle,      -             
-    -               1kcal,              8cycles,            -             
-    22.86m,             18.344s,                -                  
-    -                           18.344s,            -           
-    -             
+    -               1kcal,              -                   22.86m,        
+    18.344s,                -                       -                       
+    8strokes,           18.344s,            -               -             
   2017-06-13 14:40:51+00:00s,   0rpm,           -                    
     -                               -                           130bpm,        
     -               -                         
@@ -6980,10 +6903,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:40:11+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               38.118s,                -                  
-    -                           38.118s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    38.118s,                -                       -                       
+    0strokes,           38.118s,            -               -             
   2017-06-13 14:41:08+00:00s,   24rpm,          -                    
     -                               -                           147bpm,        
     -               -                         
@@ -7004,10 +6926,9 @@ lap
     -                   1lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:40:49+00:00,  lap_swimming,   freestyle,      -             
-    -               1kcal,              7cycles,            -             
-    22.86m,             17.375s,                -                  
-    -                           17.375s,            -           
-    -             
+    -               1kcal,              -                   22.86m,        
+    17.375s,                -                       -                       
+    7strokes,           17.375s,            -               -             
   2017-06-13 14:41:48+00:00s,   0rpm,           -                    
     -                               -                           125bpm,        
     -               -                         
@@ -7028,10 +6949,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:41:07+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               39.695s,                -                  
-    -                           39.695s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    39.695s,                -                       -                       
+    0strokes,           39.695s,            -               -             
   2017-06-13 14:43:35+00:00s,   26rpm,          -                    
     -                               -                           138bpm,        
     -               -                         
@@ -7052,10 +6972,9 @@ lap
     -                   4lengths,               4lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:41:46+00:00,  lap_swimming,   freestyle,      -             
-    -               7kcal,              46cycles,           -             
-    91.44m,             107.067s,               -                  
-    -                           107.067s,           -           
-    -             
+    -               7kcal,              -                   91.44m,        
+    107.067s,               -                       -                       
+    46strokes,          107.067s,           -               -             
   2017-06-13 14:44:06+00:00s,   0rpm,           -                    
     -                               -                           124bpm,        
     -               -                         
@@ -7076,10 +6995,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:43:33+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               31.258s,                -                  
-    -                           31.258s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    31.258s,                -                       -                       
+    0strokes,           31.258s,            -               -             
   2017-06-13 14:44:51+00:00s,   29rpm,          -                    
     -                               -                           147bpm,        
     -               -                         
@@ -7100,10 +7018,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:44:05+00:00,  lap_swimming,   freestyle,      -             
-    -               4kcal,              22cycles,           -             
-    45.72m,             45.071s,                -                  
-    -                           45.071s,            -           
-    -             
+    -               4kcal,              -                   45.72m,        
+    45.071s,                -                       -                       
+    22strokes,          45.071s,            -               -             
   2017-06-13 14:45:22+00:00s,   0rpm,           -                    
     -                               -                           131bpm,        
     -               -                         
@@ -7124,10 +7041,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:44:50+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               30.577s,                -                  
-    -                           30.577s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    30.577s,                -                       -                       
+    0strokes,           30.577s,            -               -             
   2017-06-13 14:46:08+00:00s,   28rpm,          -                    
     -                               -                           146bpm,        
     -               -                         
@@ -7148,10 +7064,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:45:20+00:00,  lap_swimming,   freestyle,      -             
-    -               4kcal,              21cycles,           -             
-    45.72m,             45.803s,                -                  
-    -                           45.803s,            -           
-    -             
+    -               4kcal,              -                   45.72m,        
+    45.803s,                -                       -                       
+    21strokes,          45.803s,            -               -             
   2017-06-13 14:46:33+00:00s,   0rpm,           -                    
     -                               -                           137bpm,        
     -               -                         
@@ -7172,10 +7087,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:46:06+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               25.818s,                -                  
-    -                           25.818s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    25.818s,                -                       -                       
+    0strokes,           25.818s,            -               -             
   2017-06-13 14:47:18+00:00s,   28rpm,          -                    
     -                               -                           150bpm,        
     -               -                         
@@ -7196,10 +7110,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:46:32+00:00,  lap_swimming,   freestyle,      -             
-    -               5kcal,              21cycles,           -             
-    45.72m,             44.488s,                -                  
-    -                           44.488s,            -           
-    -             
+    -               5kcal,              -                   45.72m,        
+    44.488s,                -                       -                       
+    21strokes,          44.488s,            -               -             
   2017-06-13 14:47:39+00:00s,   0rpm,           -                    
     -                               -                           147bpm,        
     -               -                         
@@ -7220,10 +7133,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:47:16+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               21.393s,                -                  
-    -                           21.393s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    21.393s,                -                       -                       
+    0strokes,           21.393s,            -               -             
   2017-06-13 14:48:24+00:00s,   28rpm,          -                    
     -                               -                           152bpm,        
     -               -                         
@@ -7244,10 +7156,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:47:38+00:00,  lap_swimming,   freestyle,      -             
-    -               6kcal,              21cycles,           -             
-    45.72m,             45.173s,                -                  
-    -                           45.173s,            -           
-    -             
+    -               6kcal,              -                   45.72m,        
+    45.173s,                -                       -                       
+    21strokes,          45.173s,            -               -             
   2017-06-13 14:48:40+00:00s,   0rpm,           -                    
     -                               -                           155bpm,        
     -               -                         
@@ -7268,10 +7179,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:48:23+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               15.922s,                -                  
-    -                           15.922s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    15.922s,                -                       -                       
+    0strokes,           15.922s,            -               -             
   2017-06-13 14:49:27+00:00s,   27rpm,          -                    
     -                               -                           152bpm,        
     -               -                         
@@ -7292,10 +7202,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:48:39+00:00,  lap_swimming,   freestyle,      -             
-    -               6kcal,              21cycles,           -             
-    45.72m,             46.849s,                -                  
-    -                           46.849s,            -           
-    -             
+    -               6kcal,              -                   45.72m,        
+    46.849s,                -                       -                       
+    21strokes,          46.849s,            -               -             
   2017-06-13 14:49:38+00:00s,   0rpm,           -                    
     -                               -                           153bpm,        
     -               -                         
@@ -7316,10 +7225,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:49:26+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               10.507s,                -                  
-    -                           10.507s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    10.507s,                -                       -                       
+    0strokes,           10.507s,            -               -             
   2017-06-13 14:50:23+00:00s,   28rpm,          -                    
     -                               -                           155bpm,        
     -               -                         
@@ -7340,10 +7248,9 @@ lap
     -                   2lengths,               2lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:49:36+00:00,  lap_swimming,   freestyle,      -             
-    -               6kcal,              21cycles,           -             
-    45.72m,             45.38s,                 -                  
-    -                           45.38s,             -           
-    -             
+    -               6kcal,              -                   45.72m,        
+    45.38s,                 -                       -                       
+    21strokes,          45.38s,             -               -             
   2017-06-13 14:51:23+00:00s,   0rpm,           -                    
     -                               -                           124bpm,        
     -               -                         
@@ -7364,10 +7271,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:50:22+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               59.936s,                -                  
-    -                           59.936s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    59.936s,                -                       -                       
+    0strokes,           59.936s,            -               -             
   2017-06-13 14:54:06+00:00s,   25rpm,          -                    
     -                               -                           138bpm,        
     -               -                         
@@ -7388,10 +7294,9 @@ lap
     -                   6lengths,               6lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:51:22+00:00,  lap_swimming,   freestyle,      -             
-    -               11kcal,             69cycles,           -             
-    137.16m,            162.871s,               -                  
-    -                           162.871s,           -           
-    -             
+    -               11kcal,             -                   137.16m,       
+    162.871s,               -                       -                       
+    69strokes,          162.871s,           -               -             
   2017-06-13 14:54:26+00:00s,   0rpm,           -                    
     -                               -                           136bpm,        
     -               -                         
@@ -7412,10 +7317,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:54:04+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               19.754s,                -                  
-    -                           19.754s,            -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    19.754s,                -                       -                       
+    0strokes,           19.754s,            -               -             
   2017-06-13 14:56:22+00:00s,   25rpm,          -                    
     -                               -                           145bpm,        
     -               -                         
@@ -7436,10 +7340,9 @@ lap
     -                   4lengths,               4lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:54:24+00:00,  lap_swimming,   breaststroke,   -             
-    -               11kcal,             49cycles,           -             
-    91.44m,             116.408s,               -                  
-    -                           116.408s,           -           
-    -             
+    -               11kcal,             -                   91.44m,        
+    116.408s,               -                       -                       
+    49strokes,          116.408s,           -               -             
   2017-06-13 14:56:29+00:00s,   0rpm,           -                    
     -                               -                           -              
     -               -                         
@@ -7460,10 +7363,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:56:21+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               7.034s,                 -                  
-    -                           7.034s,             -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    7.034s,                 -                       -                       
+    0strokes,           7.034s,             -               -             
   2017-06-13 14:56:31+00:00s,   0rpm,           -                    
     -                               -                           -              
     -               -                         
@@ -7484,10 +7386,9 @@ lap
     -                   0lengths,               1lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:56:28+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               2.272s,                 -                  
-    -                           2.272s,             -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    2.272s,                 -                       -                       
+    0strokes,           2.272s,             -               -             
   2017-06-13 14:56:33+00:00s,   0rpm,           -                    
     -                               -                           -              
     -               -                         
@@ -7508,10 +7409,9 @@ lap
     -                   0lengths,               0lengths,       swimming,
     -               -                       -                    
     2017-06-13 14:56:30+00:00,  lap_swimming,   -               -             
-    -               0kcal,              0cycles,            -             
-    0.0m,               1.89s,                  -                  
-    -                           1.89s,              -           
-    -             
+    -               0kcal,              -                   0.0m,          
+    1.89s,                  -                       -                       
+    0strokes,           1.89s,              -               -             
   2036-06-05 05:36:13+00:00s,   74rpm,          77rpm,80rpm,         
     53.0percent,                    1.7890625rpm,               11bpm,         
     11mm,           73.0percent,              
@@ -7532,10 +7432,9 @@ lap
     18246watts,         48464lengths,           18507lengths,   73,      
     54405,          -0.6905015185475349°,   -177.42348862811923°,
     2031-08-21 13:15:04+00:00,  249,            71,             1431721.739s, 
-    17675m,         44733kcal,          1733521669cycles,   19273m,       
-    34467783.75m,       1398035.024s,           9765kcal,          
-    1.3359375cycles,            3578744.913s,       2608892869J,
-    49624         
+    17675m,         44733kcal,          1733521669cycles,   19273m,        
+    34467783.75m,           1398035.024s,           9765kcal,               
+    1.3359375cycles,    3578744.913s,       2608892869J,    49624         
 
 event (defn 2/2)
   timestamp,                    data,   event,          event_group,
@@ -7557,13 +7456,13 @@ device_info (defn 2/2)
   timestamp,                    device_index,   device_type,    garmin_product,
     hardware_version,   manufacturer,   serial_number,  software_version,
     source_type
-  2017-06-13 13:56:13+00:00s,   creator,        -               2158,          
+  2017-06-13 13:56:13+00:00s,   creator,        -               fr735xt,       
     -                   garmin,         3924789282,     8.2,             
     local      
   2017-06-13 13:56:13+00:00s,   1,              8,              -              
     60672,              57344,          -               0.01,            
     local      
-  2017-06-13 14:56:33+00:00s,   creator,        -               2158,          
+  2017-06-13 14:56:33+00:00s,   creator,        -               fr735xt,       
     -                   garmin,         3924789282,     8.2,             
     local      
   2017-06-13 14:56:33+00:00s,   1,              8,              -              

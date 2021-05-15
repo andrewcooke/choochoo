@@ -54,9 +54,9 @@ lap
   start_time: 2017-06-12 16:10:15+00:00,  sub_sport: commuting,
   time_in_hr_zone: 0.0s,7.401s,57.123s,0.0s,0.0s,0.0s,0.0s,
   timestamp: 2017-06-12 16:11:22+00:00s,  total_ascent: 0m,
-  total_calories: 8kcal,  total_cycles: 75cycles,     total_descent: 0m,
-  total_distance: 457.12m,    total_elapsed_time: 64.524s,
-  total_fat_calories: 0kcal,  total_timer_time: 64.524s
+  total_calories: 8kcal,  total_descent: 0m,  total_distance: 457.12m,
+  total_elapsed_time: 64.524s,    total_fat_calories: 0kcal,
+  total_strokes: 75strokes,   total_timer_time: 64.524s
 
 session
   avg_cadence: 68rpm,     avg_fractional_cadence: 0.3203125rpm,
@@ -72,9 +72,9 @@ session
   swc_lat: 37.414756743237376°,   swc_long: -122.06889398396015°,
   time_in_hr_zone: 0.0s,7.401s,57.123s,0.0s,0.0s,0.0s,0.0s,
   timestamp: 2017-06-12 16:11:22+00:00s,  total_ascent: 0m,
-  total_calories: 8kcal,  total_cycles: 75cycles,     total_descent: 0m,
-  total_distance: 457.12m,    total_elapsed_time: 64.524s,
-  total_fat_calories: 0kcal,  total_timer_time: 64.524s,  trigger: activity_end
+  total_calories: 8kcal,  total_descent: 0m,  total_distance: 457.12m,
+  total_elapsed_time: 64.524s,    total_fat_calories: 0kcal,
+  total_strokes: 75strokes,   total_timer_time: 64.524s,  trigger: activity_end
 
 activity
   event: activity,    event_type: stop,   local_timestamp: 2017-06-12 09:11:22,

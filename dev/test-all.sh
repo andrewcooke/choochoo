@@ -1,10 +1,9 @@
 #!/bin/bash
 
 dkr/run-pg-transient.sh &
-PID=$!
 
 function cleanup {
-    kill $PID
+    docker stop $(docker ps -a -q)
 }
 
 trap cleanup EXIT
@@ -13,4 +12,4 @@ sleep 5
 source py/env/bin/activate
 ch2 db add user
 ch2 db add database
-PYTHONPATH=py python -m unittest py/tests/*.py
+PYTHONPATH=py python -m unittest py/tests/*.py |& tee tests.log

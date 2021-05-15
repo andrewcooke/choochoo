@@ -15,13 +15,13 @@ log = getLogger(__name__)
 ARCSEC = 1/3600
 
 
-class TestSortem(LogTestCase):
+class TestSRTM1(LogTestCase):
 
     @contextmanager
     def bilinear(self):
         user = random_test_user()
         bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
-        config = bootstrap_db(user, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
+        config = bootstrap_db(user, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '~/.ch2/permanent/srtm1',
                                    mm(FORCE))
         constants(config)
         with config.db.session_context() as s:
@@ -31,7 +31,7 @@ class TestSortem(LogTestCase):
     def spline(self, smooth=0):
         user = random_test_user()
         bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
-        config = bootstrap_db(user, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '/home/andrew/archive/srtm1',
+        config = bootstrap_db(user, m(V), '5', 'constants', 'set', SRTM1_DIR_CNAME, '~/.ch2/permanent/srtm1',
                                    mm(FORCE))
         constants(config)
         with config.db.session_context() as s:

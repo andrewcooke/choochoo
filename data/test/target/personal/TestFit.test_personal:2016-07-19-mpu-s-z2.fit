@@ -45,8 +45,8 @@ lap
   start_position_long: -70.60779000632465°,
   start_time: 2016-07-19 12:47:36+00:00,  sub_sport: generic,
   timestamp: 2016-07-19 15:38:15+00:00s,  total_ascent: 324m,
-  total_calories: 699kcal,    total_cycles: 9062cycles,   total_descent: 285m,
-  total_distance: 43112.72m,  total_elapsed_time: 10001.125s,
+  total_calories: 699kcal,    total_descent: 285m,    total_distance: 43112.72m,
+  total_elapsed_time: 10001.125s,     total_strokes: 9062strokes,
   total_timer_time: 8056.825s
 
 session
@@ -62,8 +62,8 @@ session
   start_time: 2016-07-19 12:47:36+00:00,  sub_sport: generic,
   swc_lat: -33.512114798650146°,  swc_long: -70.75767477974296°,
   timestamp: 2016-07-19 15:38:15+00:00s,  total_ascent: 324m,
-  total_calories: 699kcal,    total_cycles: 9062cycles,   total_descent: 285m,
-  total_distance: 43112.72m,  total_elapsed_time: 10001.125s,
+  total_calories: 699kcal,    total_descent: 285m,    total_distance: 43112.72m,
+  total_elapsed_time: 10001.125s,     total_strokes: 9062strokes,
   total_timer_time: 8056.825s,    total_training_effect: 1.9,
   trigger: activity_end
 

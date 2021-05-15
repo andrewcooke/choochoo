@@ -30,9 +30,9 @@ session
   start_time: 2013-08-16 18:05:10+00:00,  sub_sport: generic,
   swc_lat: 47.62048308737576°,    swc_long: -52.834464479237795°,
   threshold_power: 315watts,  timestamp: 2013-08-16 19:43:30+00:00s,
-  total_ascent: 514m,     total_calories: 1293kcal,   total_cycles: 6751cycles,
-  total_descent: 515m,    total_distance: 41339.38m,
-  total_elapsed_time: 4700.05s,   total_fat_calories: 0kcal,
+  total_ascent: 514m,     total_calories: 1293kcal,   total_descent: 515m,
+  total_distance: 41339.38m,  total_elapsed_time: 4700.05s,
+  total_fat_calories: 0kcal,  total_strokes: 6751strokes,
   total_timer_time: 4700.05s,     total_work: 1296229J,
   training_stress_score: 118.7tss,    trigger: activity_end
 
@@ -18594,81 +18594,72 @@ lap
     left_right_balance,     max_cadence,    max_heart_rate,     max_power,
     message_index,  normalized_power,   sport,      start_position_lat, 
     start_position_long,    start_time,                 total_ascent,
-    total_calories,     total_cycles,   total_descent,  total_distance,
-    total_elapsed_time,     total_fat_calories,     total_timer_time,
-    total_work
+    total_calories,     total_descent,  total_distance,     total_elapsed_time,
+    total_fat_calories,     total_strokes,  total_timer_time,   total_work
   2013-08-16 18:25:17+00:00s,   86rpm,          139bpm,             252watts, 
     47.68086003139615°,     -52.80385904945433°,    7.637m/s,          
     14.66m/s,               lap,    stop,           manual,     
     37851,                  120rpm,         153bpm,             458watts, 
     0,              277watts,           cycling,    47.62682634405792°, 
     -52.815485587343574°,   2013-08-16 18:05:10+00:00,  146m,        
-    303kcal,            1714cycles,     118m,           9220.46m,      
-    1207.35s,               0kcal,                  1207.35s,        
-    303684J   
+    303kcal,            118m,           9220.46m,           1207.35s,          
+    0kcal,                  1714strokes,    1207.35s,           303684J   
   2013-08-16 18:30:21+00:00s,   93rpm,          149bpm,             294watts, 
     47.66782390885055°,     -52.770231356844306°,   10.581m/s,         
     15.181m/s,              lap,    stop,           manual,     
     37859,                  125rpm,         158bpm,             549watts, 
     1,              306watts,           cycling,    47.6809280924499°,  
     -52.80376701615751°,    2013-08-16 18:25:17+00:00,  6m,          
-    89kcal,             469cycles,      62m,            3214.78m,      
-    303.825s,               0kcal,                  303.825s,        
-    89478J    
+    89kcal,             62m,            3214.78m,           303.825s,          
+    0kcal,                  469strokes,     303.825s,           89478J    
   2013-08-16 18:34:47+00:00s,   90rpm,          162bpm,             327watts, 
     47.654685862362385°,    -52.75533956475556°,    8.768m/s,          
     14.51m/s,               lap,    stop,           manual,     
     37836,                  118rpm,         164bpm,             495watts, 
     2,              342watts,           cycling,    47.667815275490284°,
     -52.77013186365366°,    2013-08-16 18:30:21+00:00,  32m,         
-    86kcal,             399cycles,      30m,            2334.08m,      
-    266.2s,                 0kcal,                  266.2s,          
-    86935J    
+    86kcal,             30m,            2334.08m,           266.2s,            
+    0kcal,                  399strokes,     266.2s,             86935J    
   2013-08-16 18:36:57+00:00s,   27rpm,          117bpm,             55watts,  
     47.649494698271155°,    -52.75704117491841°,    5.573m/s,          
     15.29m/s,               lap,    stop,           manual,     
     37600,                  85rpm,          158bpm,             384watts, 
     3,              122watts,           cycling,    47.65455275774002°, 
     -52.755335457623005°,   2013-08-16 18:34:47+00:00,  3m,          
-    7kcal,              36cycles,       26m,            722.04m,       
-    129.55s,                0kcal,                  129.55s,         
-    7140J     
+    7kcal,              26m,            722.04m,            129.55s,           
+    0kcal,                  36strokes,      129.55s,            7140J     
   2013-08-16 18:56:59+00:00s,   91rpm,          163bpm,             311watts, 
     47.65114258043468°,     -52.81398589722812°,    8.929m/s,          
     14.61m/s,               lap,    stop,           manual,     
     37781,                  133rpm,         170bpm,             619watts, 
     4,              320watts,           cycling,    47.649487908929586°,
     -52.75713387876749°,    2013-08-16 18:36:57+00:00,  173m,        
-    374kcal,            1825cycles,     75m,            10736.29m,     
-    1202.4s,                0kcal,                  1202.4s,         
-    374251J   
+    374kcal,            75m,            10736.29m,          1202.4s,           
+    0kcal,                  1825strokes,    1202.4s,            374251J   
   2013-08-16 18:59:11+00:00s,   72rpm,          141bpm,             160watts, 
     47.659817514941096°,    -52.81242468394339°,    7.984m/s,          
     11.72m/s,               lap,    stop,           manual,     
     37411,                  117rpm,         164bpm,             393watts, 
     5,              176watts,           cycling,    47.651239642873406°,
     -52.814054042100906°,   2013-08-16 18:56:59+00:00,  11m,         
-    21kcal,             158cycles,      11m,            1053.3m,       
-    131.925s,               0kcal,                  131.925s,        
-    21098J    
+    21kcal,             11m,            1053.3m,            131.925s,          
+    0kcal,                  158strokes,     131.925s,           21098J    
   2013-08-16 19:19:14+00:00s,   89rpm,          165bpm,             305watts, 
     47.63690742664039°,     -52.79020828194916°,    9.761m/s,          
     16.098m/s,              lap,    stop,           manual,     
     37641,                  120rpm,         176bpm,             591watts, 
     6,              316watts,           cycling,    47.659878032281995°,
     -52.812358383089304°,   2013-08-16 18:59:11+00:00,  136m,        
-    367kcal,            1786cycles,     184m,           11738.38m,     
-    1202.55s,               0kcal,                  1202.55s,        
-    367325J   
+    367kcal,            184m,           11738.38m,          1202.55s,          
+    0kcal,                  1786strokes,    1202.55s,           367325J   
   2013-08-16 19:43:30+00:00s,   85rpm,          144bpm,             180watts, 
     47.62648595497012°,     -52.8148090839386°,     9.054m/s,          
     11.784m/s,              lap,    stop,           session_end,
     37550,                  105rpm,         176bpm,             416watts, 
     7,              201watts,           cycling,    47.63686811551452°, 
     -52.7902926877141°,     2013-08-16 19:19:14+00:00,  7m,          
-    46kcal,             365cycles,      9m,             2320.06m,      
-    256.25s,                0kcal,                  256.25s,         
-    46318J    
+    46kcal,             9m,             2320.06m,           256.25s,           
+    0kcal,                  365strokes,     256.25s,            46318J    
 
 record (defn 5/5)
   timestamp,                    accumulated_power,  distance, 

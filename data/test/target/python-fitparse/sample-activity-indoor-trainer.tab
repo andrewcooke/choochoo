@@ -38,10 +38,11 @@ session
   normalized_power: 228watts,     num_laps: 5,    sport: cycling,
   start_time: 2011-11-02 12:54:19+00:00,  sub_sport: generic,
   threshold_power: 250watts,  timestamp: 2011-11-02 13:32:51+00:00s,
-  total_ascent: 4m,   total_calories: 379kcal,    total_cycles: 2995cycles,
-  total_descent: 0m,  total_distance: 0.0m,   total_elapsed_time: 2261.85s,
-  total_fat_calories: 0kcal,  total_timer_time: 2261.85s,
-  training_stress_score: 50.8tss,     trigger: activity_end
+  total_ascent: 4m,   total_calories: 379kcal,    total_descent: 0m,
+  total_distance: 0.0m,   total_elapsed_time: 2261.85s,
+  total_fat_calories: 0kcal,  total_strokes: 2995strokes,
+  total_timer_time: 2261.85s,     training_stress_score: 50.8tss,
+  trigger: activity_end
 
 activity
   event: activity,    event_type: stop,   num_sessions: 1,
@@ -4571,36 +4572,36 @@ lap
     enhanced_avg_speed,     event,  event_type,     lap_trigger,
     max_cadence,    max_heart_rate,     max_power,  message_index,
     normalized_power,   sport,      start_time,                 total_ascent,
-    total_calories,     total_cycles,   total_descent,  total_distance,
-    total_elapsed_time,     total_fat_calories,     total_timer_time
+    total_calories,     total_descent,  total_distance,     total_elapsed_time,
+    total_fat_calories,     total_strokes,  total_timer_time
   2011-11-02 13:00:36+00:00s,   74rpm,          116bpm,             150watts, 
     0.0m/s,                 lap,    stop,           manual,     
     84rpm,          132bpm,             209watts,   0,            
     163watts,           cycling,    2011-11-02 12:54:19+00:00,  2m,          
-    43kcal,             401cycles,      0m,             0.0m,          
-    377.075s,               0kcal,                  377.075s        
+    43kcal,             0m,             0.0m,               377.075s,          
+    0kcal,                  401strokes,     377.075s        
   2011-11-02 13:10:37+00:00s,   86rpm,          159bpm,             258watts, 
     0.0m/s,                 lap,    stop,           manual,     
     96rpm,          173bpm,             328watts,   1,            
     257watts,           cycling,    2011-11-02 13:00:36+00:00,  0m,          
-    123kcal,            860cycles,      0m,             0.0m,          
-    601.075s,               0kcal,                  601.075s        
+    123kcal,            0m,             0.0m,               601.075s,          
+    0kcal,                  860strokes,     601.075s        
   2011-11-02 13:16:48+00:00s,   74rpm,          142bpm,             152watts, 
     0.0m/s,                 lap,    stop,           manual,     
     89rpm,          174bpm,             236watts,   2,            
     163watts,           cycling,    2011-11-02 13:10:37+00:00,  0m,          
-    57kcal,             453cycles,      0m,             0.0m,          
-    370.975s,               0kcal,                  370.975s        
+    57kcal,             0m,             0.0m,               370.975s,          
+    0kcal,                  453strokes,     370.975s        
   2011-11-02 13:26:49+00:00s,   85rpm,          166bpm,             263watts, 
     0.0m/s,                 lap,    stop,           manual,     
     90rpm,          176bpm,             331watts,   3,            
     262watts,           cycling,    2011-11-02 13:16:48+00:00,  2m,          
-    127kcal,            855cycles,      0m,             0.0m,          
-    600.975s,               0kcal,                  600.975s        
+    127kcal,            0m,             0.0m,               600.975s,          
+    0kcal,                  855strokes,     600.975s        
   2011-11-02 13:32:51+00:00s,   83rpm,          135bpm,             87watts,  
     0.0m/s,                 lap,    stop,           session_end,
     108rpm,         176bpm,             140watts,   4,            
     119watts,           cycling,    2011-11-02 13:26:49+00:00,  0m,          
-    29kcal,             426cycles,      0m,             0.0m,          
-    311.75s,                0kcal,                  311.75s         
+    29kcal,             0m,             0.0m,               311.75s,           
+    0kcal,                  426strokes,     311.75s         
 
