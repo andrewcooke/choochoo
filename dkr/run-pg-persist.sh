@@ -3,8 +3,8 @@
 cd "${BASH_SOURCE%/*}/" || exit
 
 CMD=$0
-DEV="-dev"
-DEV2="--dev"
+DEV=
+DEV2=
 RESET=0
 PGCONF=postgres-default.conf
 LOG=0
@@ -12,19 +12,19 @@ LOG=0
 help () {
     echo -e "\n  Run the postgres image (only)"
     echo -e "\n  Usage:"
-    echo -e "\n   $CMD [--reset] [--prof] [--no-dev] [--log] [-h]"
+    echo -e "\n   $CMD [--reset] [--prof] [--dev] [--log] [-h]"
     echo -e "\n  --reset:     re-create the disks"
     echo -e "  --prof:      use the pgbadger conf for postgres (profiling)"
-    echo -e "  --no-dev:    don't use dev-specific disks"
+    echo -e "  --dev:       use dev-specific disks"
     echo -e "  --log:       enable logging"
     echo -e "   -h:         show this message\n"
     exit 1
 }
 
 while [ $# -gt 0 ]; do
-    if [ $1 == "--no-dev" ]; then
-        DEV=
-        DEV2=
+    if [ $1 == "--dev" ]; then
+        DEV="-dev"
+        DEV2="--dev"
     elif [ $1 == "--prof" ]; then
 	PGCONF=postgres-pgbadger.conf
     elif [ $1 == "--reset" ]; then

@@ -4,15 +4,14 @@ cd "${BASH_SOURCE%/*}/" || exit
 
 CMD=$0
 SRC=
-DEV="-dev"
-DEV2="--dev"
+DEV=
 DIR=/tmp/backup-pg-persist
 
 help () {
     echo -e "\n  Restore the postgres data"
     echo -e "\n  Usage:"
-    echo -e "\n   $CMD [--reset] [--prof] [--no-dev] [--src-dev] [-h]"
-    echo -e "\n  --no-dev:    don't use dev-specific disks"
+    echo -e "\n   $CMD [--reset] [--prof] [--dev] [--src-dev] [-h]"
+    echo -e "\n  --dev:       use dev-specific disks"
     echo -e "   --src-dev:    use the dev-specific backup"
     echo -e "   -h:         show this message\n"
     echo -e "\nBy default this restores the non-dev data to the dev disk."
@@ -20,9 +19,8 @@ help () {
 }
 
 while [ $# -gt 0 ]; do
-    if [ $1 == "--no-dev" ]; then
-        DEV=
-        DEV2=
+    if [ $1 == "--dev" ]; then
+        DEV="-dev"
     elif [ $1 == "--src-dev" ]; then
 	SRC="-dev"
     elif [ $1 == "-h" ]; then

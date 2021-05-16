@@ -11,7 +11,7 @@ CMD=$0
 
 BASE=python:3.9.1-slim-buster
 COMMENT="# syntax=docker/dockerfile:experimental"
-MOUNT="--mount=type=cache,target=/root/.cache/pip"
+MOUNT="--mount=type=cache,mode=0777,target=/root/.cache/pip"
 JS_PKG="npm"
 HAVE_JS=0
 FILE="Dockerfile"
@@ -83,7 +83,7 @@ cat >>$FILE <<EOF
 workdir /app/py
 copy py/ch2 /app/py/ch2
 copy py/setup.py py/MANIFEST.in /app/py/
-run --mount=type=cache,target=~/.cache/pip pip install .
+run $MOUNT pip install .
 EOF
 
 if ((HAVE_JS)); then

@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from logging import getLogger
 
-from sqlalchemy import create_engine, MetaData, text
+from sqlalchemy import create_engine, MetaData, text, inspect
 from sqlalchemy.orm import sessionmaker, Session
 from uritools import urisplit, uriunsplit
 
@@ -96,8 +96,7 @@ class DatabaseBase:
             raise CannotConnect(f'Could not connect to database')
 
     def no_schema(self, table):
-        # https://stackoverflow.com/questions/33053241/sqlalchemy-if-table-does-not-exist
-        return not self.engine.dialect.has_table(self.engine, table.__tablename__)
+        return not inspect(self.engine).has_table(table.__tablename__)
 
     @contextmanager
     def session_context(self, **kargs):

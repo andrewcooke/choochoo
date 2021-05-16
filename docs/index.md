@@ -31,7 +31,7 @@ direction. Good luck!
 This is what I have to do, on my development machine.  For me, once all
 required software packages are installed, it is quite simple:
 
-    > dkr/make-images.sh
+    > dkr/make-images.sh --dev
     > dkr/make-postgresql-log-volume.sh --dev
     > dkr/make-postgresql-data-volume.sh --dev
 
