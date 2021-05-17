@@ -31,15 +31,16 @@ default configuration (`ch2 default-config`) is sufficient.
 To check for errors in `myfile.fit`:
 
     > ch2 fix-fit myfile.fit --discard
-    [37m    INFO: [37mLogging to /home/andrew/.ch2/0-39/logs/fix-fit.log[0m
-    [37m WARNING: [36mCould not connect to database[0m
-    
-     Welcome to Choochoo.
-    
-     You must configure the database before use (no uri).
-    
-     Please use the ch2 database command.
-    
+    Traceback (most recent call last):
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 33, in <module>
+        sys.exit(load_entry_point('choochoo', 'console_scripts', 'ch2')())
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 22, in importlib_load_entry_point
+        for entry_point in distribution(dist_name).entry_points
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 524, in distribution
+        return Distribution.from_name(distribution_name)
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 187, in from_name
+        raise PackageNotFoundError(name)
+    importlib.metadata.PackageNotFoundError: choochoo
 
 
 If there are no warnings or errors (as above) then the file is OK (as
@@ -52,13 +53,16 @@ problems.  Note that using `-v 2` reduces the logging to `ERROR` level
 only (with `-v 0` we would see no logging, just the file names).
 
     > ch2 -v 2 fix-fit --name-bad *.fit
-    
-     Welcome to Choochoo.
-    
-     You must configure the database before use (no uri).
-    
-     Please use the ch2 database command.
-    
+    Traceback (most recent call last):
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 33, in <module>
+        sys.exit(load_entry_point('choochoo', 'console_scripts', 'ch2')())
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 22, in importlib_load_entry_point
+        for entry_point in distribution(dist_name).entry_points
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 524, in distribution
+        return Distribution.from_name(distribution_name)
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 187, in from_name
+        raise PackageNotFoundError(name)
+    importlib.metadata.PackageNotFoundError: choochoo
 
 
 ## Check Timestamps in a FIT File
@@ -67,15 +71,16 @@ To check that the timestamp never increases by more than 60s between
 records:
 
     > ch2 fix-fit myfile.fit --max-delta-t 60 --discard
-    [37m    INFO: [37mLogging to /home/andrew/.ch2/0-39/logs/fix-fit.log[0m
-    [37m WARNING: [36mCould not connect to database[0m
-    
-     Welcome to Choochoo.
-    
-     You must configure the database before use (no uri).
-    
-     Please use the ch2 database command.
-    
+    Traceback (most recent call last):
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 33, in <module>
+        sys.exit(load_entry_point('choochoo', 'console_scripts', 'ch2')())
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 22, in importlib_load_entry_point
+        for entry_point in distribution(dist_name).entry_points
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 524, in distribution
+        return Distribution.from_name(distribution_name)
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 187, in from_name
+        raise PackageNotFoundError(name)
+    importlib.metadata.PackageNotFoundError: choochoo
 
 
 Here we can see that there was a jump of 273 seconds.
@@ -93,15 +98,16 @@ file (see below to understand what information is removed).
 The command to drop data is (see notes below):
 
     > ch2 fix-fit myfile.fit --max-delta-t 60 --drop --fix-header --fix-checksum --max-fwd-len 500 -o fixed.fit
-    [37m    INFO: [37mLogging to /home/andrew/.ch2/0-39/logs/fix-fit.log[0m
-    [37m WARNING: [36mCould not connect to database[0m
-    
-     Welcome to Choochoo.
-    
-     You must configure the database before use (no uri).
-    
-     Please use the ch2 database command.
-    
+    Traceback (most recent call last):
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 33, in <module>
+        sys.exit(load_entry_point('choochoo', 'console_scripts', 'ch2')())
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 22, in importlib_load_entry_point
+        for entry_point in distribution(dist_name).entry_points
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 524, in distribution
+        return Distribution.from_name(distribution_name)
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 187, in from_name
+        raise PackageNotFoundError(name)
+    importlib.metadata.PackageNotFoundError: choochoo
 
 
 Note that:
@@ -122,38 +128,16 @@ In the recipe above data were dropped after the first 4975 bytes.  We
 can see what records that affected as follows:
 
     > ch2 fit records --after-bytes 4975 myfile.fit
-    [37m    INFO: [37mLogging to /home/andrew/.ch2/0-39/logs/fit.log[0m
-    
-    207 04975 lap
-      end_position_lat: -33.42734768986702°,
-      end_position_long: -70.60800148174167°,     enhanced_avg_speed: 5.577m/s,
-      enhanced_max_speed: 7.838m/s,   event: lap,     event_type: stop,
-      lap_trigger: session_end,   message_index: 0,   sport: cycling,
-      start_position_lat: -33.42788371257484°,
-      start_position_long: -70.60833390802145°,
-      start_time: 2018-07-26 13:34:49+00:00,  sub_sport: generic,
-      timestamp: 2018-07-26 13:59:18+00:00s,  total_ascent: 78m,
-      total_calories: 181kcal,    total_descent: 49m,     total_distance: 5538.87m,
-      total_elapsed_time: 1186.958s,  total_timer_time: 993.097s
-    
-    209 05207 session
-      enhanced_avg_speed: 5.577m/s,   enhanced_max_speed: 7.838m/s,   event: lap,
-      event_type: stop,   first_lap_index: 0,     message_index: 0,
-      nec_lat: -33.42733050696552°,   nec_long: -70.58597140945494°,  num_laps: 1,
-      sport: cycling,     start_position_lat: -33.42788371257484°,
-      start_position_long: -70.60833390802145°,
-      start_time: 2018-07-26 13:34:49+00:00,  sub_sport: generic,
-      swc_lat: -33.435353580862284°,  swc_long: -70.60833390802145°,
-      timestamp: 2018-07-26 13:59:18+00:00s,  total_ascent: 78m,
-      total_calories: 181kcal,    total_descent: 49m,     total_distance: 5538.87m,
-      total_elapsed_time: 1186.958s,  total_timer_time: 993.097s,
-      trigger: activity_end
-    
-    211 05347 activity
-      event: activity,    event_type: stop,   local_timestamp: 2018-07-26 09:59:18,
-      num_sessions: 1,    timestamp: 2018-07-26 13:59:18+00:00,
-      total_timer_time: 993.097s,     type: manual
-    
+    Traceback (most recent call last):
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 33, in <module>
+        sys.exit(load_entry_point('choochoo', 'console_scripts', 'ch2')())
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 22, in importlib_load_entry_point
+        for entry_point in distribution(dist_name).entry_points
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 524, in distribution
+        return Distribution.from_name(distribution_name)
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 187, in from_name
+        raise PackageNotFoundError(name)
+    importlib.metadata.PackageNotFoundError: choochoo
 
 
 That looks like metadata associated with ending an activity.  Probably
@@ -171,78 +155,16 @@ those are not consecutive there must be some internal messages also
 present.  We can display those too:
 
     > ch2 fit records --after-bytes 4975 --internal myfile.fit
-    [37m    INFO: [37mLogging to /home/andrew/.ch2/0-39/logs/fit.log[0m
-    
-    207 04975 lap
-      end_position_lat: -33.42734768986702°,
-      end_position_long: -70.60800148174167°,     enhanced_avg_speed: 5.577m/s,
-      enhanced_max_speed: 7.838m/s,   event: lap,     event_type: stop,
-      lap_trigger: session_end,   message_index: 0,   sport: cycling,
-      start_position_lat: -33.42788371257484°,
-      start_position_long: -70.60833390802145°,
-      start_time: 2018-07-26 13:34:49+00:00,  sub_sport: generic,
-      timestamp: 2018-07-26 13:59:18+00:00s,  total_ascent: 78m,
-      total_calories: 181kcal,    total_descent: 49m,     total_distance: 5538.87m,
-      total_elapsed_time: 1186.958s,  total_timer_time: 993.097s
-    
-    208 05069 definition
-      architecture: b'\x00',  field_0: timestamp (uint32),
-      field_1: start_time (uint32),   field_10: nec_long (sint32),
-      field_11: swc_lat (sint32),     field_12: swc_long (sint32),
-      field_13: unknown (uint8),  field_14: unknown (uint8),
-      field_15: message_index (uint16),   field_16: total_calories (uint16),
-      field_17: avg_speed (uint16),   field_18: max_speed (uint16),
-      field_19: total_ascent (uint16),    field_2: start_position_lat (sint32),
-      field_20: total_descent (uint16),   field_21: first_lap_index (uint16),
-      field_22: num_laps (uint16),    field_23: avg_vertical_oscillation (uint16),
-      field_24: avg_stance_time_percent (uint16),
-      field_25: avg_stance_time (uint16),     field_26: event (enum),
-      field_27: event_type (enum),    field_28: sub_sport (enum),
-      field_29: avg_heart_rate (uint8),   field_3: start_position_long (sint32),
-      field_30: max_heart_rate (uint8),   field_31: avg_cadence (uint8),
-      field_32: max_cadence (uint8),  field_33: total_training_effect (uint8),
-      field_34: event_group (uint8),  field_35: trigger (enum),
-      field_36: avg_temperature (sint8),  field_37: max_temperature (sint8),
-      field_38: unknown (uint8),  field_39: avg_fractional_cadence (uint8),
-      field_4: total_elapsed_time (uint32),
-      field_40: max_fractional_cadence (uint8),
-      field_41: total_fractional_cycles (uint8),  field_42: unknown (uint8),
-      field_43: sport_index (uint8),  field_5: total_timer_time (uint32),
-      field_6: total_distance (uint32),   field_7: sport (enum),
-      field_8: total_cycles (uint32),     field_9: nec_lat (sint32),
-      local_message_type: 1,  message_name: session,  message_number: 18,
-      no_of_fields: 44,   reserved: b'\x00'
-    
-    209 05207 session
-      enhanced_avg_speed: 5.577m/s,   enhanced_max_speed: 7.838m/s,   event: lap,
-      event_type: stop,   first_lap_index: 0,     message_index: 0,
-      nec_lat: -33.42733050696552°,   nec_long: -70.58597140945494°,  num_laps: 1,
-      sport: cycling,     start_position_lat: -33.42788371257484°,
-      start_position_long: -70.60833390802145°,
-      start_time: 2018-07-26 13:34:49+00:00,  sub_sport: generic,
-      swc_lat: -33.435353580862284°,  swc_long: -70.60833390802145°,
-      timestamp: 2018-07-26 13:59:18+00:00s,  total_ascent: 78m,
-      total_calories: 181kcal,    total_descent: 49m,     total_distance: 5538.87m,
-      total_elapsed_time: 1186.958s,  total_timer_time: 993.097s,
-      trigger: activity_end
-    
-    210 05317 definition
-      architecture: b'\x00',  field_0: timestamp (uint32),
-      field_1: total_timer_time (uint32),     field_2: local_timestamp (uint32),
-      field_3: num_sessions (uint16),     field_4: type (enum),
-      field_5: event (enum),  field_6: event_type (enum),
-      field_7: event_group (uint8),   local_message_type: 4,
-      message_name: activity,     message_number: 34,     no_of_fields: 8,
-      reserved: b'\x00'
-    
-    211 05347 activity
-      event: activity,    event_type: stop,   local_timestamp: 2018-07-26 09:59:18,
-      num_sessions: 1,    timestamp: 2018-07-26 13:59:18+00:00,
-      total_timer_time: 993.097s,     type: manual
-    
-    212 05366 checksum
-      checksum: 37636
-    
+    Traceback (most recent call last):
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 33, in <module>
+        sys.exit(load_entry_point('choochoo', 'console_scripts', 'ch2')())
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 22, in importlib_load_entry_point
+        for entry_point in distribution(dist_name).entry_points
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 524, in distribution
+        return Distribution.from_name(distribution_name)
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 187, in from_name
+        raise PackageNotFoundError(name)
+    importlib.metadata.PackageNotFoundError: choochoo
 
 
 Hmm.  Some message defintions and the checksum.  Nothing very
@@ -251,13 +173,16 @@ exciting.
 We can also see the same data in binary form.  For example:
 
     > ch2 fit tokens --after-bytes 4975 myfile.fit
-    [37m    INFO: [37mLogging to /home/andrew/.ch2/0-39/logs/fit.log[0m
-    207 04975 DTA 00b687bc35f981bc35b5a33ae82425cacdb0bc3ae8a234cacd8e1c120049270f009f730800ffffffff7dbd3ae84f37cecd964739e82425cacd0000b500c9159e1e4e003100ffffffffffffffff0901ffffffffff0702ff007f7fffffffff
-    208 05069 DFN 41000012002cfd04860204860304850404850704860804860904860a04861d04851e04851f04852004854e04866e1007fe02840b02840e02840f02841602841702841902841a02845902845a02845b02840001000101000501000601001001021101021201021301021801021b01021c01003901013a01015101005c01025d01025e01026d01026f0102
-    209 05207 DTA 01b687bc35f981bc35b5a33ae82425cacd8e1c120049270f009f730800ffffffff7dbd3ae84f37cecd964739e82425cacdffffffff42696b650000000000000000000000000000b500c9159e1e4e00310000000100ffffffffffff09010200ffffffffffff007f7f00ffffffffff
-    210 05317 DFN 440000220008fd0486000486050486010284020100030100040100060102
-    211 05347 DTA 04b687bc3549270f00764fbc350100001a01ff
-    212 05366 CRC 0493
+    Traceback (most recent call last):
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 33, in <module>
+        sys.exit(load_entry_point('choochoo', 'console_scripts', 'ch2')())
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 22, in importlib_load_entry_point
+        for entry_point in distribution(dist_name).entry_points
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 524, in distribution
+        return Distribution.from_name(distribution_name)
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 187, in from_name
+        raise PackageNotFoundError(name)
+    importlib.metadata.PackageNotFoundError: choochoo
 
 
 ## Remove Arbitrary Data from a FIT File
@@ -272,15 +197,16 @@ First, we note from the `tokens` dump that the data extend from offset
 follows:
 
     > ch2 fix-fit myfile.fit --slices :05069,05317: --fix-header --fix-checksum -o sliced.fit
-    [37m    INFO: [37mLogging to /home/andrew/.ch2/0-39/logs/fix-fit.log[0m
-    [37m WARNING: [36mCould not connect to database[0m
-    
-     Welcome to Choochoo.
-    
-     You must configure the database before use (no uri).
-    
-     Please use the ch2 database command.
-    
+    Traceback (most recent call last):
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 33, in <module>
+        sys.exit(load_entry_point('choochoo', 'console_scripts', 'ch2')())
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 22, in importlib_load_entry_point
+        for entry_point in distribution(dist_name).entry_points
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 524, in distribution
+        return Distribution.from_name(distribution_name)
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 187, in from_name
+        raise PackageNotFoundError(name)
+    importlib.metadata.PackageNotFoundError: choochoo
 
 
 Note that `fix-fit` won't let you remove data that would corrupt the
@@ -289,15 +215,16 @@ file (to the best of its ability).
 ## Change the Times in a FIT File
 
     > ch2 fix-fit myfile.fit --start '2018-01-01 12:00:00' --fix-checksum -o fixed.fit
-    [37m    INFO: [37mLogging to /home/andrew/.ch2/0-39/logs/fix-fit.log[0m
-    [37m WARNING: [36mCould not connect to database[0m
-    
-     Welcome to Choochoo.
-    
-     You must configure the database before use (no uri).
-    
-     Please use the ch2 database command.
-    
+    Traceback (most recent call last):
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 33, in <module>
+        sys.exit(load_entry_point('choochoo', 'console_scripts', 'ch2')())
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 22, in importlib_load_entry_point
+        for entry_point in distribution(dist_name).entry_points
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 524, in distribution
+        return Distribution.from_name(distribution_name)
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 187, in from_name
+        raise PackageNotFoundError(name)
+    importlib.metadata.PackageNotFoundError: choochoo
 
 
 The `--start` value sets the first timestamp in the file.  Subsequent
@@ -309,13 +236,16 @@ For some reason we want to know if a file contains any speed values
 over 7 m/s:
 
     > ch2 fit grep -p '.*speed>7' --compact myfile.fit
-    usage: ch2 fit grep [-h] [--after-records N] [--limit-records N]
-                        [--after-bytes N] [--limit-bytes N] [-w] [--no-validate]
-                        [--max-delta-t S] [--name] [--not] [--match MATCH]
-                        [--compact] [--context] --pattern MSG:FLD[=VAL]
-                        [MSG:FLD[=VAL] ...] [--width WIDTH]
-                        PATH [PATH ...]
-    ch2 fit grep: error: the following arguments are required: --pattern
+    Traceback (most recent call last):
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 33, in <module>
+        sys.exit(load_entry_point('choochoo', 'console_scripts', 'ch2')())
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 22, in importlib_load_entry_point
+        for entry_point in distribution(dist_name).entry_points
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 524, in distribution
+        return Distribution.from_name(distribution_name)
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 187, in from_name
+        raise PackageNotFoundError(name)
+    importlib.metadata.PackageNotFoundError: choochoo
 
 
 ## Search for Values in a FIT File with Context
@@ -324,13 +254,16 @@ Seeing the results above we'd like to know more about the records
 where we were over 7.5m/s:
 
     > ch2 fit grep -p 'record:enhanced_speed>7' --context myfile.fit
-    usage: ch2 fit grep [-h] [--after-records N] [--limit-records N]
-                        [--after-bytes N] [--limit-bytes N] [-w] [--no-validate]
-                        [--max-delta-t S] [--name] [--not] [--match MATCH]
-                        [--compact] [--context] --pattern MSG:FLD[=VAL]
-                        [MSG:FLD[=VAL] ...] [--width WIDTH]
-                        PATH [PATH ...]
-    ch2 fit grep: error: the following arguments are required: --pattern
+    Traceback (most recent call last):
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 33, in <module>
+        sys.exit(load_entry_point('choochoo', 'console_scripts', 'ch2')())
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 22, in importlib_load_entry_point
+        for entry_point in distribution(dist_name).entry_points
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 524, in distribution
+        return Distribution.from_name(distribution_name)
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 187, in from_name
+        raise PackageNotFoundError(name)
+    importlib.metadata.PackageNotFoundError: choochoo
 
 
 The search expression has the form `record:field=value` where `record`
@@ -343,13 +276,16 @@ the last of these is for regular expression matching on the value.
 This has made us curious.  Do we have any rides where we exceed 17m/s?
 
     > ch2 fit grep -p 'record:enhanced_speed>17' --match 0 --name *.fit
-    usage: ch2 fit grep [-h] [--after-records N] [--limit-records N]
-                        [--after-bytes N] [--limit-bytes N] [-w] [--no-validate]
-                        [--max-delta-t S] [--name] [--not] [--match MATCH]
-                        [--compact] [--context] --pattern MSG:FLD[=VAL]
-                        [MSG:FLD[=VAL] ...] [--width WIDTH]
-                        PATH [PATH ...]
-    ch2 fit grep: error: the following arguments are required: --pattern
+    Traceback (most recent call last):
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 33, in <module>
+        sys.exit(load_entry_point('choochoo', 'console_scripts', 'ch2')())
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 22, in importlib_load_entry_point
+        for entry_point in distribution(dist_name).entry_points
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 524, in distribution
+        return Distribution.from_name(distribution_name)
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 187, in from_name
+        raise PackageNotFoundError(name)
+    importlib.metadata.PackageNotFoundError: choochoo
 
 
 The `--name` flag displays filenames on matching, while `--match 0`
@@ -362,13 +298,16 @@ bytes, but not timestamps (or any other field).  But we can work
 around this by using `--grep`:
 
     > ch2 fit grep -p '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- myfile.fit
-    usage: ch2 fit grep [-h] [--after-records N] [--limit-records N]
-                        [--after-bytes N] [--limit-bytes N] [-w] [--no-validate]
-                        [--max-delta-t S] [--name] [--not] [--match MATCH]
-                        [--compact] [--context] --pattern MSG:FLD[=VAL]
-                        [MSG:FLD[=VAL] ...] [--width WIDTH]
-                        PATH [PATH ...]
-    ch2 fit grep: error: the following arguments are required: --pattern
+    Traceback (most recent call last):
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 33, in <module>
+        sys.exit(load_entry_point('choochoo', 'console_scripts', 'ch2')())
+      File "/home/andrew/project/choochoo/py/env/bin/ch2", line 22, in importlib_load_entry_point
+        for entry_point in distribution(dist_name).entry_points
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 524, in distribution
+        return Distribution.from_name(distribution_name)
+      File "/usr/local/lib/python3.9/importlib/metadata.py", line 187, in from_name
+        raise PackageNotFoundError(name)
+    importlib.metadata.PackageNotFoundError: choochoo
 
 
 Note that we needed to explicitly include a wildcard record for the
