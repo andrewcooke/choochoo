@@ -82,4 +82,5 @@ rm -f docker-compose.yml
 cp docker-compose-ch2-jp-pg-persist.yml docker-compose.yml
 sed -i s/DEV/$DEV/ docker-compose.yml 
 sed -i s/VERSION/$VERSION/ docker-compose.yml
+mkdir -p ~/.ch2/$VERSION/notebook  # needed by jupyter
 TZ=$TZ ID="$(id -u):$(id -g)" docker-compose up
