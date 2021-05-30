@@ -22,4 +22,6 @@
 /dev/ch2 kit change --force bowman front-sealant stans 2019-11-16
 /dev/ch2 kit change --force bowman rear-sealant stans 2019-11-16
 /dev/ch2 kit change --force bowman chain kmc-x11el '2020-03-21 21:07:33'
+/dev/ch2 kit change --force bowman chain fsa 2021-04-01
+/dev/ch2 kit change --force cotic chain kmc-x11el 2020-10-18
 /dev/ch2 kit rebuild

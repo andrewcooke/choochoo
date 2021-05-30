@@ -37,7 +37,7 @@ def compare_activities(local_time, compare_time, activity_group):
     health = std_health_statistics(s)
     hr_zones = hr_zones_from_database(s, local_time, activity_group)
     climbs = Statistics(s, sources=climb_sources(s, local_time, activity_group=activity_group)). \
-        by_name(SectorCalculator, N.CLIMB_ANY, like=True).with_. \
+        by_name(SectorCalculator, N.CLIMB_ANY, N.VERTICAL_POWER, like=True).with_. \
         copy_with_units().df
     active = Statistics(s, activity_journal=local_time, activity_group=activity_group). \
         by_name(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
@@ -117,7 +117,7 @@ def compare_activities(local_time, compare_time, activity_group):
     '''
 
     if present(climbs, N.CLIMB_TIME):
-        display(transform(climbs.filter(like='Climb').dropna(),
+        display(transform(climbs,
                           {N.CLIMB_TIME: format_seconds, N.CLIMB_ELEVATION: format_metres,
                            N.CLIMB_DISTANCE: format_km, N.CLIMB_GRADIENT: format_percent,
                            N.CLIMB_POWER: format_watts, N.CLIMB_CATEGORY: lambda x: x}))
