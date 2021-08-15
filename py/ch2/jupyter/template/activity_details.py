@@ -118,7 +118,7 @@ def activity_details(local_time, activity_group):
         display(transform(climbs,
                           {N.CLIMB_TIME: format_seconds, N.CLIMB_ELEVATION: format_metres,
                            N.CLIMB_DISTANCE: format_km, N.CLIMB_GRADIENT: format_percent,
-                           N.CLIMB_POWER: format_watts, N.CLIMB_CATEGORY: lambda x: x}))
+                           N.VERTICAL_POWER: format_watts, N.CLIMB_CATEGORY: lambda x: x}))
 
     '''
     ## Health and Fitness

@@ -82,6 +82,7 @@ class ACooke(Garmin):
                     N.KIT: {
                         'cotic': simple_name(MTB),
                         'bowman': simple_name(ROAD),
+                        'cbutler': simple_name(ROAD),
                     },
                     DEFAULT: simple_name(BIKE),
                 },
@@ -115,7 +116,8 @@ class ACooke(Garmin):
         else:
             add_kit_power_estimate(s, (MTB, ROAD))
             for kit, activity_group, cda, crr, bike_weight in (('cotic', MTB, 0.42, 0.0055, 12),
-                                                               ('bowman', ROAD, 0.42, 0.0055, 8)):
+                                                               ('bowman', ROAD, 0.42, 0.0055, 8),
+                                                               ('cbutler', ROAD, 0.42, 0.0055, 12)):
                 add_kit_power_model(s, kit, self._activity_groups[activity_group], cda, crr, bike_weight)
         return [PowerCalculator]  # additional blocker for activity stats
 
