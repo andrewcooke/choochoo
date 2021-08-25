@@ -20,7 +20,6 @@ DiaryTopic, DiaryTopicJournal, DiaryTopicField,
 ActivityTopic, ActivityTopicJournal, ActivityTopicField,
 StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText, StatisticMeasure
 Pipeline
-MonitorJournal
 Constant, SystemConstant, Process
 ActivitySimilarity, ActivityNearby
 Timestamp, Process, SystemConstant

@@ -1,5 +1,6 @@
 
 from bokeh.io import output_file
+from bokeh.palettes import magma
 
 from ch2.data import *
 from ch2.data.plot.calendar import *

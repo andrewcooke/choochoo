@@ -133,7 +133,4 @@ def compare_activities(local_time, compare_time, activity_group):
     xrange = ff.x_range if ff else None
     add_multi_line_at_index(ff, N.TIME, fitness + fatigue, health, colours, alphas=alphas, index=-1)
     atd = std_distance_time_plot(900, 200, health, x_range=xrange)
-    shr = multi_plot(900, 200, N.TIME, [N.DAILY_STEPS, N.REST_HR_BPM], health, ['grey', 'red'], alphas=[1, 0.5],
-                     x_range=xrange, rescale=True, plotters=[bar_plotter(dt.timedelta(hours=20)), dot_plotter()])
-    add_curve(shr, N.TIME, N.REST_HR_BPM, health, color='red', y_range_name=N.REST_HR_BPM)
-    show(gridplot([[ff], [atd], [shr]]))
+    show(gridplot([[ff], [atd]]))

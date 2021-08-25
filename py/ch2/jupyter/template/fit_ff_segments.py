@@ -42,7 +42,7 @@ def fit_ff_segments(group, *segment_titles):
     s = session('-v2')
 
     # hr10 = statistics(s, HR_IMPULSE_10, activity_group=ActivityGroup.from_name(s, 'all'))
-    hr10 = Statistics(s).by_name(MonitorReader, N.HR_IMPULSE_10).df
+    hr10 = Statistics(s).by_name(ImpulseCalculator, N.HR_IMPULSE_10).df
     print(hr10.describe())
     segments = [s.query(Segment).filter(Segment.title == segment_title).one() for segment_title in segment_titles]
     for segment in segments:

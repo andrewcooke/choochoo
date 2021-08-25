@@ -4,14 +4,16 @@ from os import makedirs
 from os.path import basename, join, exists, dirname
 
 from ..commands.args import KIT, PATH, DATA, UPLOAD, PROCESS, CPROFILE
-from ..common.date import time_to_local_time, Y, YMDTHMS
+from ..common.date import time_to_local_time, Y, YMDTHMS, to_time
 from ..common.io import touch, clean_path, data_hash
 from ..common.log import log_current_exception
+from ..fit.format.read import filtered_records
+from ..fit.format.records import merge_duplicates, fix_degrees, unpack_single_bytes
 from ..lib.io import split_fit_path
 from ..lib.log import Record
 from ..lib.utils import timing
 from ..pipeline.process import run_pipeline
-from ..pipeline.read.utils import AbortImportButMarkScanned
+from ..pipeline.read.utils import AbortImportButMarkScanned, ProcessFitReader
 from ..sql import KitItem, FileHash, PipelineType
 
 log = getLogger(__name__)
@@ -31,6 +33,8 @@ DIR = 'dir'
 DOT_FIT = '.fit'
 READ_PATH = 'read-path'
 WRITE_PATH = 'write-path'
+
+MONITORING_INFO_ATTR = 'monitoring_info'
 
 
 def upload(config):
@@ -118,14 +122,24 @@ def check_file(s, file):
     check_hash(s, file)
 
 
+def _parse_records(data):
+    types, messages, records = filtered_records(data)
+    return [record.as_dict(merge_duplicates, fix_degrees, unpack_single_bytes)
+            for _, _, record in sorted(records,
+                                       key=lambda r: r[2].timestamp if r[2].timestamp else to_time(0.0))]
+
+
+def _read_first_timestamp(path, records):
+    return ProcessFitReader.assert_contained(path, records, [MONITORING_INFO_ATTR], 0)
+
+
 def parse_fit_data(file, items=None):
-    from ch2.pipeline.read.monitor import MonitorReader
     from ch2.pipeline.read.activity import ActivityReader
     try:
         # add TIME and TYPE and EXTRA (and maybe SPORT) given (fit) DATA and NAME
         try:
-            records = MonitorReader.parse_records(file[DATA])
-            file[TIME] = MonitorReader.read_first_timestamp(file[NAME], records)
+            records = _parse_records(file[DATA])
+            file[TIME] = _read_first_timestamp(file[NAME], records)
             file[TYPE] = MONITOR
             # don't use '-' here or it will be treated as kit in path matching
             file[EXTRA] = ':' + file[HASH][0:5]

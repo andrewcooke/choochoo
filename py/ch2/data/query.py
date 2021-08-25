@@ -335,7 +335,7 @@ def set_times_from_index(df):
 
 def std_health_statistics(s, freq='1h'):
 
-    from ..pipeline.owners import RestHRCalculator, ResponseCalculator, ActivityCalculator, StepsCalculator
+    from ..pipeline.owners import ResponseCalculator, ActivityCalculator
 
     # 2 days to skip constants etc with time zones
     start = s.query(StatisticJournal.time). \
@@ -353,8 +353,6 @@ def std_health_statistics(s, freq='1h'):
         drop_prefix(N.DEFAULT + SPACE).into(stats, tolerance='30m')
 
     stats = Statistics(s). \
-        by_name(RestHRCalculator, N.REST_HR). \
-        by_name(StepsCalculator, N.DAILY_STEPS). \
         by_name(ActivityCalculator, N._delta(N.DEFAULT_ANY), like=True).with_. \
         rename_with_units(N.REST_HR).into(stats, tolerance='30m')
 

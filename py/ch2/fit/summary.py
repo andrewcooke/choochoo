@@ -224,7 +224,7 @@ def summarize_grep(data, grep, name_file=None, match=1, compact=False, context=F
                     (first_bytes is None and (after_bytes is not None and offset >= after_bytes)):
                 first_record, first_bytes = index, offset
             if first_record is not None or first_bytes is not None:
-                if (first_record is not None and (limit_records < 0 or i - first_record < limit_records)) and \
+                if (first_record is not None and (limit_records < 0 or index - first_record < limit_records)) and \
                         (first_bytes is not None and (limit_bytes < 0 or offset - first_bytes < limit_bytes)):
                     record = record.as_dict(fix_degrees, merge_duplicates)
                     for name, values_units in sorted(record.data.items()):
