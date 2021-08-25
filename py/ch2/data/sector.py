@@ -2,6 +2,7 @@ from itertools import groupby
 from logging import getLogger
 
 from sqlalchemy import text
+from sqlalchemy.exc import DataError
 
 from ch2.names import N
 from ch2.sql import StatisticJournal, StatisticName, Source
@@ -126,6 +127,7 @@ update sector
        distance = coalesce(distance, st_length(e.route) / 1000)
   from endcaps as e
  where sector.id = :sector_id
+   and st_geometrytype(e.hull) = 'ST_Polygon'
 ''')
     log.debug(sql)
     s.connection().execute(sql, sector_id=sector_id, radius=HULL_RADIUS)

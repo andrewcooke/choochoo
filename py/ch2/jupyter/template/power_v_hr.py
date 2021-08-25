@@ -62,9 +62,9 @@ def power_v_hr(local_time, activity_group):
 
     def model(params, df):
         idf = impulse_10(df, HRImpulse('HR Impulse', gamma=params['gamma'], zero=params['zero'], one=6, max_secs=60))
-        idf.rolling('60S').apply(lambda g: trapz(g, g.index.astype(np.int64) / 10**9))
+        idf.rolling('60S').apply(lambda g: trapz(g, g.index.view(np.int64) / 10**9))
         mdf = ldf.copy(deep=True)
-        mdf[N.HR_IMPULSE_10] = interp1d(idf.index.astype(np.int64), idf[N.HR_IMPULSE_10], bounds_error=False)(mdf.index.astype(np.int64))
+        mdf[N.HR_IMPULSE_10] = interp1d(idf.index.view(np.int64), idf[N.HR_IMPULSE_10], bounds_error=False)(mdf.index.view(np.int64))
         mdf = add_energy_budget(mdf, mass)
         mdf = add_loss_estimate(mdf, mass, cda=params['cda'], crr=params['crr'])
         mdf = add_power_estimate(mdf)

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-dev/killall.sh
-dev/shutdown.sh
+#dev/killall.sh
+#dev/shutdown.sh
 
 #dev/ch2 db remove schema
 dev/ch2 db remove database

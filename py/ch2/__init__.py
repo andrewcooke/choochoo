@@ -113,7 +113,7 @@ def main():
             log.critical('User abort')
             exit(1)
         except Exception as e:
-            log.critical(e)
+            log.critical(e, exc_info=True)
             log.info('See `%s %s` for available commands.' % (PROGNAME, HELP))
             log.info('Docs at http://andrewcooke.github.io/choochoo')
             if not args or args[DEV]:
@@ -127,7 +127,7 @@ Welcome to Choochoo.
 
 You must configure the database before use (no {"schema" if uri else "uri"}).
 
-Please use the {PROGNAME} {DATABASE} command.
+Please use the {PROGNAME} {DB} command.
 ''')
     if command_name != WEB:
         exit(3)

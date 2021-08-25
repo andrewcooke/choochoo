@@ -98,7 +98,7 @@ class PowerCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityGroupProces
         if present(ldf, N.POWER_ESTIMATE):
             ldf['tmp'] = ldf[N.POWER_ESTIMATE]
             ldf.loc[ldf['tmp'].isna(), ['tmp']] = 0
-            energy = np.trapz(y=ldf['tmp'], x=ldf.index.astype(np.int64) / 1e12)
+            energy = np.trapz(y=ldf['tmp'], x=ldf.index.view(np.int64) / 1e12)
             loader.add_data(N.ENERGY_ESTIMATE, ajournal, energy, ajournal.start)
             loader.add_data(N.CALORIE_ESTIMATE, ajournal, energy * 0.239006 / self.caloric_eff, ajournal.start)
             ldf.drop(columns=['tmp'], inplace=True)

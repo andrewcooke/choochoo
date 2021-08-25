@@ -45,7 +45,7 @@ def times_for_distance(df, delta=0.01):  # all units of km
     stats, km = {}, round_km()
     tmp = pd.DataFrame({N.TIME: df.index}, index=df[N.DISTANCE])
     tmp = tmp[~tmp.index.duplicated(keep='last')]
-    t4d = pd.DataFrame({N.TIME: (tmp[N.TIME] - tmp[N.TIME].iloc[0]).astype(np.int64) / 1e9},
+    t4d = pd.DataFrame({N.TIME: (tmp[N.TIME] - tmp[N.TIME].iloc[0]).view(np.int64) / 1e9},
                        index=df[N.DISTANCE])
     lt4d = linear_resample(t4d, d=delta)
     for target in km:
@@ -95,7 +95,7 @@ def max_med_stats(df, params=((N.HEART_RATE, N.MAX_MED_HR_M),), mins=None, delta
     ldf_all = linear_resample_time(df, dt=delta, with_timespan=False, add_time=False)
     ldf_all.interpolate('nearest')
     ldf_tstamp = ldf_all.loc[ldf_all[N.TIMESPAN_ID].isin(df[N.TIMESPAN_ID].unique())].copy()
-    ldf_tstamp.loc[:, 'gap'] = ldf_tstamp.index.astype(np.int64) / 1e9
+    ldf_tstamp.loc[:, 'gap'] = ldf_tstamp.index.view(np.int64) / 1e9
     ldf_tstamp.loc[:, 'gap'] = ldf_tstamp['gap'].diff()
     log.debug(f'Largest gap is {ldf_tstamp["gap"].max()}s')
     for target in mins:

@@ -16,12 +16,10 @@ from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.climb import FindClimbCalculator
 from ..pipeline.calculate.cluster import ClusterCalculator
 from ..pipeline.calculate.elevation import ElevationCalculator
-from ..pipeline.calculate.heart_rate import RestHRCalculator
 from ..pipeline.calculate.kit import KitCalculator
 from ..pipeline.calculate.nearby import SimilarityCalculator, NearbyCalculator
 from ..pipeline.calculate.response import ResponseCalculator
 from ..pipeline.calculate.sector import SectorCalculator, NewSectorCalculator
-from ..pipeline.calculate.steps import StepsCalculator
 from ..pipeline.calculate.summary import SummaryCalculator
 from ..pipeline.display.activity.achievement import AchievementDelegate
 from ..pipeline.display.activity.jupyter import JupyterDelegate
@@ -30,11 +28,8 @@ from ..pipeline.display.activity.nearby import NearbyDelegate
 from ..pipeline.display.activity.utils import ActivityDisplayer, ActivityDelegate
 from ..pipeline.display.database import DatabaseDisplayer
 from ..pipeline.display.diary import DiaryDisplayer
-from ..pipeline.display.monitor import MonitorDisplayer
 from ..pipeline.display.response import ResponseDisplayer
 from ..pipeline.read.activity import ActivityReader
-from ..pipeline.read.garmin import GARMIN_USER, GARMIN_PASSWORD
-from ..pipeline.read.monitor import MonitorReader
 from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, ActivityTopic, PipelineType
 from ..sql.types import short_cls
 from ..srtm.file import SRTM1_DIR_CNAME
@@ -121,7 +116,6 @@ class Profile:
         record_to_db = self._record_to_db()
         add_process(s, ActivityReader, owner_out=short_cls(ActivityReader),
                     sport_to_activity=sport_to_activity, record_to_db=record_to_db)
-        add_process(s, MonitorReader)
 
     def _ff_parameters(self):
         return ((42, 1, 1, T.FITNESS_D % 42, 'fitness'),
@@ -151,10 +145,6 @@ your FF-model parameters (fitness and fatigue).
 
     def _load_standard_statistics(self, s, power_statistics=None):
         blockers = self._sector_statistics(s, power_statistics=power_statistics)
-        add_process(s, StepsCalculator, blocked_by=[MonitorReader],
-                    owner_in=short_cls(MonitorReader))
-        add_process(s, RestHRCalculator, blocked_by=[MonitorReader],
-                    owner_in=short_cls(MonitorReader))
         add_process(s, KitCalculator, blocked_by=[ActivityReader],
                     owner_in=short_cls(ActivityReader))
         blockers = blockers or []
@@ -171,8 +161,7 @@ your FF-model parameters (fitness and fatigue).
     def _sector_statistics(self, s, power_statistics=None):
         blockers = power_statistics or []
         add_process(s, FindClimbCalculator, blocked_by=[ElevationCalculator],
-                    owner_in=short_cls(ActivityReader), climb=CLIMB_CNAME,
-                    activity_group=BIKE)
+                    climb=CLIMB_CNAME, activity_group=BIKE)
         add_process(s, ClusterCalculator, blocked_by=[ElevationCalculator],
                     owner_in=short_cls(ActivityReader))
         add_process(s, SectorCalculator, blocked_by=[ClusterCalculator, FindClimbCalculator],
@@ -186,7 +175,7 @@ your FF-model parameters (fitness and fatigue).
         # also, add year first so that monthly doesn't get confused by extra stats range
         x = add_process(s, SummaryCalculator,
                         # relying on ActivityCalculator dependencies
-                        blocked_by=[ActivityCalculator, RestHRCalculator, StepsCalculator],
+                        blocked_by=[ActivityCalculator],
                         schedule=Schedule.normalize('x'))
         y = add_process(s, SummaryCalculator, blocked_by=[x],
                         schedule=Schedule.normalize('y'))
@@ -206,7 +195,6 @@ your FF-model parameters (fitness and fatigue).
 
     def _load_diary_pipeline(self, s):
         add_displayer(s, DiaryDisplayer)
-        add_displayer(s, MonitorDisplayer)
         # prefix ties in to the ff statistics config
         add_displayer(s, ResponseDisplayer, owner_in=short_cls(ResponseCalculator), prefix=N.DEFAULT)
         add_displayer(s, ActivityDisplayer)
@@ -230,19 +218,6 @@ These data are used to give improved values when using GPS elevation.
 You must create the directory and populate it with suitable files from http://dwtkns.com/srtm30m.
 If the directory or files are missing the raw GPS elevation will be used.
 This is noted as a warning in the logs (along with the name of the missing file).
-''',
-                     single=True, statistic_journal_type=StatisticJournalType.TEXT)
-        add_constant(s, GARMIN_USER, None,
-                     description='''
-User for Garmin.
-If set, monitor data (daily steps, heart rate) are downloaded from Garmin.
-''',
-                     single=True, statistic_journal_type=StatisticJournalType.TEXT)
-        add_constant(s, GARMIN_PASSWORD, None,
-                     description='''
-Password for Garmin.
-This is stored as plaintext on the server (and visible here)
-so do not use an important password that applies to many accounts.
 ''',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
 

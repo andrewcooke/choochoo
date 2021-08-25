@@ -127,7 +127,7 @@ class SimilarityCalculator(RerunWhenNewActivitiesMixin, ProcessCalculator):
 
         existing_lo = select([ns.c.activity_journal_lo_id])
         existing_hi = select([ns.c.activity_journal_hi_id])
-        existing = existing_lo.union(existing_hi).cte()
+        existing = existing_lo.union(existing_hi).select()
 
         # todo - has not been tuned for latest schema
         stmt = select([sj_lat.c.source_id, sjf_lon.c.value, sjf_lat.c.value]). \

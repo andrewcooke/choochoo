@@ -227,7 +227,7 @@ class MonitorReader(LoaderMixin, ProcessFitReader):
 
     def _write_diff(self, s, df):
         steps = StatisticName.from_name(s, N.STEPS, self.owner_out)
-        times = df.loc[(df[NEW_STEPS] != df[N.STEPS]) & ~df[N.STEPS].isna()].index.astype(np.int64) / 1e9
+        times = df.loc[(df[NEW_STEPS] != df[N.STEPS]) & ~df[N.STEPS].isna()].index.view(np.int64) / 1e9
         if len(times):
             times = [to_time(time) for time in times]
             n = s.query(func.count(StatisticJournal.id)). \

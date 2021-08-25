@@ -157,6 +157,19 @@ def add_user(config):
         passwd=config.args[PASSWD])
 
 
+def _create_role(cnxn, name):
+    # https://stackoverflow.com/a/49858797
+    execute(cnxn, f'''
+do $$
+begin
+  create role {name} inherit;
+  exception when duplicate_object then
+    raise notice 'not creating {name} - already exists';
+end
+$$;
+''')
+
+
 def add_database(config):
     cnxn = get_postgres_cnxn(config).execution_options(isolation_level='AUTOCOMMIT')
     add(cnxn, 'database', urlsplit(config.args._format(URI)).path[1:],
@@ -165,12 +178,11 @@ def add_database(config):
     # https://dba.stackexchange.com/a/37373
     execute(cnxn, 'create extension if not exists btree_gist')
     execute(cnxn, 'create extension if not exists postgis')
-    # todo - move to separate stage
-    execute(cnxn, 'create role postgis_reader inherit')
+    _create_role(cnxn, 'postgis_reader')
     execute(cnxn, 'grant select on geometry_columns to postgis_reader')
     execute(cnxn, 'grant select on geography_columns to postgis_reader')
     execute(cnxn, 'grant select on spatial_ref_sys to postgis_reader')
-    execute(cnxn, 'create role postgis_writer inherit')
+    _create_role(cnxn, 'postgis_writer')
     execute(cnxn, 'grant postgis_reader to postgis_writer')
     execute(cnxn, 'grant insert, update, delete on spatial_ref_sys to postgis_writer')
 
