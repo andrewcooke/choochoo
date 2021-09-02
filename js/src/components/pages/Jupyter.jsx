@@ -52,7 +52,7 @@ export default function Jupyter(props) {
         setParams(null);
         csrfFetch('/api/jupyter/parameters')
             .then(handleJson(history, setParams, setError));
-    }, [1]);
+    }, []);
 
     return (
         <Layout title='Jupyter' content={<Columns params={params}/>} errorState={errorState}/>

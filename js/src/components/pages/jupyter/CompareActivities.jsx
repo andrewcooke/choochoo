@@ -9,7 +9,6 @@ export default function CompareActivities(props) {
 
     const {params} = props;
     const groups = Object.keys(params.activity_times_by_group).filter(group => params.activity_times_by_group[group].length > 1);
-    if (groups.length === 0) return <Empty/>;
 
     const defaultGroup = params.latest_activity_group in groups ? params.latest_activity_group : groups[0];
     const [group, setGroup] = useState(defaultGroup);
@@ -26,6 +25,8 @@ export default function CompareActivities(props) {
 
     const href = fmtHref('api/jupyter/compare_activities?local_time=%s&compare_time=%s&activity_group=%s',
         localTime, compareTime, group);
+
+    if (groups.length === 0) return <Empty/>;
 
     return (<ActivityCard header='Compare Activities' pad={8} href={href}>
         <Grid item xs={12}><Text>

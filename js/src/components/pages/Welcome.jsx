@@ -25,7 +25,7 @@ function Warnings(props) {
 
     useEffect(() => {
         csrfFetch('/api/warnings').then(handleJson(history, setWarnings, setError));
-    }, [1]);
+    }, []);
 
     return warnings.map((warning, i) => <ConfigWarning warning={warning} key={i}/>);
 }

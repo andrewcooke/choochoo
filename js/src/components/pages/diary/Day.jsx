@@ -43,7 +43,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 
-function childrenFromRest(head, rest, writer, level, history) {
+function ChildrenFromRest(head, rest, writer, level, history) {
 
     const classes = useStyles();
     let children = [];
@@ -98,7 +98,7 @@ function Header(props) {
 
     const children = head.tag === 'jupyter-activity' ?
         <JupyterActivity json={rest}/> :
-        childrenFromRest(head, rest, writer, level + 1, history);
+        ChildrenFromRest(head, rest, writer, level + 1, history);
 
     if (head.tag === 'climb') {
         return (<ClimbField json={json} history={history}/>);
@@ -170,7 +170,7 @@ function TopLevelPaper(props) {
     } else {
         const children = head.tag === 'jupyter-activity' ?
             <JupyterActivity json={rest}/> :
-            childrenFromRest(head, rest, writer, 3, history);
+            ChildrenFromRest(head, rest, writer, 3, history);
         // we drop the title for these
         if (['activity', 'achievements', 'nearbys'].includes(head.tag)) {
             return (<ColumnCard>{children}</ColumnCard>);

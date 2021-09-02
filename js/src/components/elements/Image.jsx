@@ -13,5 +13,7 @@ export default function Image(props) {
             .then(setImage);
     }, [url]);
 
-    return (image === null ? <p>?</p> : <img src={URL.createObjectURL(image)} className={className}/>)
+    return (image === null ?
+        <p>?</p> :
+        <img alt='' src={URL.createObjectURL(image)} className={className}/>)
 }

@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Text} from "../../../common/elements";
+import {Empty, Text} from "../../../common/elements";
 import {Grid} from "@material-ui/core";
 import {FMT_DAY} from "../../../constants";
 import {format, parse} from 'date-fns';
@@ -12,13 +12,13 @@ import {fmtHref, last} from "../../../common/functions";
 export default function AllActivities(props) {
 
     const {params} = props;
-    if (Object.keys(params.activity_times_by_group).length === 0) return <Empty/>;
-
     const all_activity_dates = params.all_activity_times.map(time => time.split(' ')[0]);
     const activities_start = last(all_activity_dates);
     const [start, setStart] = useState(activities_start);
     const [finish, setFinish] = useState(all_activity_dates[0]);
     const href = fmtHref('api/jupyter/all_activities?start=%s&finish=%s', start, finish);
+
+    if (Object.keys(params.activity_times_by_group).length === 0) return <Empty/>;
 
     // the addDay increments below are weird, but work.  bug in picker?  or i just don't understand.
     return (<ActivityCard header='All Activities' pad={2} href={href}>

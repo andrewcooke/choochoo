@@ -1,11 +1,8 @@
 import React from 'react';
-import {Grid, InputLabel, Link, Tooltip, Typography} from "@material-ui/core";
-import {sprintf} from "sprintf-js";
+import {Grid, InputLabel, Link, Tooltip} from "@material-ui/core";
 import {FormatValueUnits, Image} from '../../../elements';
 import {Text} from '../../../../common/elements';
-import {Measures} from ".";
 import {makeStyles} from "@material-ui/core/styles";
-import log from "loglevel";
 
 
 const useStyles = makeStyles(theme => ({

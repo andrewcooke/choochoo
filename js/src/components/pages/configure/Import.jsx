@@ -109,7 +109,7 @@ export default function Import(props) {
             .catch(reason => {
                 log.warn('configure/profiles:', reason);
             });
-    }, [1]);
+    }, []);
 
     return (
         <Layout title='Import User Data'

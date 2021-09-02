@@ -2,12 +2,14 @@ import React, {useEffect, useState} from 'react';
 import {Loading} from "../../common/elements";
 import {OSMap, Route} from ".";
 import {csrfFetch, handleJson} from "../functions";
+import {useHistory} from "react-router-dom";
 
 
 export default function ActivityMap(props) {
 
     const {json} = props;
     const [data, setData] = useState(null);
+    const history = useHistory();
 
     useEffect(() => {
         csrfFetch('/api/route/latlon/' + json.db[0] + '/' + encodeURIComponent(json.db[1]))

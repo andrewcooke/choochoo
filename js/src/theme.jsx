@@ -1,4 +1,4 @@
-import createMuiTheme from "@material-ui/core/styles/createMuiTheme";
+import createMuiTheme from "@material-ui/core/styles/createTheme";
 import {cyan, deepOrange, lime} from "@material-ui/core/colors";
 
 

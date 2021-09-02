@@ -3,7 +3,8 @@ import {last} from "../../../../common/functions";
 import {scaleLinear} from "d3-scale";
 import {Grid, Slider, useTheme} from "@material-ui/core";
 import log from "loglevel";
-import {Area, AxisBottom, AxisLeft, AxisRight, Circle, Line, LinePath, ParentSize} from "@visx/visx";
+import {Area, Circle, Line, LinePath, ParentSize} from "@visx/shape"
+import {AxisBottom, AxisLeft, AxisRight} from "@visx/axis";
 import React, {useState} from "react";
 import {ColumnCard, Text} from "../../../../common/elements";
 
@@ -20,7 +21,7 @@ function hms(seconds) {
 
 function Comparison(props) {
 
-    const {width, height, slider, fast, slow, min, max, fColour, sColour, n=100,
+    const {width, height, slider, fast, slow, min, max, fColour, sColour,
         margin={top: 10, bottom: 40, left: 40, right: 40}} = props;
 
     const sliderFast = interpolate(fast, slider * last(fast).distance, 'distance');

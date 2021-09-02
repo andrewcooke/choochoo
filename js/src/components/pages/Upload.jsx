@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {ConfirmedWriteButton} from "../elements";
 import {ColumnCard, ColumnList, Loading, Text} from "../../common/elements";
-import {Button, Grid, IconButton, TextField, FormControlLabel, Checkbox, Link} from "@material-ui/core";
+import {Button, Grid, IconButton, TextField, Link} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {Autocomplete} from "@material-ui/lab";
 import {Clear} from '@material-ui/icons';

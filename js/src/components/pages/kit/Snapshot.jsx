@@ -72,27 +72,6 @@ function Columns(props) {
 }
 
 
-// TODO - this isn't used?!
-function SnapshotMenu(props) {
-
-    const {datetime, history} = props;
-    const classes = useStyles();
-
-    function setDate(datetime) {
-        history.push('/kit/' + format(datetime, FMT_DAY));
-    }
-
-    return (<List component="nav" className={classes.root}>
-        <ListItem>
-            <Picker ymdSelected={2} datetime={datetime} onChange={setDate}/>
-        </ListItem>
-        <DateButtons ymd={2} ymdSelected={2} datetime={datetime} onChange={setDate} onCentre={setDate}/>
-        <DateButtons ymd={1} ymdSelected={2} datetime={datetime} onChange={setDate}/>
-        <DateButtons ymd={0} ymdSelected={2} datetime={datetime} onChange={setDate}/>
-    </List>);
-}
-
-
 export default function Snapshot(props) {
 
     const {match, history} = props;

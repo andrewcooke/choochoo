@@ -15,5 +15,7 @@ export default function Thumbnail(props) {
             .then(setImage);
     }, [activity_id]);
 
-    return (image === null ? <p>?</p> : <img src={URL.createObjectURL(image)} className={className}/>)
+    return (image === null ?
+        <p>?</p> :
+        <img alt='' src={URL.createObjectURL(image)} className={className}/>)
 }

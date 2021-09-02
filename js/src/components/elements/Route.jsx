@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Circle, Polyline, CircleMarker} from "react-leaflet";
+import {Polyline, CircleMarker} from "react-leaflet";
 import {last} from '../../common/functions';
 
 

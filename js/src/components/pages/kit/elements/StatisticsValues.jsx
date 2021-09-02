@@ -15,9 +15,9 @@ function NamedValue(props) {
 function Statistic(props) {
     const {statistic} = props;
     return (<>
-        {Object.keys(statistic).
-        filter(key => ! ['n', 'name', 'units', 'id'].includes(key)).
-        map((key, i) =>
+        {Object.keys(statistic)
+            .filter(key => ! ['n', 'name', 'units', 'id'].includes(key))
+            .map((key, i) =>
             <NamedValue xs={4} name={statistic.name} value={statistic[key]} units={statistic.units} key={i}/>)}
     </>)
 }

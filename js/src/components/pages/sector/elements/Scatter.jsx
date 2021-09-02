@@ -1,7 +1,8 @@
 import {scaleLinear, scaleTime} from "d3-scale";
 import {linearRegression} from "simple-statistics";
 import {Grid, useTheme} from "@material-ui/core";
-import {AxisBottom, AxisLeft, Brush, Circle, Group, Line, ParentSize, PatternLines, RectClipPath} from "@visx/visx";
+import {AxisBottom, AxisLeft} from "@visx/axis";
+import {Brush, Circle, Group, Line, ParentSize, PatternLines, RectClipPath} from "@visx/shape";
 import React, {useState} from "react";
 import {ColumnCard, Text} from "../../../../common/elements";
 

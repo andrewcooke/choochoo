@@ -39,10 +39,10 @@ function SearchTerms(props) {
     const [terms, setTerms] = termsState;
 
     useEffect(() => {
-        csrfFetch('/api/search/activity-terms').
-            then(response => response.json()).
-            then(response => setTerms(response))
-    }, [1]);
+        csrfFetch('/api/search/activity-terms')
+            .then(response => response.json())
+            .then(response => setTerms(response))
+    }, []);
 
     return (<ColumnCard header='Available Statistic Names'>
         {terms === null ? <Loading/> : terms.map((term, i) => <SearchTerm term={term} key={i}/>)}

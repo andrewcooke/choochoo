@@ -8,10 +8,10 @@ import {fmtHref} from "../../../common/functions";
 export default function SimilarActivities(props) {
 
     const {params} = props;
-    if (params.all_activity_times.length === 0) return <Empty/>;
-
     const [datetime, setDatetime] = useState(params.all_activity_times[0]);
     const href = fmtHref('api/jupyter/similar_activities?local_time=%s', datetime);
+
+    if (params.all_activity_times.length === 0) return <Empty/>;
 
     return (<ActivityCard header='Similar Activities' pad={3} href={href}>
         <Grid item xs={12}><Text>

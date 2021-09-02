@@ -12,7 +12,7 @@ export default function BusyWarning(props) {
 
     useEffect(() => {
         csrfFetch('/api/busy').then(handleJson(history, setBusy, setError));
-    }, [1]);
+    }, [setError]);
 
     return busy ? (<Warning title='Busy'
                             warning='Background processes are running so data may be incomplete.'/>) : <></>;

@@ -3,11 +3,11 @@ import {Layout} from "../../elements";
 import {Loading} from "../../../common/elements";
 import {useQuery} from "../../../common/functions";
 import {handleJson} from "../../functions";
-import {AxisBottom, AxisLeft, Brush, Circle, Group, Line, ParentSize, PatternLines, RectClipPath} from "@visx/visx";
+import {Brush, Circle, Group, ParentSize, PatternLines} from "@visx/shape";
+import {AxisBottom, AxisLeft} from "@visx/axis";
 import {scaleLinear, scaleTime} from "d3-scale";
-import {linearRegression} from "simple-statistics";
 import {useTheme} from "@material-ui/core";
-import {format, parse} from 'date-fns';
+import {parse} from 'date-fns';
 import {FMT_DAY_TIME} from "../../../constants";
 
 

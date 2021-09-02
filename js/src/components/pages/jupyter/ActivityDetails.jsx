@@ -8,11 +8,11 @@ import {fmtHref} from "../../../common/functions";
 export default function ActivityDetails(props) {
 
     const {params} = props;
-    if (Object.keys(params.activity_times_by_group).length === 0) return <Empty/>;
-
     const [group, setGroup] = useState(params.latest_activity_group);
     const [datetime, setDatetime] = useState(params.all_activity_times[0]);
     const href = fmtHref('api/jupyter/activity_details?local_time=%s&activity_group=%s', datetime, group);
+
+    if (Object.keys(params.activity_times_by_group).length === 0) return <Empty/>;
 
     // force consistent date (will re-render)
     const datetimes = params.activity_times_by_group[group];

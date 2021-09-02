@@ -16,9 +16,9 @@ export default function LatestIcon(props) {
     }
 
     function onClick() {
-        csrfFetch('/api/diary/latest').
-            then(response => response.json()).
-            then(updateHistory);
+        csrfFetch('/api/diary/latest')
+            .then(response => response.json())
+            .then(updateHistory);
     }
 
     return (<Tooltip title='Latest activity' placement='bottom'>

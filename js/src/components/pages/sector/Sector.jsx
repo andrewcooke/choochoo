@@ -68,7 +68,7 @@ function SectorJournal(props) {
                 <Link onClick={() => sort('activity_group')}><Text>{json.activity_group}</Text></Link>
             </Tooltip>
         </Grid>
-        <Grid item xs={1}><Radio checked={i == json.index} onChange={() => setI(json.index)} color='secondary'/></Grid>
+        <Grid item xs={1}><Radio checked={i === json.index} onChange={() => setI(json.index)} color='secondary'/></Grid>
         <Grid item xs={5}>
             <Tooltip title='Sort by date' placement='top'>
                 <Link onClick={() => sort('date', true)}><Text>{format(json.date, FMT_DAY_TIME)}</Text></Link>
@@ -89,7 +89,7 @@ function SectorJournal(props) {
                 <Link onClick={() => sort('elevation')}><FormatValueUnits value={json.elevation} units='m'/></Link>
             </Tooltip>
         </Grid>
-        <Grid item xs={1}><Radio checked={j == json.index} onChange={() => setJ(json.index)} color='primary'/></Grid>
+        <Grid item xs={1}><Radio checked={j === json.index} onChange={() => setJ(json.index)} color='primary'/></Grid>
     </Grid><Grid item xs={2}>
         <Tooltip title='Display diary for activity' placement='top'>
             <Link onClick={() => onClick(json.date)} onAuxClick={() => onAuxClick(json.date)}>
