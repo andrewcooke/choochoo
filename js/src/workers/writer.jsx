@@ -15,8 +15,10 @@ let timeout;
 let data = {};
 
 
+// eslint-disable-next-line no-restricted-globals
 const close = self.close;
 
+// eslint-disable-next-line no-restricted-globals
 self.close = () => {
   write();
   close();
@@ -60,7 +62,7 @@ function write() {
     }
 }
 
-
+// eslint-disable-next-line no-restricted-globals
 self.addEventListener('message', (event) => {
     if (timeout !== undefined) clearTimeout(timeout);
     queue(event);

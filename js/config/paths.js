@@ -18,7 +18,7 @@ const resolveApp = relativePath => path.resolve(appDirectory, relativePath);
 const publicUrlOrPath = getPublicUrlOrPath(
   process.env.NODE_ENV === 'development',
   require(resolveApp('package.json')).homepage,
-  process.env.PUBLIC_URL
+  'api/static'
 );
 
 const buildPath = process.env.BUILD_PATH || 'build';
@@ -58,6 +58,7 @@ module.exports = {
   appPublic: resolveApp('public'),
   appHtml: resolveApp('public/index.html'),
   appIndexJs: resolveModule(resolveApp, 'src/index'),
+  writerJs: resolveModule(resolveApp, 'src/workers/writer'),
   appPackageJson: resolveApp('package.json'),
   appSrc: resolveApp('src'),
   appTsConfig: resolveApp('tsconfig.json'),
