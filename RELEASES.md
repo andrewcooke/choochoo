@@ -1,6 +1,12 @@
 
 ## Latest Changes
 
+### v0.40.0
+
+Simplification and maintenance - removed support for download HR data from
+Garmin (too difficult to maintain for the reward) and updated to the latest
+React (hopefully removing a bunch of npm vulnerabilities).
+
 ### v0.39.0
 
 Lots of small fixes and an updated FIT file parser (generated from the latest
