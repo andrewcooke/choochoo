@@ -1,2 +1,7 @@
-*.js
-*.js.gz
+*.js*
+*.txt
+*.png
+*.txt
+*.ico
+*.html
+static

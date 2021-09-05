@@ -40,6 +40,7 @@ class Static(ContentType):
         raise Exception(f'File not found: {file}')
 
     def parse_path(self, path):
+        log.debug(f'Parsing {path}')
         package = self.__package
         head, tail = split(path)
         if not tail:
@@ -50,4 +51,5 @@ class Static(ContentType):
             raise Exception(f'Package separators in {head}')
         if head:
             package += '.' + '.'.join(head.split(sep))
+        log.debug(f'Parsed {path} as {package} + {tail}')
         return package, tail
