@@ -13,7 +13,6 @@ BASE=python:3.9.1-slim-buster
 COMMENT="# syntax=docker/dockerfile:experimental"
 MOUNT="--mount=type=cache,mode=0777,target=/root/.cache/pip"
 JS_PKG="npm"
-HAVE_JS=0
 FILE="Dockerfile"
 
 help() {
@@ -23,7 +22,6 @@ help() {
   echo -e "\n    FILE:      destination file name (default Dockerfile)"
   echo -e "  --big:       use larger base distro"
   echo -e "  --slow:      do not mount pip cache (buildkit)"
-  echo -e "  --js:        assumes node pre-built"
   echo -e "   -h:         show this message\n"
   exit 1
 }
@@ -36,9 +34,6 @@ while [ $# -gt 0 ]; do
   elif [ $1 == "--slow" ]; then
     COMMENT="# pip cache disabled with --slow"
     MOUNT=
-  elif [ $1 == "--js" ]; then
-    HAVE_JS=1
-    JS_PKG=
   else
     FILE=$1
   fi
@@ -57,17 +52,10 @@ run apt-get update
 run apt-get -y install sqlite3 libsqlite3-dev libpq-dev $JS_PKG gcc emacs
 EOF
 
-if ((HAVE_JS)); then
-  # if we're in a dev enrironment the js will have been built locally
-  if [ ! -f ../py/ch2/web/static/bundle.js.gz ]; then
-    echo -e "\nERROR: missing bundle.js.gz"
-    exit 2
-  fi
-else
-  # otherwise we need to do it all in the docker build :(
-  cat >>$FILE <<EOF
-copy js/package.json js/package-lock.json js/webpack.config.js js/.babelrc \
-     /app/js/
+cat >>$FILE <<EOF
+copy js/package.json js/package-lock.json js/config js/public /app/js/
+copy js/config /app/js/config
+copy js/public /app/js/public
 workdir /app/js
 run npm install -g npm@next
 run npm install
@@ -75,31 +63,26 @@ run npm install
 copy js/src /app/js/src
 run npm run build
 EOF
-fi
 
-# python install of ch2 package
 # https://pythonspeed.com/articles/docker-cache-pip-downloads/
 cat >>$FILE <<EOF
 workdir /app/py
 copy py/ch2 /app/py/ch2
 copy py/setup.py py/MANIFEST.in /app/py/
+run rm -fr /app/py/ch2/web/static/*.js* /app/py/ch2/web/static/*.html /app/py/ch2/web/static/*.png /app/py/ch2/web/static/*.txt /app/py/ch2/web/static/*.ico
+workdir /app/js
+run cp -r build/* ../py/ch2/web/static
+run cp src/workers/writer.js ../py/ch2/web/static
+run touch ../py/ch2/web/static/__init__.py ../py/ch2/web/static/static/__init__.py ../py/ch2/web/static/static/js/__init__.py
+workdir /app/py
 run $MOUNT pip install .
 EOF
 
-if ((HAVE_JS)); then
-  # if we're in a dev enrironment the profile will have been built locally
-  if [ ! -f ../py/ch2/fit/profile/global-profile.pkl ]; then
-    echo -e "\nERROR: missing global-profile.pkl"
-    exit 3
-  fi
-else
-  # otherwise, package with ch2
-  cat >>$FILE <<EOF
+cat >>$FILE <<EOF
 workdir /app
 copy data/sdk/Profile.xlsx /app
 run ch2 package-fit-profile ./Profile.xlsx
 EOF
-fi
 
 # finally, start up
 cat >>$FILE <<EOF

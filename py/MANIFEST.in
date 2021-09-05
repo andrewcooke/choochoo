@@ -1,6 +1,2 @@
 include ch2/fit/profile/global-profile.pkl
-include ch2/web/static/index.html
-include ch2/web/static/writer.js
-include ch2/web/static/bundle.js
-include ch2/web/static/writer.js.gz
-include ch2/web/static/bundle.js.gz
+recursive-include ch2/web/static *.js* *.html *.png *.txt *.ico

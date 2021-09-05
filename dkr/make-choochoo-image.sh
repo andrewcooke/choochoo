@@ -3,7 +3,6 @@
 cd "${BASH_SOURCE%/*}/" || exit
 
 CMD=$0
-JS=
 BIG=
 SLOW=
 DEV=
@@ -19,7 +18,6 @@ help () {
     echo -e "  --big:       use larger base distro"
     echo -e "  --slow:      do not mount pip cache (buildkit)"
     echo -e "  --dev:       separate image used for development"
-    echo -e "  --js:        assumes node pre-built"
     echo -e "  --prune:     wipe old data"
     echo -e "   -h:         show this message\n"
     exit 1
@@ -35,8 +33,6 @@ while [ $# -gt 0 ]; do
 	BUILDKIT=0
     elif [ $1 == "--dev" ]; then
 	DEV="-dev"
-    elif [ $1 == "--js" ]; then
-	JS=$1
     elif [ $1 == "--prune" ]; then
         PRUNE=1
     else
@@ -48,7 +44,7 @@ done
 
 if (( PRUNE )); then ./prune.sh; fi
 
-CMD="./make-choochoo-dockerfile.sh $BIG $SLOW $JS $FILE"
+CMD="./make-choochoo-dockerfile.sh $BIG $SLOW $FILE"
 echo -e "\n> $CMD\n"
 eval $CMD
 
@@ -56,19 +52,12 @@ echo
 cat $FILE
 echo
 
-if [ "$JS" == "" ]; then
-    pushd .. > /dev/null
-    dev/package-bundle.sh
-    popd > /dev/null
-else
-    echo -e "\nWARNING: skipping JS build\n"
-fi
-
 pushd .. > /dev/null
 CMD="DOCKER_BUILDKIT=$BUILDKIT docker build --network host --tag andrewcooke/choochoo:latest-local$DEV -f $FILE ."
 echo -e "\n> $CMD\n"
 eval $CMD
 popd > /dev/null
+
 rm $FILE
 
 echo -e "\nIMPORTANT: YOU SHOULD ALSO UPDATE THE JUPYTER IMAGE\n"
