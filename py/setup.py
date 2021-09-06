@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(name='choochoo',
                  packages=setuptools.find_packages(),
-                 version='0.40.0',
+                 version='0.41.0',
                  author='andrew cooke',
                  author_email='andrew@acooke.org',
                  description='Data Science for Training',
