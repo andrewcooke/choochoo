@@ -121,7 +121,7 @@ class Source(Base):
 @listens_for(Session, 'before_flush')
 def before_flush(session, context, instances):
     from .. import StatisticJournal
-    StatisticJournal.before_flush(session)
+    # StatisticJournal.before_flush(session)
     Source.before_flush(session)
 
 

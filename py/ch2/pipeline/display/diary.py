@@ -25,11 +25,13 @@ class DiaryDisplayer(Displayer):
                 yield list(self.__read_date_diary_topic(s, date, journal.cache(s), topic))
 
     def __read_date_diary_topic(self, s, date, cache, topic):
+        log.info(f'__rddt {len(s.new)}')
         yield text(topic.title)
         if topic.description: yield text(topic.description)
         log.debug(f'topic id {topic.id}; fields {topic.fields}')
         for field in topic.fields:
             if field.schedule.at_location(date):
+                log.info(f'before from_field {len(s.new)}')
                 yield from_field(field, cache[field])
         for child in topic.children:
             if child.schedule.at_location(date):

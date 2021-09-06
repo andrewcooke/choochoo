@@ -25,7 +25,8 @@ class Diary:
             data = read_date(s, date)
         else:
             data = read_schedule(s, Schedule(schedule), date)
-        return rewrite_db(list(data))
+        data = list(data)
+        return rewrite_db(data)
 
     def read_neighbour_activities(self, request, s, date):
         # used in the sidebar menu to advance/retreat to the next activity

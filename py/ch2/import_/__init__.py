@@ -52,30 +52,33 @@ def copy_statistic_journal(record, old_s, old, old_statistic_name, old_statistic
                     StatisticJournalType.TEXT.value: old.meta.tables['statistic_journal_text']}
     old_journal = old_journals[old_statistic_name.statistic_journal_type]
     old_value = old_s.query(old_journal).filter(old_journal.c.id == old_statistic_journal.id).one()
-    log.debug(f'Resolved old statistic_journal {old_value}')
-    new_journal = STATISTIC_JOURNAL_CLASSES[StatisticJournalType(new_statistic_name.statistic_journal_type)]
-    # to_time for sqlite
-    previous = new_s.query(new_journal). \
-        filter(new_journal.time == to_time(old_statistic_journal.time),
-               new_journal.statistic_name == new_statistic_name).one_or_none()
-    # drop ugly auto-titles if nicer ones available (bug fix 0-32 to 0-33)
-    if previous and new_statistic_name.name == 'name' and \
-            new_statistic_name.statistic_journal_type == StatisticJournalType.TEXT and \
-            previous.value.startswith('20'):
-        record.warning(f'Dropping previous ({previous}) for {name}')
-        new_s.delete(previous)
-        new_s.commit()
-        previous = None
-    if previous:
-        record.warning(f'Value already exists for {name} ({previous})')
+    if old_value.value is None:
+        log.warning(f'Skipping null value for {name}')
     else:
+        log.debug(f'Resolved old statistic_journal {old_value}')
+        new_journal = STATISTIC_JOURNAL_CLASSES[StatisticJournalType(new_statistic_name.statistic_journal_type)]
         # to_time for sqlite
-        new_value = add(new_s,
-                        new_journal(value=old_value.value, time=to_time(old_statistic_journal.time),
-                                    statistic_name=new_statistic_name, source=source))
-        new_s.commit()  # avoid logging below if error
-        date = format_date(time_to_local_date(to_time(new_value.time)))
-        record.info(f'Statistic value {new_value.value} at {date} for {name}')
+        previous = new_s.query(new_journal). \
+            filter(new_journal.time == to_time(old_statistic_journal.time),
+                   new_journal.statistic_name == new_statistic_name).one_or_none()
+        # drop ugly auto-titles if nicer ones available (bug fix 0-32 to 0-33)
+        if previous and new_statistic_name.name == 'name' and \
+                new_statistic_name.statistic_journal_type == StatisticJournalType.TEXT and \
+                previous.value.startswith('20'):
+            record.warning(f'Dropping previous ({previous}) for {name}')
+            new_s.delete(previous)
+            new_s.commit()
+            previous = None
+        if previous:
+            record.warning(f'Value already exists for {name} ({previous})')
+        else:
+            # to_time for sqlite
+            new_value = add(new_s,
+                            new_journal(value=old_value.value, time=to_time(old_statistic_journal.time),
+                                        statistic_name=new_statistic_name, source=source))
+            new_s.commit()  # avoid logging below if error
+            date = format_date(time_to_local_date(to_time(new_value.time)))
+            record.info(f'Statistic value {new_value.value} at {date} for {name}')
 
 
 def any_attr(instance, *names):

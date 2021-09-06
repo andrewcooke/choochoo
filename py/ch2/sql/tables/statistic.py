@@ -358,7 +358,7 @@ class StatisticJournalFloat(StatisticJournal):
     __tablename__ = 'statistic_journal_float'
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
-    value = Column(Float, nullable=False)
+    value = Column(Float, nullable=True)
 
     @classmethod
     def add(cls, s, name, units, summary, owner, source, value, time, serial=None, description=None):
@@ -405,7 +405,7 @@ class StatisticJournalText(StatisticJournal):
     __tablename__ = 'statistic_journal_text'
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
-    value = Column(Text, nullable=False)
+    value = Column(Text, nullable=True)
 
     @classmethod
     def add(cls, s, name, units, summary, owner, source, value, time, serial=None, description=None):
@@ -432,7 +432,7 @@ class StatisticJournalTimestamp(StatisticJournal):
     __tablename__ = 'statistic_journal_timestamp'
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
-    value = Column(UTC, nullable=False)
+    value = Column(UTC, nullable=True)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.TIMESTAMP
