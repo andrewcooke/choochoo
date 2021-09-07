@@ -172,19 +172,6 @@ class StatisticJournal(Base):
             return 'StatisticJournal base'
 
     @classmethod
-    def before_flush(cls, s):
-        cls.__delete_null_values(s)
-
-    @classmethod
-    def __delete_null_values(cls, s):
-        # drop null values.  these are instances that were created when reading missing values from the diary
-        # for display.  the actual values written are done in a separate thread (and have non-null values).
-        # (it's difficult to do this by discarding after reading because of auto-flush)
-        for instance in s.new:
-            if isinstance(instance, StatisticJournal) and hasattr(instance, 'value') and instance.value is None:
-                s.expunge(instance)
-
-    @classmethod
     def add(cls, s, name, units, summary, owner, source, value, time, serial, type,
             description=None):
         statistic_name = StatisticName.add_if_missing(s, name, type, units, summary, owner,

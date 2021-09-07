@@ -157,12 +157,10 @@ class Cache:
     def __getitem__(self, field):
         if field.id not in self.__cache:
             log.debug(f'Creating {field}')
-            log.info(f'before len(new) = {len(self.__session.new)}')
             name = field.statistic_name
             self.__cache[field.id] = add(self.__session,
                                          STATISTIC_JOURNAL_CLASSES[name.statistic_journal_type](
                                              statistic_name=name, source=self.__source, time=self.__time))
-            log.info(f'after len(new) = {len(self.__session.new)}')
         log.debug(f'Returning {field}')
         return self.__cache[field.id]
 
