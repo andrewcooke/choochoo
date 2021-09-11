@@ -7,5 +7,8 @@ export default function csrfFetch(url, init={}) {
     init.headers['CsrfCheck'] = 'True';
     init.credentials = 'same-origin';
     log.debug(init);
-    return fetch(url, init);
+    if (process.env.NODE_ENV === 'development')
+        return fetch('http://localhost:8000' + url, init);
+    else
+        return fetch(url, init);
 }

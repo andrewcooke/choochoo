@@ -5,7 +5,7 @@ import {makeStyles} from "@material-ui/styles";
 import ListItemText from "@material-ui/core/ListItemText";
 import {KeyboardArrowLeft} from "@material-ui/icons";
 import {useHistory} from 'react-router-dom';
-import {handleJson} from "../functions";
+import {handleJson, csrfFetch} from "../functions";
 
 
 const useStyles = makeStyles(theme => ({
@@ -31,7 +31,7 @@ export default function StatisticsMenu(props) {
     const [statistics, setStatistics] = useState([]);
 
     useEffect(() => {
-        fetch('/api/statistics/plottable').then(handleJson(history, setStatistics));
+        csrfFetch('/api/statistics/plottable').then(handleJson(history, setStatistics));
     }, []);
 
     const makeUrl = statistic => {

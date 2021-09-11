@@ -7,7 +7,7 @@ from werkzeug.routing import Map, Rule
 from werkzeug.wrappers.json import JSONMixin
 
 from .json import JsonResponse
-from .middleware import CsrfCheck
+from .middleware import CsrfCheck, CORS
 from .servlets.configure import Configure
 from .servlets.diary import Diary
 from .servlets.image import Thumbnail, Sparkline
@@ -66,8 +66,11 @@ class WebController(BaseController):
 
     def _run(self):
         log.debug(f'Binding to {self._bind}:{self._port}')
-        run_simple(self._bind, self._port,
-                   CsrfCheck(WebServer(self._config, warn_data=self.__warn_data, warn_secure=self.__warn_secure)),
+        app = WebServer(self._config, warn_data=self.__warn_data, warn_secure=self.__warn_secure)
+        app = CsrfCheck(app)
+        if self._dev:
+            app = CORS(app, '*')
+        run_simple(self._bind, self._port, app,
                    use_debugger=self._dev, use_reloader=self._dev)
 
     def _cleanup(self):

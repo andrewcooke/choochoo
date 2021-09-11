@@ -3,8 +3,9 @@ import {last} from "../../../../common/functions";
 import {scaleLinear} from "d3-scale";
 import {Grid, Slider, useTheme} from "@material-ui/core";
 import log from "loglevel";
-import {Area, Circle, Line, LinePath, ParentSize} from "@visx/shape"
+import {Area, Circle, Line, LinePath} from "@visx/shape";
 import {AxisBottom, AxisLeft, AxisRight} from "@visx/axis";
+import {ParentSize} from "@visx/responsive";
 import React, {useState} from "react";
 import {ColumnCard, Text} from "../../../../common/elements";
 

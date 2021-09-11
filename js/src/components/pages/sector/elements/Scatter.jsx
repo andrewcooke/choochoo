@@ -2,9 +2,14 @@ import {scaleLinear, scaleTime} from "d3-scale";
 import {linearRegression} from "simple-statistics";
 import {Grid, useTheme} from "@material-ui/core";
 import {AxisBottom, AxisLeft} from "@visx/axis";
-import {Brush, Circle, Group, Line, ParentSize, PatternLines, RectClipPath} from "@visx/shape";
+import {Circle, Line} from "@visx/shape";
 import React, {useState} from "react";
 import {ColumnCard, Text} from "../../../../common/elements";
+import {Brush} from "@visx/brush";
+import {Group} from "@visx/group";
+import {ParentSize} from "@visx/responsive";
+import {RectClipPath} from "@visx/clip-path";
+import {PatternLines} from "@visx/pattern";
 
 
 function between(start, date, finish) {
