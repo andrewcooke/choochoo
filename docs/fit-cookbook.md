@@ -32,28 +32,14 @@ To check for errors in `myfile.fit`:
 
     > ch2 fix-fit myfile.fit --discard
     [37m    INFO: [37mLogging to /home/andrew/.ch2/0-41/logs/fix-fit.log[0m
-    [37m    INFO: [37mInput ----------[0m
-    [37m    INFO: [37mReading binary data from myfile.fit[0m
-    [37m    INFO: [37mInitial Data ----------[0m
-    [37m    INFO: [37mLength: 5368 bytes[0m
-    [37m    INFO: [37mHeader size: 14[0m
-    [37m    INFO: [37mProtocol version: 16[0m
-    [37m    INFO: [37mProfile version: 2014[0m
-    [37m    INFO: [37mChecksum: 37636 (0x9304)[0m
-    [37m    INFO: [37mValidation ----------[0m
-    [37m    INFO: [37m--max-delta-t None[0m
-    [37m WARNING: [36mTime-reversal is allowed unless max-delta-t is set[0m
-    [37m    INFO: [37mFirst timestamp: 2018-07-26 13:34:49+00:00[0m
-    [37m    INFO: [37mLast timestamp:  2018-07-26 13:59:18+00:00[0m
-    [37m    INFO: [37mOK[0m
-    [37m    INFO: [37mFinal Data ----------[0m
-    [37m    INFO: [37mLength: 5368 bytes[0m
-    [37m    INFO: [37mHeader size: 14[0m
-    [37m    INFO: [37mProtocol version: 16[0m
-    [37m    INFO: [37mProfile version: 2014[0m
-    [37m    INFO: [37mChecksum: 37636 (0x9304)[0m
-    [37m    INFO: [37mOutput ----------[0m
-    [37m    INFO: [37mDiscarded output[0m
+    [37m WARNING: [36mCould not connect to database[0m
+    
+     Welcome to Choochoo.
+    
+     You must configure the database before use (no uri).
+    
+     Please use the ch2 db command.
+    
 
 
 If there are no warnings or errors (as above) then the file is OK (as
@@ -66,20 +52,13 @@ problems.  Note that using `-v 2` reduces the logging to `ERROR` level
 only (with `-v 0` we would see no logging, just the file names).
 
     > ch2 -v 2 fix-fit --name-bad *.fit
-    [37m   ERROR: [1;31mData size incorrect (1542/757+12+2=771)[0m
-    activity-activity-filecrc.fit
-    [37m   ERROR: [1;31mBad checksum (a1d5/b1d5)[0m
-    activity-filecrc.fit
-    [37m   ERROR: [1;31mData size incorrect (854/757+12+2=771)[0m
-    activity-settings-corruptheader.fit
-    [37m   ERROR: [1;31mData size incorrect (853/757+12+2=771)[0m
-    activity-settings.fit
-    [37m   ERROR: [1;31mData size incorrect (786/757+12+2=771)[0m
-    activity-settings-nodata.fit
-    [37m   ERROR: [1;31mData size incorrect (768/757+12+2=771)[0m
-    activity-unexpected-eof.fit
-    [37m   ERROR: [1;31mData size incorrect (88904/58949+14+2=58965)[0m
-    event_timestamp.fit
+    
+     Welcome to Choochoo.
+    
+     You must configure the database before use (no uri).
+    
+     Please use the ch2 db command.
+    
 
 
 ## Check Timestamps in a FIT File
@@ -89,44 +68,14 @@ records:
 
     > ch2 fix-fit myfile.fit --max-delta-t 60 --discard
     [37m    INFO: [37mLogging to /home/andrew/.ch2/0-41/logs/fix-fit.log[0m
-    [37m    INFO: [37mInput ----------[0m
-    [37m    INFO: [37mReading binary data from myfile.fit[0m
-    [37m    INFO: [37mInitial Data ----------[0m
-    [37m    INFO: [37mLength: 5368 bytes[0m
-    [37m    INFO: [37mHeader size: 14[0m
-    [37m    INFO: [37mProtocol version: 16[0m
-    [37m    INFO: [37mProfile version: 2014[0m
-    [37m    INFO: [37mChecksum: 37636 (0x9304)[0m
-    [37m    INFO: [37mValidation ----------[0m
-    [37m    INFO: [37m--max-delta-t 60.0[0m
-    [37m    INFO: [37mFirst timestamp: 2018-07-26 13:34:49+00:00[0m
-    [37m   ERROR: [1;31mToo large shift in timestamp (273.0s: 2018-07-26 13:54:45+00:00/2018-07-26 13:59:18+00:00[0m
-    [37m    INFO: [37mValidation failed[0m
-    [37mCRITICAL: [1;31mToo large shift in timestamp (273.0s: 2018-07-26 13:54:45+00:00/2018-07-26 13:59:18+00:00[0m
-    Traceback (most recent call last):
-      File "/home/andrew/project/choochoo/py/ch2/__init__.py", line 111, in main
-        command(config)
-      File "/home/andrew/project/choochoo/py/ch2/commands/fix_fit.py", line 68, in fix_fit
-        data = fix(data, warn=args[WARN],
-      File "/home/andrew/project/choochoo/py/ch2/fit/fix.py", line 49, in fix
-        validate_data(data, State(types, messages, max_delta_t=max_delta_t), warn=warn, force=force)
-      File "/home/andrew/project/choochoo/py/ch2/fit/fix.py", line 258, in validate_data
-        token = token_factory(data[offset:], state)
-      File "/home/andrew/project/choochoo/py/ch2/fit/format/tokens.py", line 556, in token_factory
-        token = Data(data, state)
-      File "/home/andrew/project/choochoo/py/ch2/fit/format/tokens.py", line 292, in __init__
-        super().__init__('DTA', data, state, data[0] & 0x0f)
-      File "/home/andrew/project/choochoo/py/ch2/fit/format/tokens.py", line 223, in __init__
-        self.__parse_timestamp(data, state)
-      File "/home/andrew/project/choochoo/py/ch2/fit/format/tokens.py", line 236, in __parse_timestamp
-        state.timestamp = times[0]
-      File "/home/andrew/project/choochoo/py/ch2/fit/format/tokens.py", line 581, in timestamp
-        self._timestamp = self._validate_timestamp(timestamp)
-      File "/home/andrew/project/choochoo/py/ch2/fit/format/tokens.py", line 586, in _validate_timestamp
-        raise Exception('Too large shift in timestamp (%.1fs: %s/%s' %
-    Exception: Too large shift in timestamp (273.0s: 2018-07-26 13:54:45+00:00/2018-07-26 13:59:18+00:00
-    [37m    INFO: [37mSee `ch2 help` for available commands.[0m
-    [37m    INFO: [37mDocs at http://andrewcooke.github.io/choochoo[0m
+    [37m WARNING: [36mCould not connect to database[0m
+    
+     Welcome to Choochoo.
+    
+     You must configure the database before use (no uri).
+    
+     Please use the ch2 db command.
+    
 
 
 Here we can see that there was a jump of 273 seconds.
@@ -145,50 +94,14 @@ The command to drop data is (see notes below):
 
     > ch2 fix-fit myfile.fit --max-delta-t 60 --drop --fix-header --fix-checksum --max-fwd-len 500 -o fixed.fit
     [37m    INFO: [37mLogging to /home/andrew/.ch2/0-41/logs/fix-fit.log[0m
-    [37m    INFO: [37mInput ----------[0m
-    [37m    INFO: [37mReading binary data from myfile.fit[0m
-    [37m    INFO: [37mInitial Data ----------[0m
-    [37m    INFO: [37mLength: 5368 bytes[0m
-    [37m    INFO: [37mHeader size: 14[0m
-    [37m    INFO: [37mProtocol version: 16[0m
-    [37m    INFO: [37mProfile version: 2014[0m
-    [37m    INFO: [37mChecksum: 37636 (0x9304)[0m
-    [37m    INFO: [37mDrop Data ----------[0m
-    [37m    INFO: [37m--min-sync-cnt 3[0m
-    [37m    INFO: [37m--max-record-len None[0m
-    [37m    INFO: [37m--max-drop-cnt 1[0m
-    [37m    INFO: [37m--max-back-cnt 3[0m
-    [37m    INFO: [37m--max-fwd-len 500[0m
-    [37m    INFO: [37m--max-delta-t 60.0[0m
-    [37m    INFO: [37mRead complete from 5366[0m
-    [37m    INFO: [37mFound slices :4975[0m
-    [37m    INFO: [37mSlice ----------[0m
-    [37m    INFO: [37mSlices: :4975[0m
-    [37m    INFO: [37mHave 4975 bytes after slicing[0m
-    [37m WARNING: [36mSlicing decreased length by 393 bytes[0m
-    [37m    INFO: [37mHeader and Checksums ----------[0m
-    [37m    INFO: [37m--header-size None[0m
-    [37m    INFO: [37m--protocol-version None[0m
-    [37m    INFO: [37m--profile-version None[0m
-    [37m WARNING: [36mFixing header data size: 5352 -> 4959[0m
-    [37m WARNING: [36mFixing header checksum: 067b -> 5447[0m
-    [37m WARNING: [36mAdding 2 byte(s) for checksum[0m
-    [37m WARNING: [36mFixing final checksum: 0000 -> 8cdf[0m
-    [37m WARNING: [36mFixing header data size: 4959 -> 4961[0m
-    [37m WARNING: [36mFixing header checksum: 5447 -> ccc5[0m
-    [37m    INFO: [37mValidation ----------[0m
-    [37m    INFO: [37m--max-delta-t 60.0[0m
-    [37m    INFO: [37mFirst timestamp: 2018-07-26 13:34:49+00:00[0m
-    [37m    INFO: [37mLast timestamp:  2018-07-26 13:54:45+00:00[0m
-    [37m    INFO: [37mOK[0m
-    [37m    INFO: [37mFinal Data ----------[0m
-    [37m    INFO: [37mLength: 4977 bytes[0m
-    [37m    INFO: [37mHeader size: 14[0m
-    [37m    INFO: [37mProtocol version: 16[0m
-    [37m    INFO: [37mProfile version: 2014[0m
-    [37m    INFO: [37mChecksum: 36063 (0x8cdf)[0m
-    [37m    INFO: [37mOutput ----------[0m
-    [37m    INFO: [37mWriting binary data to fixed.fit[0m
+    [37m WARNING: [36mCould not connect to database[0m
+    
+     Welcome to Choochoo.
+    
+     You must configure the database before use (no uri).
+    
+     Please use the ch2 db command.
+    
 
 
 Note that:
@@ -360,42 +273,14 @@ follows:
 
     > ch2 fix-fit myfile.fit --slices :05069,05317: --fix-header --fix-checksum -o sliced.fit
     [37m    INFO: [37mLogging to /home/andrew/.ch2/0-41/logs/fix-fit.log[0m
-    [37m    INFO: [37mInput ----------[0m
-    [37m    INFO: [37mReading binary data from myfile.fit[0m
-    [37m    INFO: [37mInitial Data ----------[0m
-    [37m    INFO: [37mLength: 5368 bytes[0m
-    [37m    INFO: [37mHeader size: 14[0m
-    [37m    INFO: [37mProtocol version: 16[0m
-    [37m    INFO: [37mProfile version: 2014[0m
-    [37m    INFO: [37mChecksum: 37636 (0x9304)[0m
-    [37m    INFO: [37mSlice ----------[0m
-    [37m    INFO: [37mSlices: :5069,5317:-2[0m
-    [37m    INFO: [37mHave 5118 bytes after slicing[0m
-    [37m WARNING: [36mSlicing decreased length by 250 bytes[0m
-    [37m    INFO: [37mHeader and Checksums ----------[0m
-    [37m    INFO: [37m--header-size None[0m
-    [37m    INFO: [37m--protocol-version None[0m
-    [37m    INFO: [37m--profile-version None[0m
-    [37m WARNING: [36mFixing header data size: 5352 -> 5102[0m
-    [37m WARNING: [36mFixing header checksum: 067b -> ec8d[0m
-    [37m WARNING: [36mAdding 2 byte(s) for checksum[0m
-    [37m WARNING: [36mFixing final checksum: 0000 -> 99ab[0m
-    [37m WARNING: [36mFixing header data size: 5102 -> 5104[0m
-    [37m WARNING: [36mFixing header checksum: ec8d -> 6c0d[0m
-    [37m    INFO: [37mValidation ----------[0m
-    [37m    INFO: [37m--max-delta-t None[0m
-    [37m WARNING: [36mTime-reversal is allowed unless max-delta-t is set[0m
-    [37m    INFO: [37mFirst timestamp: 2018-07-26 13:34:49+00:00[0m
-    [37m    INFO: [37mLast timestamp:  2018-07-26 13:59:18+00:00[0m
-    [37m    INFO: [37mOK[0m
-    [37m    INFO: [37mFinal Data ----------[0m
-    [37m    INFO: [37mLength: 5120 bytes[0m
-    [37m    INFO: [37mHeader size: 14[0m
-    [37m    INFO: [37mProtocol version: 16[0m
-    [37m    INFO: [37mProfile version: 2014[0m
-    [37m    INFO: [37mChecksum: 39339 (0x99ab)[0m
-    [37m    INFO: [37mOutput ----------[0m
-    [37m    INFO: [37mWriting binary data to sliced.fit[0m
+    [37m WARNING: [36mCould not connect to database[0m
+    
+     Welcome to Choochoo.
+    
+     You must configure the database before use (no uri).
+    
+     Please use the ch2 db command.
+    
 
 
 Note that `fix-fit` won't let you remove data that would corrupt the
@@ -405,36 +290,14 @@ file (to the best of its ability).
 
     > ch2 fix-fit myfile.fit --start '2018-01-01 12:00:00' --fix-checksum -o fixed.fit
     [37m    INFO: [37mLogging to /home/andrew/.ch2/0-41/logs/fix-fit.log[0m
-    [37m    INFO: [37mInput ----------[0m
-    [37m    INFO: [37mReading binary data from myfile[0m
-    [37m    INFO: [37mInitial Data ----------[0m
-    [37m    INFO: [37mLength: 557213 bytes[0m
-    [37m    INFO: [37mHeader size: 14[0m
-    [37m    INFO: [37mProtocol version: 16[0m
-    [37m    INFO: [37mProfile version: 2044[0m
-    [37m    INFO: [37mChecksum: 36047 (0x8ccf)[0m
-    [37m    INFO: [37mStart ----------[0m
-    [37m    INFO: [37mStart: 2018-01-01 12:00:00[0m
-    [37m WARNING: [36mShifting timestamps by -460d 21h36m33s[0m
-    [37m    INFO: [37mHeader and Checksums ----------[0m
-    [37m    INFO: [37m--header-size None[0m
-    [37m    INFO: [37m--protocol-version None[0m
-    [37m    INFO: [37m--profile-version None[0m
-    [37m WARNING: [36mFixing final checksum: 8ccf -> 2b06[0m
-    [37m    INFO: [37mValidation ----------[0m
-    [37m    INFO: [37m--max-delta-t None[0m
-    [37m WARNING: [36mTime-reversal is allowed unless max-delta-t is set[0m
-    [37m    INFO: [37mFirst timestamp: 2018-01-01 12:00:00+00:00[0m
-    [37m    INFO: [37mLast timestamp:  2018-01-01 17:35:24+00:00[0m
-    [37m    INFO: [37mOK[0m
-    [37m    INFO: [37mFinal Data ----------[0m
-    [37m    INFO: [37mLength: 557213 bytes[0m
-    [37m    INFO: [37mHeader size: 14[0m
-    [37m    INFO: [37mProtocol version: 16[0m
-    [37m    INFO: [37mProfile version: 2044[0m
-    [37m    INFO: [37mChecksum: 11014 (0x2b06)[0m
-    [37m    INFO: [37mOutput ----------[0m
-    [37m    INFO: [37mWriting binary data to fixed.fit[0m
+    [37m WARNING: [36mCould not connect to database[0m
+    
+     Welcome to Choochoo.
+    
+     You must configure the database before use (no uri).
+    
+     Please use the ch2 db command.
+    
 
 
 The `--start` value sets the first timestamp in the file.  Subsequent
