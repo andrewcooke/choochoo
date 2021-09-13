@@ -5,7 +5,7 @@ from re import sub
 from typing import MutableMapping
 
 from .io import clean_path
-from .names import BIND, PORT, OFF, LIGHT, DARK, USER, U, PASSWD, P, URI, VERSION, ADMIN_USER, ADMIN_PASSWD
+from .names import BIND, PORT, PLAIN, LIGHT, DARK, USER, U, PASSWD, P, URI, VERSION, ADMIN_USER, ADMIN_PASSWD
 
 log = getLogger(__name__)
 
@@ -100,10 +100,6 @@ def add_data_source_args(parser, uri_default):
     parser.add_argument(mm(PASSWD), m(P), default='', metavar='PASS', help='user password')
     parser.add_argument(mm(ADMIN_USER), default='postgres', metavar='USER', help='the database admin user')
     parser.add_argument(mm(ADMIN_PASSWD), default='', metavar='PASS', help='user database admin password')
-    parser.add_argument(mm(URI), default=uri_default, help='use the given database URI')
+    parser.add_argument(mm(URI), default=uri_default,
+                        help=f'use the given database URI (default {uri_default})')
 
-
-def color(color):
-    if color.lower() not in (LIGHT, DARK, OFF):
-        raise Exception(f'Bad color: {color} ({LIGHT}|{DARK}|{OFF})')
-    return color

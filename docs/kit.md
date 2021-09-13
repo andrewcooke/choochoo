@@ -60,57 +60,61 @@ automatically:
 
 First, I will add my Cotic bike:
 
-    > ch2 kit start bike cotic --force
-    usage: ch2 [-h] [--dev] [--log FILE] [--log-dir DIR] [--color COLOR] [-v N]
-               [-V] [--db-bind ADDRESS] [--db-port PORT] [--user USER]
-               [--passwd PASS] [--admin-user USER] [--admin-passwd PASS]
-               [--uri URI] [--base DIR] [--data DIR] [--cprofile [DIR]]
-               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,sparkline,package-fit-profile,show-schedule}
-               ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'sparkline', 'package-fit-profile', 'show-schedule')
+    > ch2 --plain kit start bike cotic --force
+       INFO: Logging to /home/andrew/.ch2/0-41/logs/kit.log
+    WARNING: Forcing creation of new group (bike)
+    WARNING: Setting title from name "Kit Added" (owner KitItem)
+       INFO: Started bike cotic at 2021-09-12 21:02:40
 
 
 We're introducing a completely new *group* (bike) and so the `--force`
 flag is needed for confirmation.  Adding future bikes will not require
-this, because `bike` will already be known by the system..
+this, because `bike` will already be known by the system.
+
+Note: the `--plain` flag is used because these docs are automatically
+generated (coloured output would make the embedded output ugly).
 
 Now I have a bike I am going to add some inner tubes at various dates.
 
-    > ch2 kit change cotic front-tube michelin 2019-01-01 --force
-    usage: ch2 [-h] [--dev] [--log FILE] [--log-dir DIR] [--color COLOR] [-v N]
-               [-V] [--db-bind ADDRESS] [--db-port PORT] [--user USER]
-               [--passwd PASS] [--admin-user USER] [--admin-passwd PASS]
-               [--uri URI] [--base DIR] [--data DIR] [--cprofile [DIR]]
-               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,sparkline,package-fit-profile,show-schedule}
-               ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'sparkline', 'package-fit-profile', 'show-schedule')
+    > ch2 --plain kit change cotic front-tube michelin 2019-01-01 --force
+       INFO: Logging to /home/andrew/.ch2/0-41/logs/kit.log
+    WARNING: Forcing creation of new component (front-tube)
+    WARNING: Model michelin does not match any previous entries
+    WARNING: Setting title from name "Kit Added" (owner KitModel)
+       INFO: Changed cotic front-tube michelin at 2019-01-01
 
 
 Again the system catches the first use of `front-tube` so we flag that
 it is OK with `--force`.
 
-    > ch2 kit change cotic front-tube michelin 2019-03-01
-    usage: ch2 [-h] [--dev] [--log FILE] [--log-dir DIR] [--color COLOR] [-v N]
-               [-V] [--db-bind ADDRESS] [--db-port PORT] [--user USER]
-               [--passwd PASS] [--admin-user USER] [--admin-passwd PASS]
-               [--uri URI] [--base DIR] [--data DIR] [--cprofile [DIR]]
-               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,sparkline,package-fit-profile,show-schedule}
-               ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'sparkline', 'package-fit-profile', 'show-schedule')
+    > ch2 --plain kit change cotic front-tube michelin 2019-03-01
+       INFO: Logging to /home/andrew/.ch2/0-41/logs/kit.log
+      DEBUG: Formatting postgresql://{user}:{passwd}@{db-bind}:{db-port}/activity-{version}
+      DEBUG: Connecting to postgresql://default:xxxxxx@localhost:5432/activity-0-41
+      DEBUG: Formatting postgresql://{user}:{passwd}@{db-bind}:{db-port}/activity-{version}
+      DEBUG: Creating engine for postgresql://default:@localhost:5432/activity-0-41 with options {'echo': False, 'executemany_mode': 'values'} and connect args {}
+      DEBUG: Add timestamp for Kit Added at 2019-03-01 03:00:00+00:00 with source None
+      DEBUG: Add timestamp for Kit Retired at 2019-03-01 03:00:00+00:00 with source None
+    WARNING: Setting title from name "Kit Retired" (owner KitModel)
+       INFO: Retired previous front-tube (michelin)
+       INFO: Changed cotic front-tube michelin at 2019-03-01
 
 
 Previous tubes are *retired* as new ones are added.  You don't need to
 add the tubes in order - however they're added, the start and end
 times should align correctly.
 
-    > ch2 kit change cotic front-tube vittoria
-    usage: ch2 [-h] [--dev] [--log FILE] [--log-dir DIR] [--color COLOR] [-v N]
-               [-V] [--db-bind ADDRESS] [--db-port PORT] [--user USER]
-               [--passwd PASS] [--admin-user USER] [--admin-passwd PASS]
-               [--uri URI] [--base DIR] [--data DIR] [--cprofile [DIR]]
-               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,sparkline,package-fit-profile,show-schedule}
-               ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'sparkline', 'package-fit-profile', 'show-schedule')
+    > ch2 --plain kit change cotic front-tube vittoria
+       INFO: Logging to /home/andrew/.ch2/0-41/logs/kit.log
+      DEBUG: Formatting postgresql://{user}:{passwd}@{db-bind}:{db-port}/activity-{version}
+      DEBUG: Connecting to postgresql://default:xxxxxx@localhost:5432/activity-0-41
+      DEBUG: Formatting postgresql://{user}:{passwd}@{db-bind}:{db-port}/activity-{version}
+      DEBUG: Creating engine for postgresql://default:@localhost:5432/activity-0-41 with options {'echo': False, 'executemany_mode': 'values'} and connect args {}
+    WARNING: Model vittoria does not match any previous entries
+      DEBUG: Add timestamp for Kit Added at 2021-09-13 00:02:46.095204+00:00 with source None
+      DEBUG: Add timestamp for Kit Retired at 2021-09-13 00:02:46.095204+00:00 with source None
+       INFO: Retired previous front-tube (michelin)
+       INFO: Changed cotic front-tube vittoria at 2021-09-12 21:02:46
 
 
 That's three different inner tubes on the front.  The last uses
@@ -119,14 +123,21 @@ command line as you do the work.
 
 Now we can see the statistics:
 
-    > ch2 kit statistics front-tube
-    usage: ch2 [-h] [--dev] [--log FILE] [--log-dir DIR] [--color COLOR] [-v N]
-               [-V] [--db-bind ADDRESS] [--db-port PORT] [--user USER]
-               [--passwd PASS] [--admin-user USER] [--admin-passwd PASS]
-               [--uri URI] [--base DIR] [--data DIR] [--cprofile [DIR]]
-               {help,web,upload,process,search,constants,validate,kit,db,import,delete,fit,fix-fit,thumbnail,sparkline,package-fit-profile,show-schedule}
-               ...
-    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'process', 'search', 'constants', 'validate', 'kit', 'db', 'import', 'delete', 'fit', 'fix-fit', 'thumbnail', 'sparkline', 'package-fit-profile', 'show-schedule')
+    > ch2 --plain kit statistics front-tube
+       INFO: Logging to /home/andrew/.ch2/0-41/logs/kit.log
+    component: front-tube
+    +-model: michelin
+    | `-Age
+    |   +-n: 1
+    |   `-sum: 59
+    +-model: michelin
+    | `-Age
+    |   +-n: 1
+    |   `-sum: 926
+    `-model: vittoria
+      `-Age
+        +-n: 1
+        `-sum: 0
 
 
 In this example (which is auto-generated from the commands) there were
@@ -172,9 +183,9 @@ track the make of seals / oil used).
 Doing this lets me see how much time / distance the forks have between
 service intervals:
 
-    > dev/ch2 kit statistics fork-service-oil
+    > ch2 --plain kit statistics fork-service-oil
 	INFO: Version 0.28.beta
-	INFO: Using database at /home/andrew/.ch2/database-0-28.sql
+	INFO: Using database at /home/andrew/.ch2 --plain/database-0-28.sql
     Item fork-service-oil
     `-Model liquimoly
       +-Lifetime 457d 7h35m16s
@@ -187,10 +198,10 @@ The software has to 'know' what kit is used in what activity.  This
 is done by defining the variable `kit` when you load the activity.
 
 So, for example, if all the fit files in directory `mtb-rides` are
-from rides on my Cotic bike (defined with `ch2 kit start cotic`), then
+from rides on my Cotic bike (defined with `ch2 --plain kit start cotic`), then
 I can load them all with:
 
-    > ch2 activities ./mtb-rides/*.fit -Dkit=cotic
+    > ch2 --plain activities ./mtb-rides/*.fit -Dkit=cotic
 
 This will populate the appropriate statistics using the kit defined
 before the data were loaded.  If you modify the kit (eg by using `kit
@@ -201,7 +212,7 @@ change`) then you can rebuild the statistics with the
 
 Don't forget you can do
 
-    > ch2 kit *command* -h
+    > ch2 --plain kit *command* -h
 
 for more information.
 
@@ -238,7 +249,7 @@ Indicate that you have changed a
 For example if you change the chain on your bike that you care
 calling "trek", and the new chain is SRAM PC110, you might type
 
-    > ch2 kit change trek chain sram-pc1110
+    > ch2 --plain kit change trek chain sram-pc1110
 
 The `chain` is the *component* and `sram-pc110` is the *model*.
 

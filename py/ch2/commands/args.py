@@ -5,9 +5,9 @@ from logging import getLogger
 from os import makedirs
 from os.path import join
 
-from ..common.args import mm, m, no, add_server_args, NamespaceWithVariables, color, add_data_source_args
+from ..common.args import mm, m, no, add_server_args, NamespaceWithVariables, add_data_source_args
 from ..common.names import *
-from ..common.names import UNDEF, COLOR, OFF, VERSION, USER
+from ..common.names import UNDEF, COLOR, PLAIN, VERSION, USER
 from ..lib.utils import parse_bool
 
 log = getLogger(__name__)
@@ -246,8 +246,13 @@ def make_parser(with_noop=False):
                         help='the file name for the log (command name by default)')
     parser.add_argument(mm(LOG_DIR), metavar='DIR', default='{base}/{version}/logs',
                         help='the directory for the log')
-    parser.add_argument(mm(COLOR), mm(COLOUR), type=color, dest=COLOR, default=DARK,
-                        help=f'pretty stdout log - {LIGHT}|{DARK}|{OFF}')
+    parser.add_argument(mm(DARK), dest=COLOR, action='store_const', const=DARK,
+                        help='coloured log for dark backgrounds (default)')
+    parser.add_argument(mm(LIGHT), dest=COLOR, action='store_const', const=LIGHT,
+                        help='coloured log for light backgrounds')
+    parser.add_argument(mm(PLAIN), dest=COLOR, action='store_const', const=PLAIN,
+                        help='plain log')
+    parser.set_defaults(color=DARK)
     parser.add_argument(m(V), mm(VERBOSITY), default=UNDEF, type=int, metavar='N',
                         help='output level for stderr (0: silent; 5:noisy)')
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
@@ -257,7 +262,7 @@ def make_parser(with_noop=False):
     parser.add_argument(mm(BASE), default='~/.ch2', metavar='DIR', type=clean_path,
                         help='the base directory for data (default ~/.ch2)')
     parser.add_argument(mm(DATA), metavar='DIR', default='{base}/permanent',
-                        help='the root directory for storing data on disk')
+                        help='the root directory for storing data on disk (default {base}/permanent)')
     parser.add_argument(mm(CPROFILE), metavar='DIR', nargs='?', action='append',
                         help='file for profiling data (development)')
 
