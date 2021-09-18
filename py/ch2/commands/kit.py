@@ -13,7 +13,7 @@ from ..names import U, N
 from ..pipeline.calculate.kit import KitCalculator
 from ..pipeline.pipeline import run_pipeline
 from ..sql import PipelineType, Timestamp
-from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name, ADDED, EXPIRED, _N, INDIVIDUAL
+from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name, ADDED, EXPIRED, _N, INDIVIDUAL, SUM
 from ..sql.tables.source import Composite
 from ..sql.types import long_cls, short_cls
 
@@ -222,14 +222,17 @@ def statistics(s, name, csv=False, output=stdout):
 
 def stats_children(model):
     names = [key for key in model.keys() if key not in (NAME, UNITS)]
-    if model[UNITS] == U.KM:
-        format = format_km
-    elif model[UNITS] == U.S:
-        format = lambda s: format_minutes(int(s))
-    else:
-        format = lambda x: x
     return [{NAME: _N, VALUE: model[_N]}] + \
-           [{NAME: name, VALUE: format(model[name])} for name in names if name != _N]
+           [{NAME: name, VALUE: format_model(model)(model[name])} for name in names if name != _N]
+
+
+def format_model(model):
+    if model[UNITS] == U.KM:
+        return format_km
+    elif model[UNITS] == U.S:
+        return lambda s: format_minutes(int(s))
+    else:
+        return lambda x: x
 
 
 def to_stats(model):
@@ -243,7 +246,8 @@ def to_stats(model):
             return label, None
     elif VALUE not in model:
         log.debug('Formatting statistic')
-        return f'{model[NAME]}', stats_children(model)
+        return f'{model[NAME]}: {format_model(model)(model[SUM])}', None
+        # return f'{model[NAME]}', stats_children(model)
     else:
         # leaf
         return f'{model[NAME]}: {model[VALUE]}', None

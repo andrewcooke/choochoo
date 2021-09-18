@@ -71,7 +71,6 @@ class TitlesBase:
 
 class Titles(TitlesBase):
 
-    AGE = 'Age'
     ACTIVE_DISTANCE = 'Active Distance'
     ACTIVE_SPEED = 'Active Speed'
     ACTIVE_TIME = 'Active Time'

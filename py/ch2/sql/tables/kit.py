@@ -183,8 +183,6 @@ class StatisticsMixin:
         model_statistics = []
         self._calculate_individual_statistics(model_statistics, T.ACTIVE_DISTANCE, self.active_distances(s), U.KM)
         self._calculate_individual_statistics(model_statistics, T.ACTIVE_TIME, self.active_times(s), U.S)
-        expire = self.time_expired(s) or now()
-        model_statistics.append({NAME: T.AGE, _N: 1, SUM: (expire - self.time_added(s)).days, UNITS: U.D})
         model[STATISTICS] = model_statistics
 
     def _calculate_individual_statistics(self, model_statistics, name, values, units):
