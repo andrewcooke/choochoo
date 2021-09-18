@@ -12,10 +12,10 @@ from ..lib.tree import to_tree, to_csv
 from ..names import U, N
 from ..pipeline.calculate.kit import KitCalculator
 from ..pipeline.pipeline import run_pipeline
-from ..sql import PipelineType
+from ..sql import PipelineType, Timestamp
 from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name, ADDED, EXPIRED, _N, INDIVIDUAL
 from ..sql.tables.source import Composite
-from ..sql.types import long_cls
+from ..sql.types import long_cls, short_cls
 
 log = getLogger(__name__)
 
@@ -46,9 +46,9 @@ Note that in practice some commands that do 'important' changes to the database 
 
 This example will give statistics on how long (time, distance) different bikes chains lasted.
 
-In addition, when importing activities, the `kit` variable must be defined.  So, for example:
+In addition, when uploading activities, the `kit` variable must be defined.  So, for example:
 
-    > ch2 activities -D kit=cotic **/*.fit
+    > ch2 upload --kit cotic **/*.fit
 
 In this way the system knows what equipment was used in what activity.
 
@@ -73,26 +73,25 @@ but in general must be unique.  They can contain spaces if quoted.
     '''
     args = config.args
     cmd = args[SUB_COMMAND]
-    if cmd == REBUILD:
-        rebuild(config)
-    else:
-        with config.db.session_context() as s:
-            if cmd == START:
-                start(s, args[GROUP], args[ITEM], args[DATE], args[FORCE])
-            elif cmd == FINISH:
-                finish(s, args[ITEM], args[DATE], args[FORCE])
-            elif cmd == DELETE:
-                delete(s, args[NAME], args[FORCE])
-            elif cmd == CHANGE:
-                change(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[FORCE], args[START])
-            elif cmd == UNDO:
-                undo(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[ALL])
-            elif cmd == SHOW:
-                show(s, args[NAME], args[DATE], csv=args[CSV], output=output)
-            elif cmd == STATISTICS:
-                statistics(s, args[NAME], csv=args[CSV], output=output)
-            elif cmd == DUMP:
-                dump(s, args[CMD])
+    with config.db.session_context() as s:
+        if cmd == START:
+            start(s, args[GROUP], args[ITEM], args[DATE], args[FORCE])
+        elif cmd == FINISH:
+            finish(s, args[ITEM], args[DATE], args[FORCE])
+        elif cmd == DELETE:
+            delete(s, args[NAME], args[FORCE])
+        elif cmd == CHANGE:
+            change(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[FORCE], args[START])
+        elif cmd == UNDO:
+            undo(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[ALL])
+        elif cmd == SHOW:
+            show(s, args[NAME], args[DATE], csv=args[CSV], output=output)
+        elif cmd == STATISTICS:
+            statistics(s, args[NAME], csv=args[CSV], output=output)
+        elif cmd == DUMP:
+            dump(s, args[CMD])
+        elif cmd == REBUILD:
+            rebuild(s, config)
 
 
 def start(s, group, item, date, force):
@@ -151,8 +150,10 @@ def undo(s, item, component, model, date, all):
     component_instance.delete_if_unused(s)
 
 
-def rebuild(config):
-    run_pipeline(config, PipelineType.PROCESS, force=True, like=[long_cls(KitCalculator)])
+def rebuild(s, config):
+    Timestamp.clear(s, owner=short_cls(KitCalculator))
+    s.commit()
+    run_pipeline(config, PipelineType.PROCESS, like=[long_cls(KitCalculator)])
 
 
 def show(s, name, date, csv=None, output=stdout):

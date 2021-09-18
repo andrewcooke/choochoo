@@ -58,7 +58,8 @@ similarly with activity groups.
 KitGroup - groups kit (bikes, shoes, etc.)
 KitItem - a particular item of kit (a bike, pair of shoes, etc)
 KitComponent - the classes of things that go into a KitItem (wheels, tyres, laces, etc)
-KitModel - a particular instance of a component (a particular wheel, a particular tyre, etc) 
+KitModel - a particular instance of a component (a particular wheel, a particular tyre, etc)
+
 '''
 
 
@@ -147,7 +148,7 @@ class StatisticsMixin:
         log.debug(f'Add timestamp for {statistic} at {time} with source {source}')
         # if source is given it is in addition to self
         if source:
-            source = Composite.create(s, source, self)
+            source = Composite.create(s, [source, self])
             log.debug(f'Composite {source}')
         else:
             source = self
@@ -196,6 +197,9 @@ class StatisticsMixin:
 
 
 class ModelMixin:
+    '''
+    This is for MVC models, not KitModel.
+    '''
 
     @staticmethod
     def fmt_time(time):

@@ -185,13 +185,7 @@ class ResponseCalculator(LoaderMixin, OwnerInMixin, ProcessCalculator):
         # find times where the source changes
         changes = data.loc[data[name].ne(data[name].shift())]
         for time, row in changes.iterrows():
-            id = row[name]
-            if not is_nan(id):
-                composite = add(s, Composite(n_components=2))
-                add(s, CompositeComponent(input_source_id=id, output_source=composite))
-            else:
-                composite = add(s, Composite(n_components=1))
-            add(s, CompositeComponent(input_source=prev, output_source=composite))
+            composite = Composite.create(s, [x for x in [row[name], prev] if not is_nan(x)])
             yield time, composite
             prev = composite
         s.commit()

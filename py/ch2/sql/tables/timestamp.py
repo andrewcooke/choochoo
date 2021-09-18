@@ -56,9 +56,11 @@ class Timestamp(Base):
 
     @classmethod
     def clear(cls, s, owner, source=None):
-        s.query(Timestamp). \
-            filter(Timestamp.owner == owner,
-                   Timestamp.source == source).delete()
+        q = s.query(Timestamp).filter(Timestamp.owner == owner)
+        if source:
+            q = q.filter(Timestamp.source == source)
+        log.debug(q)
+        q.delete()
 
     @contextmanager
     def on_success(self, s):
