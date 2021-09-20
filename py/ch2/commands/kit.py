@@ -175,20 +175,22 @@ def show(s, name, date, csv=None, all=False, output=stdout):
     # this is complicated because both name and date are optional so if only one is
     # supplied we need to guess which from the format.
     if name is None:  # date must be None too, since it comes second on command line
-        name, time = '*', now()
+        name, time = None, None if all else now()
     elif date is None:
         if is_local_time(name):  # only one was supplied and it looks like a date
-            name, time = '*', local_time_to_time(name)
+            name, time = None, local_time_to_time(name)
         else:
-            time = now()
+            time = None if all else now()
     else:
         time = local_time_to_time(date)
-    if name == '*':
-        models = [group.to_model(s, time=time, statistics=INDIVIDUAL)
-                  for group in s.query(KitGroup).order_by(KitGroup.name).all()]
-    else:
+    if time and all:
+        raise Exception(f'Do not specify date with {mm(ALL)}')
+    if name:
         models = [get_name(s, name, classes=(KitGroup, KitItem), require=True)
                       .to_model(s, time=time, statistics=INDIVIDUAL)]
+    else:
+        models = [group.to_model(s, time=time, statistics=INDIVIDUAL)
+                  for group in s.query(KitGroup).order_by(KitGroup.name).all()]
     driver = to_csv if csv else to_tree
     format = to_stats_csv if csv else to_stats
     for model in models:
