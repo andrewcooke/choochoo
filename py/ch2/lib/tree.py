@@ -17,7 +17,7 @@ def to_tree(model, format, children, indent='  '):
     for child in all_children:
         last = child == all_children[-1]
         prefix = '`-' if last else '+-'
-        for line in to_tree(child, format, children):
+        for line in to_tree(child, format, children, indent=''):
             yield indent + prefix + line
             prefix = '  ' if last else '| '
 
