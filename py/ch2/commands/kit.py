@@ -184,11 +184,11 @@ def show(s, name, date, csv=None, all=False, output=stdout):
     else:
         time = local_time_to_time(date)
     if name == '*':
-        models = [group.to_model(s, time=time, depth=3, statistics=INDIVIDUAL)
+        models = [group.to_model(s, time=time, statistics=INDIVIDUAL)
                   for group in s.query(KitGroup).order_by(KitGroup.name).all()]
     else:
         models = [get_name(s, name, classes=(KitGroup, KitItem), require=True)
-                      .to_model(s, time=time, depth=3, statistics=INDIVIDUAL)]
+                      .to_model(s, time=time, statistics=INDIVIDUAL)]
     driver = to_csv if csv else to_tree
     format = to_stats_csv if csv else to_stats
     for model in models:
@@ -225,9 +225,9 @@ def to_label_name_dates_csv(model):
 
 def statistics(s, name, csv=False, output=stdout):
     if name:
-        models = [get_name(s, name, require=True).to_model(s, depth=3, statistics=INDIVIDUAL)]
+        models = [get_name(s, name, require=True).to_model(s, statistics=INDIVIDUAL)]
     else:
-        models = [group.to_model(s, depth=3, statistics=INDIVIDUAL)
+        models = [group.to_model(s, statistics=INDIVIDUAL)
                   for group in s.query(KitGroup).order_by(KitGroup.name).all()]
     driver = to_csv if csv else to_tree
     format = to_stats_csv if csv else to_stats

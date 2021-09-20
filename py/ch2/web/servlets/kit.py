@@ -46,7 +46,7 @@ class Kit:
     def write_retire_item(request, s):
         data = request.json
         log.debug(data)
-        finish(s, data[ITEM], None, True)
+        finish(s, data[ITEM], None, None, True)
 
     @staticmethod
     def write_replace_model(request, s):
