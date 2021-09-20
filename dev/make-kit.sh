@@ -25,6 +25,8 @@ ch2 kit change --force bowman chain kmc-x11el '2020-03-21 21:07:33'
 ch2 kit change --force bowman front-pads disco-pad 2021-03-01
 ch2 kit change --force bowman rear-pads disco-pad 2021-03-01
 ch2 kit change --force bowman chain fsa 2021-04-01
+ch2 kit finish bowman front-sealant 2021-08-09
+ch2 kit finish bowman rear-sealant 2021-08-09
 ch2 kit change --force bowman front-tyre pirelli-p-zero 2021-08-09
 ch2 kit change --force bowman rear-tyre pirelli-p-zero 2021-08-09
 ch2 kit change --force cotic chain kmc-x11el 2020-10-18

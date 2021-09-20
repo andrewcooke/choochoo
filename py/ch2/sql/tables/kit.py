@@ -317,6 +317,7 @@ class KitItem(ModelMixin, StatisticsMixin, UngroupedSource):
             else:
                 raise Exception(f'Item {self.name} is already retired')
         self._add_timestamp(s, T.KIT_RETIRED, date)
+        log.info(f'Retired {self.name}')
 
     def delete(self, s):
         s.delete(self)
@@ -427,6 +428,14 @@ class KitComponent(ModelMixin, Base):
             for statistic in population[STATISTICS]:
                 statistic[MEAN] /= statistic[N]
             model[MODELS].append(population)
+
+    def finish(self, s, item, date):
+        # this is really a finish of any associated model
+        for model in s.query(KitModel).filter(KitModel.component == self,
+                                              KitModel.item == item).all():
+            if not model.time_expired(s):
+                model._add_timestamp(s, T.KIT_RETIRED, date)
+                log.info(f'Retired {model.name}')
 
     def __str__(self):
         return f'KitComponent "{self.name}"'

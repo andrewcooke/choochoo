@@ -77,7 +77,7 @@ but in general must be unique.  They can contain spaces if quoted.
         if cmd == START:
             start(s, args[GROUP], args[ITEM], args[DATE], args[FORCE])
         elif cmd == FINISH:
-            finish(s, args[ITEM], args[DATE], args[FORCE])
+            finish(s, args[ITEM], args[COMPONENT], args[DATE], args[FORCE])
         elif cmd == DELETE:
             delete(s, args[NAME], args[FORCE])
         elif cmd == CHANGE:
@@ -85,7 +85,7 @@ but in general must be unique.  They can contain spaces if quoted.
         elif cmd == UNDO:
             undo(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[ALL])
         elif cmd == SHOW:
-            show(s, args[NAME], args[DATE], csv=args[CSV], output=output)
+            show(s, args[NAME], args[DATE], csv=args[CSV], all=args[ALL], output=output)
         elif cmd == STATISTICS:
             statistics(s, args[NAME], csv=args[CSV], output=output)
         elif cmd == DUMP:
@@ -102,10 +102,25 @@ def start(s, group, item, date, force):
              f'at {time_to_local_time(item_instance.time_added(s))}')
 
 
-def finish(s, item, date, force):
-    date = local_time_or_now(date)
-    get_name(s, item, classes=(KitItem,), require=True).finish(s, date, force)
-    log.info(f'Finished {item}')
+def finish(s, item, component, date, force):
+    # complicated because component and date are both optional
+    if component is None:  # date must be None too, since it comes second on command line
+        date = now()
+    elif date is None:
+        if is_local_time(component):  # only one was supplied and it looks like a date
+            component, date = None, local_time_to_time(component)
+        else:
+            date = now()
+    else:
+        date = local_time_to_time(date)
+    if component and force:
+        raise Exception(f'Cannot use {mm(FORCE)} with component (would change all models)')
+    item = get_name(s, item, classes=(KitItem,), require=True)
+    if component:
+        component = get_name(s, component, classes=(KitComponent,), require=True)
+        component.finish(s, item, date)
+    else:
+        item.finish(s, date, force)
 
 
 def delete(s, name, force):
@@ -156,24 +171,26 @@ def rebuild(s, config):
     run_pipeline(config, PipelineType.PROCESS, like=[long_cls(KitCalculator)])
 
 
-def show(s, name, date, csv=None, output=stdout):
+def show(s, name, date, csv=None, all=False, output=stdout):
     # this is complicated because both name and date are optional so if only one is
     # supplied we need to guess which from the format.
     if name is None:  # date must be None too, since it comes second on command line
         name, time = '*', now()
     elif date is None:
-        if is_local_time(name):  # only one was supplied and it looke like a date
+        if is_local_time(name):  # only one was supplied and it looks like a date
             name, time = '*', local_time_to_time(name)
         else:
             time = now()
     else:
         time = local_time_to_time(date)
     if name == '*':
-        models = [group.to_model(s, time=time, depth=3) for group in s.query(KitGroup).order_by(KitGroup.name).all()]
+        models = [group.to_model(s, time=time, depth=3, statistics=INDIVIDUAL)
+                  for group in s.query(KitGroup).order_by(KitGroup.name).all()]
     else:
-        models = [get_name(s, name, classes=(KitGroup, KitItem), require=True).to_model(s, time=time, depth=3)]
+        models = [get_name(s, name, classes=(KitGroup, KitItem), require=True)
+                      .to_model(s, time=time, depth=3, statistics=INDIVIDUAL)]
     driver = to_csv if csv else to_tree
-    format = to_label_name_dates_csv if csv else to_label_name_dates
+    format = to_stats_csv if csv else to_stats
     for model in models:
         for line in driver(model, format, model_children):
             print(line, file=output)
@@ -237,7 +254,10 @@ def format_model(model):
 
 def to_stats(model):
     if TYPE in model:
-        label = f'{model[TYPE]}: {model[NAME]}'
+        if ADDED in model:
+            label = f'{model[TYPE]}: {model[NAME]}  {model[ADDED]} - {model[EXPIRED] or ""}'
+        else:
+            label = f'{model[TYPE]}: {model[NAME]}'
         if STATISTICS in model:
             log.debug(f'Extracting statistics from {model[TYPE]}')
             return label, model[STATISTICS]
