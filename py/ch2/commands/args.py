@@ -427,10 +427,6 @@ def make_parser(with_noop=False):
     kit_show_when.add_argument(DATE, nargs='?', help='when to display (default now)')
     kit_show_when.add_argument(mm(ALL), action='store_true', help='show items from all times')
     kit_show.add_argument(mm(CSV), action='store_true', help='CSV format')
-    kit_statistics = kit_cmds.add_parser(STATISTICS, help='display statistics',
-                                         description='display kit statistics')
-    kit_statistics.add_argument(NAME, nargs='?', help='group, item, component or model')
-    kit_statistics.add_argument(mm(CSV), action='store_true', help='CSV format')
     kit_rebuild = kit_cmds.add_parser(REBUILD, help='rebuild database entries')
     kit_dump = kit_cmds.add_parser(DUMP, help='dump to script')
     kit_dump.add_argument(mm(CMD), help='command to use instead of ch2')

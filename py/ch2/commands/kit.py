@@ -64,10 +64,6 @@ For running shoes you might simply track each item:
     > ch2 kit finish adidas
     > ch2 kit start shoe nike
 
-Statistics for shoes:
-
-    > ch2 kit statistic shoe
-
 Names can be chosen at will (there is nothing hard-coded about 'bike', 'chain', 'cotic', etc),
 but in general must be unique.  They can contain spaces if quoted.
     '''
@@ -86,8 +82,6 @@ but in general must be unique.  They can contain spaces if quoted.
             undo(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[ALL])
         elif cmd == SHOW:
             show(s, args[NAME], args[DATE], csv=args[CSV], all=args[ALL], output=output)
-        elif cmd == STATISTICS:
-            statistics(s, args[NAME], csv=args[CSV], output=output)
         elif cmd == DUMP:
             dump(s, args[CMD])
         elif cmd == REBUILD:
@@ -209,42 +203,6 @@ def model_children(model):
         yield from model[CHILDREN[model[TYPE]]]
 
 
-def to_label_name_dates(model):
-    if ADDED in model:
-        return f'{model[TYPE]}: {model[NAME]}  {model[ADDED]} - {model[EXPIRED] or ""}', None
-    else:
-        return f'{model[TYPE]}: {model[NAME]}', None
-
-
-def to_label_name_dates_csv(model):
-    if ADDED in model:
-        added = time_to_local_time(model[ADDED])
-        expired = time_to_local_time(model[EXPIRED]) if model[EXPIRED] else ''
-    else:
-        added, expired = '', ''
-    return f'{q(model[TYPE])},{q(model[NAME])},{q(added)},{q(expired)}', None
-
-
-def statistics(s, name, csv=False, output=stdout):
-    if name:
-        models = [get_name(s, name, require=True).to_model(s, statistics=INDIVIDUAL)]
-    else:
-        models = [group.to_model(s, statistics=INDIVIDUAL)
-                  for group in s.query(KitGroup).order_by(KitGroup.name).all()]
-    driver = to_csv if csv else to_tree
-    format = to_stats_csv if csv else to_stats
-    log.debug(models)
-    for model in models:
-        for line in driver(model, format, model_children):
-            print(line, file=output)
-
-
-def stats_children(model):
-    names = [key for key in model.keys() if key not in (NAME, UNITS)]
-    return [{NAME: _N, VALUE: model[_N]}] + \
-           [{NAME: name, VALUE: format_model(model)(model[name])} for name in names if name != _N]
-
-
 def format_model(model):
     if model[UNITS] == U.KM:
         return format_km
@@ -269,7 +227,6 @@ def to_stats(model):
     elif VALUE not in model:
         log.debug('Formatting statistic')
         return f'{model[NAME]}: {format_model(model)(model[SUM])}', None
-        # return f'{model[NAME]}', stats_children(model)
     else:
         # leaf
         return f'{model[NAME]}: {model[VALUE]}', None
@@ -283,7 +240,7 @@ def to_stats_csv(model):
         else:
             return label, None
     elif VALUE not in model:
-        return f'{q(model[NAME])}', stats_children(model)
+        return f'{model[NAME]},{format_model(model)(model[SUM])}', None
     else:
         return f'{q(model[NAME])},{q(model[VALUE])}', None
 
