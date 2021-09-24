@@ -53,8 +53,7 @@ run apt-get -y install sqlite3 libsqlite3-dev libpq-dev $JS_PKG gcc emacs
 EOF
 
 cat >>$FILE <<EOF
-copy js/package.json js/package-lock.json js/config js/public /app/js/
-copy js/config /app/js/config
+copy js/package.json js/package-lock.json js/public /app/js/
 copy js/public /app/js/public
 workdir /app/js
 run npm install -g npm@next
