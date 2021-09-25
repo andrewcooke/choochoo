@@ -61,26 +61,31 @@ automatically:
 First, I will add my Cotic bike:
 
 #/bin/bash
-rm -f /tmp/kit.sql
-dev/ch2 -f /tmp/kit.sql config default > /dev/null 2>&1
+ch2 --plain config default > /dev/null 2>&1
+ch2 --plain db add user
+ch2 --plain db add database
+ch2 --plain db add profile acooke
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 kit start bike cotic --force"
-dev/ch2 -f /tmp/kit.sql kit start bike cotic --force > $out 2>&1
+echo "    > ch2 --plain kit start bike cotic --force"
+ch2 --plain kit start bike cotic --force > $out 2>&1
 sed -i 's|/tmp/kit.sql|database.sql|' $out
 sed 's/^/    /' $out
 
 We're introducing a completely new *group* (bike) and so the `--force`
 flag is needed for confirmation.  Adding future bikes will not require
-this, because `bike` will already be known by the system..
+this, because `bike` will already be known by the system.
+
+Note: the `--plain` flag is used because these docs are automatically
+generated (coloured output would make the embedded output ugly).
 
 Now I have a bike I am going to add some inner tubes at various dates.
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 kit change cotic front-tube michelin 2019-01-01 --force"
-dev/ch2 -f /tmp/kit.sql kit change cotic front-tube michelin 2019-01-01 --force > $out 2>&1
+echo "    > ch2 --plain kit change cotic front-tube michelin 2019-01-01 --force"
+ch2 --plain kit change cotic front-tube michelin 2019-01-01 --force > $out 2>&1
 sed -i 's|/tmp/kit.sql|database.sql|' $out
 sed 's/^/    /' $out
 
@@ -89,8 +94,8 @@ it is OK with `--force`.
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 kit change cotic front-tube michelin 2019-03-01"
-dev/ch2 --dev -f /tmp/kit.sql kit change cotic front-tube michelin 2019-03-01 > $out 2>&1
+echo "    > ch2 --plain kit change cotic front-tube michelin 2019-03-01"
+ch2 --plain --dev kit change cotic front-tube michelin 2019-03-01 > $out 2>&1
 sed -i 's|/tmp/kit.sql|database.sql|' $out
 sed 's/^/    /' $out
 
@@ -100,8 +105,8 @@ times should align correctly.
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 kit change cotic front-tube vittoria"
-dev/ch2 --dev -f /tmp/kit.sql kit change cotic front-tube vittoria > $out 2>&1
+echo "    > ch2 --plain kit change cotic front-tube vittoria"
+ch2 --plain --dev kit change cotic front-tube vittoria > $out 2>&1
 sed -i 's|/tmp/kit.sql|database.sql|' $out
 sed 's/^/    /' $out
 
@@ -113,8 +118,8 @@ Now we can see the statistics:
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 kit statistics front-tube"
-dev/ch2 -f /tmp/kit.sql kit statistics front-tube > $out 2>&1
+echo "    > ch2 --plain kit statistics front-tube"
+ch2 --plain kit statistics front-tube > $out 2>&1
 sed -i 's|/tmp/kit.sql|database.sql|' $out
 sed 's/^/    /' $out
 
@@ -161,9 +166,9 @@ track the make of seals / oil used).
 Doing this lets me see how much time / distance the forks have between
 service intervals:
 
-    > dev/ch2 kit statistics fork-service-oil
+    > ch2 kit statistics fork-service-oil
 	INFO: Version 0.28.beta
-	INFO: Using database at /home/andrew/.ch2/database-0-28.sql
+	INFO: Using database at /home/andrew/.ch2 --plain/database-0-28.sql
     Item fork-service-oil
     `-Model liquimoly
       +-Lifetime 457d 7h35m16s
@@ -172,19 +177,18 @@ service intervals:
 
 ## Loading Activities
 
-The software has to 'know' what kit is used in what activity.  This
-is done by defining the variable `kit` when you load the activity.
+The software has to 'know' what kit is used in what activity.  This is done by
+defining `--kit` when you upload the activity.
 
 So, for example, if all the fit files in directory `mtb-rides` are
 from rides on my Cotic bike (defined with `ch2 kit start cotic`), then
 I can load them all with:
 
-    > ch2 activities ./mtb-rides/*.fit -Dkit=cotic
+    > ch2 upload ./mtb-rides/*.fit --kit cotic
 
-This will populate the appropriate statistics using the kit defined
-before the data were loaded.  If you modify the kit (eg by using `kit
-change`) then you can rebuild the statistics with the
-[rebuild](#kit-rebuild) command.
+Running `ch2 process` will populate the appropriate statistics using the kit
+defined.  If you modify the kit (eg by using `kit change`) then you can
+rebuild the statistics with the [rebuild](#kit-rebuild) command.
 
 ## Command Reference
 

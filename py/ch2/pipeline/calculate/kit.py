@@ -13,11 +13,6 @@ log = getLogger(__name__)
 
 
 class KitCalculator(OwnerInMixin, ActivityJournalProcessCalculator):
-    '''
-    Convert `-D kit=XXX` statistic set on activities during import into kit usage entries.
-
-    The kit statistic is also used directly by other code (eg to filter activities by kit).
-    '''
 
     def _run_one(self, missed):
         start = local_time_to_time(missed)
@@ -31,7 +26,8 @@ class KitCalculator(OwnerInMixin, ActivityJournalProcessCalculator):
                     for kit_name in kit.value.split(','):
                         try:
                             for kit_instance in expand_item(s, kit_name, ajournal.start):
-                                kit_instance.add_use(s, ajournal.start, source=ajournal, owner=self.owner_out)
+                                kit_instance.add_use(s, ajournal.start, source=ajournal,
+                                                     owner=self.owner_out)
                                 log.debug(f'Added usage for {kit_instance}')
                         except Exception as e:
                             log_current_exception()

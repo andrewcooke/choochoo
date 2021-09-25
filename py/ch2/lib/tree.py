@@ -1,6 +1,6 @@
 
 
-def to_tree(model, format, children):
+def to_tree(model, format, children, indent='  '):
     '''
     this will yield lines formatted as a tree.
 
@@ -12,13 +12,13 @@ def to_tree(model, format, children):
     return by format.
     '''
     line, extra = format(model)
-    yield line
+    yield indent + line
     all_children = (list(extra) if extra else []) + list(children(model))
     for child in all_children:
         last = child == all_children[-1]
         prefix = '`-' if last else '+-'
-        for line in to_tree(child, format, children):
-            yield prefix + line
+        for line in to_tree(child, format, children, indent=''):
+            yield indent + prefix + line
             prefix = '  ' if last else '| '
 
 

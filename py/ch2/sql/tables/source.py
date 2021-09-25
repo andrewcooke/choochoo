@@ -312,10 +312,13 @@ class Composite(Source):
                 s.query(Source).filter(Source.id.in_(q_all_nodes)).delete(synchronize_session=False)
 
     @classmethod
-    def create(cls, s, *sources):
+    def create(cls, s, sources):
         composite = add(s, Composite(n_components=0))
         for source in sources:
-            add(s, CompositeComponent(input_source=source, output_source=composite))
+            if isinstance(source, int):
+                add(s, CompositeComponent(input_source_id=source, output_source=composite))
+            else:
+                add(s, CompositeComponent(input_source=source, output_source=composite))
             composite.n_components += 1
         return composite
 

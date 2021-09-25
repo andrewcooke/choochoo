@@ -58,7 +58,8 @@ similarly with activity groups.
 KitGroup - groups kit (bikes, shoes, etc.)
 KitItem - a particular item of kit (a bike, pair of shoes, etc)
 KitComponent - the classes of things that go into a KitItem (wheels, tyres, laces, etc)
-KitModel - a particular instance of a component (a particular wheel, a particular tyre, etc) 
+KitModel - a particular instance of a component (a particular wheel, a particular tyre, etc)
+
 '''
 
 
@@ -147,7 +148,7 @@ class StatisticsMixin:
         log.debug(f'Add timestamp for {statistic} at {time} with source {source}')
         # if source is given it is in addition to self
         if source:
-            source = Composite.create(s, source, self)
+            source = Composite.create(s, [source, self])
             log.debug(f'Composite {source}')
         else:
             source = self
@@ -182,8 +183,6 @@ class StatisticsMixin:
         model_statistics = []
         self._calculate_individual_statistics(model_statistics, T.ACTIVE_DISTANCE, self.active_distances(s), U.KM)
         self._calculate_individual_statistics(model_statistics, T.ACTIVE_TIME, self.active_times(s), U.S)
-        expire = self.time_expired(s) or now()
-        model_statistics.append({NAME: T.AGE, _N: 1, SUM: (expire - self.time_added(s)).days, UNITS: U.D})
         model[STATISTICS] = model_statistics
 
     def _calculate_individual_statistics(self, model_statistics, name, values, units):
@@ -196,6 +195,9 @@ class StatisticsMixin:
 
 
 class ModelMixin:
+    '''
+    This is for MVC models, not KitModel.
+    '''
 
     @staticmethod
     def fmt_time(time):
@@ -204,15 +206,14 @@ class ModelMixin:
         else:
             return None
 
-    def to_model(self, s, depth=0, statistics=None, time=None, own_models=True):
+    def to_model(self, s, statistics=None, time=None, own_models=True):
         model = {TYPE: self.SIMPLE_NAME, DB: self.id, NAME: self.name}
         try:
             model.update({ADDED: self.fmt_time(self.time_added(s)),
                           EXPIRED: self.fmt_time(self.time_expired(s))})
         except AttributeError:
             pass  # not a subclass of statistics mixin
-        if depth > 0:
-            self._add_children(s, model, depth=depth-1, statistics=statistics, time=time, own_models=own_models)
+        self._add_children(s, model, statistics=statistics, time=time, own_models=own_models)
         try:
             if statistics == INDIVIDUAL:
                 self._add_individual_statistics(s, model)
@@ -252,9 +253,8 @@ class KitGroup(ModelMixin, Base):
                 else:
                     raise Exception(f'Specify {mm(FORCE)} to create a new group ({name})')
 
-    def _add_children(self, s, model, depth=0, statistics=None, time=None, own_models=True):
-        model[ITEMS] = [item.to_model(s, depth=depth, statistics=statistics, 
-                                      time=time, own_models=own_models)
+    def _add_children(self, s, model, statistics=None, time=None, own_models=True):
+        model[ITEMS] = [item.to_model(s, statistics=statistics, time=time, own_models=own_models)
                         for item in self.items
                         if time is None or inside_interval(item.time_added(s), time, item.time_expired(s))]
 
@@ -315,27 +315,29 @@ class KitItem(ModelMixin, StatisticsMixin, UngroupedSource):
             else:
                 raise Exception(f'Item {self.name} is already retired')
         self._add_timestamp(s, T.KIT_RETIRED, date)
+        log.info(f'Retired {self.name}')
 
     def delete(self, s):
         s.delete(self)
         Composite.clean(s)
 
-    def _add_children(self, s, model, depth=0, statistics=None, time=None, own_models=True):
-        model[COMPONENTS] = [component.to_model(s, depth=depth, statistics=statistics, 
-                                                time=time, own_models=own_models)
+    def _add_children(self, s, model, statistics=None, time=None, own_models=True):
+        model[COMPONENTS] = [component.to_model(s, statistics=statistics, time=time, own_models=own_models)
                              for component in self.components]
-        model[MODELS] = [model.to_model(s, depth=depth, statistics=statistics, 
-                                        time=time, own_models=own_models)
+        model[MODELS] = [model.to_model(s, statistics=statistics, time=time, own_models=own_models)
                          for model in self.models
                          if time is None or inside_interval(model.time_added(s), time, model.time_expired(s))]
 
-    def to_model(self, s, depth=0, statistics=None, time=None, own_models=True):
-        model = super().to_model(s, depth=depth, statistics=statistics, time=time)
-        model_ids = set(model.id for model in self.models)
-        if own_models and COMPONENTS in model:
-            for component in model[COMPONENTS]:
-                # restrict component's models to subset of own models
-                component[MODELS] = [model for model in component[MODELS] if model[DB] in model_ids]
+    def to_model(self, s, statistics=None, time=None, own_models=True):
+        model = super().to_model(s, statistics=statistics, time=time)
+        if COMPONENTS in model:
+            if own_models:
+                model_ids = set(model.id for model in self.models)
+                for component in model[COMPONENTS]:
+                    # restrict component's models to subset of own models
+                    component[MODELS] = [model for model in component[MODELS] if model[DB] in model_ids]
+            # drop components with no models (eg when finish was called)
+            model[COMPONENTS] = [component for component in model[COMPONENTS] if component[MODELS]]
         return model
 
     def __str__(self):
@@ -384,18 +386,17 @@ class KitComponent(ModelMixin, Base):
         if not self.models:
             s.delete(self)
 
-    def _add_children(self, s, model, depth=0, statistics=None, time=None, own_models=True):
+    def _add_children(self, s, model, statistics=None, time=None, own_models=True):
         model_statistics = INDIVIDUAL if statistics == POPULATION else statistics
-        model[MODELS] = [model.to_model(s, depth=depth, statistics=model_statistics,
-                                        time=time, own_models=own_models)
+        model[MODELS] = [model.to_model(s, statistics=model_statistics, time=time, own_models=own_models)
                          for model in self.models
                          if time is None or inside_interval(model.time_added(s), time, model.time_expired(s))]
         if statistics == POPULATION:
             self._add_population_statistics(model)
 
-    def to_model(self, s, depth=0, statistics=None, time=None, own_models=True):
+    def to_model(self, s, statistics=None, time=None, own_models=True):
         # force all time, since this is constrained via the item if needed and, if not, helps prompts
-        return super().to_model(s, depth=depth, statistics=statistics, time=time if statistics else None)
+        return super().to_model(s, statistics=statistics, time=time if statistics else None)
 
     def _add_population_statistics(self, model):
         # replace KitModel instances with populations.  so this doesn't just rewrite the statistics,
@@ -425,6 +426,14 @@ class KitComponent(ModelMixin, Base):
             for statistic in population[STATISTICS]:
                 statistic[MEAN] /= statistic[N]
             model[MODELS].append(population)
+
+    def finish(self, s, item, date):
+        # this is really a finish of any associated model
+        for model in s.query(KitModel).filter(KitModel.component == self,
+                                              KitModel.item == item).all():
+            if not model.time_expired(s):
+                model._add_timestamp(s, T.KIT_RETIRED, date)
+                log.info(f'Retired {model.name}')
 
     def __str__(self):
         return f'KitComponent "{self.name}"'
@@ -574,7 +583,7 @@ class KitModel(ModelMixin, StatisticsMixin, UngroupedSource):
     def time_range(self, s):
         return None, None
 
-    def _add_children(self, s, model, depth=0, statistics=None, time=None, own_models=True):
+    def _add_children(self, s, model, statistics=None, time=None, own_models=True):
         pass
 
     def __str__(self):

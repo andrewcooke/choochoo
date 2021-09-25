@@ -5,9 +5,9 @@ from logging import getLogger
 from os import makedirs
 from os.path import join
 
-from ..common.args import mm, m, no, add_server_args, NamespaceWithVariables, color, add_data_source_args
+from ..common.args import mm, m, no, add_server_args, NamespaceWithVariables, add_data_source_args
 from ..common.names import *
-from ..common.names import UNDEF, COLOR, OFF, VERSION, USER
+from ..common.names import UNDEF, COLOR, PLAIN, VERSION, USER
 from ..lib.utils import parse_bool
 
 log = getLogger(__name__)
@@ -246,8 +246,13 @@ def make_parser(with_noop=False):
                         help='the file name for the log (command name by default)')
     parser.add_argument(mm(LOG_DIR), metavar='DIR', default='{base}/{version}/logs',
                         help='the directory for the log')
-    parser.add_argument(mm(COLOR), mm(COLOUR), type=color, dest=COLOR, default=DARK,
-                        help=f'pretty stdout log - {LIGHT}|{DARK}|{OFF}')
+    parser.add_argument(mm(DARK), dest=COLOR, action='store_const', const=DARK,
+                        help='coloured log for dark backgrounds (default)')
+    parser.add_argument(mm(LIGHT), dest=COLOR, action='store_const', const=LIGHT,
+                        help='coloured log for light backgrounds')
+    parser.add_argument(mm(PLAIN), dest=COLOR, action='store_const', const=PLAIN,
+                        help='plain log')
+    parser.set_defaults(color=DARK)
     parser.add_argument(m(V), mm(VERBOSITY), default=UNDEF, type=int, metavar='N',
                         help='output level for stderr (0: silent; 5:noisy)')
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
@@ -257,7 +262,7 @@ def make_parser(with_noop=False):
     parser.add_argument(mm(BASE), default='~/.ch2', metavar='DIR', type=clean_path,
                         help='the base directory for data (default ~/.ch2)')
     parser.add_argument(mm(DATA), metavar='DIR', default='{base}/permanent',
-                        help='the root directory for storing data on disk')
+                        help='the root directory for storing data on disk (default {base}/permanent)')
     parser.add_argument(mm(CPROFILE), metavar='DIR', nargs='?', action='append',
                         help='file for profiling data (development)')
 
@@ -385,25 +390,26 @@ def make_parser(with_noop=False):
     kit = commands.add_parser(KIT, help='manage kit',
                                 description='add, remove, modify and display kit details')
     kit_cmds = kit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    kit_start = kit_cmds.add_parser(START, help='define a new item (new bike, new shoe)',
-                                    description='define a new item (new bike, new shoe)')
-    kit_start.add_argument(GROUP, help='item group (bike, shoe, etc)')
-    kit_start.add_argument(ITEM, help='item name (cotic, adidas, etc)')
+    kit_start = kit_cmds.add_parser(START, help='define a new item',
+                                    description='define a new item')
+    kit_start.add_argument(GROUP, help='item group')
+    kit_start.add_argument(ITEM, help='item name')
     kit_start.add_argument(DATE, nargs='?', help='when created (default now)')
     kit_start.add_argument(mm(FORCE), action='store_true', help='confirm creation of a new group')
-    kit_finish = kit_cmds.add_parser(FINISH, help='retire an item',
-                                     description='retire an item (bike, shoe)')
+    kit_finish = kit_cmds.add_parser(FINISH, help='retire an item or component',
+                                     description='retire an item or component')
     kit_finish.add_argument(ITEM, help='item name')
+    kit_finish.add_argument(COMPONENT, nargs='?', help='component name')
     kit_finish.add_argument(DATE, nargs='?', help='when to retire (default now)')
     kit_finish.add_argument(mm(FORCE), action='store_true', help='confirm change of existing date')
     kit_delete = kit_cmds.add_parser(DELETE, help='remove all entries for an item or group',
                                      description='remove all entries for an item or group')
     kit_delete.add_argument(NAME, help='item or group to delete')
     kit_delete.add_argument(mm(FORCE), action='store_true', help='confirm group deletion')
-    kit_change = kit_cmds.add_parser(CHANGE, help='replace (or add) a part (wheel, innersole, etc)',
-                                     description='replace (or add) a part (wheel, innersole, etc)')
-    kit_change.add_argument(ITEM, help='item name (cotic, adidas, etc)')
-    kit_change.add_argument(COMPONENT, help='component type (chain, laces, etc)')
+    kit_change = kit_cmds.add_parser(CHANGE, help='replace (or add) a component',
+                                     description='replace (or add) a component')
+    kit_change.add_argument(ITEM, help='item name')
+    kit_change.add_argument(COMPONENT, help='component type')
     kit_change.add_argument(MODEL, help='model description')
     kit_change.add_argument(DATE, nargs='?', help='when changed (default now)')
     kit_change.add_argument(mm(FORCE), action='store_true', help='confirm creation of a new component')
@@ -417,12 +423,10 @@ def make_parser(with_noop=False):
     kit_show = kit_cmds.add_parser(SHOW, help='display kit data',
                                    description='display kit data (show what stuff you use)')
     kit_show.add_argument(NAME, nargs='?', help='group or item to display (default all)')
-    kit_show.add_argument(DATE, nargs='?', help='when to display (default now)')
+    kit_show_when = kit_show.add_mutually_exclusive_group()
+    kit_show_when.add_argument(DATE, nargs='?', help='when to display (default now)')
+    kit_show_when.add_argument(mm(ALL), action='store_true', help='show items from all times')
     kit_show.add_argument(mm(CSV), action='store_true', help='CSV format')
-    kit_statistics = kit_cmds.add_parser(STATISTICS, help='display statistics',
-                                         description='display kit statistics')
-    kit_statistics.add_argument(NAME, nargs='?', help='group, item, component or model')
-    kit_statistics.add_argument(mm(CSV), action='store_true', help='CSV format')
     kit_rebuild = kit_cmds.add_parser(REBUILD, help='rebuild database entries')
     kit_dump = kit_cmds.add_parser(DUMP, help='dump to script')
     kit_dump.add_argument(mm(CMD), help='command to use instead of ch2')
