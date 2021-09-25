@@ -42,8 +42,6 @@ services:
       - 'postgresql-logDEV:/var/log'
       - './postgres.conf:/etc/postgresql/postgresql.conf'
 volumes:
-  choochoo-data:
-    external: true
   postgresql-dataDEV:
     external: true
   postgresql-logDEV:

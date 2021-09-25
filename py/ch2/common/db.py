@@ -106,19 +106,6 @@ def backup_schema(config):
                           f'(like {src} including constraints including indexes including defaults)')
             log.info(f'Copying {src} to {dst}')
             execute(cnxn, f'insert into {dst} (select * from {src})')
-        # for row1 in execute(cnxn, 'select table_name from information_schema.tables WHERE table_schema = :schema',
-        #                     schema=user).fetchall():
-        #     table = row1[0]
-        #     src = f'{q_user}.{quote(cnxn, table)}'
-        #     dst = f'{q_previous}.{quote(cnxn, table)}'
-        #     log.info(f'Setting foreign key constraints on {dst}')
-        #     for row2 in execute(cnxn, f'select pg_get_constraintdef(oid), conname from pg_constraint '
-        #                               f'where contype=\'f\' and conrelid = \'{src}\'::regclass'):
-        #         key, name = row2[0], row2[1]
-        #         key = key.replace(user, previous)
-        #         stmt = f'alter table {dst} add constraint {name} {key}'
-        #         log.debug(key)
-        #         execute(cnxn, stmt)
 
 
 def truncate_tables(config):

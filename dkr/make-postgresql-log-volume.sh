@@ -6,7 +6,7 @@ CMD=$0
 DEV=
 
 help () {
-    echo -e "\n  Create a data volume for postgres ligs"
+    echo -e "\n  Create a data volume for postgres logs"
     echo -e "\n  Usage:"
     echo -e "\n   $CMD [--dev] [-h]"
     echo -e "\n  --dev:       dev-specific"
