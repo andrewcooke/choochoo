@@ -1,4 +1,0 @@
-#!/bin/bash
-
-source py/env/bin/activate
-ch2 "$@"
