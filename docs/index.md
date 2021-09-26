@@ -1,12 +1,9 @@
-
-# Getting Started
+ch2# Getting Started
 
 * [Danger Ahead](#danger-ahead)
 * [OS-Specific Instructions](#os-specific-instructions)
   * [Linux (OpenSuse)](#linux-opensuse)
-  * [Github Codespaces](#github-codespaces)
   * [MacOS](#macos)
-  * [Ubuntu](#ubuntu)
   * [Windows](#windows)
 * [General Guidance](#general-guidance)
 * [Initial Configuration](#initial-configuration)
@@ -28,102 +25,28 @@ direction. Good luck!
 
 ### Linux (OpenSuse)
 
-This is what I have to do, on my development machine.  For me, once all
-required software packages are installed, it is quite simple:
+I use OpenSuse Leap 15.3 for development, within a VirtualBox VM.  On my main
+(host) machine I have a `~/.ch2` directory and a directory containing my FIT
+files from Garmin.  I mount these on the VM client.
 
-    > dkr/make-images.sh --dev
-    > dkr/make-postgresql-log-volume.sh --dev
-    > dkr/make-postgresql-data-volume.sh --dev
+After checking the project out from github I use `dev/install.sh` to install
+the development system.  Then the system can be started (in docker) with
 
-At this point, if I am ecovering from a backup, I update the `~/.ch2`
-directory and the Postgres volume (ie replace the contents of the new volume
-just created with the old volume from backup).  Then run
+    > dkr/run-ch2-jp-pg-persist.sh --dev -G vboxsf
 
-    > dkr/run-ch2-jp-pg-persist.sh --dev
+(the `-G vboxsf` changes the group to allow reading the files mounted from the
+host on VirtualBox).
 
 The GUI should then be visible at http://localhost:8000
 
-The above uses Docker and Docker Compose.  It keeps logs and FIT files in
-`~/.ch2` and the database in a Docker volume.
-
-### Github Codespaces
-
-*Warning - Experimental and Unsupported (contributed by 3rd party)*
-
-If you have access to Github Codespaces, clone the Choochoo repo to your
-account, select the branch you want to use, and run the "Code -> Open with
-Codespaces" flow.  Once in there, open up a terminal and move on to the Ubuntu
-instructions.
-
-All of the dependencies are already there and docker is running so you should
-skip all of the apt-get commands, but it's likely that that you'll need to
-update docker-compose. You may have luck with running:
-
-https://gist.github.com/tylerszabo/b5b3f9874bb9cce56d23e1f814433b86
-
-Once you're up and running, open the "docker" panel, right click on the
-running choochoo container, and click "Open in browser".
+If this does not work check the output from `install.sh` carefully.  There is
+probably an error somewher due to a missing dependency.
 
 ### MacOS
 
 This has not been run natively on Mac OS X, but you can run an Ubuntu VM using
-something like [multipass](http://multipass.run). Ensure that you have enough 
-memory (4G) and disk (25G) to run.
-
-`multipass launch -d 25G -m 4G -n choochoo`
-`multipass exec choochoo -- apt-get install -y gcc`
-`multipass shell choochoo`
-
-Now that you are in your VM, on to the Ubuntu instructions to finish
-installation.
-
-To access choochoo once it is running, you will need to set up port forwarding
-using something like this from your Mac, where 192.168.64.3 is the ip of your
-vm:
-
-`ssh -L 8000:127.0.0.1:8000 ubuntu@192.168.64.3`
-
-### Ubuntu
-
-The following (some time ago) started up the system on an Ubuntu 20 virtual
-machine (new install, with only gcc, perl and make already added to support
-the VirtualBox client tools):
-
-```
-git clone https://github.com/andrewcooke/choochoo.git
-cd choochoo
-sudo apt-get update
-
-# configure the python environment
-sudo apt-get install -y python3.8-venv libpq-dev python3.8-dev
-dev/make-env-py.sh
-
-# configure the javascript environment
-sudo apt-get install -y npm
-dev/make-env-js.sh
-
-# configure docker
-sudo apt-get install -y apt-transport-https ca-certificates curl \
-     gnupg-agent software-properties-common
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-sudo add-apt-repository \
-     "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-     $(lsb_release -cs) stable"
-sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose
-sudo usermod -aG docker $USER
-
-[reboot]
-
-# build and start the docker images (takes a long time)
-cd choochoo
-dkr/run-ch2-jp-pg-persist.sh --reset
-
-# eventually choochoo is visible at http://0.0.0.0:8000/
-
-Ctrl-C
-dkr/run-ch2-jp-pg-persist.sh   # normal use
-```
+something like [multipass](http://multipass.run) to run an OpenSuse image
+(then follow the instructions above).
 
 ### Windows
 
