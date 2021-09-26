@@ -3,16 +3,15 @@
 cd "${BASH_SOURCE%/*}/" || exit
 
 CMD=$0
-SRC=
 DEV=
-DIR=/tmp/backup-pg-persist
+DIR=
 
 help () {
     echo -e "\n  Restore the postgres data"
     echo -e "\n  Usage:"
-    echo -e "\n   $CMD [--reset] [--prof] [--dev] [--src-dev] [-h]"
+    echo -e "\n   $CMD [--reset] [--prof] [--dev] DIR [-h]"
     echo -e "\n  --dev:       use dev-specific disks"
-    echo -e "   --src-dev:    use the dev-specific backup"
+    echo -e "   DIR:        the directory containing data.tgz"
     echo -e "   -h:         show this message\n"
     echo -e "\nBy default this restores the non-dev data to the dev disk."
     exit 1
@@ -21,28 +20,34 @@ help () {
 while [ $# -gt 0 ]; do
     if [ $1 == "--dev" ]; then
         DEV="-dev"
-    elif [ $1 == "--src-dev" ]; then
-	SRC="-dev"
     elif [ $1 == "-h" ]; then
         help
     else
-        echo -e "\nERROR: do not understand $1\n"
-        help
+	if [ -z "$DIR" ]; then
+	    DIR=$1
+	else
+            echo -e "\nERROR: do not understand $1\n"
+            help
+	fi
     fi
     shift
 done
 
-./prune.sh
-
-FULLDIR="${DIR}${SRC}"
-if [ ! -e "$FULLDIR" ]; then
-    echo -e "\nNo data at $FULLDIR"
+if [ -z "$DIR" ]; then
+    echo -e "\nERROR: provide DIR"
     exit 2
 fi
 
+if [ ! -e "$DIR/data.tgz" ]; then
+    echo -e "\nERROR: No data at $DIR/data.tgz"
+    exit 2
+fi
+
+./prune.sh
+
 docker run --rm \
        -v "postgresql-data$DEV":/var/lib/postgresql/data \
-       -v "$FULLDIR":/tmp/backup \
+       -v "$DIR":/tmp/backup \
        --name=postgresql \
        --entrypoint "" \
        postgis/postgis:13-3.0-alpine \

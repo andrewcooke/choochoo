@@ -43,7 +43,7 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-if [ ! -z "$PROFILE" -a ! -z "$BASCKUP" ]; then
+if [ ! -z "$PROFILE" -a ! -z "$BACKUP" ]; then
     echo -e "\nERROR: Specify only one of --profile and --backup"
     exit 3
 fi
@@ -69,6 +69,8 @@ fi
 
 pushd .. >& /dev/null
 
+set -e
+
 dev/make-env-py.sh
 dev/package-profile.sh
 dev/package-bundle.sh
@@ -83,8 +85,8 @@ if [ ! -z "$BACKUP" ]; then
 fi
 
 if [ ! -z "$PROFILE" ]; then
-    dkr/run-pg-persiste.sh --dev &
-    sleep 15
+    dkr/run-pg-persist.sh --dev &
+    sleep 60
     source py/env/bin/activate
     ch2 db add user
     ch2 db add database

@@ -3,7 +3,7 @@
 PYTHON=python3.9
 #PYTHON=python3.8
 
-pushd py
+pushd py >& /dev/null
 rm -fr env
 $PYTHON -m venv env
 source env/bin/activate

@@ -13,7 +13,6 @@ help () {
     echo -e "\n   $CMD [--reset] [--prof] [--dev] [-h]"
     echo -e "\n  --dev:       use dev-specific disks"
     echo -e "   -h:         show this message\n"
-    echo -e "\nBy default this backs-up the non-dev data."
     exit 1
 }
 

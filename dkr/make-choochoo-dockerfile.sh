@@ -14,6 +14,7 @@ COMMENT="# syntax=docker/dockerfile:experimental"
 MOUNT="--mount=type=cache,mode=0777,target=/root/.cache/pip"
 JS_PKG="npm"
 FILE="Dockerfile"
+NPM_VERSION=`npm --version`
 
 help() {
   echo -e "\n  Create the file used to install Choochoo in Docker"
@@ -56,7 +57,7 @@ cat >>$FILE <<EOF
 copy js/package.json js/package-lock.json js/public /app/js/
 copy js/public /app/js/public
 workdir /app/js
-run npm install -g npm@next
+run npm install -g npm@$NPM_VERSION
 run npm install
 # do this after install so that we use a separate layer
 copy js/src /app/js/src

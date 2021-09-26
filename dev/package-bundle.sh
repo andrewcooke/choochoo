@@ -6,6 +6,7 @@ rm -fr py/ch2/web/static/*.png
 rm -fr py/ch2/web/static/*.txt
 rm -fr py/ch2/web/static/*.ico
 pushd js >> /dev/null
+npm install
 npm run build
 popd
 cp -r js/build/* py/ch2/web/static
