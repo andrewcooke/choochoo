@@ -42,6 +42,13 @@ The GUI should then be visible at http://localhost:8000
 If this does not work check the output from `install.sh` carefully.  There is
 probably an error somewher due to a missing dependency.
 
+It is also possible to start the database alone in docker and run the web
+server locally (useful for debugging, but ni Jupyter):
+
+    > dev/run-pg-persist.sh --dev &
+    > source py/env/bin/activate
+    > ch2 web service
+
 ### MacOS
 
 This has not been run natively on Mac OS X, but you can run an Ubuntu VM using
