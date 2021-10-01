@@ -14,7 +14,11 @@ RESTORE=0
 PGCONF=postgres-default.conf
 DEV=
 DEV2=
-GID=`id -g`
+if [ -z "$DEFAULT_GID" ]; then
+    GID=`id -g`
+else
+    GID=$DEFAULT_GID
+fi 
 
 help () {
     echo -e "\n  Run choochoo + jupyter + postgres with named volumes"
