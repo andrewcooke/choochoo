@@ -34,7 +34,7 @@ services:
     image: 'postgis/postgis:13-3.0-alpine'
     container_name: 'postgresql'
     shm_size: '1g'
-    command: '-c config_file=/etc/postgresql/postgresql.conf'
+    command: '-c config_file=/etc/postgresql/postgresql.conf -c max_wal_size=10GB -c work_mem=40GB'
     environment:
       - 'POSTGRES_HOST_AUTH_METHOD=trust'
     volumes:

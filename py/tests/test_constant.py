@@ -20,11 +20,11 @@ class TestConstant(LogTestCase):
         bootstrap_db(user, m(V), '5', mm(DEV), configurator=default)
         with config.db.session_context() as s:
             n = s.query(count(Constant.id)).scalar()
-            self.assertEqual(n, 14)
+            self.assertEqual(n, 13)
         config = bootstrap_db(user, m(V), '5', 'constants', 'set', 'fthr:%', '154', mm(FORCE))
         constants(config)
         with config.db.session_context() as s:
             n = s.query(count(Constant.id)).scalar()
-            self.assertEqual(n, 14)
+            self.assertEqual(n, 13)
             # todo - maybe test for value?
             # todo - now that this is defined anyway, change the test?

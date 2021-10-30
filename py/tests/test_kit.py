@@ -2,7 +2,7 @@ from io import StringIO
 from tempfile import TemporaryDirectory
 
 from ch2.commands.args import V, DEV, K, bootstrap_db, BASE, UPLOAD
-from ch2.commands.kit import start, change, finish, show, undo, statistics
+from ch2.commands.kit import start, change, finish, show, undo
 from ch2.commands.upload import upload
 from ch2.common.args import mm, m
 from ch2.config.profiles.default import default

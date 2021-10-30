@@ -49,9 +49,10 @@ class Profile:
     A class-based approach so that we can easily modify the config for different profiles.
     '''
 
-    def __init__(self, config):
+    def __init__(self, config, climb_phis=(0.7, 0.4)):
         self._config = config
         self._activity_groups = {}
+        self._climb_phis = climb_phis
 
     def load(self):
         with self._config.db.session_context() as s:
@@ -140,7 +141,6 @@ your FF-model parameters (fitness and fatigue).
 ''',
                          activity_group=activity_group, units=U.BPM,
                          statistic_journal_type=StatisticJournalType.INTEGER)
-        add_climb(s)  # default climb calculator
         add_responses(s, self._ff_parameters(), prefix=N.DEFAULT)
 
     def _load_standard_statistics(self, s, power_statistics=None):
@@ -160,8 +160,9 @@ your FF-model parameters (fitness and fatigue).
 
     def _sector_statistics(self, s, power_statistics=None):
         blockers = power_statistics or []
+        climbs = ','.join(CLIMB_CNAME + str(index) for index in range(len(self._climb_phis)))
         add_process(s, FindClimbCalculator, blocked_by=[ElevationCalculator],
-                    climb=CLIMB_CNAME, activity_group=BIKE)
+                    climbs=climbs, activity_group=BIKE)
         add_process(s, ClusterCalculator, blocked_by=[ElevationCalculator],
                     owner_in=short_cls(ActivityReader))
         add_process(s, SectorCalculator, blocked_by=[ClusterCalculator, FindClimbCalculator],
@@ -220,6 +221,8 @@ If the directory or files are missing the raw GPS elevation will be used.
 This is noted as a warning in the logs (along with the name of the missing file).
 ''',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
+        for index, phi in enumerate(self._climb_phis):
+            add_climb(s, index, phi=phi)  # default climb calculator
 
     def _load_diary_topics(self, s, c):
         # the fields you see every day in the diary

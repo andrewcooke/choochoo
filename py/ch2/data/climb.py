@@ -61,6 +61,7 @@ def find_climbs(df, params=Climb()):
 
 
 def find_climb_distances(df, params=Climb()):
+    log.debug(f'Searching between {df.iloc[0][N.DISTANCE]:.1f}km and {df.iloc[-1][N.DISTANCE]:.1f}km')
     mn, mx = df[N.ELEVATION].min(), df[N.ELEVATION].max()
     if mx - mn > params.min_elevation:
         score, lo, hi = biggest_climb(df, params=params)
@@ -122,21 +123,25 @@ def biggest_climb(df, params=Climb(), grid=10):
     # returns (score, dlo, dhi))
     # use distances (indices) rather than ilocs because we're subdividing the data
     if len(df) > 100 * grid:
+        log.debug(f'Doing grid search from {df.iloc[0][N.DISTANCE]:.1f}km to {df.iloc[-1][N.DISTANCE]:.1f}km')
         score, lo, hi = search(df.iloc[::grid].copy(), grid=True)
         if score:
             # need to pass through iloc to extend range
             ilo, ihi = get_index_loc(df, lo), get_index_loc(df, hi)
-            return search(df.iloc[max(0, ilo-grid):min(ihi+grid, len(df)-1)].copy(), params=params)
+            ilo, ihi = max(0, ilo-grid), max(ihi+grid, len(df)-1)
+            log.debug(f'Doing full search from {df.iloc[ilo][N.DISTANCE]:.1f}km to {df.iloc[ihi][N.DISTANCE]:.1f}km')
+            return search(df.iloc[ilo:ihi].copy(), params=params)
         else:
             return 0, None, None
     else:
+        log.debug(f'Doing full search from {df.iloc[0][N.DISTANCE]:.1f}km to {df.iloc[-1][N.DISTANCE]}km')
         return search(df, params=params)
 
 
 def search(df, params=Climb(), grid=False):
     # returns (score, dlo, dhi)
     # use distance (indices) rather than ilocs because we're subdividing the data
-    max_score, max_indices, d = 0, (None, None), df.index[1] - df.index[0]
+    max_score, max_indices, max_elevation, d = 0, (None, None), None, df.index[1] - df.index[0]
     for offset in range(len(df)-1, 0, -1):
         df[N._delta(N.ELEVATION)] = df[N.ELEVATION].diff(offset)
         d_distance = d * offset
@@ -149,13 +154,17 @@ def search(df, params=Climb(), grid=False):
                 max_score = score
                 hi = df.loc[df[SCORE] == max_score].index[0]  # arbitrarily pick one if tied (error here w item())
                 lo = df.index[get_index_loc(df, hi) - offset]
+                max_elevation = df.loc[df[SCORE] == max_score][N._delta(N.ELEVATION)].iloc[0]
                 if not grid:
                     # step inwards one location from each end
                     # (so that we have some 'extra' to aid with intersections)
                     lo = df.index[get_index_loc(df, hi) - (offset-1)]
                     hi = df.index[get_index_loc(df, hi) - 1]
                 max_indices = (lo, hi)
-    return max_score, max_indices[0], max_indices[1]
+    lo, hi = max_indices
+    if max_score:
+        log.debug(f'Best candidate has score {max_score:.2f} from {lo:.1f}km to {hi:.1f}km ({max_elevation:.1f}m)')
+    return max_score, lo, hi
 
 
 def climbs_for_activity(s, ajournal):

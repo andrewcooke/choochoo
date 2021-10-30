@@ -36,7 +36,9 @@ CMD="docker run --rm -p 127.0.0.1:5432:5432 \
        --shm-size=1g \
        --name=postgresql-transient \
        postgis/postgis:13-3.0-alpine \
-       -c 'config_file=/etc/postgresql/postgresql.conf'"
+       -c 'config_file=/etc/postgresql/postgresql.conf' \
+       -c 'max_wal_size=10GB' \
+       -c 'work_mem=40GB'"
 if [ $LOG -eq 1 ]; then
     CMD="$CMD \
        -c 'log_statement=all'"

@@ -25,17 +25,7 @@ class Route(ContentType):
                 'sectors': list(self._read_sectors(s, activity))}
 
     def _read_activity_route(self, s, activity_journal_id):
-        sql = text(f'''
-  with points as (select st_dumppoints(aj.route_edt::geometry) as point
-                    from activity_journal as aj
-                   where aj.id = :activity_journal_id)
-select st_x((point).geom) as {N.LONGITUDE}, st_y((point).geom) as {N.LATITUDE}, 
-       st_z((point).geom) as {N.ELEVATION}, st_m((point).geom) as "{N.DISTANCE_TIME}"
-  from points;
-        ''')
-        log.debug(sql)
-        return pd.read_sql(sql, s.connection(),
-                           params={'activity_journal_id': activity_journal_id})
+        return read_activity_route(s, activity_journal_id)
 
     def _read_sectors(self, s, activity):
         for sjournal in s.query(SectorJournal).filter(SectorJournal.activity_journal_id == activity).all():
@@ -56,3 +46,20 @@ select st_transform(st_setsrid(s.route, sg.srid), {WGS84_SRID})
 
     def read_sector_latlon(self, request, s, sector):
         return {'latlon': self._read_sector_route(s, sector)}
+
+
+def read_activity_route(s, activity_journal_id):
+    """
+    Reads in the coord system of the activity, so WGS84 lat lon.
+    """
+    sql = text(f'''
+  with points as (select st_dumppoints(aj.route_edt::geometry) as point
+                    from activity_journal as aj
+                   where aj.id = :activity_journal_id)
+select st_x((point).geom) as {N.LONGITUDE}, st_y((point).geom) as {N.LATITUDE}, 
+       st_z((point).geom) as {N.ELEVATION}, st_m((point).geom) as "{N.DISTANCE_TIME}"
+  from points;
+        ''')
+    log.debug(sql)
+    return pd.read_sql(sql, s.connection(),
+                       params={'activity_journal_id': activity_journal_id})

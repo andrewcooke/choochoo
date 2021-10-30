@@ -93,9 +93,10 @@ class ACooke(Profile):
         power_statistics = power_statistics or []
         add_process(s, ClusterCalculator, blocked_by=[ElevationCalculator],
                     owner_in=short_cls(ActivityReader))
+        climbs = ','.join(CLIMB_CNAME + str(index) for index in range(len(self._climb_phis)))
         for activity_group in (ROAD, MTB):
             add_process(s, FindClimbCalculator, blocked_by=[ElevationCalculator],
-                        owner_in=short_cls(ActivityReader), climb=CLIMB_CNAME,
+                        owner_in=short_cls(ActivityReader), climbs=climbs,
                         activity_group=activity_group)
             add_process(s, SectorCalculator, blocked_by=[ClusterCalculator, FindClimbCalculator],
                         power_model=POWER_MODEL_CNAME, activity_group=activity_group)

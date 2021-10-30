@@ -5,13 +5,18 @@ from logging import getLogger
 import pandas as pd
 from sqlalchemy import text, func
 
+from ch2.commands.args import DARK
+from ch2.data.climb import find_climbs, MIN_CLIMB_GRADIENT, MAX_CLIMB_GRADIENT, MIN_CLIMB_ELEVATION, MAX_CLIMB_REVERSAL, \
+    CLIMB_PHI, Climb
+from ch2.lib.log import make_log
+from ch2.sql.database import Database
 from .elevation import expand_distance_time, elapsed_time_to_time
 from .utils import ActivityGroupProcessCalculator
 from ...common.date import local_time_to_time
 from ...common.log import log_current_exception
 from ...data.sector import add_start_finish
 from ...names import N
-from ...sql import Timestamp, Constant, Sector, SectorGroup, SectorClimb
+from ...sql import Timestamp, Constant, Sector, SectorGroup, SectorClimb, ActivityJournal
 from ...sql.types import linestringxy
 from ...sql.utils import add
 
@@ -22,14 +27,15 @@ DISTINCT_CLIMB = 0.5
 
 class FindClimbCalculator(ActivityGroupProcessCalculator):
 
-    def __init__(self, *args, climb=None, **kargs):
+    def __init__(self, *args, climbs=None, **kargs):
         super().__init__(*args, **kargs)
-        self.__climb_ref = climb
+        self.__climbs_ref = climbs
 
     def _startup(self, s):
         from ...data.climb import Climb
         super()._startup(s)
-        self.__climb = Climb(**loads(Constant.from_name(s, self.__climb_ref).at(s).value))
+        self.__climbs = [Climb(**loads(Constant.from_name(s, climb).at(s).value))
+                         for climb in self.__climbs_ref.split(',')]
 
     def _shutdown(self, s):
         super()._shutdown(s)
@@ -49,10 +55,7 @@ class FindClimbCalculator(ActivityGroupProcessCalculator):
             ajournal = self._get_source(s, start)
             with Timestamp(owner=self.owner_out, source=ajournal).on_success(s):
                 if ajournal.route_edt:
-                    for sector_group in s.query(SectorGroup). \
-                            filter(func.st_distance(SectorGroup.centre, ajournal.centre)
-                                   < SectorGroup.radius). \
-                            all():
+                    for sector_group in SectorGroup.near(s, ajournal.centre):
                         log.info(f'Finding climbs for activity journal {ajournal.id} / sector group {sector_group.id}')
                         try:
                             self.__find_big_climbs(s, sector_group, ajournal)
@@ -68,27 +71,13 @@ class FindClimbCalculator(ActivityGroupProcessCalculator):
         df = expand_distance_time(df)
         df = elapsed_time_to_time(df, ajournal.start)
         df = df.set_index(df[N.TIME]).drop(columns=[N.TIME])
-        for climb in find_climbs(df, params=self.__climb):
-            log.info(f'Have a climb (elevation {climb[N.CLIMB_ELEVATION]})')
-            self.__register_climb(s, df, climb, sector_group, ajournal.id)
+        for params in self.__climbs:
+            for climb in find_climbs(df, params=params):
+                log.info(f'Have a climb (elevation {climb[N.CLIMB_ELEVATION]})')
+                self.__register_climb(s, df, climb, sector_group, ajournal.id)
 
     def __read_complete_route(self, s, sector_group_id, activity_journal_id):
-        sql = text(f'''
-  with points as (select st_dumppoints(st_transform(aj.route_edt::geometry, sg.srid)) as point
-                    from activity_journal as aj,
-                         sector_group as sg
-                   where aj.id = :activity_journal_id
-                     and sg.id = :sector_group_id
-                     and st_distance(sg.centre, aj.centre) < sg.radius)
-select st_x((point).geom) as x, st_y((point).geom) as y, 
-       st_z((point).geom) as {N.ELEVATION}, st_m((point).geom) as "{N.DISTANCE_TIME}"
-  from points;
-        ''')
-        log.debug(sql)
-        df = pd.read_sql(sql, s.connection(),
-                         params={'sector_group_id': sector_group_id,
-                                 'activity_journal_id': activity_journal_id})
-        return df
+        return read_activity_route_for_sector_group(s, activity_journal_id, sector_group_id)
 
     def __register_climb(self, s, df, climb_id, sector_group, activity_journal_id):
         # this is not easy
@@ -143,3 +132,47 @@ select count(1)
             return True
         else:
             return False
+
+
+def read_activity_route_for_sector_group(s, activity_journal_id, sector_group_id):
+    """
+    Reads in the coord system of the sector group (so typically m in some local mercator projection).
+    """
+    sql = text(f'''
+with points as (select st_dumppoints(st_transform(aj.route_edt::geometry, sg.srid)) as point
+                from activity_journal as aj,
+                     sector_group as sg
+               where aj.id = :activity_journal_id
+                 and sg.id = :sector_group_id
+                 and st_distance(sg.centre, aj.centre) < sg.radius)
+select st_x((point).geom) as x, st_y((point).geom) as y, 
+   st_z((point).geom) as {N.ELEVATION}, st_m((point).geom) as "{N.DISTANCE_TIME}"
+from points;
+    ''')
+    log.debug(sql)
+    df = pd.read_sql(sql, s.connection(),
+                     params={'sector_group_id': sector_group_id,
+                             'activity_journal_id': activity_journal_id})
+    return df
+
+
+# allow manual run with data to corral quemado
+
+if __name__ == '__main__':
+    make_log('/tmp/test.log', 5, DARK)
+    db = Database('postgresql://default:@localhost:5432/activity-0-41')
+    with db.session_context() as s:
+        activity_journal = ActivityJournal.at(s, '2021-10-19')
+        sector_group = list(SectorGroup.near(s, activity_journal.centre))[0]
+        df = read_activity_route_for_sector_group(s, activity_journal.id, sector_group.id)
+        df = expand_distance_time(df)
+        df = elapsed_time_to_time(df, activity_journal.start)
+        df = df.set_index(df[N.TIME]).drop(columns=[N.TIME])
+        params = Climb(phi=CLIMB_PHI,
+                       min_gradient=MIN_CLIMB_GRADIENT,
+                       max_gradient=MAX_CLIMB_GRADIENT,
+                       min_elevation=MIN_CLIMB_ELEVATION,
+                       max_reversal=MAX_CLIMB_REVERSAL)
+        for climb in find_climbs(df, params=params):
+            print(f'Have a climb (elevation {climb[N.CLIMB_ELEVATION]})')
+            print(climb)

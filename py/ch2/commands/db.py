@@ -2,10 +2,10 @@ from logging import getLogger
 
 from .args import SUB_COMMAND, LIST, PROFILE, ITEM, USERS, SCHEMAS, DATABASES, PROFILES, ADD, DATABASE, SCHEMA, REMOVE, \
     BACKUP
-from ..common.db import get_cnxn, add_schema, with_log, remove_schema, remove_database, remove_user, add_database, \
+from ..common.db import add_schema, with_log, remove_schema, remove_database, remove_user, add_database, \
     add_user, list_databases, list_schemas, list_users, backup_schema
 from ..common.md import Markdown
-from ..common.names import USER, assert_name
+from ..common.names import USER
 from ..config.profile import get_profile, get_profiles
 from ..sql.support import Base
 

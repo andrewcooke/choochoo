@@ -109,6 +109,13 @@ class SectorGroup(Base):
                     return sector_group
         return add(s, SectorGroup(srid=srid, centre=centre, radius=radius, title=title))
 
+    @classmethod
+    def near(cls, s, centre):
+        return s.query(SectorGroup). \
+            filter(func.st_distance(SectorGroup.centre, centre)
+                   < SectorGroup.radius). \
+            all()
+
 
 class SectorType(IntEnum):
     '''

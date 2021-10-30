@@ -51,9 +51,7 @@ class SectorCalculator(LoaderMixin, ActivityGroupProcessCalculator):
 
     def _run_activity_journal(self, s, ajournal, power_model):
         if ajournal.route_edt:
-            for sector_group in s.query(SectorGroup). \
-                    filter(func.ST_Distance(SectorGroup.centre, ajournal.centre) < SectorGroup.radius). \
-                    all():
+            for sector_group in SectorGroup.near(s, ajournal.centre):
                 count = 0
                 for sjournal in find_and_add_sector_journals(s, sector_group, ajournal):
                     loader = self._get_loader(s, add_serial=False)

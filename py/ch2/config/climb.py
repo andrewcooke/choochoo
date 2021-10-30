@@ -2,19 +2,19 @@ from logging import getLogger
 
 from .database import add_enum_constant
 from ..data.climb import Climb, MAX_CLIMB_GRADIENT, MIN_CLIMB_GRADIENT, MAX_CLIMB_REVERSAL, \
-    MIN_CLIMB_ELEVATION
+    MIN_CLIMB_ELEVATION, CLIMB_PHI
 
 log = getLogger(__name__)
 
 CLIMB_CNAME = 'climb'
 
 
-def add_climb(s, phi=0.7):
+def add_climb(s, index, phi=CLIMB_PHI):
     '''
     Add the constants necessary to auto-detect climbs.
     '''
     log.debug('Adding climb parameters')
-    add_enum_constant(s, CLIMB_CNAME, Climb,
+    add_enum_constant(s, CLIMB_CNAME + str(index), Climb,
                       {'phi': phi,
                        'min_gradient': MIN_CLIMB_GRADIENT,
                        'max_gradient': MAX_CLIMB_GRADIENT,

@@ -18,6 +18,10 @@ def make_log_from_args(args):
         verbosity = 5 if args[DEV] else 4
     else:
         verbosity = args[VERBOSITY]
+    make_log(path, verbosity, args[COLOR])
+
+
+def make_log(path, verbosity, color):
     configure_log('ch2', path, verbosity, {
         'bokeh': DEBUG,
         'ch2': DEBUG,
@@ -29,7 +33,7 @@ def make_log_from_args(args):
         'werkzeug': DEBUG,
         '__main__': DEBUG
     })
-    set_log_color(args[COLOR])
+    set_log_color(color)
     log.info(f'Logging to {path}')
 
 
