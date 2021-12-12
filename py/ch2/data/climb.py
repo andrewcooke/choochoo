@@ -128,7 +128,7 @@ def biggest_climb(df, params=Climb(), grid=10):
         if score:
             # need to pass through iloc to extend range
             ilo, ihi = get_index_loc(df, lo), get_index_loc(df, hi)
-            ilo, ihi = max(0, ilo-grid), max(ihi+grid, len(df)-1)
+            ilo, ihi = max(0, ilo-grid), min(ihi+grid, len(df)-1)
             log.debug(f'Doing full search from {df.iloc[ilo][N.DISTANCE]:.1f}km to {df.iloc[ihi][N.DISTANCE]:.1f}km')
             return search(df.iloc[ilo:ihi].copy(), params=params)
         else:
