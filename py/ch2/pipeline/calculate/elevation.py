@@ -22,8 +22,9 @@ log = getLogger(__name__)
 
 class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournalProcessCalculator):
 
-    def __init__(self, *args, smooth=3, **kargs):
+    def __init__(self, *args, smooth=3, simplify=0.5, **kargs):
         self.smooth = smooth
+        self.simplify = simplify
         super().__init__(*args, **kargs)
 
     def _startup(self, s):
@@ -94,6 +95,8 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
         df.dropna(inplace=True)   # so all routes should be aligned (fractional positions should correspond)
         if self.__create_route(s, ajournal, df, 'route_d', N.DISTANCE):
             self.__create_centre(s, ajournal)
+            self.__create_simple(s, ajournal)
+            self.__create_distance(s, ajournal)
             self.__create_utm_srid(s, ajournal)
         self.__create_route(s, ajournal, df, 'route_a', N._delta(N.AZIMUTH))
         self.__create_route_z(s, ajournal, df, 'route_et', N.ELAPSED_TIME)
@@ -143,6 +146,20 @@ class ElevationCalculator(LoaderMixin, DataFrameCalculatorMixin, ActivityJournal
         table = ActivityJournal.__table__
         centre = f'ST_Centroid({table.c.route_d})'
         update = table.update().values(centre=text(centre)).where(table.c.id == ajournal.id)
+        log.debug(update)
+        s.execute(update)
+
+    def __create_simple(self, s, ajournal):
+        table = ActivityJournal.__table__
+        simple = f'ST_Simplify(ST_Force2D({table.c.route_d}::geometry), {self.simplify})'
+        update = table.update().values(route_simple=text(simple)).where(table.c.id == ajournal.id)
+        log.debug(update)
+        s.execute(update)
+
+    def __create_distance(self, s, ajournal):
+        table = ActivityJournal.__table__
+        distance = f'ST_Length({table.c.route_d})'
+        update = table.update().values(distance=text(distance)).where(table.c.id == ajournal.id)
         log.debug(update)
         s.execute(update)
 

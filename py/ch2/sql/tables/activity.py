@@ -3,7 +3,7 @@ import datetime as dt
 from logging import getLogger
 
 from geoalchemy2 import Geography, Geometry
-from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint, desc, DateTime, Index, text
+from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint, desc, DateTime, Index, text, Float
 from sqlalchemy.orm import relationship, backref
 
 from .source import SourceType, GroupedSource, Source
@@ -63,9 +63,12 @@ class ActivityJournal(GroupedSource):
     finish = Column(UTC, nullable=False)
     # nullable because created later
     centre = Column(Geography('Point', srid=WGS84_SRID))
+    distance = Column(Float)  # m
     utm_srid = Column(Integer)
     # used to detect folding back
     route_a = Column(Geography('LineStringM', srid=WGS84_SRID))  # delta azimuth
+    # used for fast matching
+    route_simple = Column(Geography('LineString', srid=WGS84_SRID))
     # used to calculate values from offsets
     route_d = Column(Geography('LineStringM', srid=WGS84_SRID))  # distance
     route_et = Column(Geography('LineStringZM', srid=WGS84_SRID))  # time

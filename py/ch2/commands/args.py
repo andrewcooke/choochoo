@@ -451,7 +451,7 @@ def make_parser(with_noop=False):
     db_backup = db_cmds.add_parser(BACKUP, help='backup current configuration')
     db_backup_item = db_backup.add_subparsers(title='item to backup', dest=ITEM, required=True)
     db_backup_item.add_parser(SCHEMA, help='backup a schema')
-    db_remove = db_cmds.add_parser(REMOVE, help='reduce current configuration')
+    db_remove = db_cmds.add_parser(REMOVE, help='remove something from current configuration')
     db_remove_item = db_remove.add_subparsers(title='item to remove', dest=ITEM, required=True)
     db_remove_item.add_parser(USER, help='remove a user')
     db_remove_item.add_parser(DATABASE, help='remove a database')

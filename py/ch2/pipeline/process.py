@@ -151,7 +151,7 @@ class EmptyException(Exception): pass
 
 class DependencyQueue:
 
-    def __init__(self, config, pipelines, kargs, min_missing=1, max_missing=20, gamma=0.4):
+    def __init__(self, config, pipelines, kargs, min_missing=1, max_missing=100, gamma=0.4):
         self.__clean_pipelines(pipelines)
         self.__config = config
         self.__blocked = [pipeline for pipeline in pipelines if pipeline.blocked_by]
@@ -323,6 +323,8 @@ class Stats:
         for suffix in ('Reader', 'Calculator'):
             if label.endswith(suffix):
                 label = label[:-len(suffix)+1] + '%'
+        if len(label) > 13:
+            label = label[:12] + '%'
         return label
 
     def __str__(self):

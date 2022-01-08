@@ -21,7 +21,7 @@ ActivityTopic, ActivityTopicJournal, ActivityTopicField,
 StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText, StatisticMeasure
 Pipeline
 Constant, SystemConstant, Process
-ActivitySimilarity, ActivityNearby
+ActivityDistance, ActivityNearby
 Timestamp, Process, SystemConstant
 SectorGroup, Sector, SectorClimb
 

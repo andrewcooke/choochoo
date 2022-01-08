@@ -46,7 +46,7 @@ class Timestamp(Base):
         cls.clear(s, owner, source=source)
         s.add(Timestamp(owner=owner, source=source))
         s.commit()
-        log.debug(f'Timestamp for {short_cls(owner)} / {source}')
+        # log.debug(f'Timestamp for {short_cls(owner)} / {source}')
 
     @classmethod
     def get(cls, s, owner, source=None):
@@ -59,7 +59,7 @@ class Timestamp(Base):
         q = s.query(Timestamp).filter(Timestamp.owner == owner)
         if source:
             q = q.filter(Timestamp.source == source)
-        log.debug(q)
+        # log.debug(q)
         q.delete()
 
     @contextmanager

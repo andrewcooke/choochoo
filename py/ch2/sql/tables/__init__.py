@@ -5,7 +5,7 @@ from .cluster import ClusterInputScratch, ClusterHull, ClusterFragmentScratch
 from .constant import Constant
 from .file import FileScan, FileHash
 from .kit import KitGroup, KitItem, KitComponent, KitModel
-from .nearby import ActivitySimilarity, ActivityNearby
+from .nearby import ActivityDistance, ActivityNearby
 from .pipeline import Pipeline, PipelineType
 from .sector import SectorGroup, Sector, SectorClimb, SectorJournal, SectorType
 from .source import Source, Interval, NoStatistics, Composite, CompositeComponent

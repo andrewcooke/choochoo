@@ -17,9 +17,10 @@ from ..pipeline.calculate.climb import FindClimbCalculator
 from ..pipeline.calculate.cluster import ClusterCalculator
 from ..pipeline.calculate.elevation import ElevationCalculator
 from ..pipeline.calculate.kit import KitCalculator
-from ..pipeline.calculate.nearby import SimilarityCalculator, NearbyCalculator
+from ..pipeline.calculate.nearby import NearbyCalculator
 from ..pipeline.calculate.response import ResponseCalculator
 from ..pipeline.calculate.sector import SectorCalculator, NewSectorCalculator
+from ..pipeline.calculate.distance import HausdorffDistanceCalculator
 from ..pipeline.calculate.summary import SummaryCalculator
 from ..pipeline.display.activity.achievement import AchievementDelegate
 from ..pipeline.display.activity.jupyter import JupyterDelegate
@@ -153,10 +154,9 @@ your FF-model parameters (fitness and fatigue).
                                            FindClimbCalculator],
                     owner_in=short_cls(ResponseCalculator),
                     response_prefix=N.DEFAULT)
-        add_process(s, SimilarityCalculator, blocked_by=[ActivityCalculator],
-                    owner_in=short_cls(ActivityCalculator))
-        add_process(s, NearbyCalculator, blocked_by=[SimilarityCalculator],
-                    owner_in=short_cls(SimilarityCalculator))
+        add_process(s, HausdorffDistanceCalculator, blocked_by=[ElevationCalculator])
+        add_process(s, NearbyCalculator, blocked_by=[HausdorffDistanceCalculator],
+                    owner_in=short_cls(HausdorffDistanceCalculator))
 
     def _sector_statistics(self, s, power_statistics=None):
         blockers = power_statistics or []
