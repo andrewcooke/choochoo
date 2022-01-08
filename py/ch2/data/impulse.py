@@ -24,8 +24,8 @@ def hr_zone(heart_rate_df, fthr_df, pc_fthr_zones=BC_ZONES, heart_rate=N.HEART_R
     for start, finish, fthr in fthrs:  # start is inclusive
         start, finish = pd.to_datetime(start, utc=True), pd.to_datetime(finish, utc=True)
         zones = [x * fthr / 100.0 for x in pc_fthr_zones]
-        for zone, upper in enumerate(zones + [None], start=1):
-            if zone == 1:
+        for zone, upper in enumerate(zones + [None]):
+            if zone == 0:
                 # we don't try to distinguish zones below 1
                 heart_rate_df.loc[(heart_rate_df.index >= start) & (heart_rate_df.index < finish) &
                                   (heart_rate_df[heart_rate] <= upper),

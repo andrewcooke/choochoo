@@ -6,8 +6,8 @@ from ..sql import StatisticJournal, Constant, ActivityGroup
 from ..names import N
 
 # values from british cycling online calculator
-# these are upper limits
-BC_ZONES = (68, 83, 94, 105, 121)
+# these are upper limits; 1-5 from BC; 0 extrapolated backwards from 1-2
+BC_ZONES = (68 - (83-68), 68, 83, 94, 105, 121)
 
 
 # these functions were used during development, but are not used in current code
@@ -20,16 +20,17 @@ def zone(hr, fthr, zones=BC_ZONES):
     for i in range(len(zones)):
         if hr < zones[i]:
             if i == len(zones) - 1:
-                return i + 1 + (hr - zones[i-1]) / (zones[i-1] - zones[i-2])
+                return i + (hr - zones[i-1]) / (zones[i-1] - zones[i-2])
             elif i:
-                return i + 1 + (hr - zones[i-1]) / (zones[i] - zones[i-1])
+                return i + (hr - zones[i-1]) / (zones[i] - zones[i-1])
             else:
-                return 2 + (hr - zones[0]) / (zones[1] - zones[0])
+                return 1 + (hr - zones[0]) / (zones[1] - zones[0])
+    return len(zones)
 
 
 def shrimp(hr, gamma, zero, fthr, zones=BC_ZONES):
     hrz = zone(hr, fthr, zones)
-    n = len(zones) - 1
+    n = len(zones)
     return n * (max(0, hrz - zero) / (n - zero)) ** gamma
 
 
