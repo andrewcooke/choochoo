@@ -75,7 +75,6 @@ class ACooke(Profile):
     def _sport_to_activity(self):
 
         # map the additional groups above based on kit use
-        # (cotic and bowman are kit items added via kit commands)
 
         return {Sports.SPORT_CYCLING: {
                     N.KIT: {

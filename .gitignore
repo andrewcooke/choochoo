@@ -1,5 +1,6 @@
 
 .idea
+.idea-intellij
 env*
 *.iml
 *.pyc

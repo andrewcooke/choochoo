@@ -82,7 +82,6 @@ class SummaryCalculator(LoaderMixin, IntervalCalculatorMixin, ProcessCalculator)
         t = _tables()
         sjx = inspect(STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]).local_table
         units = statistic_name.units
-        activity_group_id = interval.activity_group.id if interval.activity_group else None
 
         if summary == S.MAX:
             result = func.max(sjx.c.value)
@@ -107,8 +106,9 @@ class SummaryCalculator(LoaderMixin, IntervalCalculatorMixin, ProcessCalculator)
                        t.sj.c.statistic_name_id == statistic_name.id,
                        t.sj.c.time >= start_time,
                        t.sj.c.time < finish_time,
-                       t.sj.c.source_id == t.src.c.id,
-                       t.src.c.activity_group_id == activity_group_id))
+                       t.sj.c.source_id == t.src.c.id))
+        if interval.activity_group_id:
+            stmt = stmt.where(t.src.c.activity_group_id == interval.activity_group_id)
 
         return next(s.connection().execute(stmt))[0], units
 
@@ -122,13 +122,14 @@ class SummaryCalculator(LoaderMixin, IntervalCalculatorMixin, ProcessCalculator)
         return f'The {adjective} {statistic_name.title} over {period}.'
 
     def _calculate_measures(self, s, statistic_name, order_asc, start_time, finish_time, interval, measures):
-        data = sorted([x for x in
-                       s.query(StatisticJournal).
-                      join(Source).
-                      filter(StatisticJournal.statistic_name == statistic_name,
-                             StatisticJournal.time >= start_time,
-                             StatisticJournal.time < finish_time,
-                             Source.activity_group == interval.activity_group).all()
+        query = s.query(StatisticJournal). \
+            join(Source). \
+            filter(StatisticJournal.statistic_name == statistic_name,
+                   StatisticJournal.time >= start_time,
+                   StatisticJournal.time < finish_time)
+        if Source.activity_group:
+            query = query.filter(Source.activity_group == interval.activity_group)
+        data = sorted([x for x in query.all()
                        if x is not None and x.value is not None],
                       key=lambda x: x.value, reverse=not order_asc)
         n, local_measures = len(data), []
