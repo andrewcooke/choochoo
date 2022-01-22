@@ -6,6 +6,7 @@ CMD=$0
 BIG=
 SLOW=
 DEV=
+DDEV=
 BUILDKIT=1
 PRUNE=0
 FILE=`pwd`/Dockerfile.local
@@ -33,6 +34,7 @@ while [ $# -gt 0 ]; do
 	BUILDKIT=0
     elif [ $1 == "--dev" ]; then
 	DEV="-dev"
+	DDEV="--dev"
     elif [ $1 == "--prune" ]; then
         PRUNE=1
     else
@@ -44,7 +46,7 @@ done
 
 if (( PRUNE )); then ./prune.sh; fi
 
-CMD="./make-choochoo-dockerfile.sh $BIG $SLOW $FILE"
+CMD="./make-choochoo-dockerfile.sh $DDEV $BIG $SLOW $FILE"
 echo -e "\n> $CMD\n"
 eval $CMD
 

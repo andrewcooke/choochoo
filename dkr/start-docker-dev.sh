@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# start npm in separate thread
+pushd /app/js
+echo -e "\nrunning npm"\n
+HOST=0.0.0.0 PORT=8000 npm start &
+popd
+
 # this is so matplotlib can write it's config (we're running as non-root)
 export MPLCONFIGDIR=/data/.config
 

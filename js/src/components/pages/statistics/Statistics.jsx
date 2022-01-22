@@ -9,6 +9,7 @@ import {scaleLinear, scaleTime} from "d3-scale";
 import {useTheme} from "@material-ui/core";
 import {parse} from 'date-fns';
 import {FMT_DAY_TIME} from "../../../constants";
+import {csrfFetch} from "../../functions";
 
 
 function StatisticsPlot(props) {
@@ -118,7 +119,7 @@ export default function Statistics(props) {
     useEffect(() => {
         let url = '/api/statistics/by-date/' + name;
         if (owner) url += '?owner=' + owner;
-        fetch(url).then(handleJson(history, setJson, setError));
+        csrfFetch(url).then(handleJson(history, setJson, setError));
     }, [name, owner]);
 
     const content = data ? <AutoScaleStatisticsPlot data={data}/> : <Loading/>;
