@@ -27,6 +27,7 @@ class AchievementCalculator(OwnerInMixin, ActivityJournalProcessCalculator):
         self._append_like(table, s, 'fastest', 10, N.ACTIVE_SPEED, self.owner_in)
         self._append_like(table, s, 'highest', 3, N.MAX_MEAN_PE_M_ANY, self.owner_in)
         self._append_like(table, s, 'highest', 10, N._delta(N.FITNESS_ANY), self.owner_in)
+        self._append_like(table, s, 'highest', 5, N.FITNESS_ANY, self.owner_in)
         self._append_like(table, s, 'highest', 10, N.TOTAL_CLIMB, self.owner_in)
         self._append_like(table, s, 'highest', 5, N.CLIMB_ELEVATION, self.owner_in)
         self._append_like(table, s, 'highest', 5, N.CLIMB_DISTANCE, self.owner_in)
