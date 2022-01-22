@@ -7,7 +7,8 @@ import {Grid, Slider, TextField, useTheme} from "@material-ui/core";
 import log from "loglevel";
 import {makeStyles} from "@material-ui/styles";
 import {scaleLinear} from "d3-scale";
-import {Area, LinePath, ParentSize} from "@visx/shape"
+import {ParentSize} from "@visx/responsive"
+import {Area, LinePath} from "@visx/shape"
 import {AxisBottom, AxisLeft} from "@visx/axis";
 
 const useStyles = makeStyles(theme => ({
