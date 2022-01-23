@@ -40,9 +40,9 @@ class CORS:
         def add_cors_headers(status, headers, exc_info=None):
             headers = Headers(headers)
             headers.add("Access-Control-Allow-Origin", self.origin)
-            headers.add("Access-Control-Allow-Headers", "CsrfCheck")
+            headers.add("Access-Control-Allow-Headers", "CsrfCheck, content-type")
             headers.add("Access-Control-Allow-Credentials", "true")
-            headers.add("Access-Control-Allow-Methods", "GET, POST")
+            headers.add("Access-Control-Allow-Methods", "GET, POST, PUT")
             headers.add("Access-Control-Expose-Headers", "...")
             return start_response(status, headers, exc_info)
 
