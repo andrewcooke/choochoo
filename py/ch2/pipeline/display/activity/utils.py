@@ -134,7 +134,7 @@ class ActivityDelegate(ActivityJournalDelegate):
         if climbs: yield [text('Climbs')] + climbs
         sectors = list(self.__read_sectors(s, ajournal, date))
         # ajournal id as we link to new sectors for that activity
-        if sectors: yield [text('Sectors', db=ajournal.id)] + sectors
+        yield [text('Sectors', db=ajournal.id)] + sectors
         for (title, template, re) in (('Min Time', N.MIN_KM_TIME_ANY, r'(\d+km)'),
                                       ('Med Time', N.MED_KM_TIME_ANY, r'(\d+km)'),
                                       ('Max Med Heart Rate', N.MAX_MED_HR_M_ANY, r'(\d+m)'),

@@ -47,11 +47,11 @@ with srid as (select s.id as sector_id,
                                 st_linelocatepoint(p.route_et, p.point) as fraction
                            from finish_point as p
                           where st_geometrytype(p.point) = 'ST_Point'),
-     shortest as (select distinct  -- multiple starts/finishes can lead to duplicates
+     noverlap as (select distinct
                          r.sector_id,
                          s.fraction as start_fraction,
                          f.fraction as finish_fraction,
-                         min(f.fraction - s.fraction) over (partition by r.sector_id) as shortest
+                         coalesce(lag(s.fraction) over (partition by r.sector_id order by s.fraction) >= f.fraction, false) as overlap
                     from srid as r,
                          start_fraction as s,
                          finish_fraction as f
@@ -60,21 +60,21 @@ with srid as (select s.id as sector_id,
                      and s.sector_id = r.sector_id
                      and st_length(st_linesubstring(r.route_d, s.fraction, f.fraction))
                          between 0.95 * st_length(r.sector) and 1.05 * st_length(r.sector))
-select s.sector_id,
-       s.start_fraction,
-       s.finish_fraction,
-       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_et, s.start_fraction)) as start_time,
-       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_et, s.finish_fraction)) as finish_time,
-       st_m(st_lineinterpolatepoint(r.route_d, s.start_fraction)) as start_distance,
-       st_m(st_lineinterpolatepoint(r.route_d, s.finish_fraction)) as finish_distance,
-       st_z(st_lineinterpolatepoint(r.route_et, s.start_fraction)) as start_elevation,
-       st_z(st_lineinterpolatepoint(r.route_et, s.finish_fraction)) as finish_elevation
+select n.sector_id,
+       n.start_fraction,
+       n.finish_fraction,
+       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_et, n.start_fraction)) as start_time,
+       aj.start + interval '1' second * st_m(st_lineinterpolatepoint(r.route_et, n.finish_fraction)) as finish_time,
+       st_m(st_lineinterpolatepoint(r.route_d, n.start_fraction)) as start_distance,
+       st_m(st_lineinterpolatepoint(r.route_d, n.finish_fraction)) as finish_distance,
+       st_z(st_lineinterpolatepoint(r.route_et, n.start_fraction)) as start_elevation,
+       st_z(st_lineinterpolatepoint(r.route_et, n.finish_fraction)) as finish_elevation
   from srid as r,
-       shortest as s,
+       noverlap as n,
        activity_journal as aj
  where aj.id = :activity_journal_id
-   and r.sector_id = s.sector_id
-   and s.finish_fraction - s.start_fraction = s.shortest
+   and r.sector_id = n.sector_id
+   and not n.overlap
 ''')
     log.debug(sql)
     result = s.connection().execute(sql, sector_group_id=sector_group.id, activity_journal_id=ajournal.id,

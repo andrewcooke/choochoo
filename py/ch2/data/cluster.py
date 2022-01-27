@@ -4,6 +4,7 @@ from logging import getLogger
 from geoalchemy2.shape import to_shape
 from math import log10
 from sqlalchemy import desc, text
+from sqlalchemy.exc import InternalError
 
 from ..data.sector import add_start_finish
 from ..sql import ActivityJournal, ClusterInputScratch, ClusterHull, ClusterFragmentScratch, SectorGroup, Sector
@@ -212,9 +213,26 @@ def sectors_from_hulls(s, sector_group):
                    Sector.start == None,
                    Sector.finish == None,
                    Sector.owner == short_cls(ClusterCalculator)).all():
-        add_start_finish(s, id[0])
+        try:
+            add_start_finish(s, id[0])
+        except InternalError as e:
+            log.warning(f'Failed to generate sector {id}: {e}')
+    delete_failed_sectors(s, sector_group)
     delete_tmp_fragments(s, sector_group)
     log.info(f'Finished finding sectors for clusters for {sector_group.title}')
+
+
+def delete_failed_sectors(s, sector_group):
+    from ..pipeline.calculate.cluster import ClusterCalculator
+    query = s.query(Sector.id). \
+            filter(Sector.sector_group_id == sector_group.id,
+                   Sector.start == None,
+                   Sector.finish == None,
+                   Sector.owner == short_cls(ClusterCalculator))
+    n = query.count()
+    if n:
+        log.warning(f'Cleaning out {n} failed sectors')
+        query.delete(synchronize_session=False)
 
 
 def populate_tmp_fragments_from_hulls(s, sector_group, min_separation=50):
